@@ -6,20 +6,23 @@ import org.ndexbio.orientdb.domain.*;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.service.helpers.RidConverter;
+
+
 import org.ndexbio.rest.models.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 
 public class NdexTaskService extends OrientDBConnectionService
 {
-    private static final Logger _logger = LoggerFactory.getLogger(NdexTaskService.class);
-    
-    
+    private static final Logger logger = LoggerFactory.getLogger(NdexTaskService.class);
     
     public NdexTaskService()
     {
@@ -27,11 +30,36 @@ public class NdexTaskService extends OrientDBConnectionService
     }
     
     /*
-     * get a Collection of Tasks that are pending file uploads
+     * get a Collection of Tasks based on Status value
      */
-    
-     public List<Task> getPendingFileUploads() {
-    	 return null;
+    private List<Task> getTasksByStatus(Status aStatus) throws NdexException {
+    	 String query = "select from Task "
+    	            + " where Status = " +aStatus;
+    	 final List<Task> foundTasks = Lists.newArrayList();
+    	 try {
+			setupDatabase();
+
+			 final List<ODocument> taskDocumentList = _orientDbGraph.getBaseGraph().
+					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
+			 for (final ODocument document : taskDocumentList)
+	                foundTasks.add(new Task(_orientDbGraph.getVertex(document, ITask.class)));
+
+	            return foundTasks;
+		} catch (Exception e) {
+			logger.error("Failed to search tasks", e);
+	            throw new NdexException("Failed to search tasks.");
+		}finally {
+			teardownDatabase();
+		}
+
+    }
+    // only specific status states are exposed 
+     public List<Task> getQueuedTasks() throws NdexException {
+    	 return getTasksByStatus(Status.QUEUED);
+     }
+     
+     public List<Task> getInProgressTasks() throws NdexException{
+    	 return getTasksByStatus(Status.PROCESSING);
      }
    
     /**************************************************************************
@@ -63,7 +91,7 @@ public class NdexTaskService extends OrientDBConnectionService
         }
         catch (Exception e)
         {
-            _logger.error("Failed to get task: " + taskId + ".", e);
+            logger.error("Failed to get task: " + taskId + ".", e);
             throw new NdexException("Failed to retrieve the task.");
         }
         finally
@@ -109,7 +137,7 @@ public class NdexTaskService extends OrientDBConnectionService
         }
         catch (Exception e)
         {
-            _logger.error("Failed to update task: " + updatedTask.getId() + ".", e);
+            logger.error("Failed to update task: " + updatedTask.getId() + ".", e);
             _orientDbGraph.getBaseGraph().rollback(); 
             throw new NdexException("Failed to update task: " + updatedTask.getId() + ".");
         }

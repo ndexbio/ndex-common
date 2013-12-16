@@ -7,7 +7,7 @@ import java.util.Date;
 
 public interface ITask extends VertexFrame
 {
-    @Property("description")
+    @Property("description")    
     public String getDescription();
     
     @Property("description")
@@ -44,8 +44,14 @@ public interface ITask extends VertexFrame
     public void setStartTime(Date startTime);
 
     @Property("status")
-    public void setStatus(Status status);
+    public void setStatus(Status status);  
 
     @Property("status")
     public Status getStatus();
+    
+    @Property("type")
+    public TaskType getType();
+    
+    @Property("type")
+    public void setType(TaskType type);
 }

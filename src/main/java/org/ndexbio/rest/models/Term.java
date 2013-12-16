@@ -1,12 +1,11 @@
 package org.ndexbio.rest.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.ndexbio.service.helpers.TermDeserializer;
-
 //import com.fasterxml.jackson.annotation.JsonSubTypes;
 //import com.fasterxml.jackson.annotation.JsonTypeInfo;
 //import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.ndexbio.service.helpers.TermDeserializer;
 import org.ndexbio.orientdb.domain.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -20,7 +20,7 @@ public interface IAccount extends VertexFrame
     @Property("createdDate")
     public Date getCreatedDate();
 
-    @Property("description")
+    @Property("description")  
     public String getDescription();
 
     @Property("description")
