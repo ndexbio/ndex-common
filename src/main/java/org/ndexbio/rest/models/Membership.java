@@ -2,8 +2,8 @@ package org.ndexbio.rest.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.ndexbio.orientdb.domain.*;
-import com.orientechnologies.orient.core.id.ORID;
 import org.ndexbio.service.helpers.RidConverter;
+import com.orientechnologies.orient.core.id.ORID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Membership
