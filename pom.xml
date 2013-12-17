@@ -2,9 +2,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.ndexbio</groupId>
-	<artifactId>ndexbio-service</artifactId>
+	<artifactId>ndex-common</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ndexbio-service</name>
+	<name>ndex-common</name>
 	<repositories>
 		<repository>
 			<id>oss.sonatype.org</id>
@@ -20,6 +20,12 @@
 	</repositories>
 
 	<dependencies>
+
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.13</version>
+		</dependency>
 		<dependency>
 			<groupId>javax.ws.rs</groupId>
 			<artifactId>jsr311-api</artifactId>

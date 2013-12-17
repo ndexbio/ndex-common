@@ -42,17 +42,20 @@ import org.slf4j.LoggerFactory;
  * as values
  */
 
-public enum NDExMemoryPersistence implements NDExPersistenceService {
+public class NDExMemoryPersistence implements NDExPersistenceService {
 	
-	INSTANCE;
+	
 	 
-	 private OrientDBConnectionService ndexService = new OrientDBConnectionService();
-	 private Set<Long> jdexIdSet = Sets.newHashSet();
+	 private OrientDBConnectionService ndexService;
+	 private Set<Long> jdexIdSet ;
 	 private INetwork network;
 	 private IUser user;
 	 private static final Logger logger = LoggerFactory.getLogger(NDExMemoryPersistence.class);
 	 
-	 
+	 public NDExMemoryPersistence() {
+		 ndexService = new OrientDBConnectionService();
+		   jdexIdSet = Sets.newHashSet();
+	 }
 	 
 	 //IBaseTerm cache
 	 private RemovalListener<Long,IBaseTerm> baseTermListener = new RemovalListener<Long, IBaseTerm>() {
