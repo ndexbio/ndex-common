@@ -51,6 +51,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 	 private INetwork network;
 	 private IUser user;
 	 private static final Logger logger = LoggerFactory.getLogger(NDExMemoryPersistence.class);
+	 private static final Long CACHE_SIZE = 100000L;
 	 
 	 public NDExMemoryPersistence() {
 		 ndexService = new OrientDBConnectionService();
@@ -68,7 +69,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 		 
 	 };
 	 private LoadingCache<Long, IBaseTerm> baseTermCache = CacheBuilder.newBuilder()
-			 .maximumSize(10000L)
+			 .maximumSize(CACHE_SIZE)
 			 .expireAfterAccess(240L, TimeUnit.MINUTES)
 			 .removalListener(baseTermListener)
 			 .build(new CacheLoader<Long,IBaseTerm>() {
@@ -89,7 +90,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 			 
 		 };
 	 private LoadingCache<Long, IFunctionTerm> functionTermCache = CacheBuilder.newBuilder()
-			 .maximumSize(10000L)
+			 .maximumSize(CACHE_SIZE)
 			 .expireAfterAccess(240L, TimeUnit.MINUTES)
 			 .removalListener(functionTermListener)
 			 .build(new CacheLoader<Long,IFunctionTerm>() {
@@ -112,7 +113,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 		 };
 		 
 	 private LoadingCache<Long, INamespace> namespaceCache = CacheBuilder.newBuilder()
-			 .maximumSize(10000L)
+			 .maximumSize(CACHE_SIZE)
 			 .expireAfterAccess(240L, TimeUnit.MINUTES)
 			 .removalListener(namespaceListener)
 			 .build(new CacheLoader<Long,INamespace>() {
@@ -135,7 +136,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 			 
 		 };
 	 private LoadingCache<Long, ICitation> citationCache = CacheBuilder.newBuilder()
-			 .maximumSize(10000L)
+			 .maximumSize(CACHE_SIZE)
 			 .expireAfterAccess(240L, TimeUnit.MINUTES)
 			 .removalListener(citationListener)
 			 .build(new CacheLoader<Long,ICitation>() {
@@ -157,7 +158,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 			 
 		 };
 		 private LoadingCache<Long, IEdge> edgeCache = CacheBuilder.newBuilder()
-				 .maximumSize(10000L)
+				 .maximumSize(CACHE_SIZE)
 				 .expireAfterAccess(240L, TimeUnit.MINUTES)
 				 .removalListener(edgeListener)
 				 .build(new CacheLoader<Long,IEdge>() {
@@ -179,7 +180,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 				 
 			 };
 		 private LoadingCache<Long, INode> nodeCache = CacheBuilder.newBuilder()
-				 .maximumSize(10000L)
+				 .maximumSize(CACHE_SIZE)
 				 .expireAfterAccess(240L, TimeUnit.MINUTES)
 				 .removalListener(nodeListener)
 				 .build(new CacheLoader<Long,INode>() {
@@ -201,7 +202,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 				 
 			 };
 		 private LoadingCache<Long, ISupport> supportCache = CacheBuilder.newBuilder()
-				 .maximumSize(10000L)
+				 .maximumSize(CACHE_SIZE)
 				 .expireAfterAccess(240L, TimeUnit.MINUTES)
 				
 				 .build(new CacheLoader<Long,ISupport>() {
@@ -492,12 +493,14 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 			for(ISupport support : this.supportCache.asMap().values()){
 				this.network.addSupport(support);
 			}
+			//this.supportCache.invalidateAll();
 		}
 		
 		private void addICitations() {
 			for(ICitation citation : this.citationCache.asMap().values()){
 				this.network.addCitation(citation);
 			}
+			//this.citationCache.invalidateAll();
 		}
 		
 		private void addIEdges() {
@@ -505,6 +508,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 				this.network.addNdexEdge(edge);
 			}
 			this.network.setNdexEdgeCount(this.edgeCache.asMap().size());
+			//this.edgeCache.invalidateAll();
 		}
 		
 		
@@ -514,21 +518,26 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 				this.network.addNdexNode(in);
 			}
 			this.network.setNdexNodeCount(this.nodeCache.asMap().size());
+			//this.nodeCache.invalidateAll();
 		}
 		
 		private void addINamespaces() {
 			for(INamespace ns : this.namespaceCache.asMap().values()){
 				this.network.addNamespace(ns);
 			}
+			// clear namespace cache
+			//this.namespaceCache.invalidateAll();
 		}
 		
 		private void addITerms() {		
 			for (IBaseTerm bt : this.baseTermCache.asMap().values() ){
 				this.network.addTerm(bt);
 			}
+			//this.baseTermCache.invalidateAll();
 			for(IFunctionTerm ft : this.functionTermCache.asMap().values()){
 				this.network.addTerm(ft);
-			}					
+			}	
+			//this.functionTermCache.invalidateAll();
 		}
 
 

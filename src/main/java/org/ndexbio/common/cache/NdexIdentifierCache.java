@@ -2,7 +2,7 @@ package org.ndexbio.common.cache;
 
 import java.util.concurrent.TimeUnit;
 
-
+import org.ndexbio.orientdb.domain.ISupport;
 import org.ndexbio.service.JdexIdService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +11,8 @@ import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 
 /*
  * Service implement as a Singleton to provide access to cached XBEL 
@@ -21,6 +23,7 @@ import com.google.common.cache.LoadingCache;
 public enum NdexIdentifierCache {
 	INSTANCE;
 	private static final Logger logger = LoggerFactory.getLogger(NdexIdentifierCache.class);
+	private static final Long CACHE_SIZE = 1000000L;
 	
 	 private LoadingCache<String, Long> identifierCache; 
 	 /*
@@ -64,18 +67,29 @@ public enum NdexIdentifierCache {
 		 return identifierCache;
 	 }
 	 
+	 
+		//Identifier cache
+		 private RemovalListener<String,Long> identifiertListener = new RemovalListener<String, Long>() {
+			 	
+				public void onRemoval(RemovalNotification<String, Long> removal) {
+					logger.info("*****Identifier removed from cache key= " +removal.getKey()
+							+" Cause= " +removal.getCause().toString());				
+				}
+				 
+			 };
+	 
 	 private void initializeIdentifierCache() {
 		 this.identifierCache = CacheBuilder.newBuilder()
-				 .maximumSize(10000L)
+				 .maximumSize(CACHE_SIZE)
 				 .expireAfterAccess(120L, TimeUnit.MINUTES)
-				 .removalListener(new IdentifierRemovalListener())
+				 .removalListener(identifiertListener)
 				 .build(new CacheLoader<String,Long>() {
 
 					@Override
 					public Long load(String key) throws Exception {
 						
-						logger.info("Cache created new jdex id for identifier: "
-								+key);
+						//logger.info("Cache created new jdex id for identifier: "
+						//	+key);
 						return JdexIdService.INSTANCE.getNextJdexId();
 					}
 					 
@@ -92,10 +106,7 @@ public enum NdexIdentifierCache {
 						@Override
 						// the supplied key is not in the cache
 						// generate a new JDEx ID for a new key value pair
-						public Long load(String key) throws Exception {
-							
-							logger.info("Cache created new jdex id for identifier: "
-									+key);
+						public Long load(String key) throws Exception {							
 							return JdexIdService.INSTANCE.getNextJdexId();
 						}
 						 
