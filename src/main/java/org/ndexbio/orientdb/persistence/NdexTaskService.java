@@ -33,8 +33,8 @@ public class NdexTaskService extends OrientDBConnectionService
      * get a Collection of Tasks based on Status value
      */
     private List<Task> getTasksByStatus(Status aStatus) throws NdexException {
-    	 String query = "select from Task "
-    	            + " where Status = " +aStatus;
+    	 String query = "select from task "
+    	            + " where status = '" +aStatus +"'";
     	 final List<Task> foundTasks = Lists.newArrayList();
     	 try {
 			setupDatabase();
@@ -125,6 +125,7 @@ public class NdexTaskService extends OrientDBConnectionService
 
         try
         {
+        	setupDatabase();
             final ITask taskToUpdate = _orientDbGraph.getVertex(taskRid, ITask.class);
             if (taskToUpdate == null){
                 throw new ObjectNotFoundException("Task", updatedTask.getId());
