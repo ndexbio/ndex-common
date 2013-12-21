@@ -18,6 +18,7 @@ import org.ndexbio.service.helpers.RidConverter;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -52,10 +53,13 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 	 private IUser user;
 	 private static final Logger logger = LoggerFactory.getLogger(NDExMemoryPersistence.class);
 	 private static final Long CACHE_SIZE = 100000L;
+	 private final Stopwatch stopwatch;
+	 private long commitCounter  =0L;
 	 
 	 public NDExMemoryPersistence() {
 		 ndexService = new OrientDBConnectionService();
 		   jdexIdSet = Sets.newHashSet();
+		   this.stopwatch = Stopwatch.createUnstarted();
 	 }
 	 
 	 //IBaseTerm cache
@@ -76,6 +80,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 				@Override
 				public IBaseTerm load(Long key) throws Exception {
 					return ndexService._orientDbGraph.addVertex("class:baseTerm", IBaseTerm.class);
+					
 				}
 			 });
 	 
@@ -339,6 +344,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 	            network.setFormat(newNetwork.getFormat());
 	            network.setSource(newNetwork.getSource());
 	            network.setTitle(newNetwork.getTitle());
+	            
 	           this.network = network;  // keep a copy in this repository
 	            return network;
 	        }catch (Exception e)
@@ -461,19 +467,20 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 		
 		public void persistNetwork() {
 			try {
+				
 
 				//1. namespaces
-				this.addINamespaces();
+				//this.addINamespaces();
 				//2. terms
-				this.addITerms();
+				//this.addITerms();
 				//3. nodes
-				this.addINodes();
+				//this.addINodes();
 				//4. edges
-				this.addIEdges();
-				//5. citations
-				this.addICitations();
+				//this.addIEdges();
+				////5. citations
+				//this.addICitations();
 				//6. supports
-				this.addISupports();
+				//this.addISupports();
 				// commit
 
 				ndexService._orientDbGraph.getBaseGraph().commit();
@@ -525,6 +532,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 			for(INamespace ns : this.namespaceCache.asMap().values()){
 				this.network.addNamespace(ns);
 			}
+			
 			// clear namespace cache
 			//this.namespaceCache.invalidateAll();
 		}
@@ -538,6 +546,32 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 				this.network.addTerm(ft);
 			}	
 			//this.functionTermCache.invalidateAll();
+		}
+
+
+
+		@Override
+		/*
+		 * mod 20Dec2013
+		 * time how long commits take
+		 */
+		public void commitCurrentNetwork() throws NdexException {
+			commitCounter++;
+			if(null != this.getCurrentNetwork() ) {
+				if (commitCounter %10000 == 0) {
+					this.stopwatch.start();
+					ndexService._orientDbGraph.getBaseGraph().commit();
+					this.stopwatch.stop();
+					
+					logger.info("Network commit required "
+							+ this.stopwatch.elapsed(TimeUnit.MILLISECONDS)
+							+ " milliseconds. Number of edges " +this.edgeCache.size());
+					this.stopwatch.reset();
+				}
+			} else {
+				throw new NdexException("Attempt to commit non-existent network.");
+			}
+			
 		}
 
 

@@ -15,6 +15,8 @@ public class OrientDBSchemaManager
     public synchronized void init(OrientBaseGraph orientDbGraph)
     {
         orientDbGraph.getRawGraph().commit();
+        
+       
 
         /**********************************************************************
         * Create base types first. 

@@ -72,8 +72,10 @@ public enum NdexIdentifierCache {
 		 private RemovalListener<String,Long> identifiertListener = new RemovalListener<String, Long>() {
 			 	
 				public void onRemoval(RemovalNotification<String, Long> removal) {
+					if(!removal.getCause().toString().equalsIgnoreCase("EXPLICIT")){
 					logger.info("*****Identifier removed from cache key= " +removal.getKey()
-							+" Cause= " +removal.getCause().toString());				
+							+" Cause= " +removal.getCause().toString());	
+					}
 				}
 				 
 			 };
