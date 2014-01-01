@@ -13,6 +13,6 @@ public enum NDExPersistenceServiceFactory {
 	private static final Logger logger = LoggerFactory.getLogger(NDExPersistenceServiceFactory.class);
 	public NDExPersistenceService getNDExPersistenceService() {
 		logger.info("NDExPersistenceServiceFactory  invoked...");
-		return  new NDExMemoryPersistence();
+		return  new NDExNoTxMemoryPersistence();
 	}
 }

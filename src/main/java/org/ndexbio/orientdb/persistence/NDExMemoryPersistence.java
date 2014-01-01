@@ -44,9 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 
 public class NDExMemoryPersistence implements NDExPersistenceService {
-	
-	
-	 
+
 	 private OrientDBConnectionService ndexService;
 	 private Set<Long> jdexIdSet ;
 	 private INetwork network;
@@ -467,21 +465,6 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 		
 		public void persistNetwork() {
 			try {
-				
-
-				//1. namespaces
-				//this.addINamespaces();
-				//2. terms
-				//this.addITerms();
-				//3. nodes
-				//this.addINodes();
-				//4. edges
-				//this.addIEdges();
-				////5. citations
-				//this.addICitations();
-				//6. supports
-				//this.addISupports();
-				// commit
 
 				ndexService._orientDbGraph.getBaseGraph().commit();
 				System.out.println("The new network " +network.getTitle() 
@@ -571,6 +554,14 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 			} else {
 				throw new NdexException("Attempt to commit non-existent network.");
 			}
+			
+		}
+
+
+
+		@Override
+		public void deleteNetwork() {
+			// TODO Auto-generated method stub
 			
 		}
 

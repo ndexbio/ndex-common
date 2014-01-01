@@ -42,6 +42,7 @@ public interface NDExPersistenceService {
 	
 	public SearchResult<IUser> findUsers(SearchParameters searchParameters) throws NdexException;
 	public void abortTransaction();
+	public void deleteNetwork();
 	
 	
 	
