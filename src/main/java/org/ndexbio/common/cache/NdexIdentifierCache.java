@@ -1,12 +1,10 @@
 package org.ndexbio.common.cache;
 
 import java.util.concurrent.TimeUnit;
-
-import org.ndexbio.orientdb.domain.ISupport;
+import org.ndexbio.common.models.data.ISupport;
 import org.ndexbio.service.JdexIdService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

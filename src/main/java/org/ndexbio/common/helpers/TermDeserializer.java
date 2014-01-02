@@ -1,4 +1,4 @@
-package org.ndexbio.service.helpers;
+package org.ndexbio.common.helpers;
 
 import java.io.IOException;
 import org.ndexbio.common.models.object.BaseTerm;
@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+//TODO: Remove this class - it was only needed because of incomplete unit test data
 public class TermDeserializer extends JsonDeserializer<Term>
 {
     public TermDeserializer()
@@ -29,9 +30,9 @@ public class TermDeserializer extends JsonDeserializer<Term>
         
         if (termType != null)
         {
-            if (termType.asText() == "Base")
+            if (termType.asText().equals("Base"))
                 return populateBaseTerm(serializedTerm);
-            else if (termType.asText() == "Function")
+            else if (termType.asText().equals("Function"))
                 return populateFunctionTerm(serializedTerm);
         }
         else

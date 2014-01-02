@@ -4,18 +4,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import org.ndexbio.common.cache.NdexIdentifierCache;
-import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.exceptions.ValidationException;
-import org.ndexbio.orientdb.domain.*;
-import org.ndexbio.rest.models.Membership;
-import org.ndexbio.rest.models.Network;
-import org.ndexbio.rest.models.SearchParameters;
-import org.ndexbio.rest.models.SearchResult;
-import org.ndexbio.service.helpers.RidConverter;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -30,7 +18,16 @@ import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
+import org.ndexbio.common.cache.NdexIdentifierCache;
+import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.common.exceptions.ValidationException;
+import org.ndexbio.common.helpers.IdConverter;
+import org.ndexbio.common.models.data.*;
+import org.ndexbio.common.models.object.Membership;
+import org.ndexbio.common.models.object.Network;
+import org.ndexbio.common.models.object.SearchParameters;
+import org.ndexbio.common.models.object.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -324,7 +321,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 	        {
 	           
 	            final Membership newNetworkMembership = newNetwork.getMembers().get(0);
-	            final ORID userRid = RidConverter.convertToRid(newNetworkMembership.getResourceId());
+	            final ORID userRid = IdConverter.toRid(newNetworkMembership.getResourceId());
 
 	            final IUser networkOwner =  ndexService._orientDbGraph.getVertex(userRid, IUser.class);
 	            if (networkOwner == null)

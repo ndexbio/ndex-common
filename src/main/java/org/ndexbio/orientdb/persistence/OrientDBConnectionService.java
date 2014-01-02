@@ -1,18 +1,8 @@
 package org.ndexbio.orientdb.persistence;
 
-import org.ndexbio.orientdb.domain.IBaseTerm;
-import org.ndexbio.orientdb.domain.IFunctionTerm;
-import org.ndexbio.orientdb.domain.IGroup;
-import org.ndexbio.orientdb.domain.IGroupInvitationRequest;
-import org.ndexbio.orientdb.domain.IGroupMembership;
-import org.ndexbio.orientdb.domain.IJoinGroupRequest;
-import org.ndexbio.orientdb.domain.INetworkAccessRequest;
-import org.ndexbio.orientdb.domain.INetworkMembership;
-import org.ndexbio.orientdb.domain.IUser;
-import org.ndexbio.service.helpers.Configuration;
+import org.ndexbio.common.models.data.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;

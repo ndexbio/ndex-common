@@ -1,17 +1,13 @@
 package org.ndexbio.orientdb.persistence;
 
 import java.util.List;
-
-import org.ndexbio.orientdb.domain.*;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.service.helpers.RidConverter;
-
-
-import org.ndexbio.rest.models.Task;
+import org.ndexbio.common.helpers.IdConverter;
+import org.ndexbio.common.models.data.*;
+import org.ndexbio.common.models.object.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -81,12 +77,12 @@ public class NdexTaskService extends OrientDBConnectionService
            
         try
         {
-            final ORID taskRid = RidConverter.convertToRid(taskId);           
+            final ORID taskRid = IdConverter.toRid(taskId);           
             setupDatabase();          
             final Task t = new Task(_orientDbGraph.getVertex(taskRid, ITask.class));
-            if ( t == null ){
-            	throw new ObjectNotFoundException("Task id ", taskId +" not in orientdb");
-            }
+            if ( t == null )
+            	throw new ObjectNotFoundException("Task id ", taskId + " not in orientdb");
+
             return t;
         }
         catch (Exception e)
@@ -121,7 +117,7 @@ public class NdexTaskService extends OrientDBConnectionService
     {
     	Preconditions.checkNotNull(updatedTask,"The task to update is empty.");
         
-        ORID taskRid = RidConverter.convertToRid(updatedTask.getId());
+        ORID taskRid = IdConverter.toRid(updatedTask.getId());
 
         try
         {

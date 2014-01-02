@@ -1,13 +1,11 @@
 package org.ndexbio.orientdb.persistence;
 
 import java.util.concurrent.ExecutionException;
-
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.orientdb.domain.*;
-
-import org.ndexbio.rest.models.Network;
-import org.ndexbio.rest.models.SearchParameters;
-import org.ndexbio.rest.models.SearchResult;
+import org.ndexbio.common.models.data.*;
+import org.ndexbio.common.models.object.Network;
+import org.ndexbio.common.models.object.SearchParameters;
+import org.ndexbio.common.models.object.SearchResult;
 
 /*
  * public interface representing all interactions with the underlying persistence implementation
