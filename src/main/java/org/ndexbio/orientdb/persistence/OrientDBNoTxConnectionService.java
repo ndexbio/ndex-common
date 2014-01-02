@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.frames.FramedGraph;
 import com.tinkerpop.frames.FramedGraphFactory;
 import com.tinkerpop.frames.modules.gremlingroovy.GremlinGroovyModule;
@@ -28,14 +29,14 @@ import com.tinkerpop.frames.modules.typedgraph.TypedGraphModuleBuilder;
  * closing the database connection
  */
 
-public class OrientDBConnectionService {
+public class OrientDBNoTxConnectionService {
 	private static final Logger logger = LoggerFactory
-			.getLogger(OrientDBConnectionService.class);
+			.getLogger(OrientDBNoTxConnectionService.class);
 	protected FramedGraphFactory _graphFactory = null;
 	protected ODatabaseDocumentTx _ndexDatabase = null;
 	protected FramedGraph<OrientBaseGraph> _orientDbGraph = null;
 
-	public OrientDBConnectionService() {
+	public OrientDBNoTxConnectionService() {
 		this.setupDatabase();
 	}
 
@@ -68,7 +69,7 @@ public class OrientDBConnectionService {
 		// Configuration.getInstance().getProperty("OrientDB-Password"));
 
 		_orientDbGraph = _graphFactory
-				.create((OrientBaseGraph) new OrientGraph(_ndexDatabase));
+				.create((OrientBaseGraph) new OrientGraphNoTx(_ndexDatabase));
 		OrientDBSchemaManager.INSTANCE.init(_orientDbGraph.getBaseGraph());
 		logger.info("Connection to OrientDB established");
 
