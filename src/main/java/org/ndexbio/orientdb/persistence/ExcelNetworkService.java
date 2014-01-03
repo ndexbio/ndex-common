@@ -1,6 +1,7 @@
 package org.ndexbio.orientdb.persistence;
 
 import java.util.concurrent.ExecutionException;
+
 import org.ndexbio.common.cache.NdexIdentifierCache;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.data.IBaseTerm;
@@ -11,16 +12,18 @@ import org.ndexbio.common.models.data.INetworkMembership;
 import org.ndexbio.common.models.data.INode;
 import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.*;
+import org.ndexbio.service.CommonNetworkService;
 import org.ndexbio.service.JdexIdService;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
-public class ExcelNetworkService {
+public class ExcelNetworkService extends CommonNetworkService {
 
 	private static ExcelNetworkService instance;
 
-	private NDExPersistenceService persistenceService;
+	
 	private static Joiner idJoiner = Joiner.on(":").skipNulls();
 
 	public static ExcelNetworkService getInstance() {
@@ -32,38 +35,14 @@ public class ExcelNetworkService {
 
 	private ExcelNetworkService() {
 		super();
-		this.persistenceService = NDExPersistenceServiceFactory.INSTANCE
-				.getNDExPersistenceService();
+		
 	}
 
-	public INetwork createNewNetwork() throws Exception {
-		return this.persistenceService.getCurrentNetwork();
-	}
+	//public INetwork createNewNetwork() throws Exception {
+	//	return this.persistenceService.getCurrentNetwork();
+	//}
 
-	public IUser createNewUser(String username) {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(username));
-		IUser user = this.persistenceService.getCurrentUser();
-		user.setUsername(username);
-		return user;
-	}
-
-	public INetworkMembership createNewMember() {
-		return this.persistenceService.createNetworkMembership();
-	}
-
-	public SearchResult<IUser> findUsers(SearchParameters searchParameters)
-			throws NdexException {
-		return this.persistenceService.findUsers(searchParameters);
-	}
-
-	public void persistNewNetwork() {
-		this.persistenceService.persistNetwork();
-	}
-
-	public void rollbackCurrentTransaction() {
-		this.persistenceService.abortTransaction();
-	}
-
+	
 	public IBaseTerm findOrCreateIBaseTerm(String name, Long jdexId)
 			throws ExecutionException {
 		Preconditions.checkArgument(null != name, "A name is required");

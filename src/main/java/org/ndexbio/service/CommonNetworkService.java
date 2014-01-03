@@ -37,13 +37,14 @@ public abstract class CommonNetworkService {
 				"A network owner name is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkTitle),
 				"A network title is required");
+		INetwork network = this.persistenceService.getCurrentNetwork();
 		// find the network owner in the database
 		IUser networkOwner = resolveUserUserByUsername(ownerName);
 		if( null == networkOwner){
 			logger.error("User " +ownerName +" is not registered in the database/");
 			throw new NdexException("User " +ownerName +" is not registered in the database");
 		}
-		INetwork network = this.persistenceService.getCurrentNetwork();
+		
 		
 		INetworkMembership membership = createNewMember();
 		membership.setMember(networkOwner);

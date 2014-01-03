@@ -69,6 +69,8 @@ public class OrientDBNoTxConnectionService {
 				.create((OrientBaseGraph) new OrientGraphNoTx(_ndexDatabase));
 		OrientDBSchemaManager.INSTANCE.init(_orientDbGraph.getBaseGraph());
 		logger.info("Connection to OrientDB established");
+		
+		
 
 	}
 
