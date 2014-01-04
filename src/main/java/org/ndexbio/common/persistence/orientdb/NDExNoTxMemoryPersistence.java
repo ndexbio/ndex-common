@@ -1,9 +1,10 @@
-package org.ndexbio.orientdb.persistence;
+package org.ndexbio.common.persistence.orientdb;
 
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
 import org.ndexbio.common.cache.NdexIdentifierCache;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
@@ -14,6 +15,8 @@ import org.ndexbio.common.models.object.Membership;
 import org.ndexbio.common.models.object.Network;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
+import org.ndexbio.common.persistence.NDExPersistenceService;
+
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -28,6 +31,7 @@ import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
