@@ -2,9 +2,8 @@ package org.ndexbio.common.models.data;
 
 import com.tinkerpop.frames.Adjacency;
 import com.tinkerpop.frames.Property;
-import com.tinkerpop.frames.VertexFrame;
 
-public interface INetwork extends VertexFrame
+public interface INetwork extends IMetadataObject
 {
     @Adjacency(label = "networkCitations")
     public void addCitation(ICitation citation);
