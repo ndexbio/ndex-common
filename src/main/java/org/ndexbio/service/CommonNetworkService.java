@@ -4,8 +4,8 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
-import org.ndexbio.orientdb.persistence.NDExPersistenceService;
-import org.ndexbio.orientdb.persistence.NDExPersistenceServiceFactory;
+import org.ndexbio.common.persistence.NDExPersistenceService;
+import org.ndexbio.common.persistence.NDExPersistenceServiceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +25,7 @@ public abstract class CommonNetworkService {
 		this.persistenceService = NDExPersistenceServiceFactory.INSTANCE
 				.getNDExPersistenceService();
 		logger = LoggerFactory.getLogger(this.getClass());
+		logger.info("connection service instantiated");
 	}
 	
 	/*
@@ -107,4 +108,13 @@ public abstract class CommonNetworkService {
 	public final void rollbackCurrentTransaction() {
 		this.persistenceService.abortTransaction();
 	}
+	
+	/*
+	 * expose persistence service to subclasses to provide access to database 
+	 * operations defined in service interface
+	 */
+	protected final NDExPersistenceService getPersistenceService() {
+		return this.persistenceService;
+	}
+	
 }

@@ -1,5 +1,6 @@
-package org.ndexbio.orientdb.persistence;
+package org.ndexbio.common.persistence;
 
+import org.ndexbio.common.persistence.orientdb.NDExNoTxMemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,6 +1,7 @@
-package org.ndexbio.orientdb.persistence;
+package org.ndexbio.common.persistence.orientdb;
 
 import java.util.List;
+
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
@@ -8,6 +9,7 @@ import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -15,14 +17,20 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+/*
+ * Represents a collection of methods for interacting with Tasks in the orientdb database
+ * Retained in the common ndex-common project to facilitate availability to multiple ndex
+ * projects using Tasks
+ */
 
-public class NdexTaskService extends OrientDBConnectionService
+public class NdexTaskService 
 {
     private static final Logger logger = LoggerFactory.getLogger(NdexTaskService.class);
+    private OrientDBNoTxConnectionService ndexService;
     
     public NdexTaskService()
     {
-        super();
+    	ndexService = new OrientDBNoTxConnectionService();  
     }
     
     /*
@@ -33,19 +41,19 @@ public class NdexTaskService extends OrientDBConnectionService
     	            + " where status = '" +aStatus +"'";
     	 final List<Task> foundTasks = Lists.newArrayList();
     	 try {
-			setupDatabase();
+			this.ndexService.setupDatabase();
 
-			 final List<ODocument> taskDocumentList = _orientDbGraph.getBaseGraph().
+			 final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
 					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
 			 for (final ODocument document : taskDocumentList)
-	                foundTasks.add(new Task(_orientDbGraph.getVertex(document, ITask.class)));
+	                foundTasks.add(new Task(this.ndexService._orientDbGraph.getVertex(document, ITask.class)));
 
 	            return foundTasks;
 		} catch (Exception e) {
 			logger.error("Failed to search tasks", e);
 	            throw new NdexException("Failed to search tasks.");
 		}finally {
-			teardownDatabase();
+			this.ndexService.teardownDatabase();
 		}
 
     }
@@ -78,8 +86,8 @@ public class NdexTaskService extends OrientDBConnectionService
         try
         {
             final ORID taskRid = IdConverter.toRid(taskId);           
-            setupDatabase();          
-            final Task t = new Task(_orientDbGraph.getVertex(taskRid, ITask.class));
+            this.ndexService.setupDatabase();          
+            final Task t = new Task(this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class));
             if ( t == null )
             	throw new ObjectNotFoundException("Task id ", taskId + " not in orientdb");
 
@@ -92,7 +100,7 @@ public class NdexTaskService extends OrientDBConnectionService
         }
         finally
         {
-            teardownDatabase();
+        	this.ndexService.teardownDatabase();
         }
         
         
@@ -121,8 +129,8 @@ public class NdexTaskService extends OrientDBConnectionService
 
         try
         {
-        	setupDatabase();
-            final ITask taskToUpdate = _orientDbGraph.getVertex(taskRid, ITask.class);
+        	this.ndexService.setupDatabase();
+            final ITask taskToUpdate = this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class);
             if (taskToUpdate == null){
                 throw new ObjectNotFoundException("Task", updatedTask.getId());
             }
@@ -130,17 +138,17 @@ public class NdexTaskService extends OrientDBConnectionService
             taskToUpdate.setStartTime(updatedTask.getCreatedDate());
             taskToUpdate.setStatus(updatedTask.getStatus());
 
-            _orientDbGraph.getBaseGraph().commit();
+            this.ndexService._orientDbGraph.getBaseGraph().commit();
         }
         catch (Exception e)
         {
             logger.error("Failed to update task: " + updatedTask.getId() + ".", e);
-            _orientDbGraph.getBaseGraph().rollback(); 
+            this.ndexService._orientDbGraph.getBaseGraph().rollback(); 
             throw new NdexException("Failed to update task: " + updatedTask.getId() + ".");
         }
         finally
         {
-            teardownDatabase();
+        	this.ndexService.teardownDatabase();
         }
     }
 }

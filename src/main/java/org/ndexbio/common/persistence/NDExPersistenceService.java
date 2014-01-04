@@ -1,4 +1,4 @@
-package org.ndexbio.orientdb.persistence;
+package org.ndexbio.common.persistence;
 
 import java.util.concurrent.ExecutionException;
 import org.ndexbio.common.exceptions.NdexException;
