@@ -57,4 +57,27 @@ public class MetaParameter
     {
         _keywords = keywords;
     }
+
+
+
+    /**************************************************************************
+    * Gets the SQL for the operator and keywords.
+    *  
+    * @return A string containing SQL for the operator.
+    **************************************************************************/
+    @Override
+    public String toString()
+    {
+        switch (_operator)
+        {
+            case '=':
+                return " = " + _keywords;
+            case ':':
+                return " like '%" + _keywords + "'";
+            case '~':
+                return " like '%" + _keywords + "%'";
+            default:
+                throw new IllegalArgumentException ("Unsupported operator encountered: " + _operator);
+        }
+    }
 }

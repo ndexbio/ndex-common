@@ -41,7 +41,8 @@ public class NdexSchemaManager
         {
             OClass termClass = orientDbGraph.createVertexType("term");
             termClass.createProperty("jdexId", OType.STRING);
-            termClass.createProperty("properties", OType.EMBEDDEDMAP);
+            termClass.createProperty("metadata", OType.EMBEDDEDMAP);
+            termClass.createProperty("metaterms", OType.EMBEDDEDMAP);
         }
 
         /**********************************************************************
@@ -62,16 +63,18 @@ public class NdexSchemaManager
             citationClass.createProperty("contributors", OType.STRING);
             citationClass.createProperty("identifier", OType.STRING);
             citationClass.createProperty("jdexId", OType.STRING);
+            citationClass.createProperty("metadata", OType.EMBEDDEDMAP);
+            citationClass.createProperty("metaterms", OType.EMBEDDEDMAP);
             citationClass.createProperty("title", OType.STRING);
             citationClass.createProperty("type", OType.STRING);
-            citationClass.createProperty("properties", OType.EMBEDDEDMAP);
         }
 
         if (orientDbGraph.getVertexType("edge") == null)
         {
             OClass edgeClass = orientDbGraph.createVertexType("edge");
             edgeClass.createProperty("jdexId", OType.STRING);
-            edgeClass.createProperty("properties", OType.EMBEDDEDMAP);
+            edgeClass.createProperty("metadata", OType.EMBEDDEDMAP);
+            edgeClass.createProperty("metaterms", OType.EMBEDDEDMAP);
         }
 
         if (orientDbGraph.getVertexType("functionTerm") == null)
@@ -105,9 +108,10 @@ public class NdexSchemaManager
         {
             OClass namespaceClass = orientDbGraph.createVertexType("namespace");
             namespaceClass.createProperty("jdexId", OType.STRING);
+            namespaceClass.createProperty("metadata", OType.EMBEDDEDMAP);
+            namespaceClass.createProperty("metaterms", OType.EMBEDDEDMAP);
             namespaceClass.createProperty("prefix", OType.STRING);
             namespaceClass.createProperty("uri", OType.STRING);
-            namespaceClass.createProperty("properties", OType.EMBEDDEDMAP);
         }
 
         if (orientDbGraph.getVertexType("network") == null)
@@ -117,11 +121,12 @@ public class NdexSchemaManager
             networkClass.createProperty("description", OType.STRING);
             networkClass.createProperty("edgeCount", OType.INTEGER);
             networkClass.createProperty("format", OType.STRING);
+            networkClass.createProperty("metadata", OType.EMBEDDEDMAP);
+            networkClass.createProperty("metaterms", OType.EMBEDDEDMAP);
             networkClass.createProperty("nodeCount", OType.INTEGER);
             networkClass.createProperty("source", OType.STRING);
             networkClass.createProperty("title", OType.STRING);
             networkClass.createProperty("version", OType.STRING);
-            networkClass.createProperty("properties", OType.EMBEDDEDMAP);
         }
 
         if (orientDbGraph.getVertexType("networkAccess") == null)
@@ -135,7 +140,8 @@ public class NdexSchemaManager
             OClass nodeClass = orientDbGraph.createVertexType("node");
             nodeClass.createProperty("name", OType.STRING);
             nodeClass.createProperty("jdexId", OType.STRING);
-            nodeClass.createProperty("properties", OType.EMBEDDEDMAP);
+            nodeClass.createProperty("metadata", OType.EMBEDDEDMAP);
+            nodeClass.createProperty("metaterms", OType.EMBEDDEDMAP);
         }
 
         if (orientDbGraph.getVertexType("support") == null)
@@ -143,7 +149,8 @@ public class NdexSchemaManager
             OClass supportClass = orientDbGraph.createVertexType("support");
             supportClass.createProperty("jdexId", OType.STRING);
             supportClass.createProperty("text", OType.STRING);
-            supportClass.createProperty("properties", OType.EMBEDDEDMAP);
+            supportClass.createProperty("metadata", OType.EMBEDDEDMAP);
+            supportClass.createProperty("metaterms", OType.EMBEDDEDMAP);
         }
 
         if (orientDbGraph.getVertexType("task") == null)
