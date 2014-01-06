@@ -28,13 +28,13 @@ public interface IGroup extends IAccount
     @Property("organizationName")
     String getOrganizationName();
 
-    @Adjacency(label = "groupNetworks")
+    @Adjacency(label = "accountNetworks")
     public void addNetwork(INetworkMembership newNetwork);
     
-    @Adjacency(label = "groupNetworks")
+    @Adjacency(label = "accountNetworks")
     public Iterable<INetworkMembership> getNetworks();
     
-    @Adjacency(label = "groupNetworks")
+    @Adjacency(label = "accountNetworks")
     public void removeNetwork(INetworkMembership network);
     
     @Adjacency(label = "groupRequests")

@@ -34,13 +34,13 @@ public interface IUser extends IAccount
     @Property("lastName")
     public void setLastName(String lastName);
 
-    @Adjacency(label = "userNetworks")
+    @Adjacency(label = "accountNetworks")
     public void addNetwork(INetworkMembership newNetwork);
     
-    @Adjacency(label = "userNetworks")
+    @Adjacency(label = "accountNetworks")
     public Iterable<INetworkMembership> getNetworks();
     
-    @Adjacency(label = "userNetworks")
+    @Adjacency(label = "accountNetworks")
     public void removeNetwork(INetworkMembership network);
 
     @Property("password")

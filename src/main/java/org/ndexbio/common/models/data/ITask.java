@@ -1,8 +1,10 @@
 package org.ndexbio.common.models.data;
 
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.frames.Adjacency;
 import com.tinkerpop.frames.Property;
 import com.tinkerpop.frames.VertexFrame;
+
 import java.util.Date;
 
 public interface ITask extends VertexFrame
@@ -13,11 +15,19 @@ public interface ITask extends VertexFrame
     @Property("description")
     public void setDescription(String description);
     
+    @Adjacency(label = "userTasks", direction = Direction.IN)
+    public IUser getOwner();
+
+    @Adjacency(label = "userTasks", direction = Direction.IN)
+    public void setOwner(IUser owner);
+
+    /*
     @Adjacency(label = "taskOwner")
     public IUser getOwner();
 
     @Adjacency(label = "taskOwner")
     public void setOwner(IUser owner);
+   */
     
     @Property("priority")
     public Priority getPriority();
