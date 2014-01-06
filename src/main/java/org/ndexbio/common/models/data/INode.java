@@ -24,14 +24,23 @@ public interface INode extends VertexFrame
     @Adjacency(label = "nodeRepresents")
     public ITerm getRepresents();
     
-    @Adjacency(label = "nodeAliases")
+    @Adjacency(label = "nodeUnificationAliases")
     public void addAlias(ITerm term);
 
-    @Adjacency(label = "nodeAliases")
+    @Adjacency(label = "nodeUnificationAliases")
     public Iterable<ITerm> getAliases();
     
-    @Adjacency(label = "nodeAliases")
+    @Adjacency(label = "nodeUnificationAliases")
     public void removeAlias(ITerm term);
+    
+    @Adjacency(label = "nodeRelationshipAliases")
+    public void addRelatedTerm(ITerm term);
+
+    @Adjacency(label = "nodeRelationshipAliases")
+    public Iterable<ITerm> getRelatedTerms();
+    
+    @Adjacency(label = "nodeRelationshipAliases")
+    public void removeRelatedTerm(ITerm term);
 
 
 }
