@@ -75,7 +75,7 @@ public class Network extends NdexObject
         _nodeCount = network.getNdexNodeCount();
         _name = network.getName();
         
-        for (final IMembership member : network.getMembers())
+        for (final INetworkMembership member : network.getMembers())
         {
             if (member.getMember() instanceof IUser)
                 _members.add(new Membership((IUser)member.getMember(), member.getPermissions()));
