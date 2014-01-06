@@ -77,7 +77,7 @@ public class Network extends NdexObject
         _title = network.getTitle();
         _version = network.getVersion();
         
-        for (final IMembership member : network.getMembers())
+        for (final INetworkMembership member : network.getMembers())
         {
             if (member.getMember() instanceof IUser)
                 _members.add(new Membership((IUser)member.getMember(), member.getPermissions()));

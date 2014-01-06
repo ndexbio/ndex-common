@@ -40,7 +40,7 @@ public class Task extends NdexObject
         this.setCreatedDate(task.getStartTime());
         
         _description = task.getDescription();
-        _owner = new User(task.getOwner());
+        //_owner = new User(task.getOwner());
         _priority = task.getPriority();
         _progress = task.getProgress();
         _resource = task.getResource();
