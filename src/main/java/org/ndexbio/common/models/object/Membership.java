@@ -58,7 +58,7 @@ public class Membership
     {
         _memberPermissions = permissions;
         _resourceId = IdConverter.toJid((ORID)network.asVertex().getId());
-        _resourceName = network.getTitle();
+        _resourceName = network.getName();
     }
     
     

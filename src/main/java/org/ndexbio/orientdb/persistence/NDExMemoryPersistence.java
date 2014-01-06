@@ -336,9 +336,9 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 	            networkOwner.addNetwork(membership);
 	            network.addMember(membership);
 	            network.setIsPublic(false);
-	            network.setFormat(newNetwork.getFormat());
-	            network.setSource(newNetwork.getSource());
-	            network.setTitle(newNetwork.getTitle());
+	            network.getMetadata().put("Format", newNetwork.getMetadata().get("Format"));
+	            network.getMetadata().put("Source", newNetwork.getMetadata().get("Source"));
+	            network.setName(newNetwork.getName());
 	            
 	           this.network = network;  // keep a copy in this repository
 	            return network;
@@ -464,7 +464,7 @@ public class NDExMemoryPersistence implements NDExPersistenceService {
 			try {
 
 				ndexService._orientDbGraph.getBaseGraph().commit();
-				System.out.println("The new network " +network.getTitle() 
+				System.out.println("The new network " +network.getName() 
 						+" has been committed");
 			} catch (Exception e) {
 				ndexService._orientDbGraph.getBaseGraph().rollback();

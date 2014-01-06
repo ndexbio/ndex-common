@@ -23,7 +23,7 @@ public abstract class NdexObject
     }
 
     /**************************************************************************
-    * Default constructor - initializes the created date. 
+    * Constructor that sets the ID using the given vertex. 
     **************************************************************************/
     public NdexObject(VertexFrame vf)
     {

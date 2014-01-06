@@ -16,11 +16,11 @@ public interface IMetadataObject extends VertexFrame
     public void removeMetadata(String metadataKey);
     
     @Property("metaterms")
-    public void addMetaterms(String metatermKey, String metatermValue);
+    public void addMetaterm(String metatermKey, IBaseTerm metatermValue);
 
     @Property("metaterms")
-    public Map<String, ITerm> getMetaterms();
+    public Map<String, IBaseTerm> getMetaterms();
     
     @Property("metaterms")
-    public void removeMetaterms(String metatermKey);
+    public void removeMetaterm(String metatermKey);
 }

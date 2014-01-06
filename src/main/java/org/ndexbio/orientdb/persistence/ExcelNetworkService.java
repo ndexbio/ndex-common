@@ -11,7 +11,7 @@ import org.ndexbio.common.models.data.INetworkMembership;
 import org.ndexbio.common.models.data.INode;
 import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.*;
-import org.ndexbio.service.JdexIdService;
+import org.ndexbio.common.JdexIdService;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

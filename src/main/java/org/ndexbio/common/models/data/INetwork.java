@@ -14,24 +14,18 @@ public interface INetwork extends IMetadataObject
     @Adjacency(label = "networkCitations")
     public void removeCitation(ICitation citation);
 
-    @Property("copyright")
-    public String getCopyright();
-
-    @Property("copyright")
-    public void setCopyright(String copyright);
-
     @Property("description")
     public String getDescription();
 
     @Property("description")
     public void setDescription(String description);
 
-    @Property("format")
-    public String getFormat();
-
-    @Property("format")
-    public void setFormat(String format);
+    @Property("isLocked")
+    public boolean getIsLocked();
     
+    @Property("isLocked")
+    public void setIsLocked(boolean isLocked);
+
     @Property("isPublic")
     public boolean getIsPublic();
     
@@ -46,6 +40,12 @@ public interface INetwork extends IMetadataObject
     
     @Adjacency(label = "networkMemberships")
     public void removeMember(INetworkMembership member);
+
+    @Property("name")
+    public String getName();
+
+    @Property("name")
+    public void setName(String name);
 
     @Adjacency(label = "networkNamespaces")
     public void addNamespace(INamespace namespace);
@@ -95,12 +95,6 @@ public interface INetwork extends IMetadataObject
     @Adjacency(label = "networkRequests")
     public void removeRequest(IRequest request);
 
-    @Property("source")
-    public String getSource();
-
-    @Property("source")
-    public void setSource(String source);
-
     @Adjacency(label = "networkSupports")
     public void addSupport(ISupport support);
 
@@ -118,16 +112,4 @@ public interface INetwork extends IMetadataObject
 
     @Adjacency(label = "networkTerms")
     public void removeTerm(ITerm term);
-
-    @Property("title")
-    public String getTitle();
-
-    @Property("title")
-    public void setTitle(String title);
-
-    @Property("version")
-    public String getVersion();
-
-    @Property("version")
-    public void setVersion(String version);
 }

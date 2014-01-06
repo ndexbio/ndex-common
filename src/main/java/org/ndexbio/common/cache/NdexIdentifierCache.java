@@ -1,8 +1,7 @@
 package org.ndexbio.common.cache;
 
 import java.util.concurrent.TimeUnit;
-import org.ndexbio.common.models.data.ISupport;
-import org.ndexbio.service.JdexIdService;
+import org.ndexbio.common.JdexIdService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.base.Strings;

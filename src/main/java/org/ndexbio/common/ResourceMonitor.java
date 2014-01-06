@@ -1,4 +1,4 @@
-package org.ndexbio.service;
+package org.ndexbio.common;
 
 public enum ResourceMonitor {
 	INSTANCE;

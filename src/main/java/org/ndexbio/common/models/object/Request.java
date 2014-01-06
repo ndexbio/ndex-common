@@ -71,7 +71,7 @@ public class Request extends NdexObject
             _fromId = IdConverter.toJid((ORID)networkRequest.getFromUser().asVertex().getId());
             _fromName = networkRequest.getFromUser().getFirstName() + " " + networkRequest.getFromUser().getLastName();
             _toId = IdConverter.toJid((ORID)networkRequest.getToNetwork().asVertex().getId());
-            _toName = networkRequest.getToNetwork().getTitle();
+            _toName = networkRequest.getToNetwork().getName();
         }
     }
 
