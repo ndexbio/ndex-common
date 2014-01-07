@@ -12,6 +12,11 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+// TODO: THIS DOES NOT BELONG HERE. THIS CLASS IS APPLICATION-SPECIFIC TO THE SERVICE
+//       AND THEREFORE SHOULD RESIDE IN THAT PACKAGE. COMMON SHOULD ONLY CONTAIN
+//       CLASSES AND FUNCTIONALITY THAT ARE COMMON TO MULTIPLE PROJECTS
+
+
 /*
  * abstract class containing functionality common to all network service classes
  */
@@ -53,8 +58,8 @@ public abstract class CommonNetworkService {
 		network.setIsPublic(true);
 		networkOwner.addNetwork(membership);
 		network.addMember(membership);
-		network.setTitle(networkTitle);
-		logger.info("A new NDex network titled: " +network.getTitle()
+		network.setName(networkTitle);
+		logger.info("A new NDex network titled: " +network.getName()
 				+" owned by " +ownerName +" has been created");
 		return network;
 	}
