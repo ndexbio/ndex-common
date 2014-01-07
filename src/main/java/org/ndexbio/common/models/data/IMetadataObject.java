@@ -15,6 +15,9 @@ public interface IMetadataObject extends VertexFrame
     @Property("metadata")
     public void removeMetadata(String metadataKey);
     
+    @Property("metadata")
+    public void setMetadata(Map<String, String> metadata);
+    
     @Property("metaterms")
     public void addMetaterm(String metatermKey, IBaseTerm metatermValue);
 
@@ -23,4 +26,7 @@ public interface IMetadataObject extends VertexFrame
     
     @Property("metaterms")
     public void removeMetaterm(String metatermKey);
+    
+    @Property("metaterms")
+    public void setMetaterms(Map<String, IBaseTerm> metaterms);
 }
