@@ -34,10 +34,13 @@ public class MetadataObject extends NdexObject
         super(metadataObject);
 
         _metadata = metadataObject.getMetadata();
-        
         _metaterms = new HashMap<String, BaseTerm>();
-        for (Entry<String, IBaseTerm> metaterm : metadataObject.getMetaterms().entrySet())
-            _metaterms.put(metaterm.getKey(), new BaseTerm(metaterm.getValue()));
+        
+        if (metadataObject.getMetaterms() != null)
+        {
+            for (Entry<String, IBaseTerm> metaterm : metadataObject.getMetaterms().entrySet())
+                _metaterms.put(metaterm.getKey(), new BaseTerm(metaterm.getValue()));
+        }
     }
 
     

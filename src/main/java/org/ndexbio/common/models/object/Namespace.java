@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.ndexbio.common.models.data.INamespace;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Namespace extends NdexObject
+public class Namespace extends MetadataObject
 {
     private String _jdexId;
     private String _prefix;

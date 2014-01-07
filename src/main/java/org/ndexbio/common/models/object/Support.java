@@ -7,7 +7,7 @@ import org.ndexbio.common.models.data.IEdge;
 import org.ndexbio.common.models.data.ISupport;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Support extends NdexObject
+public class Support extends MetadataObject
 {
     private String _jdexId;
     private String _text;

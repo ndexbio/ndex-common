@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.ndexbio.common.models.data.IEdge;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Edge extends NdexObject
+public class Edge extends MetadataObject
 {
     private String _objectId;
     private String _predicateId;

@@ -7,7 +7,7 @@ import org.ndexbio.common.models.data.ITerm;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(using = TermDeserializer.class)
-public abstract class Term extends NdexObject
+public abstract class Term extends MetadataObject
 {
     private String _termType;
 

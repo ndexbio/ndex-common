@@ -8,7 +8,7 @@ import org.ndexbio.common.models.data.IEdge;
 import org.ndexbio.common.models.data.ISupport;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Citation extends NdexObject
+public class Citation extends MetadataObject
 {
     private List<String> _contributors;
     private String _identifier;

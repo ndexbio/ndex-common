@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.ndexbio.common.models.data.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Network extends NdexObject
+public class Network extends MetadataObject
 {
     private Map<String, Citation> _citations;
     private String _description;
@@ -17,8 +17,6 @@ public class Network extends NdexObject
     private boolean _isLocked;
     private boolean _isPublic;
     private List<Membership> _members;
-    private Map<String, String> _metadata;
-    private Map<String, BaseTerm> _metaterms;
     private String _name;
     private Map<String, Namespace> _namespaces;
     private int _nodeCount;
@@ -185,26 +183,6 @@ public class Network extends NdexObject
         _members = members;
     }
     
-    public Map<String, String> getMetadata()
-    {
-        return _metadata;
-    }
-    
-    public void setMetadata(Map<String, String> metadata)
-    {
-        _metadata = metadata;
-    }
-    
-    public Map<String, BaseTerm> getMetaterms()
-    {
-        return _metaterms;
-    }
-    
-    public void setMetaterms(Map<String, BaseTerm> metaterms)
-    {
-        _metaterms = metaterms;
-    }
-    
     public String getName()
     {
         return _name;
@@ -285,8 +263,6 @@ public class Network extends NdexObject
         _citations = new HashMap<String, Citation>();
         _edges = new HashMap<String, Edge>();
         _members = new ArrayList<Membership>();
-        _metadata = new HashMap<String, String>();
-        _metaterms = new HashMap<String, BaseTerm>();
         _namespaces = new HashMap<String, Namespace>();
         _nodes = new HashMap<String, Node>();
         _requests = new ArrayList<Request>();
