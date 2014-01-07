@@ -1,6 +1,6 @@
 package org.ndexbio.common;
 
-import org.ndexbio.service.JdexIdService;
+import org.ndexbio.common.JdexIdService;
 
 public class TestJdexIdService {
 

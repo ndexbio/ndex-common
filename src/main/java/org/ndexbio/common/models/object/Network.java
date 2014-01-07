@@ -11,22 +11,21 @@ import org.ndexbio.common.models.data.*;
 public class Network extends NdexObject
 {
     private Map<String, Citation> _citations;
-    private String _copyright;
     private String _description;
     private int _edgeCount;
     private Map<String, Edge> _edges;
-    private String _format;
+    private boolean _isLocked;
     private boolean _isPublic;
     private List<Membership> _members;
+    private Map<String, String> _metadata;
+    private Map<String, BaseTerm> _metaterms;
+    private String _name;
     private Map<String, Namespace> _namespaces;
     private int _nodeCount;
     private Map<String, Node> _nodes;
     private List<Request> _requests;
-    private String _source;
     private Map<String, Support> _supports;
     private Map<String, Term> _terms;
-    private String _title;
-    private String _version;
 
 
 
@@ -36,7 +35,9 @@ public class Network extends NdexObject
     public Network()
     {
         super();
-        
+
+        _isLocked = false;
+        _isPublic = false;
         _edgeCount = 0;
         _nodeCount = 0;
         
@@ -67,15 +68,12 @@ public class Network extends NdexObject
 
         this.initCollections();
 
-        _copyright = network.getCopyright();
         _description = network.getDescription();
         _edgeCount = network.getNdexEdgeCount();
-        _format = network.getFormat();
+        _isLocked = network.getIsLocked();
         _isPublic = network.getIsPublic();
         _nodeCount = network.getNdexNodeCount();
-        _source = network.getSource();
-        _title = network.getTitle();
-        _version = network.getVersion();
+        _name = network.getName();
         
         for (final INetworkMembership member : network.getMembers())
         {
@@ -127,16 +125,6 @@ public class Network extends NdexObject
         _citations = citations;
     }
 
-    public String getCopyright()
-    {
-        return _copyright;
-    }
-    
-    public void setCopyright(String copyright)
-    {
-        _copyright = copyright;
-    }
-
     public String getDescription()
     {
         return _description;
@@ -167,14 +155,14 @@ public class Network extends NdexObject
         _edges = edges;
     }
 
-    public String getFormat()
+    public boolean getIsLocked()
     {
-        return _format;
+        return _isLocked;
     }
-
-    public void setFormat(String format)
+    
+    public void setIsLocked(boolean isLocked)
     {
-        _format = format;
+        _isLocked = isLocked;
     }
     
     public boolean getIsPublic()
@@ -195,6 +183,36 @@ public class Network extends NdexObject
     public void setMembers(List<Membership> members)
     {
         _members = members;
+    }
+    
+    public Map<String, String> getMetadata()
+    {
+        return _metadata;
+    }
+    
+    public void setMetadata(Map<String, String> metadata)
+    {
+        _metadata = metadata;
+    }
+    
+    public Map<String, BaseTerm> getMetaterms()
+    {
+        return _metaterms;
+    }
+    
+    public void setMetaterms(Map<String, BaseTerm> metaterms)
+    {
+        _metaterms = metaterms;
+    }
+    
+    public String getName()
+    {
+        return _name;
+    }
+    
+    public void setName(String name)
+    {
+        _name = name;
     }
 
     public Map<String, Namespace> getNamespaces()
@@ -237,16 +255,6 @@ public class Network extends NdexObject
         _requests = requests;
     }
 
-    public String getSource()
-    {
-        return _source;
-    }
-    
-    public void setSource(String source)
-    {
-        _source = source;
-    }
-
     public Map<String, Support> getSupports()
     {
         return _supports;
@@ -266,26 +274,6 @@ public class Network extends NdexObject
     {
         _terms = terms;
     }
-    
-    public String getTitle()
-    {
-        return _title;
-    }
-    
-    public void setTitle(String title)
-    {
-        _title = title;
-    }
-
-    public String getVersion()
-    {
-        return _version;
-    }
-    
-    public void setVersion(String version)
-    {
-        _version = version;
-    }
 
     
 
@@ -297,6 +285,8 @@ public class Network extends NdexObject
         _citations = new HashMap<String, Citation>();
         _edges = new HashMap<String, Edge>();
         _members = new ArrayList<Membership>();
+        _metadata = new HashMap<String, String>();
+        _metaterms = new HashMap<String, BaseTerm>();
         _namespaces = new HashMap<String, Namespace>();
         _nodes = new HashMap<String, Node>();
         _requests = new ArrayList<Request>();

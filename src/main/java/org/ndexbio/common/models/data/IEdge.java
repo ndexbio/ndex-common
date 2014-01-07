@@ -3,9 +3,8 @@ package org.ndexbio.common.models.data;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.frames.Adjacency;
 import com.tinkerpop.frames.Property;
-import com.tinkerpop.frames.VertexFrame;
 
-public interface IEdge extends VertexFrame
+public interface IEdge extends IMetadataObject
 {
     @Property("jdexId")
     public void setJdexId(String jdexId);

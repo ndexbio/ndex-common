@@ -3,11 +3,10 @@ package org.ndexbio.common.models.data;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.frames.Adjacency;
 import com.tinkerpop.frames.Property;
-import com.tinkerpop.frames.VertexFrame;
 import com.tinkerpop.frames.modules.typedgraph.TypeField;
 
 @TypeField("termType")
-public interface ITerm extends VertexFrame
+public interface ITerm extends IMetadataObject
 {
     @Property("jdexId")
     public String getJdexId();

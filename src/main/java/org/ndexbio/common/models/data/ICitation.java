@@ -2,11 +2,10 @@ package org.ndexbio.common.models.data;
 
 import com.tinkerpop.frames.Adjacency;
 import com.tinkerpop.frames.Property;
-import com.tinkerpop.frames.VertexFrame;
 
 import java.util.List;
 
-public interface ICitation extends VertexFrame
+public interface ICitation extends IMetadataObject
 {
     @Property("contributors")
     public List<String> getContributors();

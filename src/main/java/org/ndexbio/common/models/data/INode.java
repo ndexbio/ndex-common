@@ -2,9 +2,8 @@ package org.ndexbio.common.models.data;
 
 import com.tinkerpop.frames.Adjacency;
 import com.tinkerpop.frames.Property;
-import com.tinkerpop.frames.VertexFrame;
 
-public interface INode extends VertexFrame
+public interface INode extends IMetadataObject
 {
     @Property("jdexId")
     public void setJdexId(String jdexId);

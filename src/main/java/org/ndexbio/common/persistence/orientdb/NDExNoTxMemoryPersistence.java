@@ -345,9 +345,9 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 			networkOwner.addNetwork(membership);
 			network.addMember(membership);
 			network.setIsPublic(false);
-			network.setFormat(newNetwork.getFormat());
-			network.setSource(newNetwork.getSource());
-			network.setTitle(newNetwork.getTitle());
+            network.getMetadata().put("Format", newNetwork.getMetadata().get("Format"));
+            network.getMetadata().put("Source", newNetwork.getMetadata().get("Source"));
+			network.setName(newNetwork.getName());
 
 			this.network = network; // keep a copy in this repository
 			return network;
@@ -476,7 +476,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		try {
 			network.setNdexEdgeCount((int) this.edgeCache.size());
 			network.setNdexNodeCount((int) this.nodeCache.size());
-			System.out.println("The new network " + network.getTitle()
+			System.out.println("The new network " + network.getName()
 					+ " is complete");
 		} catch (Exception e) {
 			System.out.println("unexpected error in persist network...");
