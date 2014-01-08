@@ -1,5 +1,7 @@
 package org.ndexbio.service;
 
+import java.util.HashMap;
+
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
@@ -44,19 +46,21 @@ public abstract class CommonNetworkService {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkTitle),
 				"A network title is required");
 		INetwork network = this.persistenceService.getCurrentNetwork();
+		network.setMetadata(new HashMap<String, String>());
+		network.setMetaterms(new HashMap<String, IBaseTerm>());
 		// find the network owner in the database
 		IUser networkOwner = resolveUserUserByUsername(ownerName);
 		if( null == networkOwner){
 			logger.error("User " +ownerName +" is not registered in the database/");
 			throw new NdexException("User " +ownerName +" is not registered in the database");
 		}
-		
-		
+				
 		INetworkMembership membership = createNewMember();
 		membership.setMember(networkOwner);
 		membership.setPermissions(Permissions.ADMIN);
 		network.setIsPublic(true);
-		networkOwner.addNetwork(membership);
+		network.setIsLocked(false);
+		//networkOwner.addNetwork(membership);
 		network.addMember(membership);
 		network.setName(networkTitle);
 		logger.info("A new NDex network titled: " +network.getName()
@@ -87,9 +91,7 @@ public abstract class CommonNetworkService {
 	public final SearchResult<IUser> findUsers(SearchParameters searchParameters)
 			throws NdexException {
 		return this.persistenceService.findUsers(searchParameters);
-	}
-
-	
+	}	
 	
 	public final INetwork getCurrentNetwork() {
 		return this.persistenceService.getCurrentNetwork();
@@ -120,6 +122,11 @@ public abstract class CommonNetworkService {
 	 */
 	protected final NDExPersistenceService getPersistenceService() {
 		return this.persistenceService;
+	}
+	
+	public void setFormat(String format) {
+	    if (persistenceService.getCurrentNetwork().getMetadata() != null)
+	        persistenceService.getCurrentNetwork().getMetadata().put("Format", format);	
 	}
 	
 }
