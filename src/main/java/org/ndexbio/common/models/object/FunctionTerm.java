@@ -1,7 +1,10 @@
 package org.ndexbio.common.models.object;
 
+import java.util.HashMap;
 import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import org.ndexbio.common.models.data.IBaseTerm;
 import org.ndexbio.common.models.data.IFunctionTerm;
 import org.ndexbio.common.models.data.ITerm;
@@ -35,26 +38,15 @@ public class FunctionTerm extends Term
         this.setTermFunction(iFunctionTerm.getTermFunc().getJdexId());
 
         Integer parameterIndex = new Integer(0);
-        Integer functionIndex =  new Integer(0);
+        this.setParameters(new HashMap<Integer, String>());
         
         for (final ITerm entry : iFunctionTerm.getTermParameters())
         {
-            if (entry instanceof IBaseTerm)
-            {
-                parameterIndex++;  //pseudo key for ordering
-                IBaseTerm bt = (IBaseTerm)entry;
-                this.getParameters().put(parameterIndex, bt.getName());
-                
-            }
-            else if (entry instanceof IFunctionTerm)
-            {
-                functionIndex++; //pseudo key for ordering
-                this.getParameters().put(functionIndex, entry.getJdexId());
-            }
+            
+            this.getParameters().put(parameterIndex, entry.getJdexId());
+            parameterIndex++; //pseudo key for ordering
         }
     }
-
-
 
     public Map<Integer, String> getParameters()
     {

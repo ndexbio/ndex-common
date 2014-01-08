@@ -10,7 +10,7 @@ public interface IFunctionTerm extends ITerm
     public Iterable<ITerm> getTermParameters();
 
     @Adjacency(label = "functionTermParameters")
-    public void setTermParameters(Iterable< ITerm> termParameters);
+    public void setTermParameters(Iterable<ITerm> termParameters);
 
     @Adjacency(label = "functionTermFunction")
     public IBaseTerm getTermFunc();
