@@ -60,7 +60,8 @@ public class NdexSchemaManager
         {
             OClass citationClass = orientDbGraph.createVertexType("citation");
 
-            citationClass.createProperty("contributors", OType.STRING);
+            //citationClass.createProperty("contributors", OType.STRING);
+            citationClass.createProperty("contributors", OType.EMBEDDEDLIST, OType.STRING);
             citationClass.createProperty("identifier", OType.STRING);
             citationClass.createProperty("jdexId", OType.STRING);
             citationClass.createProperty("metadata", OType.EMBEDDEDMAP);
