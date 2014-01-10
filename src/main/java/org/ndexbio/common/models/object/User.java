@@ -76,10 +76,9 @@ public class User extends Account
         
         for (final IRequest request : user.getRequests())
         {
-            Request userRequest = new Request(request);
-            
             //Don't display requests to the user that the user responded to
-            if (userRequest.getResponder() != this.getId())
+            final Request userRequest = new Request(request);
+            if (userRequest.getResponder() == null || !userRequest.getResponder().equals(this.getId()))
                 _requests.add(userRequest);
         }
 
@@ -92,7 +91,12 @@ public class User extends Account
                 if (membership.getPermissions() == Permissions.ADMIN)
                 {
                     for (final IRequest request : membership.getGroup().getRequests())
-                        _requests.add(new Request(request));
+                    {
+                        //Don't display requests to the user that the user responded to
+                        final Request userRequest = new Request(request);
+                        if (userRequest.getResponder() == null || !userRequest.getResponder().equals(this.getId()))
+                            _requests.add(userRequest);
+                    }
                 }
             }
         
@@ -103,7 +107,12 @@ public class User extends Account
                 if (membership.getPermissions() == Permissions.ADMIN)
                 {
                     for (final IRequest request : membership.getNetwork().getRequests())
-                        _requests.add(new Request(request));
+                    {
+                        //Don't display requests to the user that the user responded to
+                        final Request userRequest = new Request(request);
+                        if (userRequest.getResponder() == null || !userRequest.getResponder().equals(this.getId()))
+                            _requests.add(userRequest);
+                    }
                 }
             }
         }
