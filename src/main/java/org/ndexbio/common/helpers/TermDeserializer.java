@@ -3,6 +3,7 @@ package org.ndexbio.common.helpers;
 import java.io.IOException;
 import org.ndexbio.common.models.object.BaseTerm;
 import org.ndexbio.common.models.object.FunctionTerm;
+import org.ndexbio.common.models.object.Namespace;
 import org.ndexbio.common.models.object.Term;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -53,18 +54,26 @@ public class TermDeserializer extends JsonDeserializer<Term>
     
     private BaseTerm populateBaseTerm(JsonNode serializedTerm)
     {
-        BaseTerm baseTerm = new BaseTerm();
+        final BaseTerm baseTerm = new BaseTerm();
         baseTerm.setName(serializedTerm.get("name").asText());
         
         if (serializedTerm.get("namespace") != null)
-            baseTerm.setNamespace(serializedTerm.get("namespace").asText());
+        {
+            final JsonNode serializedNamespace = serializedTerm.get("namespace");
+            
+            final Namespace namespace = new Namespace();
+            namespace.setPrefix(serializedNamespace.get("prefix").asText());
+            namespace.setUri(serializedNamespace.get("uri").asText());
+            
+            baseTerm.setNamespace(namespace);
+        }
         
         return baseTerm;
     }
     
     private FunctionTerm populateFunctionTerm(JsonNode serializedTerm)
     {
-        FunctionTerm functionTerm = new FunctionTerm();
+        final FunctionTerm functionTerm = new FunctionTerm();
         functionTerm.setTermFunction(serializedTerm.get("termFunction").asText());
 
         //TODO: Need to deserialize parameters, don't know what they look like yet
