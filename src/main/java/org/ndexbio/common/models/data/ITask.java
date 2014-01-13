@@ -20,14 +20,6 @@ public interface ITask extends VertexFrame
 
     @Adjacency(label = "userTasks", direction = Direction.IN)
     public void setOwner(IUser owner);
-
-    /*
-    @Adjacency(label = "taskOwner")
-    public IUser getOwner();
-
-    @Adjacency(label = "taskOwner")
-    public void setOwner(IUser owner);
-   */
     
     @Property("priority")
     public Priority getPriority();

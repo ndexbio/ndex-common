@@ -11,7 +11,6 @@ import org.ndexbio.common.models.data.TaskType;
 public class Task extends NdexObject
 {
     private String _description;
-    private User _owner;
     private Priority _priority;
     private int _progress;
     private String _resource;
@@ -40,7 +39,6 @@ public class Task extends NdexObject
         this.setCreatedDate(task.getStartTime());
         
         _description = task.getDescription();
-        //_owner = new User(task.getOwner());
         _priority = task.getPriority();
         _progress = task.getProgress();
         _resource = task.getResource();
@@ -58,16 +56,6 @@ public class Task extends NdexObject
     public void setDescription(String description)
     {
         _description = description;
-    }
-    
-    public User getOwner()
-    {
-        return _owner;
-    }
-
-    public void setOwner(User owner)
-    {
-        _owner = owner;
     }
     
     public Priority getPriority()
