@@ -24,7 +24,7 @@ public interface NDExPersistenceService {
 	public IEdge findOrCreateIEdge( Long jdexId) throws ExecutionException;
 	public INode findOrCreateINode( Long jdexId) throws ExecutionException;
 	public ISupport findOrCreateISupport( Long jdexId) throws ExecutionException;
-	public void commitCurrentNetwork() throws NdexException;
+	public void networkProgressLogCheck() throws NdexException;
 	
 	public void persistNetwork();
 	

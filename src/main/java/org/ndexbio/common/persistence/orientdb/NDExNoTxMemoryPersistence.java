@@ -489,24 +489,11 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	}
 
 
-	@Override
-	public void commitCurrentNetwork() throws NdexException {
+	public void networkProgressLogCheck() throws NdexException {
 		commitCounter++;
 		if (commitCounter % 1000 == 0) {
 			logger.info("Checkpoint: Number of edges " + this.edgeCache.size());
 		}
-		/*
-		 * if(null != this.getCurrentNetwork() ) { if (commitCounter %10000 ==
-		 * 0) { this.stopwatch.start();
-		 * ndexService._orientDbGraph.getBaseGraph().commit();
-		 * this.stopwatch.stop();
-		 * 
-		 * logger.info("Network commit required " +
-		 * this.stopwatch.elapsed(TimeUnit.MILLISECONDS) +
-		 * " milliseconds. Number of edges " +this.edgeCache.size());
-		 * this.stopwatch.reset(); } } else { throw new
-		 * NdexException("Attempt to commit non-existent network."); }
-		 */
 
 	}
 
