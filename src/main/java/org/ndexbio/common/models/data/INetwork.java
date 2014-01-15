@@ -19,6 +19,12 @@ public interface INetwork extends IMetadataObject
 
     @Property("description")
     public void setDescription(String description);
+    
+    @Property("isComplete")
+    public boolean getIsComplete();
+    
+    @Property("isComplete")
+    public void setIsComplete(boolean isComplete);
 
     @Property("isLocked")
     public boolean getIsLocked();
