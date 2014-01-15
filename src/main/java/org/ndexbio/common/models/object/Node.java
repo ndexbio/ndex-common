@@ -2,10 +2,7 @@ package org.ndexbio.common.models.object;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import org.ndexbio.common.models.data.IEdge;
 import org.ndexbio.common.models.data.INode;
 import org.ndexbio.common.models.data.ITerm;
 
@@ -53,6 +50,16 @@ public class Node extends MetadataObject
     
     
     
+    public List<String> getAliases()
+    {
+        return _aliases;
+    }
+
+    public void setAliases(List<String> aliases)
+    {
+        _aliases = aliases;
+    }
+
     public String getName()
     {
         return _name;
@@ -61,6 +68,16 @@ public class Node extends MetadataObject
     public void setName(String name)
     {
         _name = name;
+    }
+
+    public List<String> getRelatedTerms()
+    {
+        return _relatedTerms;
+    }
+
+    public void setRelatedTerms(List<String> relatedTerms)
+    {
+        _relatedTerms = relatedTerms;
     }
     
     public String getRepresents()
@@ -72,22 +89,4 @@ public class Node extends MetadataObject
     {
         _represents = representsId;
     }
-
-	public List<String> getAliases() {
-		return _aliases;
-	}
-
-	public void setAliases(List<String> _aliases) {
-		this._aliases = _aliases;
-	}
-
-	public List<String> getRelatedTerms() {
-		return _relatedTerms;
-	}
-
-	public void setRelatedTerms(List<String> _relatedTerms) {
-		this._relatedTerms = _relatedTerms;
-	}
-    
-    
 }

@@ -1,6 +1,5 @@
 package org.ndexbio.common.models.object;
 
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.ndexbio.common.models.data.INamespace;
 
@@ -10,7 +9,6 @@ public class Namespace extends MetadataObject
     private String _jdexId;
     private String _prefix;
     private String _uri;
-    private List<BaseTerm> _baseTerms;
     
     
     
@@ -34,23 +32,9 @@ public class Namespace extends MetadataObject
         _jdexId = namespace.getJdexId();
         _prefix = namespace.getPrefix();
         _uri = namespace.getUri();
-        
-        // *Don't* add all the BaseTerm jdex ids to the Namespace in the serialization.  
-        // The Terms will have the jdex ids of their namespace.  
-        // If the recipient of the serialization wants to re-construct bidirectional connections, that is their decision
     }
     
     
-    
-    public List<BaseTerm> getTerms()
-    {
-        return _baseTerms;
-    }
-    
-    public void setTerms(List<BaseTerm> terms)
-    {
-        _baseTerms = terms;
-    }
     
     public String getJdexId()
     {

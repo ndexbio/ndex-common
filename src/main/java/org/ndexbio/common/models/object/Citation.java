@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.ndexbio.common.models.data.ICitation;
-import org.ndexbio.common.models.data.IEdge;
 import org.ndexbio.common.models.data.ISupport;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -14,7 +13,6 @@ public class Citation extends MetadataObject
     private String _identifier;
     private String _title;
     private String _type;
-    private List<String> _edges;
     private List<Support> _supports;
 
 
@@ -27,7 +25,6 @@ public class Citation extends MetadataObject
         super();
 
         _contributors = new ArrayList<String>();
-        _edges = new ArrayList<String>();
         _supports = new ArrayList<Support>();
     }
 
@@ -44,14 +41,10 @@ public class Citation extends MetadataObject
         _title = citation.getTitle();
         _type = citation.getType();
         _contributors = citation.getContributors();
-        _edges = new ArrayList<String>();
         _supports = new ArrayList<Support>();
         
         for (final ISupport support : citation.getSupports())
             _supports.add(new Support(support));
-
-        for (final IEdge edge : citation.getNdexEdges())
-            _edges.add(edge.getJdexId());
     }
 
 
@@ -64,16 +57,6 @@ public class Citation extends MetadataObject
     public void setContributors(List<String> contributors)
     {
         _contributors = contributors;
-    }
-
-    public List<String> getEdges()
-    {
-        return _edges;
-    }
-
-    public void setEdges(List<String> edges)
-    {
-        _edges = edges;
     }
 
     public String getIdentifier()
