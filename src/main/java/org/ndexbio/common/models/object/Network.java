@@ -14,6 +14,7 @@ public class Network extends MetadataObject
     private String _description;
     private int _edgeCount;
     private Map<String, Edge> _edges;
+    private boolean _isComplete;
     private boolean _isLocked;
     private boolean _isPublic;
     private List<Membership> _members;
@@ -34,6 +35,7 @@ public class Network extends MetadataObject
     {
         super();
 
+        _isComplete = false;
         _isLocked = false;
         _isPublic = false;
         _edgeCount = 0;
@@ -68,6 +70,7 @@ public class Network extends MetadataObject
 
         _description = network.getDescription();
         _edgeCount = network.getNdexEdgeCount();
+        _isComplete = network.getIsComplete();
         _isLocked = network.getIsLocked();
         _isPublic = network.getIsPublic();
         _nodeCount = network.getNdexNodeCount();
@@ -151,6 +154,16 @@ public class Network extends MetadataObject
     public void setEdges(Map<String, Edge> edges)
     {
         _edges = edges;
+    }
+
+    public boolean getIsComplete()
+    {
+        return _isComplete;
+    }
+    
+    public void setIsComplete(boolean isComplete)
+    {
+        _isComplete = isComplete;
     }
 
     public boolean getIsLocked()
