@@ -476,6 +476,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		try {
 			network.setNdexEdgeCount((int) this.edgeCache.size());
 			network.setNdexNodeCount((int) this.nodeCache.size());
+			network.setIsComplete(true);
 			System.out.println("The new network " + network.getName()
 					+ " is complete");
 		} catch (Exception e) {

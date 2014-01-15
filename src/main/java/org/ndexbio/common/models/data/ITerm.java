@@ -31,5 +31,9 @@ public interface ITerm extends IMetadataObject
 
     @Adjacency(label = "nodeRelationshipAliases", direction = Direction.IN)
     public INode getRelationshipNode();
+    
+    @Adjacency(label = "functionTermParameters", direction = Direction.IN)
+    public Iterable<ITerm> getFunctionTerms();
+
 
 }
