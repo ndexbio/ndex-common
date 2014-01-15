@@ -67,7 +67,7 @@ public class Support extends MetadataObject
         return _edges;
     }
 
-    public void set_networks(List<String> edges)
+    public void setEdges(List<String> edges)
     {
         _edges = edges;
     }

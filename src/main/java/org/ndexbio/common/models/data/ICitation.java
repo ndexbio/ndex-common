@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.data;
 
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.frames.Adjacency;
 import com.tinkerpop.frames.Property;
 
@@ -37,13 +38,13 @@ public interface ICitation extends IMetadataObject
     @Property("type")
     public void setType(String type);
     
-    @Adjacency(label = "citationEdges")
+    @Adjacency(label = "edgeCitations", direction = Direction.IN)
     public void addNdexEdge(IEdge edge);
 
-    @Adjacency(label = "citationEdges")
+    @Adjacency(label = "edgeCitations", direction = Direction.IN)
     public Iterable<IEdge> getNdexEdges();
     
-    @Adjacency(label = "citationEdges")
+    @Adjacency(label = "edgeCitations", direction = Direction.IN)
     public void removeNdexEdge(IEdge edge);
     
     @Adjacency(label = "citationSupports")
