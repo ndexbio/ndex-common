@@ -8,6 +8,7 @@ public class Support extends MetadataObject
 {
     private String _jdexId;
     private String _text;
+    private String _citation;
 
 
 
@@ -30,10 +31,9 @@ public class Support extends MetadataObject
 
         _jdexId = support.getJdexId();
         _text = support.getText();
+        _citation = support.getSupportCitation().getJdexId();
     }
-
-    
-    
+ 
     public String getJdexId()
     {
         return _jdexId;
@@ -53,4 +53,14 @@ public class Support extends MetadataObject
     {
         _text = text;
     }
+
+	public String getCitation() {
+		return _citation;
+	}
+
+	public void setCitation(String _citation) {
+		this._citation = _citation;
+	}
+    
+    
 }

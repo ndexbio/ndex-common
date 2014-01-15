@@ -13,7 +13,7 @@ public class Citation extends MetadataObject
     private String _identifier;
     private String _title;
     private String _type;
-    private List<Support> _supports;
+    private List<String> _supports;
 
 
 
@@ -25,7 +25,7 @@ public class Citation extends MetadataObject
         super();
 
         _contributors = new ArrayList<String>();
-        _supports = new ArrayList<Support>();
+        _supports = new ArrayList<String>();
     }
 
     /**************************************************************************
@@ -41,10 +41,10 @@ public class Citation extends MetadataObject
         _title = citation.getTitle();
         _type = citation.getType();
         _contributors = citation.getContributors();
-        _supports = new ArrayList<Support>();
+        _supports = new ArrayList<String>();
         
         for (final ISupport support : citation.getSupports())
-            _supports.add(new Support(support));
+            _supports.add(support.getJdexId());
     }
 
 
@@ -69,12 +69,12 @@ public class Citation extends MetadataObject
         _identifier = identifier;
     }
     
-    public List<Support> getSupports()
+    public List<String> getSupports()
     {
         return _supports;
     }
     
-    public void setSupports(List<Support> supports)
+    public void setSupports(List<String> supports)
     {
         _supports = supports;
     }

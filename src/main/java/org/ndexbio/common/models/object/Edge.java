@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import org.ndexbio.common.models.data.ICitation;
 import org.ndexbio.common.models.data.IEdge;
+import org.ndexbio.common.models.data.ISupport;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Edge extends MetadataObject
@@ -15,6 +16,7 @@ public class Edge extends MetadataObject
     private String _predicateId;
     private String _subjectId;
     private List<String> _citations;
+    private List<String> _supports;
 
 
 
@@ -40,12 +42,14 @@ public class Edge extends MetadataObject
         _objectId = edge.getObject().getJdexId();
         
         _citations = new ArrayList<String>();
+        _supports = new ArrayList<String>();
         
         for (final ICitation iCitation : edge.getCitations())
             _citations.add(iCitation.getJdexId());
+        
+        for (final ISupport iSupport : edge.getSupports())
+            _supports.add(iSupport.getJdexId());
     }
-
-    
 
 
     public List<String> getCitations()
@@ -56,6 +60,16 @@ public class Edge extends MetadataObject
     public void setCitations(List<String> citations)
     {
         _citations = citations;
+    }
+    
+    public List<String> getSupports()
+    {
+        return _supports;
+    }
+
+    public void setSupports(List<String> supports)
+    {
+        _supports = supports;
     }
 
     public String getO()
