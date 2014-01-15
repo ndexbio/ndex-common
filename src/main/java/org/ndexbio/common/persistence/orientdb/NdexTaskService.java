@@ -16,11 +16,14 @@ import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.frames.VertexFrame;
 
 /*
  * Represents a collection of methods for interacting with Tasks in the orientdb database
  * Retained in the common ndex-common project to facilitate availability to multiple ndex
  * projects using Tasks
+ * 
+ * mod 13Jan2014 - use domain objects instead of model objects 
  */
 
 public class NdexTaskService 
@@ -31,6 +34,32 @@ public class NdexTaskService
     public NdexTaskService()
     {
     	ndexService = new OrientDBNoTxConnectionService();  
+    }
+    
+    /*
+     * get a Collection of ITasks based on status value
+     */
+    
+    private List<ITask> getITasksByStatus(Status aStatus) throws NdexException {
+    	String query = "select from task "
+	            + " where status = '" +aStatus +"'";
+    	final List<ITask> foundITasks = Lists.newArrayList();
+    	try {
+			this.ndexService.setupDatabase();
+			final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
+					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
+			for (final ODocument document : taskDocumentList) {
+				foundITasks.add(this.ndexService._orientDbGraph.getVertex(document, ITask.class));
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failed to search tasks", e);
+            throw new NdexException("Failed to search tasks.");
+			
+		}finally {
+			this.ndexService.teardownDatabase();
+		}
+    	return foundITasks;
     }
     
     /*
@@ -57,7 +86,29 @@ public class NdexTaskService
 		}
 
     }
-    // only specific status states are exposed 
+   
+    
+    public List<ITask> getInProgressITasks() throws NdexException{
+   	 return getITasksByStatus(Status.PROCESSING);
+    }
+    
+    public List<ITask> getActiveITasks() throws NdexException{
+    	List<ITask> activeITasks =  getITasksByStatus(Status.PROCESSING);
+    	activeITasks.addAll(getITasksByStatus(Status.STAGED));
+    	return activeITasks;
+       }
+    
+    public List<ITask> getAllCompletedITasks() throws NdexException {
+    	List<ITask> completedITasks = this.getITasksByStatus(Status.COMPLETED);
+    	completedITasks.addAll(this.getITasksByStatus(Status.COMPLETED_WITH_ERRORS));
+    	completedITasks.addAll(this.getITasksByStatus(Status.COMPLETED_WITH_WARNINGS));
+    	return completedITasks;
+    }
+    
+    public List<ITask> getQueuedITasks() throws NdexException {
+    	return getITasksByStatus(Status.QUEUED);
+    }
+    
      public List<Task> getQueuedTasks() throws NdexException {
     	 return getTasksByStatus(Status.QUEUED);
      }
@@ -65,7 +116,23 @@ public class NdexTaskService
      public List<Task> getInProgressTasks() throws NdexException{
     	 return getTasksByStatus(Status.PROCESSING);
      }
-   
+     
+     
+     /*
+      * prublic method to query for ITasks with a QUEUED status,
+      * update their status to STAGED and return them as a List
+      */
+     
+     public List<ITask> stageQueuedITasks() throws NdexException
+     {
+    	 List<ITask> stagedList = Lists.newArrayList();
+    	 List<ITask> queuedList = this.getQueuedITasks();
+    	 for (ITask task : queuedList){
+    		 stagedList.add(this.updateTaskStatus(Status.STAGED, this.resolveVertexId(task)));
+    	 }
+    	 return stagedList;
+    	 
+     }
     /**************************************************************************
     * Gets a task by ID.
     * 
@@ -79,7 +146,7 @@ public class NdexTaskService
     *            Failed to query the database.
     **************************************************************************/
     
-    public Task getITask(final String taskId) throws IllegalArgumentException, SecurityException, NdexException
+    public ITask getITask(final String taskId) throws IllegalArgumentException, SecurityException, NdexException
     {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(taskId),"No task ID was specified.");
            
@@ -87,7 +154,7 @@ public class NdexTaskService
         {
             final ORID taskRid = IdConverter.toRid(taskId);           
             this.ndexService.setupDatabase();          
-            final Task t = new Task(this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class));
+            final ITask t = (this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class));
             if ( t == null )
             	throw new ObjectNotFoundException("Task id ", taskId + " not in orientdb");
 
@@ -121,34 +188,66 @@ public class NdexTaskService
     *            Failed to update the task in the database.
     **************************************************************************/
   
-    public void updateTask(final Task updatedTask) throws IllegalArgumentException, ObjectNotFoundException, SecurityException, NdexException
+    public void updateTask(final ITask updatedTask) throws IllegalArgumentException, ObjectNotFoundException, SecurityException, NdexException
     {
     	Preconditions.checkNotNull(updatedTask,"The task to update is empty.");
         
-        ORID taskRid = IdConverter.toRid(updatedTask.getId());
+        ORID taskRid =  IdConverter.toRid(resolveVertexId(updatedTask));
 
         try
         {
         	this.ndexService.setupDatabase();
             final ITask taskToUpdate = this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class);
             if (taskToUpdate == null){
-                throw new ObjectNotFoundException("Task", updatedTask.getId());
+                throw new ObjectNotFoundException("Task", resolveVertexId(updatedTask));
             }
 
-            taskToUpdate.setStartTime(updatedTask.getCreatedDate());
+            taskToUpdate.setStartTime(updatedTask.getStartTime());
             taskToUpdate.setStatus(updatedTask.getStatus());
 
             this.ndexService._orientDbGraph.getBaseGraph().commit();
         }
         catch (Exception e)
         {
-            logger.error("Failed to update task: " + updatedTask.getId() + ".", e);
+            logger.error("Failed to update task: " + resolveVertexId(updatedTask) + ".", e);
             this.ndexService._orientDbGraph.getBaseGraph().rollback(); 
-            throw new NdexException("Failed to update task: " + updatedTask.getId() + ".");
+            throw new NdexException("Failed to update task: " + resolveVertexId(updatedTask) + ".");
         }
         finally
         {
         	this.ndexService.teardownDatabase();
         }
     }
+    protected String resolveVertexId(VertexFrame vf)
+    {
+        if (null == vf)
+            return null;
+
+        return IdConverter.toJid((ORID)vf.asVertex().getId());
+    }
+    /* public method to update itask status and return updated itask
+     * 
+     */
+	public ITask updateTaskStatus(Status status, String taskId) {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(taskId), "A task id is required");
+		Preconditions.checkArgument(null != status, "A status is required");
+		try {
+			this.ndexService.setupDatabase();
+			 ORID taskRid =  IdConverter.toRid(taskId);
+			 final ITask taskToUpdate = this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class);
+	            if (taskToUpdate == null){
+	                throw new ObjectNotFoundException("Task", taskId);
+	            }
+
+	            taskToUpdate.setStatus(status);
+	            this.ndexService._orientDbGraph.getBaseGraph().commit();
+	            return taskToUpdate;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			return null;
+		} finally {
+			this.ndexService.teardownDatabase();
+		}
+		
+	}
 }
