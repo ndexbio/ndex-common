@@ -61,16 +61,6 @@ public class Edge extends MetadataObject
     {
         _citations = citations;
     }
-    
-    public List<String> getSupports()
-    {
-        return _supports;
-    }
-
-    public void setSupports(List<String> supports)
-    {
-        _supports = supports;
-    }
 
     public String getO()
     {
@@ -100,5 +90,15 @@ public class Edge extends MetadataObject
     public void setS(String subjectId)
     {
         _subjectId = subjectId;
+    }
+    
+    public List<String> getSupports()
+    {
+        return _supports;
+    }
+
+    public void setSupports(List<String> supports)
+    {
+        _supports = supports;
     }
 }
