@@ -35,11 +35,14 @@ public class OrientDBNoTxConnectionService {
 	protected FramedGraphFactory _graphFactory = null;
 	protected ODatabaseDocumentTx _ndexDatabase = null;
 	protected FramedGraph<OrientBaseGraph> _orientDbGraph = null;
+	private boolean setup;
 
 	public OrientDBNoTxConnectionService() {
+		this.setSetup(false);
 		this.setupDatabase();
 	}
 
+	
 	/**************************************************************************
 	 * Opens a connection to OrientDB and initializes the OrientDB Graph ORM.
 	 **************************************************************************/
@@ -71,6 +74,7 @@ public class OrientDBNoTxConnectionService {
 		_orientDbGraph = _graphFactory
 				.create((OrientBaseGraph) new OrientGraphNoTx(_ndexDatabase));
 		new OrientDBSchemaManager().init(_orientDbGraph.getBaseGraph());
+		this.setSetup(true);
 		logger.info("Connection to OrientDB established");
 		
 		
@@ -94,7 +98,16 @@ public class OrientDBNoTxConnectionService {
 			_orientDbGraph.shutdown();
 			_orientDbGraph = null;
 		}
+		this.setSetup(false);
 		logger.info("Connection to OrientDB closed");
+	}
+	protected boolean isSetup() {
+		return setup;
+	}
+
+
+	private void setSetup(boolean setup) {
+		this.setup = setup;
 	}
 	public class OrientDBSchemaManager
 	{

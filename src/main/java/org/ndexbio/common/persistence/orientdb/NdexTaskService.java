@@ -45,7 +45,9 @@ public class NdexTaskService
 	            + " where status = '" +aStatus +"'";
     	final List<ITask> foundITasks = Lists.newArrayList();
     	try {
-			this.ndexService.setupDatabase();
+    		if (!this.ndexService.isSetup()) {
+				this.ndexService.setupDatabase();
+			}
 			final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
 					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
 			for (final ODocument document : taskDocumentList) {
@@ -70,7 +72,9 @@ public class NdexTaskService
     	            + " where status = '" +aStatus +"'";
     	 final List<Task> foundTasks = Lists.newArrayList();
     	 try {
-			this.ndexService.setupDatabase();
+    		 if (!this.ndexService.isSetup()) {
+ 				this.ndexService.setupDatabase();
+ 			}
 
 			 final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
 					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
@@ -153,8 +157,10 @@ public class NdexTaskService
         try
         {
             final ORID taskRid = IdConverter.toRid(taskId);           
-            this.ndexService.setupDatabase();          
-            final ITask t = (this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class));
+            if (!this.ndexService.isSetup()) {
+				this.ndexService.setupDatabase();
+			}
+			final ITask t = (this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class));
             if ( t == null )
             	throw new ObjectNotFoundException("Task id ", taskId + " not in orientdb");
 
@@ -173,51 +179,7 @@ public class NdexTaskService
         
     }
 
-    /**************************************************************************
-    * Updates a task.
-    * 
-    * @param updatedTask
-    *            The updated request.
-    * @throws IllegalArgumentException
-    *            Bad input.
-    * @throws ObjectNotFoundException
-    *            The task doesn't exist.
-    * @throws SecurityException
-    *            The user doesn't own the task.
-    * @throws NdexException
-    *            Failed to update the task in the database.
-    **************************************************************************/
-  
-    public void updateTask(final ITask updatedTask) throws IllegalArgumentException, ObjectNotFoundException, SecurityException, NdexException
-    {
-    	Preconditions.checkNotNull(updatedTask,"The task to update is empty.");
-        
-        ORID taskRid =  IdConverter.toRid(resolveVertexId(updatedTask));
-
-        try
-        {
-        	this.ndexService.setupDatabase();
-            final ITask taskToUpdate = this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class);
-            if (taskToUpdate == null){
-                throw new ObjectNotFoundException("Task", resolveVertexId(updatedTask));
-            }
-
-            taskToUpdate.setStartTime(updatedTask.getStartTime());
-            taskToUpdate.setStatus(updatedTask.getStatus());
-
-            this.ndexService._orientDbGraph.getBaseGraph().commit();
-        }
-        catch (Exception e)
-        {
-            logger.error("Failed to update task: " + resolveVertexId(updatedTask) + ".", e);
-            this.ndexService._orientDbGraph.getBaseGraph().rollback(); 
-            throw new NdexException("Failed to update task: " + resolveVertexId(updatedTask) + ".");
-        }
-        finally
-        {
-        	this.ndexService.teardownDatabase();
-        }
-    }
+    
     protected String resolveVertexId(VertexFrame vf)
     {
         if (null == vf)
@@ -232,7 +194,9 @@ public class NdexTaskService
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(taskId), "A task id is required");
 		Preconditions.checkArgument(null != status, "A status is required");
 		try {
-			this.ndexService.setupDatabase();
+			if (!this.ndexService.isSetup()) {
+				this.ndexService.setupDatabase();
+			}
 			 ORID taskRid =  IdConverter.toRid(taskId);
 			 final ITask taskToUpdate = this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class);
 	            if (taskToUpdate == null){
