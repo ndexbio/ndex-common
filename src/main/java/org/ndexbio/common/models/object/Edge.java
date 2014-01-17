@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.collect.Lists;
 
 import org.ndexbio.common.models.data.ICitation;
 import org.ndexbio.common.models.data.IEdge;
@@ -26,6 +27,7 @@ public class Edge extends MetadataObject
     public Edge()
     {
         super();
+        this.initCollections();
     }
 
     /**************************************************************************
@@ -36,7 +38,7 @@ public class Edge extends MetadataObject
     public Edge(IEdge edge)
     {
         super(edge);
-
+        this.initCollections();
         _subjectId = edge.getSubject().getJdexId();
         _predicateId = edge.getPredicate().getJdexId();
         _objectId = edge.getObject().getJdexId();
@@ -49,6 +51,14 @@ public class Edge extends MetadataObject
         
         for (final ISupport iSupport : edge.getSupports())
             _supports.add(iSupport.getJdexId());
+    }
+    
+    /*
+     * initialize class Collection fields
+     */
+    private void initCollections() {
+    	this._citations = Lists.newArrayList();
+    	this._supports = Lists.newArrayList();
     }
 
 

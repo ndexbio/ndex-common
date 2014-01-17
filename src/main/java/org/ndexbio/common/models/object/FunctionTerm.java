@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.collect.Maps;
 
 import org.ndexbio.common.models.data.IBaseTerm;
 import org.ndexbio.common.models.data.IFunctionTerm;
@@ -23,7 +24,7 @@ public class FunctionTerm extends Term
     public FunctionTerm()
     {
         super();
-        
+        this._parameters = Maps.newHashMap();
         this.setTermType("Function");
     }
 
@@ -34,6 +35,7 @@ public class FunctionTerm extends Term
     **************************************************************************/
     public FunctionTerm(IFunctionTerm iFunctionTerm)
     {
+    	this._parameters = Maps.newHashMap();
         this.setTermType("Function");
         this.setTermFunction(iFunctionTerm.getTermFunc().getJdexId());
 

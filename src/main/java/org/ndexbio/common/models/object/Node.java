@@ -2,7 +2,10 @@ package org.ndexbio.common.models.object;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.collect.Lists;
+
 import org.ndexbio.common.models.data.INode;
 import org.ndexbio.common.models.data.ITerm;
 
@@ -22,6 +25,7 @@ public class Node extends MetadataObject
     public Node()
     {
         super();
+        this.initializeCollections();
     }
     
     /**************************************************************************
@@ -33,7 +37,7 @@ public class Node extends MetadataObject
     {
         super(node);
 
-        
+        this.initializeCollections();
         _name = node.getName();
         _relatedTerms = new ArrayList<String>();
         _aliases = new ArrayList<String>();
@@ -48,7 +52,14 @@ public class Node extends MetadataObject
             _relatedTerms.add(iTerm.getJdexId());
     }
     
-    
+  
+    /*
+     * initialize class Collection fields
+     */
+    private void initializeCollections() {
+    	this._aliases = Lists.newArrayList();
+    	this._relatedTerms = Lists.newArrayList();
+    }
     
     public List<String> getAliases()
     {
