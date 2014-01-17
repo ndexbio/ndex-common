@@ -40,7 +40,7 @@ public class FunctionTerm extends Term
         this.setTermFunction(iFunctionTerm.getTermFunc().getJdexId());
 
         Integer parameterIndex = new Integer(0);
-        this.setParameters(new HashMap<Integer, String>());
+        
         
         for (final ITerm entry : iFunctionTerm.getTermParameters())
         {

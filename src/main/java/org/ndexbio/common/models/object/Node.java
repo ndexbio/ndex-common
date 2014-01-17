@@ -39,8 +39,7 @@ public class Node extends MetadataObject
 
         this.initializeCollections();
         _name = node.getName();
-        _relatedTerms = new ArrayList<String>();
-        _aliases = new ArrayList<String>();
+     
         
         if (node.getRepresents() != null)
             _represents = node.getRepresents().getJdexId();

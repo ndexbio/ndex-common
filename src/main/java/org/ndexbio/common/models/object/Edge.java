@@ -43,8 +43,7 @@ public class Edge extends MetadataObject
         _predicateId = edge.getPredicate().getJdexId();
         _objectId = edge.getObject().getJdexId();
         
-        _citations = new ArrayList<String>();
-        _supports = new ArrayList<String>();
+        
         
         for (final ICitation iCitation : edge.getCitations())
             _citations.add(iCitation.getJdexId());
