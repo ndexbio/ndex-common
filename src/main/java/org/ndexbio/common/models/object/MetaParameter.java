@@ -73,9 +73,9 @@ public class MetaParameter
             case '=':
                 return " = " + _keywords;
             case ':':
-                return " like '%" + _keywords + "'";
+                return " LIKE '" + _keywords + "%'";
             case '~':
-                return " like '%" + _keywords + "%'";
+                return " LIKE '%" + _keywords + "%'";
             default:
                 throw new IllegalArgumentException ("Unsupported operator encountered: " + _operator);
         }
