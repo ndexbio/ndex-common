@@ -33,7 +33,7 @@ public interface NDExPersistenceService {
 	// Convenience methods
 	// find an INamespace by its XBEL prefix
 	public INamespace findNamespaceByPrefix(String prefix);
-	public INetwork createNetwork(Network newNetwork) throws Exception;
+	public INetwork createNetwork() throws Exception;
 	public INetwork getCurrentNetwork();
 	public IUser getCurrentUser();
 	public INetworkMembership  createNetworkMembership();

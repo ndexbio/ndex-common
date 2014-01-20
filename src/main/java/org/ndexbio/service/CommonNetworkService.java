@@ -40,12 +40,12 @@ public abstract class CommonNetworkService {
 	 * assigning it a title
 	 * throws NdexException if supplied owner name is not in the database
 	 */
-	public final INetwork createNewNetwork(String ownerName, String networkTitle) throws NdexException {
+	public final INetwork createNewNetwork(String ownerName, String networkTitle) throws Exception {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(ownerName),
 				"A network owner name is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkTitle),
 				"A network title is required");
-		INetwork network = this.persistenceService.getCurrentNetwork();
+		INetwork network = this.persistenceService.createNetwork();
 		network.setMetadata(new HashMap<String, String>());
 		network.setMetaterms(new HashMap<String, IBaseTerm>());
 		// find the network owner in the database
@@ -60,7 +60,7 @@ public abstract class CommonNetworkService {
 		membership.setPermissions(Permissions.ADMIN);
 		network.setIsPublic(true);
 		network.setIsLocked(false);
-		//networkOwner.addNetwork(membership);
+		network.setIsComplete(false);
 		network.addMember(membership);
 		network.setName(networkTitle);
 		logger.info("A new NDex network titled: " +network.getName()
@@ -68,6 +68,52 @@ public abstract class CommonNetworkService {
 		return network;
 	}
 
+	/*
+ public INetwork createNetwork(Network newNetwork) throws Exception {
+                Preconditions.checkArgument(null != newNetwork,
+                                "A network model object is required");
+                Preconditions.checkArgument(null != newNetwork.getMembers()
+                                && newNetwork.getMembers().size() > 0,
+                                "The network to create has no members specified.");
+
+                try {
+
+                        final Membership newNetworkMembership = newNetwork.getMembers()
+                                        .get(0);
+                        final ORID userRid = IdConverter.toRid(newNetworkMembership
+                                        .getResourceId());
+
+                        final IUser networkOwner = ndexService._orientDbGraph.getVertex(
+                                        userRid, IUser.class);
+                        if (networkOwner == null)
+                                throw new ObjectNotFoundException("User",
+                                                newNetworkMembership.getResourceId());
+
+                        final INetwork network = ndexService._orientDbGraph.addVertex(
+                                        "class:network", INetwork.class);
+
+                        final INetworkMembership membership = ndexService._orientDbGraph
+                                        .addVertex("class:networkMembership",
+                                                        INetworkMembership.class);
+                        membership.setPermissions(Permissions.ADMIN);
+                        membership.setMember(networkOwner);
+                        membership.setNetwork(network);
+                        networkOwner.addNetwork(membership);
+                        network.addMember(membership);
+                        network.setIsPublic(false);
+            network.getMetadata().put("Format", newNetwork.getMetadata().get("Format"));
+            network.getMetadata().put("Source", newNetwork.getMetadata().get("Source"));
+                        network.setName(newNetwork.getName());
+
+                        this.network = network; // keep a copy in this repository
+                        return network;
+                } catch (Exception e) {
+                        ndexService._orientDbGraph.getBaseGraph().rollback();
+                        throw e;
+                }
+        }
+	 */
+	
 	protected final IUser resolveUserUserByUsername(String userName) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userName),
 				"A username is required");
@@ -127,6 +173,16 @@ public abstract class CommonNetworkService {
 	public void setFormat(String format) {
 	    if (persistenceService.getCurrentNetwork().getMetadata() != null)
 	        persistenceService.getCurrentNetwork().getMetadata().put("Format", format);	
+	}
+	
+	public void setDescription(String description) {
+		persistenceService.getCurrentNetwork().setDescription(description);	
+		
+	}
+	
+	public void setSource(String source) {
+		if (persistenceService.getCurrentNetwork().getMetadata() != null)
+	        persistenceService.getCurrentNetwork().getMetadata().put("Source", source);			
 	}
 	
 }

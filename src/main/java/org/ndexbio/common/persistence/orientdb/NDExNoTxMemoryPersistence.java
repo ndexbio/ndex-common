@@ -313,56 +313,14 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		return supportCache.get(jdexId);
 	}
 
-	public INetwork createNetwork(Network newNetwork) throws Exception {
-		Preconditions.checkArgument(null != newNetwork,
-				"A network model object is required");
-		Preconditions.checkArgument(null != newNetwork.getMembers()
-				&& newNetwork.getMembers().size() > 0,
-				"The network to create has no members specified.");
-
-		try {
-
-			final Membership newNetworkMembership = newNetwork.getMembers()
-					.get(0);
-			final ORID userRid = IdConverter.toRid(newNetworkMembership
-					.getResourceId());
-
-			final IUser networkOwner = ndexService._orientDbGraph.getVertex(
-					userRid, IUser.class);
-			if (networkOwner == null)
-				throw new ObjectNotFoundException("User",
-						newNetworkMembership.getResourceId());
-
-			final INetwork network = ndexService._orientDbGraph.addVertex(
-					"class:network", INetwork.class);
-
-			final INetworkMembership membership = ndexService._orientDbGraph
-					.addVertex("class:networkMembership",
-							INetworkMembership.class);
-			membership.setPermissions(Permissions.ADMIN);
-			membership.setMember(networkOwner);
-			membership.setNetwork(network);
-			networkOwner.addNetwork(membership);
-			network.addMember(membership);
-			network.setIsPublic(false);
-            network.getMetadata().put("Format", newNetwork.getMetadata().get("Format"));
-            network.getMetadata().put("Source", newNetwork.getMetadata().get("Source"));
-			network.setName(newNetwork.getName());
-
-			this.network = network; // keep a copy in this repository
-			return network;
-		} catch (Exception e) {
-			ndexService._orientDbGraph.getBaseGraph().rollback();
-			throw e;
-		}
-	}
 
 	public INetwork getCurrentNetwork() {
-		if (null == this.network) {
-			this.network = ndexService._orientDbGraph.addVertex(
-					"class:network", INetwork.class);
-		}
-
+		return this.network;
+	}
+	
+	public INetwork createNetwork(){
+		this.network = ndexService._orientDbGraph.addVertex(
+				"class:network", INetwork.class);
 		return this.network;
 	}
 
