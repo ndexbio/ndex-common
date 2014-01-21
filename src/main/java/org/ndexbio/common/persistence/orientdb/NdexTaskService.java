@@ -156,10 +156,11 @@ public class NdexTaskService
            
         try
         {
-            final ORID taskRid = IdConverter.toRid(taskId);           
-            if (!this.ndexService.isSetup()) {
+        	if (!this.ndexService.isSetup()) {
 				this.ndexService.setupDatabase();
 			}
+            final ORID taskRid = IdConverter.toRid(taskId);           
+            
 			final ITask t = (this.ndexService._orientDbGraph.getVertex(taskRid, ITask.class));
             if ( t == null )
             	throw new ObjectNotFoundException("Task id ", taskId + " not in orientdb");
@@ -202,9 +203,7 @@ public class NdexTaskService
 	            if (taskToUpdate == null){
 	                throw new ObjectNotFoundException("Task", taskId);
 	            }
-
 	            taskToUpdate.setStatus(status);
-	            this.ndexService._orientDbGraph.getBaseGraph().commit();
 	            return taskToUpdate;
 		} catch (Exception e) {
 			logger.error(e.getMessage());
