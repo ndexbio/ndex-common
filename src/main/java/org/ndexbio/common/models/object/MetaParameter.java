@@ -71,7 +71,7 @@ public class MetaParameter
         switch (_operator)
         {
             case '=':
-                return " = " + _keywords;
+                return " = '" + _keywords + "'";
             case ':':
                 return " LIKE '" + _keywords + "%'";
             case '~':
