@@ -7,7 +7,7 @@ import org.ndexbio.common.models.data.IBaseTerm;
 public class BaseTerm extends Term
 {
     private String _name;
-    private Namespace _namespace;
+    private String _namespace;
     
     
     
@@ -17,9 +17,6 @@ public class BaseTerm extends Term
     public BaseTerm()
     {
         super();
-        
-        _namespace = new Namespace();
-        _namespace.setPrefix("LOCAL");
         
         this.setTermType("Base");
     }
@@ -38,14 +35,9 @@ public class BaseTerm extends Term
         _name = baseTerm.getName();
         
         if (baseTerm.getTermNamespace() != null)
-            _namespace = new Namespace(baseTerm.getTermNamespace());
-        else
-        {
-            _namespace = new Namespace();
-            _namespace.setPrefix("Local");
-        }
+            _namespace = baseTerm.getTermNamespace().getJdexId();
+
     }
-    
     
     
     public String getName()
@@ -58,12 +50,12 @@ public class BaseTerm extends Term
         _name = termName;
     }
 
-    public Namespace getNamespace()
+    public String getNamespace()
     {
         return _namespace;
     }
 
-    public void setNamespace(Namespace namespace)
+    public void setNamespace(String namespace)
     {
         _namespace = namespace;
     }

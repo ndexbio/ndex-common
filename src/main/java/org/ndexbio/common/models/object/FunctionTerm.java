@@ -14,7 +14,7 @@ import org.ndexbio.common.models.data.ITerm;
 public class FunctionTerm extends Term
 {
     private String _termFunction;
-    private Map<Integer, String> _parameters;
+    private Map<String, String> _parameters;
 
     
     
@@ -45,17 +45,17 @@ public class FunctionTerm extends Term
         for (final ITerm entry : iFunctionTerm.getTermParameters())
         {
             
-            this.getParameters().put(parameterIndex, entry.getJdexId());
+            this.getParameters().put(parameterIndex.toString(), entry.getJdexId());
             parameterIndex++; //pseudo key for ordering
         }
     }
 
-    public Map<Integer, String> getParameters()
+    public Map<String, String> getParameters()
     {
         return _parameters;
     }
 
-    public void setParameters(Map<Integer, String> parameters)
+    public void setParameters(Map<String, String> parameters)
     {
         _parameters = parameters;
     }

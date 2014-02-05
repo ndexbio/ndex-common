@@ -1,18 +1,23 @@
 package org.ndexbio.common.helpers;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.ndexbio.common.models.object.BaseTerm;
 import org.ndexbio.common.models.object.FunctionTerm;
 import org.ndexbio.common.models.object.Namespace;
 import org.ndexbio.common.models.object.Term;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-//TODO: Remove this class - it was only needed because of incomplete unit test data
 public class TermDeserializer extends JsonDeserializer<Term>
 {
     public TermDeserializer()
@@ -58,14 +63,8 @@ public class TermDeserializer extends JsonDeserializer<Term>
         baseTerm.setName(serializedTerm.get("name").asText());
         
         if (serializedTerm.get("namespace") != null)
-        {
-            final JsonNode serializedNamespace = serializedTerm.get("namespace");
-            
-            final Namespace namespace = new Namespace();
-            namespace.setPrefix(serializedNamespace.get("prefix").asText());
-            namespace.setUri(serializedNamespace.get("uri").asText());
-            
-            baseTerm.setNamespace(namespace);
+        {        
+            baseTerm.setNamespace(serializedTerm.get("namespace").asText());
         }
         
         return baseTerm;
@@ -75,9 +74,16 @@ public class TermDeserializer extends JsonDeserializer<Term>
     {
         final FunctionTerm functionTerm = new FunctionTerm();
         functionTerm.setTermFunction(serializedTerm.get("termFunction").asText());
+        final Map<String, String> parameters = functionTerm.getParameters();
+        Iterator<Entry<String, JsonNode>> fieldIterator = serializedTerm.get("parameters").fields();
 
-        //TODO: Need to deserialize parameters, don't know what they look like yet
+        while (fieldIterator.hasNext()){
+        	Entry<String, JsonNode> param = fieldIterator.next();
+        	parameters.put(param.getKey(), param.getValue().asText());
+        }
+        functionTerm.setParameters(parameters);
         
         return functionTerm;
     }
+
 }
