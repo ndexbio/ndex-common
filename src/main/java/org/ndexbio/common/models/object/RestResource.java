@@ -14,6 +14,8 @@ public class RestResource extends NdexObject
     private String _path;
     private String _consumes;
     private String _produces;
+    private String _apiDoc;
+    private String _authentication;
     
 
     /**************************************************************************
@@ -76,5 +78,23 @@ public class RestResource extends NdexObject
 	public void setProduces(String _produces) {
 		this._produces = _produces;
 	}
+
+	public String getApiDoc() {
+		return _apiDoc;
+	}
+
+	public void setApiDoc(String _apiDoc) {
+		this._apiDoc = _apiDoc;
+	}
+
+	public String getAuthentication() {
+		return _authentication;
+	}
+
+	public void setAuthentication(String _authentication) {
+		this._authentication = _authentication;
+	}
+	
+	
 
 }
