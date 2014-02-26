@@ -17,6 +17,7 @@ import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.common.persistence.NDExPersistenceService;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -55,6 +56,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	private static final Long CACHE_SIZE = 100000L;
 	private final Stopwatch stopwatch;
 	private long commitCounter = 0L;
+	private static Joiner idJoiner = Joiner.on(":").skipNulls();
 
 	public NDExNoTxMemoryPersistence() {
 		ndexService = new OrientDBNoTxConnectionService();
@@ -243,14 +245,16 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	// If a jdexid is found, then lookup the INamespace by jdexid in the
 	// namespaceCache and return it.
 	public INamespace findNamespaceByPrefix(String prefix) {
+		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix),
 				"A namespace prefix is required");
+		String namespaceIdentifier = idJoiner.join("NAMESPACE", prefix);
 		Preconditions.checkArgument(
-				!NdexIdentifierCache.INSTANCE.isNovelIdentifier(prefix),
-				"The namespace prefix " + prefix + " is not registered");
+				!NdexIdentifierCache.INSTANCE.isNovelIdentifier(namespaceIdentifier),
+				"The namespace identifier " + namespaceIdentifier + " is not registered");
 		try {
 			Long jdexId = NdexIdentifierCache.INSTANCE.accessIdentifierCache()
-					.get(prefix);
+					.get(namespaceIdentifier);
 			INamespace ns = this.namespaceCache.getIfPresent(jdexId);
 			return ns;
 		} catch (ExecutionException e) {
