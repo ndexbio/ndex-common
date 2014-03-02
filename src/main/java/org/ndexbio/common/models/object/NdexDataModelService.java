@@ -11,6 +11,7 @@ public interface NdexDataModelService {
 	public Network getNetworkById(String networkId);
 	
 	public Iterable<Citation> getCitationsByNetworkId(String networkId);
+	public Network getSubnetworkByCitationId(String networkId, String citationId);
 	public Iterable<Edge> getEdgesBySupportId(String supportId);
 	public Iterable<Namespace> getNamespacesByNetworkId(String networkId);
 
