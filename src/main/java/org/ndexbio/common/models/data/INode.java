@@ -41,5 +41,21 @@ public interface INode extends IMetadataObject
     @Adjacency(label = "nodeRelationshipAliases")
     public void removeRelatedTerm(ITerm term);
 
+    @Adjacency(label = "nodeSupports")
+    public void addSupport(ISupport support);
 
+    @Adjacency(label = "nodeSupports")
+    public Iterable<ISupport> getSupports();
+    
+    @Adjacency(label = "nodeSupports")
+    public void removeSupport(ISupport support);
+    
+    @Adjacency(label = "nodeCitations")
+    public void addCitation(ICitation citation);
+
+    @Adjacency(label = "nodeCitations")
+    public Iterable<ICitation> getCitations();
+    
+    @Adjacency(label = "nodeCitations")
+    public void removeCitation(ICitation citation);
 }

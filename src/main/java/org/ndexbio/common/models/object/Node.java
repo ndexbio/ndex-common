@@ -6,7 +6,9 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 
+import org.ndexbio.common.models.data.ICitation;
 import org.ndexbio.common.models.data.INode;
+import org.ndexbio.common.models.data.ISupport;
 import org.ndexbio.common.models.data.ITerm;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -16,6 +18,8 @@ public class Node extends MetadataObject
     private String _represents;
     private List<String> _aliases;
     private List<String> _relatedTerms;
+    private List<String> _citations;
+    private List<String> _supports;
     
     
     
@@ -49,6 +53,12 @@ public class Node extends MetadataObject
         
         for (final ITerm iTerm : node.getRelatedTerms())
             _relatedTerms.add(iTerm.getJdexId());
+        
+        for (final ICitation iCitation : node.getCitations())
+            _citations.add(iCitation.getJdexId());
+        
+        for (final ISupport iSupport : node.getSupports())
+            _supports.add(iSupport.getJdexId());
     }
     
   
@@ -58,6 +68,8 @@ public class Node extends MetadataObject
     private void initializeCollections() {
     	this._aliases = Lists.newArrayList();
     	this._relatedTerms = Lists.newArrayList();
+    	this._supports = Lists.newArrayList();
+    	this._citations = Lists.newArrayList();
     }
     
     public List<String> getAliases()
