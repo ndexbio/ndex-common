@@ -8,6 +8,7 @@ import org.ndexbio.common.models.data.IGroupMembership;
 import org.ndexbio.common.models.data.IJoinGroupRequest;
 import org.ndexbio.common.models.data.INetworkAccessRequest;
 import org.ndexbio.common.models.data.INetworkMembership;
+import org.ndexbio.common.models.data.IReifiedEdgeTerm;
 import org.ndexbio.common.models.data.IUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,7 @@ public class OrientDBNoTxConnectionService {
 						.withClass(IJoinGroupRequest.class)
 						.withClass(INetworkAccessRequest.class)
 						.withClass(IBaseTerm.class)
+						.withClass(IReifiedEdgeTerm.class)
 						.withClass(IFunctionTerm.class).build());
 
 		_ndexDatabase = ODatabaseDocumentPool.global().acquire(
@@ -188,6 +190,12 @@ public class OrientDBNoTxConnectionService {
 	            //functionTermClass.createProperty("textParameters", OType.EMBEDDEDSET);
 
 	            //functionTermClass.createIndex("functionTermLinkParametersIndex", OClass.INDEX_TYPE.NOTUNIQUE, "termParameters by value");
+	        }
+	        
+	        if (orientDbGraph.getVertexType("reifiedEdgeTerm") == null)
+	        {
+	            OClass reifiedEdgeTermClass = orientDbGraph.createVertexType("reifiedEdgeTerm", "term");
+
 	        }
 
 	        if (orientDbGraph.getVertexType("group") == null)

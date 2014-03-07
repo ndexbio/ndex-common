@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import org.ndexbio.common.models.object.BaseTerm;
 import org.ndexbio.common.models.object.FunctionTerm;
 import org.ndexbio.common.models.object.Namespace;
+import org.ndexbio.common.models.object.ReifiedEdgeTerm;
 import org.ndexbio.common.models.object.Term;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -40,6 +41,8 @@ public class TermDeserializer extends JsonDeserializer<Term>
                 return populateBaseTerm(serializedTerm);
             else if (termType.asText().equals("Function"))
                 return populateFunctionTerm(serializedTerm);
+            else if (termType.asText().equals("ReifiedEdgeTerm"))
+                return populateReifiedEdgeTerm(serializedTerm);
         }
         else
         {
@@ -57,7 +60,17 @@ public class TermDeserializer extends JsonDeserializer<Term>
     
     
     
-    private BaseTerm populateBaseTerm(JsonNode serializedTerm)
+    private Term populateReifiedEdgeTerm(JsonNode serializedTerm) {
+        final ReifiedEdgeTerm reifiedEdgeTerm = new ReifiedEdgeTerm();
+        
+        reifiedEdgeTerm.setTermEdge(serializedTerm.get("termEdge").asText());
+                
+        return reifiedEdgeTerm;
+	}
+
+
+
+	private BaseTerm populateBaseTerm(JsonNode serializedTerm)
     {
         final BaseTerm baseTerm = new BaseTerm();
         baseTerm.setName(serializedTerm.get("name").asText());

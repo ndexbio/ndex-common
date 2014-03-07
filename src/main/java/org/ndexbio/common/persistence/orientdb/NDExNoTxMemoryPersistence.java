@@ -306,7 +306,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	}
 	
 	@Override
-	public IReifiedEdgeTerm findOrCreateReifiedEdgeTerm(Long jdexId) throws ExecutionException {
+	public IReifiedEdgeTerm findOrCreateIReifiedEdgeTerm(Long jdexId) throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
 				"A valid JDExId is required");
 		this.jdexIdSet.add(jdexId);

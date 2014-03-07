@@ -1,14 +1,12 @@
 package org.ndexbio.common.models.object;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import org.ndexbio.common.models.data.IFunctionTerm;
+import org.ndexbio.common.models.data.ITerm;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Maps;
-
-import org.ndexbio.common.models.data.IBaseTerm;
-import org.ndexbio.common.models.data.IFunctionTerm;
-import org.ndexbio.common.models.data.ITerm;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FunctionTerm extends Term
