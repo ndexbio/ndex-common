@@ -1,9 +1,20 @@
 package org.ndexbio.common.persistence;
 
 import java.util.concurrent.ExecutionException;
+
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.models.data.*;
-import org.ndexbio.common.models.object.Network;
+import org.ndexbio.common.models.data.IBaseTerm;
+import org.ndexbio.common.models.data.ICitation;
+import org.ndexbio.common.models.data.IEdge;
+import org.ndexbio.common.models.data.IFunctionTerm;
+import org.ndexbio.common.models.data.INamespace;
+import org.ndexbio.common.models.data.INetwork;
+import org.ndexbio.common.models.data.INetworkMembership;
+import org.ndexbio.common.models.data.INode;
+import org.ndexbio.common.models.data.IReifiedEdgeTerm;
+import org.ndexbio.common.models.data.ISupport;
+import org.ndexbio.common.models.data.ITerm;
+import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
 
@@ -24,6 +35,7 @@ public interface NDExPersistenceService {
 	public IEdge findOrCreateIEdge( Long jdexId) throws ExecutionException;
 	public INode findOrCreateINode( Long jdexId) throws ExecutionException;
 	public ISupport findOrCreateISupport( Long jdexId) throws ExecutionException;
+	public IReifiedEdgeTerm findOrCreateReifiedEdgeTerm(Long jdexId) throws ExecutionException;
 	public void networkProgressLogCheck() throws NdexException;
 	
 	public void persistNetwork();
@@ -41,6 +53,7 @@ public interface NDExPersistenceService {
 	public SearchResult<IUser> findUsers(SearchParameters searchParameters) throws NdexException;
 	public void abortTransaction();
 	public void deleteNetwork();
+	
 	
 	
 	

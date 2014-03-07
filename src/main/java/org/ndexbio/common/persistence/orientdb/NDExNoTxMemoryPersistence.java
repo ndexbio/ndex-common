@@ -93,7 +93,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	private RemovalListener<Long, IFunctionTerm> functionTermListener = new RemovalListener<Long, IFunctionTerm>() {
 
 		public void onRemoval(RemovalNotification<Long, IFunctionTerm> removal) {
-			logger.info("IBaseTerm removed from cache key= "
+			logger.info("IFunctionTerm removed from cache key= "
 					+ removal.getKey().toString() + " "
 					+ removal.getCause().toString());
 
@@ -114,6 +114,31 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 
 			});
 
+	// IReifiedEdgeTerm cache
+	private RemovalListener<Long, IReifiedEdgeTerm> reifiedEdgeListener = new RemovalListener<Long, IReifiedEdgeTerm>() {
+
+		public void onRemoval(RemovalNotification<Long, IReifiedEdgeTerm> removal) {
+			logger.info("IReifiedEdgeTerm removed from cache key= "
+					+ removal.getKey().toString() + " "
+					+ removal.getCause().toString());
+
+		}
+
+	};
+	
+	private LoadingCache<Long, IReifiedEdgeTerm> reifiedEdgeTermCache = CacheBuilder
+			.newBuilder().maximumSize(CACHE_SIZE)
+			.expireAfterAccess(240L, TimeUnit.MINUTES)
+			.removalListener(reifiedEdgeListener)
+			.build(new CacheLoader<Long, IReifiedEdgeTerm>() {
+				@Override
+				public IReifiedEdgeTerm load(Long key) throws Exception {
+					return ndexService._orientDbGraph.addVertex(
+							"class:reifiedEdgeTerm", IReifiedEdgeTerm.class);
+				}
+
+			});
+	
 	// INamespace cache
 	private RemovalListener<Long, INamespace> namespaceListener = new RemovalListener<Long, INamespace>() {
 
@@ -278,6 +303,14 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 				"A valid JDExId is required");
 		this.jdexIdSet.add(jdexId);
 		return functionTermCache.get(jdexId);
+	}
+	
+	@Override
+	public IReifiedEdgeTerm findOrCreateReifiedEdgeTerm(Long jdexId) throws ExecutionException {
+		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
+				"A valid JDExId is required");
+		this.jdexIdSet.add(jdexId);
+		return reifiedEdgeTermCache.get(jdexId);
 	}
 
 	public INamespace findOrCreateINamespace(Long jdexId)
@@ -467,5 +500,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		.println("deleteNetwork called. Not yet implemented");
 		
 	}
+
+
 
 }
