@@ -101,6 +101,8 @@ public class Network extends MetadataObject
                     _terms.put(term.getJdexId(), new BaseTerm((IBaseTerm)term));
                 else if (term instanceof IFunctionTerm)
                     _terms.put(term.getJdexId(), new FunctionTerm((IFunctionTerm)term));
+                else if (term instanceof IReifiedEdgeTerm)
+                    _terms.put(term.getJdexId(), new ReifiedEdgeTerm((IReifiedEdgeTerm)term));
             }
 
             for (final ICitation citation : network.getCitations())

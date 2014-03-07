@@ -86,6 +86,11 @@ public class NdexSchemaManager
             //functionTermClass.createIndex("functionTermLinkParametersIndex", OClass.INDEX_TYPE.NOTUNIQUE, "termParameters by value");
         }
 
+        if (orientDbGraph.getVertexType("reifiedEdgeTerm") == null)
+        {
+            OClass reifiedEdgeTermClass = orientDbGraph.createVertexType("reifiedEdgeTerm", "term");
+        }
+        
         if (orientDbGraph.getVertexType("group") == null)
         {
             OClass groupClass = orientDbGraph.createVertexType("group", "account");
