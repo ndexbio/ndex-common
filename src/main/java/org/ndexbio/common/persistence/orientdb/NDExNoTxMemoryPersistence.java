@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.ndexbio.common.JdexIdService;
 import org.ndexbio.common.cache.NdexIdentifierCache;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
@@ -248,7 +249,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	private LoadingCache<Long, ISupport> supportCache = CacheBuilder
 			.newBuilder().maximumSize(CACHE_SIZE)
 			.expireAfterAccess(240L, TimeUnit.MINUTES)
-
+			.removalListener(supportListener)
 			.build(new CacheLoader<Long, ISupport>() {
 				@Override
 				public ISupport load(Long key) throws Exception {
@@ -362,16 +363,19 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	}
 
 	/*
-	 * find the ITerm (either Base or Function) by jdex id
+	 * find the ITerm (either Base, Function, or ReifiedEdge) by jdex id
 	 */
 
 	public ITerm findChildITerm(Long jdexId) throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
 				"A valid JDExId is required");
-		return Objects.firstNonNull(
-				(ITerm) this.baseTermCache.getIfPresent(jdexId),
-				(ITerm) this.functionTermCache.getIfPresent(jdexId));
-
+		
+		ITerm term = (ITerm) this.baseTermCache.getIfPresent(jdexId);
+		if (null != term) return term;
+		term = (ITerm) this.functionTermCache.getIfPresent(jdexId);
+		if (null != term) return term;
+		term = (ITerm) this.reifiedEdgeTermCache.getIfPresent(jdexId);
+		return term;
 	}
 
 	public IUser getCurrentUser() {
@@ -472,6 +476,9 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 			network.setNdexEdgeCount((int) this.edgeCache.size());
 			network.setNdexNodeCount((int) this.nodeCache.size());
 			network.setIsComplete(true);
+			NdexIdentifierCache.INSTANCE.accessIdentifierCache().invalidateAll();
+			NdexIdentifierCache.INSTANCE.accessTermCache().invalidateAll();
+			JdexIdService.INSTANCE.reset();
 			System.out.println("The new network " + network.getName()
 					+ " is complete");
 		} catch (Exception e) {

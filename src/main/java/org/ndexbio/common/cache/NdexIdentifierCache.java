@@ -70,7 +70,7 @@ public enum NdexIdentifierCache {
 	}
 
 	// Term cache
-	private RemovalListener<String, Long> identifiertListener = new RemovalListener<String, Long>() {
+	private RemovalListener<String, Long> identifierListener = new RemovalListener<String, Long>() {
 
 		public void onRemoval(RemovalNotification<String, Long> removal) {
 			if (!removal.getCause().toString().equalsIgnoreCase("EXPLICIT")) {
@@ -99,7 +99,7 @@ public enum NdexIdentifierCache {
 		this.identifierCache = CacheBuilder.newBuilder()
 				.maximumSize(CACHE_SIZE)
 				.expireAfterAccess(180L, TimeUnit.MINUTES)
-				.removalListener(identifiertListener)
+				.removalListener(identifierListener)
 				.build(new CacheLoader<String, Long>() {
 
 					@Override

@@ -14,4 +14,9 @@ public enum JdexIdService
     {
             return ++maxJdexId;
     }
+
+	public void reset() {
+		maxJdexId = 0L;
+		
+	}
 }
