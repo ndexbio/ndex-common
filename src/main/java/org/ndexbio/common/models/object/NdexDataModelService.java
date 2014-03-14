@@ -14,5 +14,8 @@ public interface NdexDataModelService {
 	public Network getSubnetworkByCitationId(String networkId, String citationId);
 	public Iterable<Edge> getEdgesBySupportId(String supportId);
 	public Iterable<Namespace> getNamespacesByNetworkId(String networkId);
+	// internal & external annotations are persisted as namespaces
+	public Iterable<Namespace> getInternalAnnotationsByNetworkId(String networkId);
+	public Iterable<Namespace> getExternalAnnotationsByNetworkId(String networkId);
 
 }

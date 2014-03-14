@@ -39,13 +39,23 @@ public class FunctionTerm extends Term
 
         Integer parameterIndex = new Integer(0);
         
+        /*
+         * mod 14Mar2014 used ordered term parameters from ITerm to complete
+         * the parameter list. 
+         * TODO: validate that the same jdexid also exists in the term parameter list
+         *       decide what to do when it doesn't
+         */
+       for (String orderedParmId : iFunctionTerm.getTermOrderedParameterIds()) {
+    	   this.getParameters().put(parameterIndex.toString(), orderedParmId);
+    	   parameterIndex++; //pseudo key for ordering
+       }
         
-        for (final ITerm entry : iFunctionTerm.getTermParameters())
-        {
-            
-            this.getParameters().put(parameterIndex.toString(), entry.getJdexId());
-            parameterIndex++; //pseudo key for ordering
-        }
+       // deprecated - ordered parameter list
+      //  for (final ITerm entry : iFunctionTerm.getTermParameters())
+      //  {         
+       //     this.getParameters().put(parameterIndex.toString(), entry.getJdexId());
+       //     parameterIndex++; //pseudo key for ordering
+       // }
     }
 
     public Map<String, String> getParameters()
