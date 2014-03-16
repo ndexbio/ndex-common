@@ -186,6 +186,7 @@ public class OrientDBNoTxConnectionService {
 	        if (orientDbGraph.getVertexType("functionTerm") == null)
 	        {
 	            OClass functionTermClass = orientDbGraph.createVertexType("functionTerm", "term");
+	            functionTermClass.createProperty("functionTermOrderedParameters", OType.EMBEDDEDLIST);
 	           // functionTermClass.createProperty("termParameters", OType.EMBEDDEDMAP, OType.LINK);
 	            //functionTermClass.createProperty("textParameters", OType.EMBEDDEDSET);
 

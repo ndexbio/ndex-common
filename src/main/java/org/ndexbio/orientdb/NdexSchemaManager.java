@@ -81,7 +81,7 @@ public class NdexSchemaManager
         if (orientDbGraph.getVertexType("functionTerm") == null)
         {
             OClass functionTermClass = orientDbGraph.createVertexType("functionTerm", "term");
-            functionTermClass.createProperty("functionTermOrderedParameters", OType.STRING);
+            functionTermClass.createProperty("functionTermOrderedParameters", OType.EMBEDDEDLIST);
             //functionTermClass.createProperty("textParameters", OType.EMBEDDEDSET);
             //functionTermClass.createIndex("functionTermLinkParametersIndex", OClass.INDEX_TYPE.NOTUNIQUE, "termParameters by value");
         }
