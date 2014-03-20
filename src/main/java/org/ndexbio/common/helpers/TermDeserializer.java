@@ -41,7 +41,7 @@ public class TermDeserializer extends JsonDeserializer<Term>
                 return populateBaseTerm(serializedTerm);
             else if (termType.asText().equals("Function"))
                 return populateFunctionTerm(serializedTerm);
-            else if (termType.asText().equals("ReifiedEdgeTerm"))
+            else if (termType.asText().equals("ReifiedEdge"))
                 return populateReifiedEdgeTerm(serializedTerm);
         }
         else
@@ -53,6 +53,10 @@ public class TermDeserializer extends JsonDeserializer<Term>
             final JsonNode functionProperty = serializedTerm.get("termFunction");
             if (functionProperty != null)
                 return populateFunctionTerm(serializedTerm);
+            
+            final JsonNode reifiedEdgeProperty = serializedTerm.get("termEdge");
+            if (reifiedEdgeProperty != null)
+                return populateReifiedEdgeTerm(serializedTerm);
         }
         
         throw context.mappingException("Unsupported term type.");
