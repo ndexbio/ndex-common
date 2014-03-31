@@ -10,6 +10,7 @@ import org.ndexbio.common.models.data.INetworkAccessRequest;
 import org.ndexbio.common.models.data.INetworkMembership;
 import org.ndexbio.common.models.data.IReifiedEdgeTerm;
 import org.ndexbio.common.models.data.IUser;
+import org.ndexbio.orientdb.NdexSchemaManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +76,8 @@ public class OrientDBNoTxConnectionService {
 
 		_orientDbGraph = _graphFactory
 				.create((OrientBaseGraph) new OrientGraphNoTx(_ndexDatabase));
-		new OrientDBSchemaManager().init(_orientDbGraph.getBaseGraph());
+		NdexSchemaManager.INSTANCE.init(_orientDbGraph.getBaseGraph());
+		//new OrientDBSchemaManager().init(_orientDbGraph.getBaseGraph());
 		this.setSetup(true);
 		logger.info("Connection to OrientDB established");
 		

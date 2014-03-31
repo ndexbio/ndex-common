@@ -14,11 +14,11 @@ public interface NdexDataModelService {
 	
 	public List<Citation> getCitationsByNetworkId(String networkId);
 	public Network getSubnetworkByCitationId(String networkId, String citationId);
-	public Iterable<Edge> getEdgesBySupportId(String supportId);
-	public Iterable<Namespace> getNamespacesByNetworkId(String networkId);
+	public List<Edge> getEdgesBySupportId(String supportId);
+	public List<Namespace> getNamespacesByNetworkId(String networkId);
 	// internal & external annotations are persisted as namespaces
-	public Iterable<Namespace> getInternalAnnotationsByNetworkId(String networkId);
-	public Iterable<Namespace> getExternalAnnotationsByNetworkId(String networkId);
+	public List<Namespace> getInternalAnnotationsByNetworkId(String networkId);
+	public List<Namespace> getExternalAnnotationsByNetworkId(String networkId);
 	public List<BaseTerm> getBaseTermsByNamespace(String namespace, String networkId);
 
 }
