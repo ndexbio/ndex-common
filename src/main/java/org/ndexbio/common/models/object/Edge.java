@@ -43,8 +43,6 @@ public class Edge extends MetadataObject
         _predicateId = edge.getPredicate().getJdexId();
         _objectId = edge.getObject().getJdexId();
         
-        
-        
         for (final ICitation iCitation : edge.getCitations())
             _citations.add(iCitation.getJdexId());
         
@@ -52,7 +50,17 @@ public class Edge extends MetadataObject
             _supports.add(iSupport.getJdexId());
     }
     
-    /*
+    public Edge(String jdexId, String subjectId, String predicateId, String objectId) {
+    	super();
+        this.initCollections();
+        this.setId(jdexId);
+        _subjectId = subjectId;
+        _predicateId = predicateId;
+        _objectId = objectId;
+        // TODO add citations, supports, etc...
+	}
+
+	/*
      * initialize class Collection fields
      */
     private void initCollections() {
