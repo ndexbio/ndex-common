@@ -4,12 +4,24 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
+/*
+ * mod 03Apr2014 
+ * the init method should only be invoked once per JVM invocation
+ * add a flag to avoid repeated class
+ * 
+ */
+
 public class NdexSchemaManager
 {
     public static final NdexSchemaManager INSTANCE = new NdexSchemaManager();
+    
+    private Boolean initialized = Boolean.FALSE;
 
     public synchronized void init(OrientBaseGraph orientDbGraph)
     {
+    	if(this.isInitialized()) {
+    		return;
+    	}
         orientDbGraph.getRawGraph().commit();
 
         /**********************************************************************
@@ -180,5 +192,15 @@ public class NdexSchemaManager
             userClass.createIndex("index-user-username", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "username");
             userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
         }
+        // turn on initialized flag
+        this.setInitialized(Boolean.TRUE);
     }
+
+	public Boolean isInitialized() {
+		return initialized;
+	}
+
+	private void setInitialized(Boolean initialized) {
+		this.initialized = initialized;
+	}
 }

@@ -2,11 +2,11 @@ package org.ndexbio.common.models.object;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.orientechnologies.orient.core.id.ORID;
+
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.data.IGroup;
 import org.ndexbio.common.models.data.INetwork;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.data.Permissions;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Membership
