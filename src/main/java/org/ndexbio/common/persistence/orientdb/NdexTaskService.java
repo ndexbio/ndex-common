@@ -49,9 +49,9 @@ public class NdexTaskService
 	            + " where status = '" +Status.QUEUED_FOR_DELETION.toString() +"'";
     	
     	try {
-    		if (!this.ndexService.isSetup()) {
-				this.ndexService.setupDatabase();
-			}
+    		
+			this.ndexService.setupDatabase();
+			
 			final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
 					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
 			for (final ODocument document : taskDocumentList) {
