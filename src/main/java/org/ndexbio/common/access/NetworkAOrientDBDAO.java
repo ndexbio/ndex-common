@@ -19,9 +19,12 @@ import org.ndexbio.common.models.data.IEdge;
 import org.ndexbio.common.models.data.INode;
 import org.ndexbio.common.models.object.BaseTerm;
 import org.ndexbio.common.models.object.Edge;
+import org.ndexbio.common.models.object.FunctionTerm;
+import org.ndexbio.common.models.object.Namespace;
 import org.ndexbio.common.models.object.Network;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
 import org.ndexbio.common.models.object.Node;
+import org.ndexbio.common.models.object.ReifiedEdgeTerm;
 import org.ndexbio.common.models.object.Term;
 import org.ndexbio.common.models.object.User;
 import org.slf4j.Logger;
@@ -37,6 +40,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 
 	private static final Logger _logger = LoggerFactory
 			.getLogger(NetworkAOrientDBDAO.class);
+	
+	private Class stringlist = (Class<List<String>>) new ArrayList<String>().getClass();
 
 	public NetworkAOrientDBDAO() {
 		super();
@@ -172,6 +177,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			final ORID networkRid = checkAndConvertNetworkId(networkId);
 			checkBlockSize(blockSize);
 			final long startTime = System.currentTimeMillis();
+			System.out.println("Starting subnetworkQuery ");
 			Set<ORID> edgeRids = queryForEdgeRids(
 					networkRid, 
 					parameters,
@@ -212,11 +218,15 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 	}
 
 
-	private Set<ORID> queryForEdgeRids(ORID networkRid,
-			NetworkQueryParameters parameters, int skipBlocks, int blockSize) {
+	private Set<ORID> queryForEdgeRids(
+			ORID networkRid,
+			NetworkQueryParameters parameters, 
+			int skipBlocks, 
+			int blockSize) {
+		
 		// Select query handler depending on parameters
 		// TODO validate parameters
-		if ("INTERCONNECT" == parameters.getSearchType()) {
+		if ("INTERCONNECT".equals(parameters.getSearchType())) {
 			List<ORID> sourceNodeRids = getNodeRidsFromTermNames(networkRid,
 					parameters.getStartingTermStrings(), true); // change to
 																// nodes
@@ -234,7 +244,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			return edgeIdsBySourceTargetTraversal(networkRid, sourceNodeRids,
 					targetNodeRids, includedPredicateRids, maxDepth);
 
-		} else if ("NEIGHBORHOOD" == parameters.getSearchType()) {
+		} else if ("NEIGHBORHOOD".equals(parameters.getSearchType())) {
 			List<ORID> sourceNodeRids = getNodeRidsFromTermNames(networkRid,
 					parameters.getStartingTermStrings(), true); // change to
 																// nodes
@@ -354,22 +364,28 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 		
 		Map<String, ORID> nodeIdRidMap = new HashMap<String, ORID>();
 		Map<String, ORID> termIdRidMap = new HashMap<String, ORID>();
+		Map<String, ORID> namespaceIdRidMap = new HashMap<String, ORID>();
 		
 		// Expand edgeRids to include reified edges
 		addReifiedEdgeIds(network, networkRid, edgeRids);
 		addEdgesToNetwork(network, networkRid, edgeRids, nodeIdRidMap, termIdRidMap);
+		network.setEdgeCount(edgeRids.size());
 		
 		// Get Nodes
 		addNodesToNetwork(network, networkRid, nodeIdRidMap, termIdRidMap);
+		network.setNodeCount(network.getNodes().size());
 		
 		// Get Terms
-		//addTermsToNetwork(network, networkRid, nodeIdRidMap, termIdRidMap);
+		addFunctionTermRids(network, networkRid, termIdRidMap);
+		addTermsToNetwork(network, networkRid, nodeIdRidMap, termIdRidMap, namespaceIdRidMap);
 		
+		// Add Namespaces for Terms
+		addNamespacesToNetwork(network, networkRid, namespaceIdRidMap);
+				
 		// Add Supports and Citations to Network
 		//addSupportsAndCitationsToNetwork(network, networkRid, edgeRids);
 		
-		// Add Namespaces for Terms
-		//addNamespacesToNetwork(network, networkRid, termIdRidMap);
+		
 		
 		// Add Network Properties
 	
@@ -489,10 +505,92 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			if (null != aliasRid) termIdRidMap.put(aliasId, aliasRid);
 		}
 	}
+	
+	private void addFunctionTermRids(Network network, ORID networkRid,
+			Map<String, ORID> termIdRidMap){
+		// 
+		// At the point at which this method is called, the termIdRidMap contains the ids
+		// of all the terms directly referenced by nodes and edges in our selected subnetwork.
+		//
+		// Some of those are function terms, so we need to recursively find all the
+		// function and parameter terms and add them to the termIdRidMap
+		//
+		String termIdCsv = ridsToCsv(termIdRidMap.values());
+		
+		final String query = 
+				"SELECT @rid as termRid, jdexId as termId FROM (TRAVERSE out_functionTermParameters, out_functionTermFunction"
+				+ " FROM \n[" + termIdCsv + "] \n" + "WHILE $depth < 10) \n"
+				+ "WHERE @CLASS<>'node' ";
+		// System.out.println("terms from node query: " + query);
+		final List<ODocument> termDocs = _ndexDatabase
+				.query(new OSQLSynchQuery<ODocument>(query));
+		for (final ODocument doc : termDocs){
+			String termId= doc.field("termId");
+			ORID termRid = doc.field("termRid", ORID.class);
+			termIdRidMap.put(termId, termRid);
+		}
+		
+	}
 
-	private void addTermsToNetwork(Network network, ORID networkRid,
-			Map<String, ORID> nodeIdRidMap, Map<String, ORID> termIdRidMap) {
-		// TODO Auto-generated method stub
+	private void addTermsToNetwork(
+			Network network, 
+			ORID networkRid,
+			Map<String, ORID> nodeIdRidMap, 
+			Map<String, ORID> termIdRidMap,
+			Map<String, ORID> namespaceIdRidMap) {
+		//
+		// We now should have all the terms identified, so we can 
+		// simply select them all and add them to the network 
+		//
+		String termIdCsv = ridsToCsv(termIdRidMap.values());
+		final String query = 
+				"SELECT jdexId, name, out_baseTermNamespace.jdexId as namespaceId, "
+				+ "out_baseTermNamespace.@rid as namespaceRid, out_functionTermFunction.jdexId as functionId, "
+				+ "out_reifiedEdgeTermEdge.jdexId as reifiedEdgeId, "
+				+ "functionTermOrderedParameters as parameters "
+				+ "FROM "
+				+ "[ " + termIdCsv + " ] ";
+		System.out.println(query);
+		final List<ODocument> docs = _ndexDatabase.query(new OSQLSynchQuery<ODocument>(query));
+		for (final ODocument doc : docs) {
+			String termId = doc.field("jdexId");
+			String termName = doc.field("name");
+			String namespaceId = doc.field("namespaceId");
+			String functionId = doc.field("functionId");
+			ORID namespaceRid = doc.field("namespaceRid", ORID.class);
+			String reifiedEdgeId = doc.field("reifiedEdgeId");
+			List<String> parameters = doc.field("parameters", stringlist.getClass());
+			//ORID nodeRid = doc.field("nodeRid", ORID.class);
+			
+			// Dispatch depending on term type
+			if (null != termName){
+				// BaseTerm
+				BaseTerm baseTerm = new BaseTerm();
+				baseTerm.setName(termName);
+				baseTerm.setTermType("Base");
+				if (null != namespaceId){
+					baseTerm.setNamespace(namespaceId);
+					namespaceIdRidMap.put(namespaceId, namespaceRid);
+				}
+				network.getTerms().put(termId, baseTerm);
+			} else if (null != reifiedEdgeId){
+				ReifiedEdgeTerm reifiedEdgeTerm = new ReifiedEdgeTerm();
+				reifiedEdgeTerm.setTermEdge(reifiedEdgeId);
+				reifiedEdgeTerm.setTermType("ReifiedEdge");
+				network.getTerms().put(termId, reifiedEdgeTerm);
+			} else if (null != parameters){
+				FunctionTerm functionTerm = new FunctionTerm();
+				functionTerm.setTermType("Function");
+				functionTerm.setTermFunction(functionId);
+			    Integer parameterIndex = 0;
+				for (String parameterId : parameters){
+					functionTerm.getParameters().put(parameterIndex.toString(), parameterId);
+					parameterIndex++;
+				}
+				network.getTerms().put(termId, functionTerm);
+			}
+			
+		}
 		
 	}
 
@@ -503,45 +601,28 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 	}
 
 	private void addNamespacesToNetwork(Network network, ORID networkRid,
-			Map<String, ORID> termIdRidMap) {
-		// TODO Auto-generated method stub
-		
-	}
+			Map<String, ORID> namespaceIdRidMap) {
+		//
+		// We now should have all the namespaces identified, so we can 
+		// create them and add them to the network
+		//
+		String namespaceIdCsv = ridsToCsv(namespaceIdRidMap.values());
+		final String query = 
+				"SELECT jdexId, prefix, uri "
+				+ "FROM "
+				+ "[ " + namespaceIdCsv + " ] ";
+		final List<ODocument> docs = _ndexDatabase.query(new OSQLSynchQuery<ODocument>(query));
+		for (final ODocument doc : docs) {
+			String namespaceId = doc.field("jdexId");
+			String prefix = doc.field("prefix");
+			String uri = doc.field("uri");
 
-	private Set<ORID> edgeIdsBySourceTargetTraversal(ORID networkRid,
-			List<ORID> sourceNodeRids, List<ORID> targetNodeRids,
-			List<ORID> includedPredicateRids, int maxDepth) {
-		Set<ORID> allEdgeRids = new HashSet<ORID>();
-		Set<ORID> foundEdgeRids = new HashSet<ORID>();
-		Map<ORID, Integer> foundNodeRidDepthMap = new HashMap<ORID, Integer>();
-		Map<ORID, Integer> searchedNodeRidDepthMap = new HashMap<ORID, Integer>();
-		Stack<ORID> edgeRidStack = new Stack<ORID>();
-		Stack<ORID> nodeRidStack = new Stack<ORID>();
-		for (ORID sourceNodeRid : sourceNodeRids) {
-			// each source node search is completely separate
-			// because interactions will make the code hard to 
-			// debug and or optimize
-			nodeRidStack.clear();
-			edgeRidStack.clear();
-			foundEdgeRids.clear();
-			foundNodeRidDepthMap.clear();
-			searchedNodeRidDepthMap.clear();
-			
-			nodeRidStack.push(sourceNodeRid);
-			
-			System.out.println("-----------------------------------------\n");
-			System.out.println("source node: " + sourceNodeRid);
-			System.out.println("-----------------------------------------\n");
-			
-			searchFromNodeToTargetNodes(sourceNodeRid, nodeRidStack,
-					edgeRidStack, includedPredicateRids, targetNodeRids,
-					maxDepth, foundEdgeRids, foundNodeRidDepthMap, searchedNodeRidDepthMap);
-			allEdgeRids.addAll(foundEdgeRids);
-			
-			
-			
+			Namespace namespace = new Namespace();
+			if (null != prefix) namespace.setPrefix(prefix);
+			if (null != uri) namespace.setUri(uri);
+			network.getNamespaces().put(namespaceId, namespace);
 		}
-		return allEdgeRids;
+		
 	}
 
 	// This is the basis for a neighborhood query
@@ -561,12 +642,9 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 					foundEdgeRids, 
 					foundNodeRids);
 			
-
 		return foundEdgeRids;
 	}
 	
-
-
 	private void searchFromNode(
 			List<ORID> sourceNodeRids,
 			List<ORID> includedPredicateRids, 
@@ -574,7 +652,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			int maxDepth,
 			Set<ORID> foundEdgeRids, 
 			Set<ORID> foundNodeRids) {
-		boolean belowMaxDepth = depth <= maxDepth;
+		boolean belowMaxDepth = depth < maxDepth;
 		System.out.println("search from  : " + sourceNodeRids.size() + " nodes at depth " + depth + " starting with foundEdges " + foundEdgeRids.size());
 		
 		List<ORID[]> results = sourceSearchQuery(sourceNodeRids, includedPredicateRids, false);
@@ -644,6 +722,43 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 		return results;
 		
 	}
+	
+	private Set<ORID> edgeIdsBySourceTargetTraversal(ORID networkRid,
+			List<ORID> sourceNodeRids, List<ORID> targetNodeRids,
+			List<ORID> includedPredicateRids, int maxDepth) {
+		Set<ORID> allEdgeRids = new HashSet<ORID>();
+		Set<ORID> foundEdgeRids = new HashSet<ORID>();
+		Map<ORID, Integer> foundNodeRidDepthMap = new HashMap<ORID, Integer>();
+		Map<ORID, Integer> searchedNodeRidDepthMap = new HashMap<ORID, Integer>();
+		Stack<ORID> edgeRidStack = new Stack<ORID>();
+		Stack<ORID> nodeRidStack = new Stack<ORID>();
+		for (ORID sourceNodeRid : sourceNodeRids) {
+			// each source node search is completely separate
+			// because interactions will make the code hard to 
+			// debug and or optimize
+			nodeRidStack.clear();
+			edgeRidStack.clear();
+			foundEdgeRids.clear();
+			foundNodeRidDepthMap.clear();
+			searchedNodeRidDepthMap.clear();
+			
+			nodeRidStack.push(sourceNodeRid);
+			
+			
+			
+			searchFromNodeToTargetNodes(sourceNodeRid, nodeRidStack,
+					edgeRidStack, includedPredicateRids, targetNodeRids,
+					maxDepth, foundEdgeRids, foundNodeRidDepthMap, searchedNodeRidDepthMap);
+			allEdgeRids.addAll(foundEdgeRids);
+			System.out.println("-----------------------------------------");
+			System.out.println("source node: " + sourceNodeRid + " found " + foundEdgeRids.size() 
+					+ " for a total unique set of " 
+					+ allEdgeRids.size());
+			System.out.println("-----------------------------------------\n");
+		
+		}
+		return allEdgeRids;
+	}
 
 	// this is the basis for a source-target or interconnect query
 	private void searchFromNodeToTargetNodes(ORID sourceNodeRid,
@@ -655,7 +770,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 
 		// Check to see if we are at maxDepth:
 		// is the size of the edgeStack < maxDepth?
-		int depth = edgeRidStack.size();
+		int depth = edgeRidStack.size() + 1;
 		boolean belowMaxDepth = depth <= maxDepth;
 
 		// Query to find edges and linked nodes from source node
@@ -677,17 +792,20 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			// then add the edgeStack to foundEdgeRids
 			// and add the nodeStack to foundNodeRids
 			if (targetNodeRids.contains(nodeRid)) {
-				System.out.println("found target " + nodeRid + " at depth " + depth);
+				System.out.println("found target " + nodeRid + " at depth " + depth + " by edge " + edgeRid);
+				foundEdgeRids.add(edgeRid); // add the current edge
 				for (ORID rid : edgeRidStack) {
-					foundEdgeRids.add(rid);
+					foundEdgeRids.add(rid); // and add the edges already on the stack
 				}
 				updateMinimumDepths(nodeRidStack, foundNodeRidDepthMap);
 
 			} else if (foundNodeRidDepthMap.containsKey(nodeRid) && foundNodeRidDepthMap.get(nodeRid) <= depth) {
-				System.out.println("node " + nodeRid 
+				System.out.println("node " + nodeRid + " found by edge " + edgeRid
 						+ " was previously in a path at depth " 
 						+ foundNodeRidDepthMap.get(nodeRid) 
 						+ " which is less than or equal to current depth "+ depth);
+				
+				foundEdgeRids.add(edgeRid);
 				for (ORID rid : edgeRidStack) {
 					foundEdgeRids.add(rid);
 				}
@@ -804,9 +922,9 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			//System.out.println("edgeId = " + pair[0] + " nodeRid = " + pair[1]);
 		}
 		if (upstream){
-			//System.out.println("stQuery upstream results : " + results.size() + " at " + edgeRidStack.size());
+			System.out.println("stQuery upstream results : " + results.size() + " at " + edgeRidStack.size());
 		} else {
-			//System.out.println("stQuery downstream results : " + results.size() + " at " + edgeRidStack.size());
+			System.out.println("stQuery downstream results : " + results.size() + " at " + edgeRidStack.size());
 		}
 
 		return results;
