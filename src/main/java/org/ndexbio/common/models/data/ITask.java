@@ -7,6 +7,10 @@ import com.tinkerpop.frames.VertexFrame;
 
 import java.util.Date;
 
+import org.ndexbio.common.models.object.Priority;
+import org.ndexbio.common.models.object.Status;
+import org.ndexbio.common.models.object.TaskType;
+
 public interface ITask extends VertexFrame
 {
     @Property("description")    

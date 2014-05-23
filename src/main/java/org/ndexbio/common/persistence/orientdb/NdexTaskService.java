@@ -6,6 +6,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.data.*;
+import org.ndexbio.common.models.object.Status;
 import org.ndexbio.common.models.object.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.frames.VertexFrame;
 
 /*
@@ -24,6 +26,7 @@ import com.tinkerpop.frames.VertexFrame;
  * projects using Tasks
  * 
  * mod 13Jan2014 - use domain objects instead of model objects 
+ * mod 01Apr2014 - add public method to delete task entities
  */
 
 public class NdexTaskService 
@@ -34,6 +37,35 @@ public class NdexTaskService
     public NdexTaskService()
     {
     	ndexService = new OrientDBNoTxConnectionService();  
+    }
+    
+    
+    /*
+     * public method to delete Task entities that have a status of
+     * QUEUED_FOR_DELETION
+     */
+    public void deleteTasksQueuedForDeletion() throws NdexException {
+    	String query = "select from task "
+	            + " where status = '" +Status.QUEUED_FOR_DELETION.toString() +"'";
+    	
+    	try {
+    		
+			this.ndexService.setupDatabase();
+			
+			final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
+					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
+			for (final ODocument document : taskDocumentList) {
+				this.ndexService._orientDbGraph.getVertex(document, ITask.class).asVertex().remove();
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failed to search tasks", e);
+            throw new NdexException("Failed to search tasks.");
+			
+		}finally {
+			this.ndexService.teardownDatabase();
+		}
+    	
     }
     
     /*
@@ -119,6 +151,10 @@ public class NdexTaskService
      
      public List<Task> getInProgressTasks() throws NdexException{
     	 return getTasksByStatus(Status.PROCESSING);
+     }
+     
+     private List<ITask> getITasksQueuedForDeletion() throws NdexException{
+    	 return getITasksByStatus(Status.QUEUED_FOR_DELETION);
      }
      
      

@@ -1,10 +1,8 @@
 package org.ndexbio.common.models.object;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import org.ndexbio.common.models.data.ITask;
-import org.ndexbio.common.models.data.Priority;
-import org.ndexbio.common.models.data.Status;
-import org.ndexbio.common.models.data.TaskType;
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)

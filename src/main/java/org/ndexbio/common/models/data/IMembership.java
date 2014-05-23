@@ -1,5 +1,7 @@
 package org.ndexbio.common.models.data;
 
+import org.ndexbio.common.models.object.Permissions;
+
 import com.tinkerpop.frames.Property;
 import com.tinkerpop.frames.VertexFrame;
 import com.tinkerpop.frames.modules.typedgraph.TypeField;

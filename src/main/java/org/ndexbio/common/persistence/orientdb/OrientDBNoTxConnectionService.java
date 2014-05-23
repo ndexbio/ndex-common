@@ -69,11 +69,6 @@ public class OrientDBNoTxConnectionService {
 		_ndexDatabase = ODatabaseDocumentPool.global().acquire(
 				"remote:localhost/ndex", "admin", "admin");
 
-		// _ndexDatabase = ODatabaseDocumentPool.global().acquire(
-		// Configuration.getInstance().getProperty("OrientDB-URL"),
-		// Configuration.getInstance().getProperty("OrientDB-Username"),
-		// Configuration.getInstance().getProperty("OrientDB-Password"));
-
 		_orientDbGraph = _graphFactory
 				.create((OrientBaseGraph) new OrientGraphNoTx(_ndexDatabase));
 		NdexSchemaManager.INSTANCE.init(_orientDbGraph.getBaseGraph());
