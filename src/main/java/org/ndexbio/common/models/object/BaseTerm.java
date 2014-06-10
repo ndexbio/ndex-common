@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.object;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import org.ndexbio.common.models.data.IBaseTerm;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -40,7 +41,16 @@ public class BaseTerm extends Term
     }
     
     
-    public String getName()
+    public BaseTerm(String name, String jdexId, String namespaceId) {
+    	super();
+        
+        this.setTermType("Base");
+        _name = name;
+        _namespace = namespaceId;
+        this.setId(jdexId);
+	}
+
+	public String getName()
     {
         return _name;
     }
