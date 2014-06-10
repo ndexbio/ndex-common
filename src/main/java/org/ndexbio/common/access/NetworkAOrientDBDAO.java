@@ -14,9 +14,6 @@ import java.util.regex.Pattern;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.data.IBaseTerm;
-import org.ndexbio.common.models.data.IEdge;
-import org.ndexbio.common.models.data.INode;
 import org.ndexbio.common.models.object.BaseTerm;
 import org.ndexbio.common.models.object.Edge;
 import org.ndexbio.common.models.object.FunctionTerm;
@@ -493,10 +490,20 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 				+ " while $depth < 2) where in_nodeUnificationAliases in [ " 
 				+ nodeIdCsv + " ] ";
 		
+		System.out.println("node alias query : " + aliasQuery);
 		final List<ODocument> aliasDocs = _ndexDatabase.query(new OSQLSynchQuery<ODocument>(aliasQuery));
 		for (final ODocument doc : aliasDocs) {
-			String nodeId= doc.field("nodeId");
-			String aliasId= doc.field("aliasId");
+			String nodeId = null;
+			if (doc.field("nodeId") instanceof List){
+				List<String> nodeIds = doc.field("nodeId");
+				nodeId = nodeIds.get(0);
+				System.out.println("handled list of alias node ids containing : " + nodeId);
+			} else {
+				nodeId = doc.field("nodeId");
+				System.out.println("handled single alias node ids  : " + nodeId);
+			}
+
+			String aliasId = doc.field("aliasId");
 			ORID aliasRid = doc.field("aliasRid", ORID.class);
 			Node node = network.getNodes().get(nodeId);
 			// add the alias id to the node in the network
