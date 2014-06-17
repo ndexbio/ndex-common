@@ -35,14 +35,23 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO {
 
+	private static NetworkAOrientDBDAO INSTANCE = null;
+	
 	private static final Logger _logger = LoggerFactory
 			.getLogger(NetworkAOrientDBDAO.class);
 	
 	private Class stringlist = (Class<List<String>>) new ArrayList<String>().getClass();
 
-	public NetworkAOrientDBDAO() {
+	protected NetworkAOrientDBDAO() {
 		super();
 	}
+	
+	public static synchronized NetworkAOrientDBDAO getInstance() {
+	      if(INSTANCE == null) {
+	         INSTANCE = new NetworkAOrientDBDAO();
+	      }
+	      return INSTANCE;
+	   }
 
 	/*
 	 * Returns a block of BaseTerm objects in the network specified by
@@ -147,8 +156,9 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			final ORID networkRid = checkAndConvertNetworkId(networkId);
 			checkBlockSize(blockSize);
 			
-			Set<ORID> edgeRids = queryForEdgeRids(networkRid, parameters,
-					skipBlocks, blockSize);
+			Set<ORID> edgeRids = queryForEdgeRids(networkRid, parameters
+				//	,skipBlocks, blockSize
+					);
 			
 			return getEdgesByEdgeRids(edgeRids);
 		} catch (Exception e) {
@@ -159,6 +169,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 		}
 		
 	}
+	
 
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#queryForSubnetwork(java.lang.String, org.ndexbio.common.models.object.NetworkQueryParameters, int, int)
@@ -177,9 +188,10 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			System.out.println("Starting subnetworkQuery ");
 			Set<ORID> edgeRids = queryForEdgeRids(
 					networkRid, 
-					parameters,
-					skipBlocks, 
-					blockSize);
+					parameters //,
+				//	skipBlocks, 
+				//	blockSize
+					);
 			final long getEdgesTime = System.currentTimeMillis();
 			Network network =  getSubnetworkByEdgeRids(networkRid, edgeRids);
 			final long getSubnetworkTime = System.currentTimeMillis();
@@ -217,9 +229,10 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 
 	private Set<ORID> queryForEdgeRids(
 			ORID networkRid,
-			NetworkQueryParameters parameters, 
-			int skipBlocks, 
-			int blockSize) {
+			NetworkQueryParameters parameters 
+		//	int skipBlocks, 
+		//	int blockSize
+			) {
 		
 		// Select query handler depending on parameters
 		// TODO validate parameters
@@ -256,7 +269,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			return edgeIDsByTraversalFromSourceNode(networkRid, sourceNodeRids,
 					includedPredicateRids, maxDepth);
 		}
-		return null;
+		return new HashSet<ORID>();
 	}
 
 	private List<ORID> getBaseTermRidsFromIds(ORID networkRid,

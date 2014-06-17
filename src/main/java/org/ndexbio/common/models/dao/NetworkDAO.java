@@ -2,10 +2,14 @@ package org.ndexbio.common.models.dao;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.common.models.data.IEdge;
+import org.ndexbio.common.models.data.INetwork;
+import org.ndexbio.common.models.data.INode;
 import org.ndexbio.common.models.object.BaseTerm;
 import org.ndexbio.common.models.object.Citation;
 import org.ndexbio.common.models.object.Membership;
@@ -288,6 +292,7 @@ public interface NetworkDAO {
 			NetworkQueryParameters queryParameters)
 			throws IllegalArgumentException, NdexException;
 
+	
 	/**************************************************************************
 	 * Gets a subnetwork network based on network query parameters.
 	 * 
@@ -301,10 +306,10 @@ public interface NetworkDAO {
 	 *             Failed to query the database.
 	 * @return A subnetwork of the network.
 	 **************************************************************************/
-	public abstract Network queryNetwork2( String networkId,
+/*	public abstract Network queryNetwork2( String networkId,
 			NetworkQueryParameters queryParameters)
 			throws IllegalArgumentException, NdexException;
-
+*/
 	/**************************************************************************
 	 * Removes a member from a network.
 	 * 
@@ -375,4 +380,5 @@ public interface NetworkDAO {
 	public abstract void uploadNetwork(String userId, UploadedFile uploadedNetwork)
 			throws IllegalArgumentException, SecurityException, NdexException;
 
+	
 }

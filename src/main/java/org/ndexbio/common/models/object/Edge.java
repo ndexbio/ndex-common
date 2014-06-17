@@ -11,7 +11,7 @@ import org.ndexbio.common.models.data.IEdge;
 import org.ndexbio.common.models.data.ISupport;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Edge extends MetadataObject
+public class Edge extends MetadataObject implements Comparable<Edge>
 {
     private String _objectId;
     private String _predicateId;
@@ -118,4 +118,12 @@ public class Edge extends MetadataObject
     {
         _supports = supports;
     }
+
+	@Override
+	public int compareTo(Edge arg0) {
+		// TODO Auto-generated method stub
+	    	return this.getId().compareTo(arg0.getId());
+	}
+    
+    
 }

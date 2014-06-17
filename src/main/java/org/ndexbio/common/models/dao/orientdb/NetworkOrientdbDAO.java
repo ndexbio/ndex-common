@@ -12,16 +12,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeSet;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.ndexbio.common.access.NetworkAOrientDBDAO;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.dao.NetworkDAO;
-import org.ndexbio.common.models.dao.orientdb.gremlin.NetworkQueries;
 import org.ndexbio.common.models.dao.orientdb.helper.EquivalenceFinder;
 import org.ndexbio.common.models.dao.orientdb.helper.IdEquivalenceFinder;
 import org.ndexbio.common.models.dao.orientdb.helper.NetworkUtility;
@@ -29,7 +31,6 @@ import org.ndexbio.common.models.data.IBaseTerm;
 import org.ndexbio.common.models.data.ICitation;
 import org.ndexbio.common.models.data.IEdge;
 import org.ndexbio.common.models.data.IFunctionTerm;
-import org.ndexbio.common.models.data.IMembership;
 import org.ndexbio.common.models.data.INamespace;
 import org.ndexbio.common.models.data.INetwork;
 import org.ndexbio.common.models.data.INetworkMembership;
@@ -59,31 +60,22 @@ import org.ndexbio.common.models.object.TaskType;
 import org.ndexbio.common.models.object.Term;
 import org.ndexbio.common.models.object.UploadedFile;
 import org.ndexbio.common.models.object.User;
-import org.ndexbio.orientdb.gremlin.SearchSpec;
-import org.ndexbio.orientdb.gremlin.SearchType;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.frames.VertexFrame;
 
 public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(NetworkOrientdbDAO.class);
+	private static final Logger logger = Logger.getLogger(NetworkOrientdbDAO.class.getName());
 	
 	private NetworkOrientdbDAO() { super();}
 	
@@ -107,9 +99,9 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 					IdConverter.toRid(networkId), INetwork.class);
 			if (network == null)
 				return null;
-			else {
-				final List<String> foundTerms = Lists.newArrayList();
-				for (final ITerm networkTerm : network.getTerms()) {
+
+			final List<String> foundTerms = Lists.newArrayList();
+			for (final ITerm networkTerm : network.getTerms()) {
 					if (networkTerm instanceof IBaseTerm) {
 						if (((IBaseTerm) networkTerm).getName().toLowerCase()
 								.startsWith(partialTerm.toLowerCase())) {
@@ -119,13 +111,12 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 								return foundTerms;
 						}
 					}
-				}
-
-				return foundTerms;
 			}
+
+			return foundTerms;
 		} catch (Exception e) {
-			logger.error("Failed to retrieve auto-suggest data for: "
-					+ partialTerm + ".", e);
+			logger.severe("Failed to retrieve auto-suggest data for: "
+					+ partialTerm + "." + e.getMessage());
 			throw new NdexException(
 					"Failed to retrieve auto-suggest data for: " + partialTerm
 							+ ".");
@@ -390,7 +381,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 
 			return foundNetworks;
 		} catch (Exception e) {
-			logger.error("Failed to search networks.", e);
+			logger.severe("Failed to search networks. " +  e.getMessage());
 			throw new NdexException("Failed to search networks.");
 		} finally {
 			teardownDatabase();
@@ -445,7 +436,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 				throw new ObjectNotFoundException("Network", networkId);
 
 			int counter = 0;
-			final List<IEdge> foundIEdges = new ArrayList<IEdge>();
+			final Set<IEdge> foundIEdges = new TreeSet<IEdge>();
 			final int startIndex = skip * top;
 
 			for (final IEdge networkEdge : network.getNdexEdges()) {
@@ -460,7 +451,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
-			logger.error("Failed to query network: " + networkId + ".", e);
+			logger.severe("Failed to query network: " + networkId + ". " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		} finally {
 			teardownDatabase();
@@ -500,7 +491,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
-			logger.error("Failed to query network: " + networkId + ".", e);
+			logger.severe("Failed to query network: " + networkId + ". " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		} finally {
 			teardownDatabase();
@@ -545,7 +536,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
-			logger.error("Failed to query network by citations : " + networkId + ".", e);
+			logger.severe("Failed to query network by citations : " + networkId + ". " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		} finally {
 			teardownDatabase();
@@ -601,7 +592,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
-			logger.error("Failed to query network: " + networkId + ".", e);
+			logger.severe("Failed to query network: " + networkId + ". " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		} finally {
 			teardownDatabase();
@@ -646,7 +637,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
-			logger.error("Failed to query network: " + networkId + ".", e);
+			logger.severe("Failed to query network: " + networkId + ". " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		} finally {
 			teardownDatabase();
@@ -686,7 +677,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
-			logger.error("Failed to query network: " + networkId + ".", e);
+			logger.severe("Failed to query network: " + networkId + ". " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		} finally {
 			teardownDatabase();
@@ -726,7 +717,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
-			logger.error("Failed to query network: " + networkId + ".", e);
+			logger.severe("Failed to query network: " + networkId + ". " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		} finally {
 			teardownDatabase();
@@ -765,7 +756,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 			} catch (ObjectNotFoundException onfe) {
 				throw onfe;
 			} catch (Exception e) {
-				logger.error("Failed to query network: " + networkId + ".", e);
+				logger.severe("Failed to query network: " + networkId + ". " + e.getMessage());
 				throw new NdexException(e.getMessage());
 			} finally {
 				teardownDatabase();
@@ -778,69 +769,23 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId), "A network id is required" );
 
-		try {
-			setupDatabase();
-
-			final INetwork network = _orientDbGraph.getVertex(
-					IdConverter.toRid(networkId), INetwork.class);
-			if (network == null)
-				return null;
-			else {
-				List<Term> baseTerms = getBaseTermsByName(network,
-						queryParameters.getStartingTermStrings().get(0));
-				if (!baseTerms.isEmpty()) {
-					queryParameters.addStartingTermId(baseTerms.get(0).getId());
-
-					List<IEdge> foundIEdges = neighborhoodQuery(network,
-							queryParameters);
-					return getNetworkBasedOnFoundEdges(foundIEdges, network);
-				} else
-					return null;
-			}
-		} catch (Exception e) {
-			logger.error("Failed to query network: " + networkId + ".", e);
-			throw new NdexException("Failed to query the network.");
-		} finally {
-			teardownDatabase();
-		}
+		NetworkAOrientDBDAO dao = NetworkAOrientDBDAO.getInstance();
+		Network network = dao.queryForSubnetwork(null, networkId, queryParameters, 0,1000);
+	
+		return network;
 	}
 
-	@Override
+/*	@Override
 	public Network queryNetwork2(String networkId,
 			NetworkQueryParameters queryParameters)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId), "A network id is required" );
-		try {
-			setupDatabase();
-
-			final INetwork network = _orientDbGraph.getVertex(
-					IdConverter.toRid(networkId), INetwork.class);
-			if (network == null)
-				return null;
-			else {
-				List<IBaseTerm> startingTerms = getBaseTermsByNames(network,
-						queryParameters.getStartingTermStrings());
-
-				if (!startingTerms.isEmpty()) {
-					List<INode> startingNodes = getNodesFromTerms(
-							startingTerms, true);
-					if (!startingNodes.isEmpty()) {
-						List<IEdge> foundIEdges = neighborhoodNodeQuery(
-								network, startingNodes,
-								queryParameters.getSearchDepth(),
-								queryParameters.getSearchType());				
-						return getNetworkBasedOnFoundEdges(foundIEdges, network);
-					}
-				}
-			}
-			return null;
-		} catch (Exception e) {
-			logger.error("Failed to query network: " + networkId + ".", e);
-			throw new NdexException("Failed to query the network.");
-		} finally {
-			teardownDatabase();
-		}
-	}
+		
+		NetworkAOrientDBDAO dao = NetworkAOrientDBDAO.getInstance();
+		Network network = dao.queryForSubnetwork(null, networkId, queryParameters, 0,0);
+	
+		return network;
+	} */
 
 	@Override
 	public void removeMember(String userId, String networkId)
@@ -890,7 +835,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 				throw new ObjectNotFoundException("Network", networkId);
 			}
 
-			logger.error("Failed to remove member.", e);
+			logger.severe("Failed to remove member. " + e.getMessage());
 
 			throw new NdexException("Failed to remove member.");
 		} finally {
@@ -953,9 +898,9 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 			if (e.getMessage().indexOf("cluster: null") > -1)
 				throw new ObjectNotFoundException("Network", networkId);
 
-			logger.error(
+			logger.severe(
 					"Failed to update member: "
-							+ networkMember.getResourceName() + ".", e);
+							+ networkMember.getResourceName() + ". "+ e.getMessage());
 
 			throw new NdexException("Failed to update member: "
 					+ networkMember.getResourceName() + ".");
@@ -1009,9 +954,9 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 			if (e.getMessage().indexOf("cluster: null") > -1)
 				throw new ObjectNotFoundException("Network",
 						updatedNetwork.getId());
-			logger.error(
+			logger.severe(
 					"Failed to update network: " + updatedNetwork.getName()
-							+ ".", e);
+							+ ". " + e.getMessage());
 			throw new NdexException("Failed to update the network.");
 		} finally {
 			teardownDatabase();
@@ -1086,8 +1031,8 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} catch (IllegalArgumentException iae) {
 			throw iae;
 		} catch (Exception e) {
-			logger.error("Failed to process uploaded network: "
-					+ uploadedNetwork.getFilename() + ".", e);
+			logger.severe("Failed to process uploaded network: "
+					+ uploadedNetwork.getFilename() + ". " + e.getMessage());
 
 			throw new NdexException(e.getMessage());
 		}
@@ -1310,7 +1255,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 
 		}
 
-		logger.debug(query);
+		logger.fine(query);
 		return query;
 	}
 
@@ -1933,7 +1878,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 	 * 
 	 **************************************************************************/
 	private Network getNetworkBasedOnFoundEdges(
-			final List<IEdge> requiredIEdges, final INetwork network)
+			final Collection<IEdge> requiredIEdges, final INetwork network)
 			throws NdexException {
 		if (requiredIEdges.size() == 0)
 			return new Network();
@@ -2163,49 +2108,8 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		return false;
 	}
 
-	private List<IEdge> neighborhoodQuery(final INetwork network,
-			final NetworkQueryParameters queryParameters)
-			throws IllegalArgumentException {
-		final List<IEdge> foundEdges = new ArrayList<IEdge>();
 
-		// Make a SearchSpec based on the NetworkQueryParameters, verifying &
-		// converting term ids in the process
-		final SearchSpec searchSpec = new SearchSpec(queryParameters);
-
-		final Set<OrientVertex> orientEdges = NetworkQueries.INSTANCE
-				.searchNeighborhoodByTerm(_orientDbGraph.getBaseGraph(),
-						(OrientVertex) network.asVertex(), searchSpec);
-		for (final OrientVertex edge : orientEdges)
-			foundEdges.add(_orientDbGraph.getVertex(edge, IEdge.class));
-
-		return foundEdges;
-	}
-
-	private List<IEdge> neighborhoodNodeQuery(final INetwork network,
-			List<INode> startingNodes, int searchDepth, String searchType)
-			throws IllegalArgumentException {
-		final List<IEdge> foundEdges = new ArrayList<IEdge>();
-		
-
-		OIdentifiable[] nodes = new OIdentifiable[startingNodes.size()];
-		for (int index = 0; index < startingNodes.size(); index++) {
-			INode startingNode = startingNodes.get(index);
-			final ORID rid = new ORecordId(startingNode.asVertex().getId()
-					.toString());
-			nodes[index] = rid;
-		}
-
-		final SearchType searchSpecSearchType = SearchType.valueOf(searchType);
-
-		final Set<OrientVertex> orientEdges = NetworkQueries.INSTANCE
-				.searchNeighborhoodByNodes(_orientDbGraph.getBaseGraph(),
-						(OrientVertex) network.asVertex(), nodes, searchDepth,
-						searchSpecSearchType);
-		for (final OrientVertex edge : orientEdges)
-			foundEdges.add(_orientDbGraph.getVertex(edge, IEdge.class));
-
-		return foundEdges;
-	}
+	
 
 	/**************************************************************************
 	 * Parses (base) terms from the search parameters.
