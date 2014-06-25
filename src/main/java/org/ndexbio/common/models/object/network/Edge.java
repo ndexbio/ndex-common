@@ -1,4 +1,4 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.network;
 
 import java.util.ArrayList;
 import java.util.List;

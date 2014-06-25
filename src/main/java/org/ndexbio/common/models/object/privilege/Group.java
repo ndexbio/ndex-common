@@ -1,13 +1,16 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.privilege;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import org.ndexbio.common.models.data.IGroup;
 import org.ndexbio.common.models.data.IGroupMembership;
 import org.ndexbio.common.models.data.INetworkMembership;
 import org.ndexbio.common.models.data.IRequest;
 import org.ndexbio.common.models.data.IUser;
+import org.ndexbio.common.models.object.Request;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Group extends Account

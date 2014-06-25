@@ -6,6 +6,7 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 
+@Deprecated
 public enum NdexOrientdbConnectionPool {
 	INSTANCE;
 	private ConnectionPoolFactory  factory = new ConnectionPoolFactory();

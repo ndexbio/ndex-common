@@ -3,11 +3,11 @@ package org.ndexbio.common.access;
 import java.util.List;
 
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.models.object.BaseTerm;
-import org.ndexbio.common.models.object.Edge;
-import org.ndexbio.common.models.object.Network;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
-import org.ndexbio.common.models.object.User;
+import org.ndexbio.common.models.object.network.BaseTerm;
+import org.ndexbio.common.models.object.network.Edge;
+import org.ndexbio.common.models.object.network.Network;
+import org.ndexbio.common.models.object.privilege.User;
 
 public interface NetworkADAO {
 

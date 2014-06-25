@@ -2,6 +2,12 @@ package org.ndexbio.common.models.object;
 
 import java.util.List;
 
+import org.ndexbio.common.models.object.network.BaseTerm;
+import org.ndexbio.common.models.object.network.Citation;
+import org.ndexbio.common.models.object.network.Edge;
+import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.Network;
+
 /*
  * Represents a set of service operations to interact with NDEx model objects.
  * Implementations may utilize the REST service classes directly or through

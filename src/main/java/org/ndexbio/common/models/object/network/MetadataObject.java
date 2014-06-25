@@ -1,10 +1,12 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.network;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import org.ndexbio.common.models.data.IBaseTerm;
 import org.ndexbio.common.models.data.IMetadataObject;
+import org.ndexbio.common.models.object.NdexObject;
 
 public class MetadataObject extends NdexObject
 {

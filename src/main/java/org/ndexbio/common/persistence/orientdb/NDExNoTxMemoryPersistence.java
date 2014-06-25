@@ -12,10 +12,10 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.data.*;
-import org.ndexbio.common.models.object.Membership;
-import org.ndexbio.common.models.object.Network;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
+import org.ndexbio.common.models.object.network.Network;
+import org.ndexbio.common.models.object.privilege.Membership;
 import org.ndexbio.common.persistence.NDExPersistenceService;
 
 import com.google.common.base.Joiner;

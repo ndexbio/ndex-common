@@ -1,9 +1,10 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.privilege;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.ndexbio.common.models.data.IGroup;
 import org.ndexbio.common.models.data.IGroupMembership;
@@ -12,6 +13,9 @@ import org.ndexbio.common.models.data.INetworkMembership;
 import org.ndexbio.common.models.data.IRequest;
 import org.ndexbio.common.models.data.ITask;
 import org.ndexbio.common.models.data.IUser;
+import org.ndexbio.common.models.object.Request;
+import org.ndexbio.common.models.object.Task;
+import org.ndexbio.common.models.object.network.Network;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class User extends Account
@@ -44,6 +48,7 @@ public class User extends Account
     * 
     * @param user The User with source data.
     **************************************************************************/
+    @Deprecated
     public User(IUser user)
     {
         this(user, false);
@@ -56,6 +61,7 @@ public class User extends Account
     * @param loadEverything True to load owned Groups and Networks, false to
     *                       exclude them.
     **************************************************************************/
+    @Deprecated
     public User(IUser user, boolean loadEverything)
     {
         super(user);

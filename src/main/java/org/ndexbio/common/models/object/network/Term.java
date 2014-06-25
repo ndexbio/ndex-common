@@ -1,7 +1,8 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.network;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import org.ndexbio.common.helpers.TermDeserializer;
 import org.ndexbio.common.models.data.ITerm;
 

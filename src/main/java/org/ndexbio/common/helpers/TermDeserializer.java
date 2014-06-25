@@ -5,11 +5,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.ndexbio.common.models.object.BaseTerm;
-import org.ndexbio.common.models.object.FunctionTerm;
-import org.ndexbio.common.models.object.Namespace;
-import org.ndexbio.common.models.object.ReifiedEdgeTerm;
-import org.ndexbio.common.models.object.Term;
+import org.ndexbio.common.models.object.network.BaseTerm;
+import org.ndexbio.common.models.object.network.FunctionTerm;
+import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.ReifiedEdgeTerm;
+import org.ndexbio.common.models.object.network.Term;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;

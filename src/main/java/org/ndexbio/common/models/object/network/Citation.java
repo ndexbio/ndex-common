@@ -1,8 +1,10 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.network;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import org.ndexbio.common.models.data.ICitation;
 import org.ndexbio.common.models.data.ISupport;
 

@@ -152,11 +152,12 @@ public class NdexTaskService
      public List<Task> getInProgressTasks() throws NdexException{
     	 return getTasksByStatus(Status.PROCESSING);
      }
-     
+
+/*     
      private List<ITask> getITasksQueuedForDeletion() throws NdexException{
     	 return getITasksByStatus(Status.QUEUED_FOR_DELETION);
      }
-     
+*/     
      
      /*
       * prublic method to query for ITasks with a QUEUED status,

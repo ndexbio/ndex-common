@@ -14,16 +14,16 @@ import java.util.regex.Pattern;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.object.BaseTerm;
-import org.ndexbio.common.models.object.Edge;
-import org.ndexbio.common.models.object.FunctionTerm;
-import org.ndexbio.common.models.object.Namespace;
-import org.ndexbio.common.models.object.Network;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
-import org.ndexbio.common.models.object.Node;
-import org.ndexbio.common.models.object.ReifiedEdgeTerm;
-import org.ndexbio.common.models.object.Term;
-import org.ndexbio.common.models.object.User;
+import org.ndexbio.common.models.object.network.BaseTerm;
+import org.ndexbio.common.models.object.network.Edge;
+import org.ndexbio.common.models.object.network.FunctionTerm;
+import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.Network;
+import org.ndexbio.common.models.object.network.Node;
+import org.ndexbio.common.models.object.network.ReifiedEdgeTerm;
+import org.ndexbio.common.models.object.network.Term;
+import org.ndexbio.common.models.object.privilege.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -276,6 +276,25 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 			List<String> baseTermIds) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	
+	public List<ODocument> getUserFromName (String user) throws NdexException {
+		
+		try {
+			setup();
+
+			final String query = "SELECT FROM User where username='" + user + "'";
+			return _ndexDatabase
+					.query(new OSQLSynchQuery<ODocument>(query));
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new NdexException("Error in queryForSubnetwork: " + e.getLocalizedMessage());
+		} finally {
+			teardown();
+		}
+		
 	}
 
 	private List<ORID> getBaseTermRidsFromNames(ORID networkRid,

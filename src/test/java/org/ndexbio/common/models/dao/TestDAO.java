@@ -6,7 +6,8 @@ import java.util.Properties;
 
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.User;
+import org.ndexbio.common.models.object.privilege.User;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;

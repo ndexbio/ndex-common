@@ -1,26 +1,15 @@
 package org.ndexbio.common.access;
 
-import org.ndexbio.common.helpers.Configuration;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-
 
 public class NdexAOrientDBDAO {
 	
     protected ODatabaseDocumentTx _ndexDatabase = null;
     
-    public NdexAOrientDBDAO()
-    {
-        
-    }
-    
+    @Deprecated    
     protected void setup()
     {
-    _ndexDatabase = ODatabaseDocumentPool.global().acquire(
-            Configuration.getInstance().getProperty("OrientDB-URL"),
-            Configuration.getInstance().getProperty("OrientDB-Username"),
-            Configuration.getInstance().getProperty("OrientDB-Password"));
+       _ndexDatabase = NdexAOrientDBConnectionPool.getInstance().acquire();
     }
     
     protected void teardown()

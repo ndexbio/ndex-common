@@ -7,14 +7,15 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.models.object.BaseTerm;
-import org.ndexbio.common.models.object.Edge;
-import org.ndexbio.common.models.object.Network;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
-import org.ndexbio.common.models.object.User;
+import org.ndexbio.common.models.object.network.BaseTerm;
+import org.ndexbio.common.models.object.network.Edge;
+import org.ndexbio.common.models.object.network.Network;
+import org.ndexbio.common.models.object.privilege.User;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class TestNetworkAOrientDBDAO {
 	
@@ -82,6 +83,28 @@ public class TestNetworkAOrientDBDAO {
 		} 
 	}
 	*/
+	
+	@Test
+	public void mytest() throws NdexException {
+	   	
+		NetworkAOrientDBDAO dao = NetworkAOrientDBDAO.getInstance();
+		
+		List<ODocument> ds = dao.getUserFromName("biologist1");
+		
+		for (ODocument d : ds) {
+			String email = d.field("emailAddress");
+			System.out.println (email);
+			ODocument grp = d.field("out_userGroups");
+			System.out.println(grp);
+			String mtype = ((ODocument)(d.field("out_userGroups"))).field("membershipType");
+			System.out.println("use memtype:" + mtype);
+			System.out.println (d);
+		}
+		
+		
+	}
+	
+	
 	@Test 
 	public void networkByInterconnect(){
 		

@@ -1,8 +1,14 @@
 package org.ndexbio.orientdb;
 
+import org.ndexbio.common.NdexClasses;
+
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+
+
 
 /*
  * mod 03Apr2014 
@@ -17,181 +23,230 @@ public class NdexSchemaManager
     
     private Boolean initialized = Boolean.FALSE;
 
-    public synchronized void init(OrientBaseGraph orientDbGraph)
+    //TODO: type property might not be needed because we can get them from the vertex type.
+    public synchronized void init(ODatabaseDocumentTx  orientDb)
     {
     	if(this.isInitialized()) {
     		return;
     	}
-        orientDbGraph.getRawGraph().commit();
+        orientDb.commit();
+        
+        OrientBaseGraph orientDbGraph = new OrientGraph(orientDb);
 
         /**********************************************************************
         * Create base types first. 
         **********************************************************************/
-        if (orientDbGraph.getVertexType("account") == null)
+        OClass clsNdxExternalObj = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexExternalObject);
+        
+        if (clsNdxExternalObj == null)
         {
-            OClass accountClass = orientDbGraph.createVertexType("account");
-            accountClass.createProperty("backgroundImage", OType.STRING);
-            accountClass.createProperty("createdDate", OType.DATE);
-            accountClass.createProperty("description", OType.STRING);
-            accountClass.createProperty("foregroundImage", OType.STRING);
+        	clsNdxExternalObj = orientDbGraph.createVertexType(NdexClasses.NdexExternalObject);
+            clsNdxExternalObj.createProperty("UUID", OType.STRING);
+            clsNdxExternalObj.createProperty("createdDate", OType.DATE);
+            clsNdxExternalObj.createProperty("modificationDate", OType.DATE);
+        }
+        
+        OClass clsAccount = orientDb.getMetadata().getSchema().getClass(NdexClasses.Account);
+        
+        if (clsAccount == null)
+        {
+        	clsAccount = orientDbGraph.createVertexType(NdexClasses.Account, clsNdxExternalObj);
+        	clsAccount.createProperty("backgroundImage", OType.STRING);
+        	clsAccount.createProperty("description", OType.STRING);
+        	clsAccount.createProperty("foregroundImage", OType.STRING);
+        	clsAccount.createProperty("accountName", OType.STRING);
+        	clsAccount.createProperty("password", OType.STRING);
+        	clsAccount.createProperty("website", OType.STRING);
         }
 
-        if (orientDbGraph.getVertexType("membership") == null)
-        {
-            OClass membershipClass = orientDbGraph.createVertexType("membership");
-            membershipClass.createProperty("permissions", OType.STRING);
-        }
-
-        if (orientDbGraph.getVertexType("request") == null)
-        {
-            OClass requestClass = orientDbGraph.createVertexType("request");
-            requestClass.createProperty("message", OType.STRING);
-            requestClass.createProperty("requestTime", OType.DATETIME);
-        }
-
-        if (orientDbGraph.getVertexType("term") == null)
-        {
-            OClass termClass = orientDbGraph.createVertexType("term");
-            termClass.createProperty("jdexId", OType.STRING);
-            termClass.createProperty("metadata", OType.EMBEDDEDMAP);
-            termClass.createProperty("metaterms", OType.EMBEDDEDMAP);
-        }
 
         /**********************************************************************
         * Then create inherited types and uninherited types. 
         **********************************************************************/
-        if (orientDbGraph.getVertexType("baseTerm") == null)
+        OClass cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Group);  
+        if (cls == null)
         {
-            OClass termClass = orientDbGraph.createVertexType("baseTerm", "term");
+            OClass groupClass = orientDbGraph.createVertexType(NdexClasses.Group, clsAccount);
+            groupClass.createProperty("organizationName", OType.STRING);
+            groupClass.createProperty("type", OType.STRING);
+            
+//            groupClass.createIndex("index-group-name", OClass.INDEX_TYPE.UNIQUE, "name");
+        }
+        
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Membership);  
+        if ( cls == null)
+        {
+        	cls = orientDbGraph.createVertexType(NdexClasses.Membership);
+            cls.createProperty("permissions", OType.STRING);
+            cls.createProperty("membershipType", OType.STRING);
+            cls.createProperty("type", OType.STRING);
+        }
+
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexProperty);  
+        if ( cls == null)
+        {
+        	cls = orientDbGraph.createVertexType(NdexClasses.NdexProperty);
+            cls.createProperty("value", OType.STRING);
+            cls.createProperty("dataType", OType.STRING);
+            cls.createProperty("type", OType.STRING);
+        }
+
+        
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Request);  
+        if (cls == null)
+        {
+        	cls = orientDbGraph.createVertexType(NdexClasses.Request,clsNdxExternalObj);
+        	cls.createProperty("message", OType.STRING);
+            cls.createProperty("requestTime", OType.DATETIME);
+            cls.createProperty("response", OType.STRING);
+            cls.createProperty("responseMessage", OType.STRING);
+            cls.createProperty("type", OType.STRING);
+        }
+
+        
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Task);  
+        if (cls == null)
+        {
+            OClass taskClass = orientDbGraph.createVertexType(NdexClasses.Task, clsNdxExternalObj);
+            taskClass.createProperty("status", OType.STRING);
+            taskClass.createProperty("description", OType.STRING);
+            taskClass.createProperty("priority", OType.STRING);
+            taskClass.createProperty("progress", OType.STRING);
+            taskClass.createProperty("taskType", OType.STRING);
+            taskClass.createProperty("resource", OType.STRING);
+            taskClass.createProperty("type", OType.STRING);
+        }
+
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.User);  
+        if (cls == null)
+        {
+            OClass userClass = orientDbGraph.createVertexType(NdexClasses.User, clsAccount);
+
+            userClass.createProperty("firstName", OType.STRING);
+            userClass.createProperty("lastName", OType.STRING);
+            userClass.createProperty("emailAddress", OType.STRING);
+
+            userClass.createIndex("index-user-username", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "username");
+            userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
+            userClass.createProperty("type", OType.STRING);
+
+        }
+        
+        
+        // network data schema
+        
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.BaseTerm);  
+        if (cls == null)
+        {
+            OClass termClass = orientDbGraph.createVertexType(NdexClasses.BaseTerm);
             termClass.createProperty("name", OType.STRING);
+
+            termClass.createProperty("id", OType.LONG);
+            termClass.createProperty("type", OType.STRING);
 
             termClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
         }
 
-        if (orientDbGraph.getVertexType("citation") == null)
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Citation);  
+        if (cls == null)
         {
-            OClass citationClass = orientDbGraph.createVertexType("citation");
+            OClass citationClass = orientDbGraph.createVertexType(NdexClasses.Citation);
 
-            //citationClass.createProperty("contributors", OType.STRING);
             citationClass.createProperty("contributors", OType.EMBEDDEDLIST, OType.STRING);
-            citationClass.createProperty("identifier", OType.STRING);
-            citationClass.createProperty("jdexId", OType.STRING);
-            citationClass.createProperty("metadata", OType.EMBEDDEDMAP);
-            citationClass.createProperty("metaterms", OType.EMBEDDEDMAP);
+            citationClass.createProperty("id", OType.LONG);
+            citationClass.createProperty("properties", OType.EMBEDDEDLIST);
+            citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             citationClass.createProperty("title", OType.STRING);
             citationClass.createProperty("type", OType.STRING);
         }
 
-        if (orientDbGraph.getVertexType("edge") == null)
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Edge);  
+        if (cls == null)
         {
-            OClass edgeClass = orientDbGraph.createVertexType("edge");
-            edgeClass.createProperty("jdexId", OType.STRING);
-            edgeClass.createProperty("metadata", OType.EMBEDDEDMAP);
-            edgeClass.createProperty("metaterms", OType.EMBEDDEDMAP);
+            OClass edgeClass = orientDbGraph.createVertexType(NdexClasses.Edge);
+            edgeClass.createProperty("id", OType.LONG);
+            edgeClass.createProperty("properties", OType.EMBEDDEDLIST);
+            edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+            edgeClass.createProperty("type", OType.STRING);
         }
 
-        if (orientDbGraph.getVertexType("functionTerm") == null)
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.FunctionTerm);  
+        if (cls == null)
         {
-            OClass functionTermClass = orientDbGraph.createVertexType("functionTerm", "term");
+            OClass functionTermClass = orientDbGraph.createVertexType(NdexClasses.FunctionTerm);
             functionTermClass.createProperty("functionTermOrderedParameters", OType.EMBEDDEDLIST);
             //functionTermClass.createProperty("textParameters", OType.EMBEDDEDSET);
             //functionTermClass.createIndex("functionTermLinkParametersIndex", OClass.INDEX_TYPE.NOTUNIQUE, "termParameters by value");
         }
 
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.ReifiedEdgeTerm);  
         if (orientDbGraph.getVertexType("reifiedEdgeTerm") == null)
         {
-            OClass reifiedEdgeTermClass = orientDbGraph.createVertexType("reifiedEdgeTerm", "term");
+            OClass reifiedEdgeTermClass = orientDbGraph.createVertexType(NdexClasses.ReifiedEdgeTerm);
+            reifiedEdgeTermClass.createProperty("id", OType.LONG);
+//            reifiedEdgeTermClass.createProperty("type", OType.STRING);
         }
         
-        if (orientDbGraph.getVertexType("group") == null)
-        {
-            OClass groupClass = orientDbGraph.createVertexType("group", "account");
-            groupClass.createProperty("name", OType.STRING);
-            groupClass.createProperty("organizationName", OType.STRING);
-            groupClass.createProperty("website", OType.STRING);
-
-            groupClass.createIndex("index-group-name", OClass.INDEX_TYPE.UNIQUE, "name");
-        }
-        
-        if (orientDbGraph.getVertexType("groupInvite") == null)
-            orientDbGraph.createVertexType("groupInvite", "request");
-
-        if (orientDbGraph.getVertexType("groupMembership") == null)
-            orientDbGraph.createVertexType("groupMembership", "membership");
-
-        if (orientDbGraph.getVertexType("joinGroup") == null)
-            orientDbGraph.createVertexType("joinGroup", "request");
-
-        if (orientDbGraph.getVertexType("namespace") == null)
+        if (orientDbGraph.getVertexType(NdexClasses.Namespace) == null)
         {
             OClass namespaceClass = orientDbGraph.createVertexType("namespace");
-            namespaceClass.createProperty("jdexId", OType.STRING);
-            namespaceClass.createProperty("metadata", OType.EMBEDDEDMAP);
-            namespaceClass.createProperty("metaterms", OType.EMBEDDEDMAP);
+            namespaceClass.createProperty("id", OType.LONG);
             namespaceClass.createProperty("prefix", OType.STRING);
             namespaceClass.createProperty("uri", OType.STRING);
         }
 
-        if (orientDbGraph.getVertexType("network") == null)
+        if (orientDbGraph.getVertexType(NdexClasses.Network) == null)
         {
-            OClass networkClass = orientDbGraph.createVertexType("network");
-            networkClass.createProperty("copyright", OType.STRING);
+            OClass networkClass = orientDbGraph.createVertexType(NdexClasses.Network);
+       //     networkClass.createProperty("copyright", OType.STRING);
             networkClass.createProperty("description", OType.STRING);
             networkClass.createProperty("edgeCount", OType.INTEGER);
-            networkClass.createProperty("format", OType.STRING);
-            networkClass.createProperty("metadata", OType.EMBEDDEDMAP);
-            networkClass.createProperty("metaterms", OType.EMBEDDEDMAP);
+       //     networkClass.createProperty("format", OType.STRING);
+            networkClass.createProperty("properties", OType.EMBEDDEDLIST);
+            networkClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+
             networkClass.createProperty("nodeCount", OType.INTEGER);
-            networkClass.createProperty("source", OType.STRING);
-            networkClass.createProperty("title", OType.STRING);
+      //      networkClass.createProperty("source", OType.STRING);
+            networkClass.createProperty("name", OType.STRING);
             networkClass.createProperty("version", OType.STRING);
+            networkClass.createProperty("highestElementId", OType.INTEGER);
         }
 
-        if (orientDbGraph.getVertexType("networkAccess") == null)
-            orientDbGraph.createVertexType("networkAccess", "request");
-
-        if (orientDbGraph.getVertexType("networkMembership") == null)
-            orientDbGraph.createVertexType("networkMembership", "membership");
-
-        if (orientDbGraph.getVertexType("node") == null)
+        if (orientDbGraph.getVertexType(NdexClasses.Node) == null)
         {
-            OClass nodeClass = orientDbGraph.createVertexType("node");
+            OClass nodeClass = orientDbGraph.createVertexType(NdexClasses.Node);
             nodeClass.createProperty("name", OType.STRING);
-            nodeClass.createProperty("jdexId", OType.STRING);
-            nodeClass.createProperty("metadata", OType.EMBEDDEDMAP);
-            nodeClass.createProperty("metaterms", OType.EMBEDDEDMAP);
+            nodeClass.createProperty("id", OType.LONG);
+            nodeClass.createProperty("properties", OType.EMBEDDEDLIST);
+            nodeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
         }
 
-        if (orientDbGraph.getVertexType("support") == null)
+        
+        if (orientDbGraph.getVertexType(NdexClasses.Provenance) == null)
         {
-            OClass supportClass = orientDbGraph.createVertexType("support");
-            supportClass.createProperty("jdexId", OType.STRING);
+           // OClass clss = 
+            		orientDbGraph.createVertexType(NdexClasses.Provenance);
+        }
+        
+        
+        if (orientDbGraph.getVertexType(NdexClasses.Subnetwork) == null)
+        {
+            OClass clss = orientDbGraph.createVertexType(NdexClasses.Subnetwork);
+            clss.createProperty("id", OType.LONG);
+            clss.createProperty("subnetworktype", OType.STRING);
+            clss.createProperty("name", OType.STRING);
+            clss.createProperty("properties", OType.EMBEDDEDLIST);
+            clss.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+        }
+
+        if (orientDbGraph.getVertexType(NdexClasses.Support) == null)
+        {
+            OClass supportClass = orientDbGraph.createVertexType(NdexClasses.Support);
+            supportClass.createProperty("id", OType.LONG);
             supportClass.createProperty("text", OType.STRING);
-            supportClass.createProperty("metadata", OType.EMBEDDEDMAP);
-            supportClass.createProperty("metaterms", OType.EMBEDDEDMAP);
         }
 
-        if (orientDbGraph.getVertexType("task") == null)
-        {
-            OClass taskClass = orientDbGraph.createVertexType("task");
-            taskClass.createProperty("status", OType.STRING);
-            taskClass.createProperty("startTime", OType.DATETIME);
-        }
 
-        if (orientDbGraph.getVertexType("user") == null)
-        {
-            OClass userClass = orientDbGraph.createVertexType("user", "account");
-
-            userClass.createProperty("username", OType.STRING);
-            userClass.createProperty("password", OType.STRING);
-            userClass.createProperty("firstName", OType.STRING);
-            userClass.createProperty("lastName", OType.STRING);
-            userClass.createProperty("emailAddress", OType.STRING);
-            userClass.createProperty("website", OType.STRING);
-
-            userClass.createIndex("index-user-username", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "username");
-            userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
-        }
         // turn on initialized flag
         this.setInitialized(Boolean.TRUE);
     }

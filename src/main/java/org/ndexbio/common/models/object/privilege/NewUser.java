@@ -1,4 +1,4 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.privilege;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

@@ -13,10 +13,10 @@ import org.ndexbio.common.models.dao.TaskDAO;
 import org.ndexbio.common.models.data.INetwork;
 import org.ndexbio.common.models.data.ITask;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.Priority;
 import org.ndexbio.common.models.object.Status;
 import org.ndexbio.common.models.object.Task;
 import org.ndexbio.common.models.object.TaskType;
+import org.ndexbio.common.models.object.privilege.Priority;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

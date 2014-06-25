@@ -1,68 +1,67 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.network;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.ndexbio.common.models.data.INamespace;
+
+import org.ndexbio.common.models.data.ISupport;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Namespace extends MetadataObject
+public class Support extends MetadataObject
 {
     private String _jdexId;
-    private String _prefix;
-    private String _uri;
-    
-    
-    
+    private String _text;
+    private String _citation;
+
+
+
     /**************************************************************************
     * Default constructor.
     **************************************************************************/
-    public Namespace()
+    public Support()
     {
         super();
     }
-    
+
     /**************************************************************************
     * Populates the class (from the database) and removes circular references.
     * 
-    * @param namespace The Namespace with source data.
+    * @param support The Support with source data.
     **************************************************************************/
-    public Namespace (INamespace namespace)
+    public Support(ISupport support)
     {
-        super(namespace);
-        
-        _jdexId = namespace.getJdexId();
-        _prefix = namespace.getPrefix();
-        _uri = namespace.getUri();
+        super(support);
+
+        _jdexId = support.getJdexId();
+        _text = support.getText();
+        _citation = support.getSupportCitation().getJdexId();
     }
-    
-    
-    
+ 
     public String getJdexId()
     {
         return _jdexId;
     }
-    
+
     public void setJdexId(String jdexId)
     {
         _jdexId = jdexId;
     }
-    
-    public String getPrefix()
+
+    public String getText()
     {
-        return _prefix;
+        return _text;
     }
-    
-    public void setPrefix(String prefix)
+
+    public void setText(String text)
     {
-        _prefix = prefix;
+        _text = text;
     }
+
+	public String getCitation() {
+		return _citation;
+	}
+
+	public void setCitation(String _citation) {
+		this._citation = _citation;
+	}
     
-    public String getUri()
-    {
-        return _uri;
-    }
     
-    public void setUri(String uri)
-    {
-        _uri = uri;
-    }
 }

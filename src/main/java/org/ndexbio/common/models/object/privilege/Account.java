@@ -1,10 +1,12 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.privilege;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import org.ndexbio.common.models.data.IAccount;
+import org.ndexbio.common.models.object.NdexObject;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "accountType")
@@ -31,6 +33,7 @@ public abstract class Account extends NdexObject
     * 
     * @param account The Account with source data.
     **************************************************************************/
+    @Deprecated
     public Account(IAccount account)
     {
         super(account);

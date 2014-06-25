@@ -1,13 +1,21 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.network;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import org.ndexbio.common.models.data.*;
+import org.ndexbio.common.models.object.Request;
+import org.ndexbio.common.models.object.privilege.Membership;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+/**
+ * @deprecated  As of release 1.0, replaced by {@link org.ndexbio.model.object.network.Network}
+ */
+@Deprecated
 public class Network extends MetadataObject
 {
     private Map<String, Citation> _citations;

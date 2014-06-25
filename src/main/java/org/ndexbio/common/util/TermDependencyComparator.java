@@ -3,8 +3,8 @@ package org.ndexbio.common.util;
 import java.util.Comparator;
 import java.util.Map;
 
-import org.ndexbio.common.models.object.FunctionTerm;
-import org.ndexbio.common.models.object.Term;
+import org.ndexbio.common.models.object.network.FunctionTerm;
+import org.ndexbio.common.models.object.network.Term;
 
 public class TermDependencyComparator implements Comparator<String> {
 

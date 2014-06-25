@@ -3,6 +3,7 @@ package org.ndexbio.common.models.object;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import org.ndexbio.common.models.data.ITask;
+import org.ndexbio.common.models.object.privilege.Priority;
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)

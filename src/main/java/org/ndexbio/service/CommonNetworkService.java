@@ -4,9 +4,9 @@ import java.util.HashMap;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.data.*;
-import org.ndexbio.common.models.object.Permissions;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
+import org.ndexbio.common.models.object.privilege.Permissions;
 import org.ndexbio.common.persistence.NDExPersistenceService;
 import org.ndexbio.common.persistence.NDExPersistenceServiceFactory;
 import org.slf4j.Logger;

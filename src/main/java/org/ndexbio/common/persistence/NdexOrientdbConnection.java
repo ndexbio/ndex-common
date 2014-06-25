@@ -58,7 +58,7 @@ public class NdexOrientdbConnection {
               * only initialize the ORM once
               */
              if (!NdexSchemaManager.INSTANCE.isInitialized()) {
-    			NdexSchemaManager.INSTANCE.init(this.orientDbGraph.getBaseGraph());
+    			NdexSchemaManager.INSTANCE.init(this.ndexDatabase);
     		}
     }
     

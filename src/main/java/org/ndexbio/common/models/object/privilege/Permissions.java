@@ -1,4 +1,4 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.privilege;
 
 public enum Permissions
 {

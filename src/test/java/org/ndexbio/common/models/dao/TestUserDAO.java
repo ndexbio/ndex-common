@@ -12,9 +12,9 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.NewUser;
 import org.ndexbio.common.models.object.SearchParameters;
-import org.ndexbio.common.models.object.User;
+import org.ndexbio.common.models.object.privilege.NewUser;
+import org.ndexbio.common.models.object.privilege.User;
 
 import com.orientechnologies.orient.core.id.ORID;
 

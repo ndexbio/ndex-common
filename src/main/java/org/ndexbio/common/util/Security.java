@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.List;
+
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
+
 import org.jboss.resteasy.util.Base64;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.data.IBaseTerm;
@@ -18,7 +20,8 @@ import org.ndexbio.common.models.data.IJoinGroupRequest;
 import org.ndexbio.common.models.data.INetworkAccessRequest;
 import org.ndexbio.common.models.data.INetworkMembership;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.User;
+import org.ndexbio.common.models.object.privilege.User;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;

@@ -1,66 +1,69 @@
-package org.ndexbio.common.models.object;
+package org.ndexbio.common.models.object.network;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.ndexbio.common.models.data.ISupport;
+
+import org.ndexbio.common.models.data.INamespace;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Support extends MetadataObject
+public class Namespace extends MetadataObject
 {
     private String _jdexId;
-    private String _text;
-    private String _citation;
-
-
-
+    private String _prefix;
+    private String _uri;
+    
+    
+    
     /**************************************************************************
     * Default constructor.
     **************************************************************************/
-    public Support()
+    public Namespace()
     {
         super();
     }
-
+    
     /**************************************************************************
     * Populates the class (from the database) and removes circular references.
     * 
-    * @param support The Support with source data.
+    * @param namespace The Namespace with source data.
     **************************************************************************/
-    public Support(ISupport support)
+    public Namespace (INamespace namespace)
     {
-        super(support);
-
-        _jdexId = support.getJdexId();
-        _text = support.getText();
-        _citation = support.getSupportCitation().getJdexId();
+        super(namespace);
+        
+        _jdexId = namespace.getJdexId();
+        _prefix = namespace.getPrefix();
+        _uri = namespace.getUri();
     }
- 
+    
+    
+    
     public String getJdexId()
     {
         return _jdexId;
     }
-
+    
     public void setJdexId(String jdexId)
     {
         _jdexId = jdexId;
     }
-
-    public String getText()
-    {
-        return _text;
-    }
-
-    public void setText(String text)
-    {
-        _text = text;
-    }
-
-	public String getCitation() {
-		return _citation;
-	}
-
-	public void setCitation(String _citation) {
-		this._citation = _citation;
-	}
     
+    public String getPrefix()
+    {
+        return _prefix;
+    }
     
+    public void setPrefix(String prefix)
+    {
+        _prefix = prefix;
+    }
+    
+    public String getUri()
+    {
+        return _uri;
+    }
+    
+    public void setUri(String uri)
+    {
+        _uri = uri;
+    }
 }
