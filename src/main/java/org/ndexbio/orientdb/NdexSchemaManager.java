@@ -29,13 +29,15 @@ public class NdexSchemaManager
     	if(this.isInitialized()) {
     		return;
     	}
-        orientDb.commit();
+//        orientDb.commit();
         
         OrientBaseGraph orientDbGraph = new OrientGraph(orientDb);
 
         /**********************************************************************
         * Create base types first. 
         **********************************************************************/
+        orientDbGraph.getRawGraph().commit();
+
         OClass clsNdxExternalObj = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexExternalObject);
         
         if (clsNdxExternalObj == null)
@@ -57,6 +59,9 @@ public class NdexSchemaManager
         	clsAccount.createProperty("accountName", OType.STRING);
         	clsAccount.createProperty("password", OType.STRING);
         	clsAccount.createProperty("website", OType.STRING);
+
+        	clsAccount.createIndex("index-user-username", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "accountName");
+
         }
 
 
@@ -126,7 +131,6 @@ public class NdexSchemaManager
             userClass.createProperty("lastName", OType.STRING);
             userClass.createProperty("emailAddress", OType.STRING);
 
-            userClass.createIndex("index-user-username", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "username");
             userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
             userClass.createProperty("type", OType.STRING);
 
