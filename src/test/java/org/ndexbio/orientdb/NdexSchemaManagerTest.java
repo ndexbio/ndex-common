@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 
 public class NdexSchemaManagerTest {
 
-	static ODatabaseDocumentTx db;
+	 private static ODatabaseDocumentTx db;
 	 private static String DB_URL = "memory:ndex";
 	 
 	@BeforeClass
@@ -41,7 +41,7 @@ public class NdexSchemaManagerTest {
 			System.out.println(c.getName());
 		}
 		
-		assertEquals (schema.countClasses(), 19+10);
+		assertEquals (schema.countClasses(), 19+10);  // 10 internal classes.
 		
 	}
 

@@ -1,25 +1,31 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.security.Permissions;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.ndexbio.common.JdexIdService;
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.cache.NdexIdentifierCache;
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.exceptions.ValidationException;
-import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
-import org.ndexbio.common.models.object.network.Network;
-import org.ndexbio.common.models.object.privilege.Membership;
+import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.Membership;
+import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.common.persistence.NDExPersistenceService;
+import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.object.User;
 
+import com.fasterxml.uuid.EthernetAddress;
+import com.fasterxml.uuid.Generators;
+import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
@@ -31,6 +37,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -50,7 +57,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 
 	private OrientDBNoTxConnectionService ndexService;
 	private Set<Long> jdexIdSet;
-	private INetwork network;
+	private Network network;
 	private IUser user;
 	private static final Logger logger = LoggerFactory
 			.getLogger(NDExNoTxMemoryPersistence.class);
@@ -352,13 +359,27 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	}
 
 
-	public INetwork getCurrentNetwork() {
+	@Override
+	public Network getCurrentNetwork() {
 		return this.network;
 	}
 	
-	public INetwork createNetwork(){
-		this.network = ndexService._orientDbGraph.addVertex(
-				"class:network", INetwork.class);
+	@Override
+	public Network createNetwork(){
+		this.network = new Network();
+		this.network.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
+        
+		ndexService._ndexDatabase.begin();
+		
+		ODocument networkNode = new ODocument (NdexClasses.Network);
+		networkNode.field("UUID",network.getExternalId());
+		networkNode.field("createdDate", network.getCreationDate());
+		networkNode.field("modificationDate", network.getModificationDate());
+
+		networkNode.save();
+		    
+		ndexService._ndexDatabase.commit();
+		
 		return this.network;
 	}
 
@@ -386,16 +407,69 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		return this.user;
 	}
 
-	public INetworkMembership createNetworkMembership() {
+	@Override
+	public Membership createNetworkMembership(String accountName, UUID networkUUID) {
 
-		return ndexService._orientDbGraph.addVertex("class:networkMembership",
-				INetworkMembership.class);
+		Membership result = new Membership();
+		
+		UUID uuid = NdexUUIDFactory.INSTANCE.getNDExUUID();
+		
+		result.setExternalId(uuid);
+		result.setPermissions( org.ndexbio.model.object.Permissions.ADMIN);
+		result.setMembershipType(MembershipType.NETWORK);
+		ndexService._ndexDatabase.begin();
+		
+		 ODocument membership = new ODocument(NdexClasses.Membership);
+		    membership.field("membershipType", result.getMembershipType());
+		    membership.field("permissions", result.getPermissions());
+		    //TODO: need to turn this into a link
+		    membership.field("resourceUUID", networkUUID);
+		    membership.field("accountName", accountName);
+
+		    membership.save();
+   		    
+			ndexService._ndexDatabase.commit();
+
+		return result;
+	}
+
+    /**
+     * Find a user based on account name.
+     * @param accountName
+     * @return a User object when found, otherwise returns null.
+     * @throws NdexException
+     */
+	@Override
+	public User findUserByAccountName(String accountName)
+			throws NdexException
+			{
+		if (accountName == null	)
+			throw new ValidationException("No accountName was specified.");
+
+
+		final String query = "select * from " + NdexClasses.User + 
+				  " where accountName = '" + accountName + "'";
+				
+		User user = null;
+		List<ODocument> userDocumentList = ndexService._ndexDatabase
+					.query(new OSQLSynchQuery<ODocument>(query));
+
+		if ( ! userDocumentList.isEmpty()) {
+				ODocument userDoc = userDocumentList.get(0);
+				user = new User();
+				user.setAccountName((String)userDoc.field("accountName"));
+				
+				//TODO: populate all fields in User class.
+				
+		}
+		return user;
 	}
 
 	/*
 	 * Returns a collection of IUsers based on search criteria
 	 */
 
+	@Override
 	public SearchResult<IUser> findUsers(SearchParameters searchParameters)
 			throws NdexException {
 		if (searchParameters.getSearchString() == null
@@ -446,7 +520,8 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		}
 
 	}
-
+	
+	
 	/*
 	 * public method to allow xbel parsing components to rollback the
 	 * transaction and close the database connection if they encounter an error
@@ -473,8 +548,8 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 
 	public void persistNetwork() {
 		try {
-			network.setNdexEdgeCount((int) this.edgeCache.size());
-			network.setNdexNodeCount((int) this.nodeCache.size());
+			network.setEdgeCount((int) this.edgeCache.size());
+			network.setNodeCount((int) this.nodeCache.size());
 			network.setIsComplete(true);
 			NdexIdentifierCache.INSTANCE.accessIdentifierCache().invalidateAll();
 			NdexIdentifierCache.INSTANCE.accessTermCache().invalidateAll();

@@ -53,6 +53,7 @@ public class NdexSchemaManager
         if (clsAccount == null)
         {
         	clsAccount = orientDbGraph.createVertexType(NdexClasses.Account, clsNdxExternalObj);
+        	clsAccount. setAbstract(true);
         	clsAccount.createProperty("backgroundImage", OType.STRING);
         	clsAccount.createProperty("description", OType.STRING);
         	clsAccount.createProperty("foregroundImage", OType.STRING);
@@ -81,10 +82,10 @@ public class NdexSchemaManager
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Membership);  
         if ( cls == null)
         {
-        	cls = orientDbGraph.createVertexType(NdexClasses.Membership);
+        	cls = orientDbGraph.createVertexType(NdexClasses.Membership,clsNdxExternalObj);
             cls.createProperty("permissions", OType.STRING);
             cls.createProperty("membershipType", OType.STRING);
-            cls.createProperty("type", OType.STRING);
+        //    cls.createProperty("type", OType.STRING);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexProperty);  

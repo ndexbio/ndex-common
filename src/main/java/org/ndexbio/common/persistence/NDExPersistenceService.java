@@ -1,5 +1,6 @@
 package org.ndexbio.common.persistence;
 
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.ndexbio.common.exceptions.NdexException;
@@ -17,6 +18,10 @@ import org.ndexbio.common.models.data.ITerm;
 import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
+import org.ndexbio.model.object.Membership;
+import org.ndexbio.model.object.MembershipType;
+import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.network.Network;
 
 /*
  * public interface representing all interactions with the underlying persistence implementation
@@ -45,10 +50,13 @@ public interface NDExPersistenceService {
 	// Convenience methods
 	// find an INamespace by its XBEL prefix
 	public INamespace findNamespaceByPrefix(String prefix);
-	public INetwork createNetwork() throws Exception;
-	public INetwork getCurrentNetwork();
+	public Network createNetwork() throws Exception;
+	public Network getCurrentNetwork();
 	public IUser getCurrentUser();
-	public INetworkMembership  createNetworkMembership();
+	public Membership  createNetworkMembership(String accountName, UUID networkUUID);
+	
+	
+	public User findUserByAccountName(String accountName) throws NdexException;
 	
 	public SearchResult<IUser> findUsers(SearchParameters searchParameters) throws NdexException;
 	public void abortTransaction();

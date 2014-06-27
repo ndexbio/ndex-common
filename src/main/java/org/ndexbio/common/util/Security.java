@@ -2,36 +2,21 @@ package org.ndexbio.common.util;
 
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.util.Collection;
 import java.util.List;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.jboss.resteasy.util.Base64;
-import org.ndexbio.common.helpers.Configuration;
-import org.ndexbio.common.models.data.IBaseTerm;
-import org.ndexbio.common.models.data.IFunctionTerm;
-import org.ndexbio.common.models.data.IReifiedEdgeTerm;
-import org.ndexbio.common.models.data.IGroup;
-import org.ndexbio.common.models.data.IGroupInvitationRequest;
-import org.ndexbio.common.models.data.IGroupMembership;
-import org.ndexbio.common.models.data.IJoinGroupRequest;
-import org.ndexbio.common.models.data.INetworkAccessRequest;
-import org.ndexbio.common.models.data.INetworkMembership;
-import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.privilege.User;
+import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
+import org.ndexbio.model.object.User;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import java.util.UUID;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.frames.FramedGraph;
-import com.tinkerpop.frames.FramedGraphFactory;
-import com.tinkerpop.frames.modules.gremlingroovy.GremlinGroovyModule;
-import com.tinkerpop.frames.modules.typedgraph.TypedGraphModuleBuilder;
 
 public class Security
 {
@@ -44,45 +29,27 @@ public class Security
     *            Accessing the database failed.
     * @returns True if the user is authenticated, false otherwise.
     **************************************************************************/
-    public static User authenticateUser(final String[] authInfo) throws Exception
+    public static User authenticateUser(final String userName, final String password ) throws Exception
     {
-        final FramedGraphFactory graphFactory = new FramedGraphFactory(new GremlinGroovyModule(),
-            new TypedGraphModuleBuilder()
-                .withClass(IGroup.class)
-                .withClass(IUser.class)
-                .withClass(IGroupMembership.class)
-                .withClass(INetworkMembership.class)
-                .withClass(IGroupInvitationRequest.class)
-                .withClass(IJoinGroupRequest.class)
-                .withClass(INetworkAccessRequest.class)
-                .withClass(IBaseTerm.class)
-                .withClass(IReifiedEdgeTerm.class)
-                .withClass(IFunctionTerm.class)
-                .build());
-
-        ODatabaseDocumentTx ndexDatabase = null;
+    	ODatabaseDocumentTx ndexDatabase = null;
         try
         {
-            ndexDatabase = ODatabaseDocumentPool.global().acquire(
-                Configuration.getInstance().getProperty("OrientDB-URL"),
-                Configuration.getInstance().getProperty("OrientDB-Username"),
-                Configuration.getInstance().getProperty("OrientDB-Password"));
+        	ndexDatabase = NdexAOrientDBConnectionPool.getInstance().acquire();
 
-            final FramedGraph<OrientBaseGraph> orientDbGraph = graphFactory.create((OrientBaseGraph)new OrientGraph(ndexDatabase));
-
-            Collection<ODocument> usersFound = ndexDatabase
+            List<ODocument> usersFound = ndexDatabase
                 .command(new OCommandSQL("select from User where username = ?"))
-                .execute(authInfo[0]);
+                .execute(userName);
             
             if (usersFound.size() < 1)
                 return null;
 
-            IUser authUser = orientDbGraph.getVertex(usersFound.toArray()[0], IUser.class);
-            String hashedPassword = Security.hashText(authInfo[1]);
-            if (!hashedPassword.equals(authUser.getPassword()))
-                return null;
-
-            return new User(authUser, true);
+            ODocument OUserDoc = usersFound.get(0);
+            String hashedPassword = Security.hashText(password);
+            if ( ((String)OUserDoc.field("passord")).equals(hashedPassword)) {
+            	return UserOrientdbDAO.getUserFromDocument(OUserDoc);
+            };
+            
+            return null;
         }
         finally
         {

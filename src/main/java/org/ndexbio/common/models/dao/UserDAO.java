@@ -10,8 +10,8 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.UploadedFile;
 import org.ndexbio.common.models.object.network.Network;
-import org.ndexbio.common.models.object.privilege.NewUser;
-import org.ndexbio.common.models.object.privilege.User;
+import org.ndexbio.model.object.NewUser;
+import org.ndexbio.model.object.User;
 
 public interface UserDAO {
 

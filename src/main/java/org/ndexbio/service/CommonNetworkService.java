@@ -1,6 +1,8 @@
 package org.ndexbio.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.data.*;
@@ -9,6 +11,11 @@ import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.common.models.object.privilege.Permissions;
 import org.ndexbio.common.persistence.NDExPersistenceService;
 import org.ndexbio.common.persistence.NDExPersistenceServiceFactory;
+import org.ndexbio.model.object.Membership;
+import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.VisibilityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,28 +48,26 @@ public abstract class CommonNetworkService {
 	 * assigning it a title
 	 * throws NdexException if supplied owner name is not in the database
 	 */
-	public final INetwork createNewNetwork(String ownerName, String networkTitle) throws Exception {
+	public final Network createNewNetwork(String ownerName, String networkTitle) throws Exception {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(ownerName),
 				"A network owner name is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkTitle),
 				"A network title is required");
-		INetwork network = this.persistenceService.createNetwork();
-		network.setMetadata(new HashMap<String, String>());
-		network.setMetaterms(new HashMap<String, IBaseTerm>());
+		Network network = this.persistenceService.createNetwork();
+		network.setProperties(new ArrayList<NdexProperty>());
+		network.setPresentationProperties(new ArrayList<NdexProperty>());
 		// find the network owner in the database
-		IUser networkOwner = resolveUserUserByUsername(ownerName);
+		User networkOwner =  this.persistenceService.findUserByAccountName(ownerName);
 		if( null == networkOwner){
 			logger.error("User " +ownerName +" is not registered in the database/");
 			throw new NdexException("User " +ownerName +" is not registered in the database");
 		}
 				
-		INetworkMembership membership = createNewMember();
-		membership.setMember(networkOwner);
-		membership.setPermissions(Permissions.ADMIN);
-		network.setIsPublic(true);
+		Membership membership = createNewMember(ownerName, network.getExternalId());
+		network.setVisibility(VisibilityType.PUBLIC);
 		network.setIsLocked(false);
 		network.setIsComplete(false);
-		network.addMember(membership);
+		network.getMembers().add(membership);
 		network.setName(networkTitle);
 		logger.info("A new NDex network titled: " +network.getName()
 				+" owned by " +ownerName +" has been created");
@@ -115,32 +120,12 @@ public abstract class CommonNetworkService {
         }
 	 */
 	
-	protected final IUser resolveUserUserByUsername(String userName) {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(userName),
-				"A username is required");
-		SearchParameters searchParameters = new SearchParameters();
-		searchParameters.setSearchString(userName);
-		searchParameters.setSkip(0);
-		searchParameters.setTop(1);
-
-		try {
-			SearchResult<IUser> result = findUsers(searchParameters);
-			return (IUser) result.getResults().iterator().next();
-
-		} catch (NdexException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}
-		
-		return null;
-	}
-
 	public final SearchResult<IUser> findUsers(SearchParameters searchParameters)
 			throws NdexException {
 		return this.persistenceService.findUsers(searchParameters);
 	}	
 	
-	public final INetwork getCurrentNetwork() {
+	public final Network getCurrentNetwork() {
 		return this.persistenceService.getCurrentNetwork();
 	}
 
@@ -151,8 +136,8 @@ public abstract class CommonNetworkService {
 		return user;
 	}
 
-	public final INetworkMembership createNewMember() {
-		return this.persistenceService.createNetworkMembership();
+	public final Membership createNewMember(String accountName, UUID networkUUID) {
+		return this.persistenceService.createNetworkMembership(accountName, networkUUID);
 	}
 
 	public final void persistNewNetwork() {
@@ -171,19 +156,19 @@ public abstract class CommonNetworkService {
 		return this.persistenceService;
 	}
 	
-	public void setFormat(String format) {
+/*	public void setFormat(String format) {
 	    if (persistenceService.getCurrentNetwork().getMetadata() != null)
 	        persistenceService.getCurrentNetwork().getMetadata().put("Format", format);	
 	}
-	
+*/	
 	public void setDescription(String description) {
 		persistenceService.getCurrentNetwork().setDescription(description);	
 		
 	}
 	
-	public void setSource(String source) {
+/*	public void setSource(String source) {
 		if (persistenceService.getCurrentNetwork().getMetadata() != null)
 	        persistenceService.getCurrentNetwork().getMetadata().put("Source", source);			
-	}
+	} */
 	
 }

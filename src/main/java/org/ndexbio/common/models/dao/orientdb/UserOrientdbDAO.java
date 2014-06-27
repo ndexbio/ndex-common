@@ -13,10 +13,13 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.core.Response;
 
+import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
@@ -29,9 +32,9 @@ import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.UploadedFile;
 import org.ndexbio.common.models.object.network.Network;
-import org.ndexbio.common.models.object.privilege.NewUser;
-import org.ndexbio.common.models.object.privilege.User;
+import org.ndexbio.model.object.User;
 import org.ndexbio.common.util.Email;
+import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +42,15 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
+
+import org.ndexbio.model.object.NewUser;
 
 /**
  * @author fcriscuo
@@ -127,8 +133,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 			throw new SecurityException("Invalid username or password.");
 
 		try {
-			final User authUser = Security.authenticateUser(new String[] {
-					username, password });
+			final User authUser = Security.authenticateUser(username, password);
 			if (authUser == null)
 				throw new SecurityException("Invalid username or password.");
 
@@ -243,6 +248,64 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 
 	}
 
+	/**
+	 * Create a user in the Given database using the information in newUser object.
+	 * @param db
+	 * @param newUser
+	 * @return
+	 * @throws NdexException 
+	 */
+	public boolean createUser(ODatabaseDocumentTx db, NewUser newUser) throws NdexException {
+
+		Preconditions.checkArgument(null != newUser, 
+				"A user object is required");
+		Preconditions.checkArgument(!Strings.isNullOrEmpty( newUser.getUsername()),
+				"A user name is required" );
+		Preconditions.checkArgument(!Strings.isNullOrEmpty( newUser.getPassword()),
+				"A user password is required" );
+		Preconditions.checkArgument(!Strings.isNullOrEmpty( newUser.getEmailAddress()),
+				"A user email address is required" );
+		
+		
+		try {
+			
+			// confirm that the username and email address are unique
+			// method throws an exception if either already exists
+   		    this.checkForExistingUser(newUser);
+   		    
+   		    db.begin();
+   		    ODocument account = new ODocument (NdexClasses.Account);
+   		    account.field("accountName", newUser.getUsername());
+   		    account.field("password", Security.hashText(newUser.getPassword()));
+   		    
+   		    ODocument user = new ODocument(NdexClasses.User);
+   		    user.field("emailAddress", newUser.getEmailAddress());
+   		    user.field("firstName", newUser.getFirstname());
+   		    user.field("lastName", newUser.getLastname());
+   		    user.field("hasAccount", account);
+   		    
+   		    account.save();
+   		    user.save();
+   		    
+	/*		final IUser user = _orientDbGraph.addVertex("class:user",
+					IUser.class);
+			user.setUsername(newUser.getUsername());
+			user.setPassword(Security.hashText(newUser.getPassword()));
+			user.setEmailAddress(newUser.getEmailAddress());
+   */
+			
+			db.commit();
+			return true;
+		} catch (Exception e) {
+			logger.error(
+					"Failed to create a new user: " + newUser.getUsername()
+							+ ".", e);
+			throw new NdexException(e.getMessage());
+		} finally {
+			teardownDatabase();
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#createUser(org.ndexbio.common.models.object.NewUser)
 	 */
@@ -260,29 +323,39 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 		
 		
 		try {
+
 			setupDatabase();
 			
-			// confirm that the username and email address are unique
-			// method throws an exception if either already exists
-			try {
-				this.checkForExistingUser(newUser);
-			} catch (DuplicateObjectException doe) {
-				throw doe;
-			}
-
-			final IUser user = _orientDbGraph.addVertex("class:user",
-					IUser.class);
-			user.setUsername(newUser.getUsername());
-			user.setPassword(Security.hashText(newUser.getPassword()));
-			user.setEmailAddress(newUser.getEmailAddress());
-
-			
-			return new User(user);
+   		    this.checkForExistingUser(newUser);
+   		    
+   		    this._ndexDatabase.begin();
+   /*		    ODocument account = new ODocument (NdexClasses.Account);
+   		    account.field("accountName", newUser.getUsername());
+   		    account.field("password", Security.hashText(newUser.getPassword()));
+   	*/	    
+   		    User result = new User();
+   		    
+   		    result.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
+   		    result.setAccountName(newUser.getUsername());
+   		    result.setEmailAddress(newUser.getEmailAddress());
+   		    result.setFirstName(newUser.getFirstname());
+   		    result.setLastName(newUser.getLastname());
+   		    
+   		    ODocument user = new ODocument(NdexClasses.User);
+   		    user.field("emailAddress", newUser.getEmailAddress());
+   		    user.field("firstName", newUser.getFirstname());
+   		    user.field("lastName", newUser.getLastname());
+   		    user.field("accountName", newUser.getUsername());
+   		    user.field("password", Security.hashText(newUser.getPassword()));
+   		    user.field("UUID", result.getExternalId());
+   		   // user.field("hasAccount", account);
+   		    
+   		  //  account.save();
+   		    user.save();
+   		    
+			this._ndexDatabase.commit();
+			return result;
 		} catch (Exception e) {
-			if (e.getMessage().indexOf(CommonDAOValues.DUPLICATED_KEY_FLAG) > -1)
-				throw new DuplicateObjectException("A user with that name ("
-						+ newUser.getUsername() + ") or email address ("
-						+ newUser.getEmailAddress() + ") already exists.");
 
 			logger.error(
 					"Failed to create a new user: " + newUser.getUsername()
@@ -533,8 +606,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 			final List<ODocument> users = _ndexDatabase
 					.query(new OSQLSynchQuery<ODocument>(query));
 			for (final ODocument user : users)
-				foundUsers.add(new User(_orientDbGraph.getVertex(user,
-						IUser.class)));
+				foundUsers.add(getUserFromDocument(user));
 
 			return foundUsers;
 		} catch (Exception e) {
@@ -554,7 +626,9 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	@Override
 	public User getUser(String userId) throws IllegalArgumentException,
 			NdexException {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId),
+
+		throw new NdexException("Unimplemented function UserOrientdbDAO.getUser(String)");
+		/*		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId),
 				"A user id is required");
 		
 		try {
@@ -581,7 +655,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 			teardownDatabase();
 		}
 
-		return null;
+		return null; */
 	}
 
 	/* (non-Javadoc)
@@ -590,7 +664,8 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	@Override
 	public void updateUser(User updatedUser, String userId) throws IllegalArgumentException,
 			SecurityException, NdexException {
-		Preconditions.checkArgument(null != updatedUser, 
+		throw new NdexException("Unimplemented function UserOrientdbDAO.updateUser(User, String)");
+/*		Preconditions.checkArgument(null != updatedUser, 
 				"Upadted user data are required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required");
 		
@@ -657,7 +732,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 		} finally {
 			teardownDatabase();
 		}
-
+*/
 	}
 
 	/**************************************************************************
@@ -687,17 +762,38 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	 */
 	private void checkForExistingUser(final NewUser newUser) 
 			throws DuplicateObjectException {
-		final List<ODocument> existingUsers = _ndexDatabase
+		List<ODocument> existingUsers = _ndexDatabase
 				.query(new OSQLSynchQuery<Object>(
-						"SELECT @RID FROM Network "
-						+ "WHERE username = '"
+						"SELECT @RID FROM " + NdexClasses.Account
+						+ " WHERE accountName = '"
 								+newUser.getUsername()
-								+ "' OR emailAddress = '"
-								+ newUser.getEmailAddress()
 								+ "'"));
 		if (!existingUsers.isEmpty())
 			throw new DuplicateObjectException(
-					CommonDAOValues.DUPLICATED_KEY_FLAG);
+					CommonDAOValues.DUPLICATED_ACCOUNT_FLAG);
+
+		existingUsers = _ndexDatabase
+				.query(new OSQLSynchQuery<Object>(
+						"SELECT @RID FROM " + NdexClasses.User
+						+ " WHERE emailAddress = '"
+								+newUser.getEmailAddress()
+								+ "'"));
+		if (!existingUsers.isEmpty())
+			throw new DuplicateObjectException(
+					CommonDAOValues.DUPLICATED_EMAIL_FLAG);
+
+	}
+	
+	public static User getUserFromDocument(ODocument OUserDoc) {
+    	User result = new User();
+    	
+    	result.setEmailAddress((String)OUserDoc.field("emailAddress"));
+    	result.setFirstName((String)OUserDoc.field("firstName"));
+    	result.setLastName((String)OUserDoc.field("lastName"));
+    	result.setExternalId((UUID)OUserDoc.field("UUID"));
+    	result.setAccountName((String)OUserDoc.field("accountName"));
+        
+    	return result;
 	}
 
 }
