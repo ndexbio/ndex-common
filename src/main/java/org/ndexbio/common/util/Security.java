@@ -37,7 +37,7 @@ public class Security
         	ndexDatabase = NdexAOrientDBConnectionPool.getInstance().acquire();
 
             List<ODocument> usersFound = ndexDatabase
-                .command(new OCommandSQL("select from User where username = ?"))
+                .command(new OCommandSQL("select from User where accountName = ?"))
                 .execute(userName);
             
             if (usersFound.size() < 1)
@@ -45,7 +45,7 @@ public class Security
 
             ODocument OUserDoc = usersFound.get(0);
             String hashedPassword = Security.hashText(password);
-            if ( ((String)OUserDoc.field("passord")).equals(hashedPassword)) {
+            if ( ((String)OUserDoc.field("password")).equals(hashedPassword)) {
             	return UserOrientdbDAO.getUserFromDocument(OUserDoc);
             };
             

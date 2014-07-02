@@ -53,7 +53,7 @@ public class NdexSchemaManager
         if (clsAccount == null)
         {
         	clsAccount = orientDbGraph.createVertexType(NdexClasses.Account, clsNdxExternalObj);
-        	clsAccount. setAbstract(true);
+        //	clsAccount. setAbstract(true);
         	clsAccount.createProperty("backgroundImage", OType.STRING);
         	clsAccount.createProperty("description", OType.STRING);
         	clsAccount.createProperty("foregroundImage", OType.STRING);

@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -348,6 +349,8 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
    		    user.field("accountName", newUser.getUsername());
    		    user.field("password", Security.hashText(newUser.getPassword()));
    		    user.field("UUID", result.getExternalId());
+   		    user.field("createdDate", result.getCreationDate());
+   		    user.field("modificationDate", result.getModificationDate());
    		   // user.field("hasAccount", account);
    		    
    		  //  account.save();
@@ -813,10 +816,14 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
     	result.setEmailAddress((String)OUserDoc.field("emailAddress"));
     	result.setFirstName((String)OUserDoc.field("firstName"));
     	result.setLastName((String)OUserDoc.field("lastName"));
-    	result.setExternalId((UUID)OUserDoc.field("UUID"));
+    	String uuid = OUserDoc.field("UUID");
+    	result.setExternalId(UUID.fromString(uuid));
     	result.setAccountName((String)OUserDoc.field("accountName"));
+    	result.setCreationDate((Date)OUserDoc.field("createdDate"));
+    	result.setModificationDate((Date)OUserDoc.field("modificationDate"));
         
     	return result;
 	}
+	
 
 }

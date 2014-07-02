@@ -19,9 +19,9 @@ public class NdexSchemaManagerTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		
-		db = new ODatabaseDocumentTx(DB_URL);
-		db.create();
-	//	db = NdexAOrientDBConnectionPool.getInstance().acquire();
+//		db = new ODatabaseDocumentTx(DB_URL);
+//		db.create();
+		db = NdexAOrientDBConnectionPool.getInstance().acquire();
 		
 	}
 
