@@ -148,11 +148,13 @@ public abstract class CommonNetworkService {
 		this.persistenceService.abortTransaction();
 	}
 	
+	
+	
 	/*
 	 * expose persistence service to subclasses to provide access to database 
 	 * operations defined in service interface
 	 */
-	protected final NDExPersistenceService getPersistenceService() {
+	public final NDExPersistenceService getPersistenceService() {
 		return this.persistenceService;
 	}
 	

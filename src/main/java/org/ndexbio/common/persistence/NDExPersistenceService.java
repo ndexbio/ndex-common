@@ -8,9 +8,7 @@ import org.ndexbio.common.models.data.IBaseTerm;
 import org.ndexbio.common.models.data.ICitation;
 import org.ndexbio.common.models.data.IEdge;
 import org.ndexbio.common.models.data.IFunctionTerm;
-import org.ndexbio.common.models.data.INamespace;
-import org.ndexbio.common.models.data.INetwork;
-import org.ndexbio.common.models.data.INetworkMembership;
+import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.common.models.data.INode;
 import org.ndexbio.common.models.data.IReifiedEdgeTerm;
 import org.ndexbio.common.models.data.ISupport;
@@ -19,7 +17,6 @@ import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.model.object.Membership;
-import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.Network;
 
@@ -35,7 +32,9 @@ public interface NDExPersistenceService {
 	public ITerm findChildITerm( Long jdexId) throws ExecutionException;
 	public IBaseTerm findOrCreateIBaseTerm( Long jdexId) throws ExecutionException;
 	public IFunctionTerm findOrCreateIFunctionTerm( Long jdexId) throws ExecutionException;
-	public INamespace findOrCreateINamespace( Long jdexId) throws ExecutionException;
+	
+	public Namespace findOrCreateNamespace(String URI, String prefix) throws Exception;
+	public Namespace findOrCreateINamespace( Long jdexId) throws ExecutionException;
 	public ICitation findOrCreateICitation( Long jdexId) throws ExecutionException;
 	public IEdge findOrCreateIEdge( Long jdexId) throws ExecutionException;
 	public INode findOrCreateINode( Long jdexId) throws ExecutionException;
@@ -49,7 +48,7 @@ public interface NDExPersistenceService {
 	
 	// Convenience methods
 	// find an INamespace by its XBEL prefix
-	public INamespace findNamespaceByPrefix(String prefix);
+	public Namespace findNamespaceByPrefix(String prefix);
 	public Network createNetwork() throws Exception;
 	public Network getCurrentNetwork();
 	public IUser getCurrentUser();

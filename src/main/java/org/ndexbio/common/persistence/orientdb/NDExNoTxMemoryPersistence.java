@@ -21,10 +21,8 @@ import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.common.persistence.NDExPersistenceService;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.network.Namespace;
 
-import com.fasterxml.uuid.EthernetAddress;
-import com.fasterxml.uuid.Generators;
-import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -36,8 +34,6 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -148,9 +144,10 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 			});
 	
 	// INamespace cache
-	private RemovalListener<Long, INamespace> namespaceListener = new RemovalListener<Long, INamespace>() {
+	private RemovalListener<Long, Namespace> namespaceListener = new RemovalListener<Long, Namespace>() {
 
-		public void onRemoval(RemovalNotification<Long, INamespace> removal) {
+		@Override
+		public void onRemoval(RemovalNotification<Long, Namespace> removal) {
 			logger.info("INamespace removed from cache key= "
 					+ removal.getKey().toString() + " "
 					+ removal.getCause().toString());
@@ -159,15 +156,19 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 
 	};
 
-	private LoadingCache<Long, INamespace> namespaceCache = CacheBuilder
+	private LoadingCache<Long, Namespace> namespaceCache = CacheBuilder
 			.newBuilder().maximumSize(CACHE_SIZE)
 			.expireAfterAccess(240L, TimeUnit.MINUTES)
 			.removalListener(namespaceListener)
-			.build(new CacheLoader<Long, INamespace>() {
+			.build(new CacheLoader<Long, Namespace>() {
 				@Override
-				public INamespace load(Long key) throws Exception {
-					return ndexService._orientDbGraph.addVertex(
-							"class:namespace", INamespace.class);
+				//TODO: Check to make sure Namespaces are persisted when network is persisted. 
+				 // and we are not storing them here. Risk: over cache size limit will have problem in data.
+				public Namespace load(Long key) throws Exception {
+					Namespace ns = new Namespace();
+					 ns.setId(key);
+					 
+					return ns; 
 				}
 
 			});
@@ -266,6 +267,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 
 			});
 
+	@Override
 	public boolean isEntityPersisted(Long jdexId) {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
 				"A valid JDExId is required");
@@ -277,7 +279,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	// up the prefix in the identifier cache.
 	// If a jdexid is found, then lookup the INamespace by jdexid in the
 	// namespaceCache and return it.
-	public INamespace findNamespaceByPrefix(String prefix) {
+	public Namespace findNamespaceByPrefix(String prefix) {
 		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix),
 				"A namespace prefix is required");
@@ -288,7 +290,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		try {
 			Long jdexId = NdexIdentifierCache.INSTANCE.accessIdentifierCache()
 					.get(namespaceIdentifier);
-			INamespace ns = this.namespaceCache.getIfPresent(jdexId);
+			Namespace ns = this.namespaceCache.getIfPresent(jdexId);
 			return ns;
 		} catch (ExecutionException e) {
 
@@ -297,6 +299,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		return null;
 	}
 
+	@Override
 	public IBaseTerm findOrCreateIBaseTerm(Long jdexId)
 			throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
@@ -321,7 +324,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		return reifiedEdgeTermCache.get(jdexId);
 	}
 
-	public INamespace findOrCreateINamespace(Long jdexId)
+	public Namespace findOrCreateINamespace(Long jdexId)
 			throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
 				"A valid JDExId is required");
@@ -583,6 +586,61 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		
 	}
 
+	@Override
+	public Namespace findOrCreateNamespace(String uri, String prefix) throws Exception {
+		String namespaceIdentifier = null;
+		
+		if (uri == null && prefix == null){
+			prefix = "LOCAL";
+			namespaceIdentifier = "NAMESPACE:LOCAL";
+		} else if (prefix != null){
+			namespaceIdentifier = idJoiner.join("NAMESPACE", prefix);
+		} else if (uri != null){
+			prefix = findPrefixForNamespaceURI(uri);
+			if (prefix != null){
+				namespaceIdentifier = idJoiner.join("NAMESPACE", prefix);				
+			} else {
+				namespaceIdentifier = idJoiner.join("NAMESPACE", uri);	
+			}	
+		}
 
+		
+		if (uri == null && prefix != null){
+			uri = findURIForNamespacePrefix(prefix);
+		}
+		
+		Long jdexId = NdexIdentifierCache.INSTANCE.accessIdentifierCache().get(
+				namespaceIdentifier);
+		boolean persisted = isEntityPersisted(jdexId);
+		Namespace iNamespace = findOrCreateINamespace(jdexId);
+		if (persisted) return iNamespace;
+
+		// Not persisted, fill out blank Namespace
+		iNamespace.setId(jdexId);
+		if (prefix == null) prefix = this.findPrefixForNamespaceURI(uri);
+		
+		if (prefix != null) 
+			 iNamespace.setPrefix(prefix);
+		if (uri != null) iNamespace.setUri(uri);
+		network.getNamespaces().add(iNamespace);
+		logger.info("Created namespace " + iNamespace.getPrefix() + " " + iNamespace.getUri());
+		return iNamespace;
+	}
+
+
+	private static String findPrefixForNamespaceURI(String uri) {
+		if (uri.equals("http://biopax.org/generated/group/")) return "GROUP";
+		if (uri.equals("http://identifiers.org/uniprot/")) return "UniProt";
+		if (uri.equals("http://purl.org/pc2/4/")) return "PathwayCommons2";
+		//System.out.println("No Prefix for " + uri);
+		
+		return null;
+	}
+	
+	// TODO: check if this function need to be the same as the function above 
+	private static String findURIForNamespacePrefix(String prefix){
+		if (prefix.equals("UniProt")) return "http://identifiers.org/uniprot/";
+		return null;
+	}
 
 }

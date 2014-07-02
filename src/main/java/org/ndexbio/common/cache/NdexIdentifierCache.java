@@ -17,6 +17,8 @@ import com.google.common.cache.RemovalNotification;
  * LoadingCache objects are responsible for loading data from OrientDB database
  * upon cache misses
  */
+
+//TODO: Need to rewrite the cache because when it is over the size limit, values will be lost permanently 
 public enum NdexIdentifierCache {
 	INSTANCE;
 	private static final Logger logger = LoggerFactory

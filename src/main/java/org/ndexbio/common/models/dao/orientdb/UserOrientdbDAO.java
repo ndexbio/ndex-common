@@ -61,7 +61,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	private static final Logger logger = LoggerFactory.getLogger(UserOrientdbDAO.class);
 	private UserOrientdbDAO() { super(); }
 	
-	static UserOrientdbDAO createInstance( ) { return new UserOrientdbDAO();}
+	public static UserOrientdbDAO createInstance( ) { return new UserOrientdbDAO();}
 	
 	@Override
 	public Iterable<Network> addNetworkToWorkSurface(String networkId, String userId)
@@ -624,6 +624,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	 * @see org.ndexbio.common.models.dao.UserDAO#getUser(java.lang.String)
 	 */
 	@Override
+	@Deprecated
 	public User getUser(String userId) throws IllegalArgumentException,
 			NdexException {
 
@@ -657,6 +658,28 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 
 		return null; */
 	}
+	
+	@Override
+	public User getUserByAccountName(String accountName) {
+		try {
+			setupDatabase();
+
+			final List<ODocument> matchingUsers = _ndexDatabase
+					.query(new OSQLSynchQuery<Object>(
+							"SELECT FROM User WHERE username = '" + accountName
+									+ "'"));
+			if (!matchingUsers.isEmpty())
+				return getUserFromDocument(matchingUsers.get(0));
+		} catch (Exception e) {
+			logger.error("User: " + accountName + " not found in NDEx.", e);
+		} finally {
+			teardownDatabase();
+		}
+
+		return null; 
+		
+	}
+	
 
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#updateUser(org.ndexbio.common.models.object.User)

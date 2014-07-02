@@ -105,7 +105,8 @@ public class TestNetworkAOrientDBDAO {
 	}
 	
 	
-	@Test 
+/*	@Test 
+ *   comment out for now. --cj
 	public void networkByInterconnect(){
 		
 		NetworkQueryParameters parameters = new NetworkQueryParameters();
@@ -136,5 +137,5 @@ public class TestNetworkAOrientDBDAO {
 			Assert.fail(e.getMessage());
 			e.printStackTrace();
 		} 
-	}
+	} */
 }

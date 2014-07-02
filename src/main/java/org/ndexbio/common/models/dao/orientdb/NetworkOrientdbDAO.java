@@ -51,7 +51,7 @@ import org.ndexbio.common.models.object.network.Citation;
 import org.ndexbio.common.models.object.network.Edge;
 import org.ndexbio.common.models.object.network.FunctionTerm;
 import org.ndexbio.common.models.object.network.Namespace;
-import org.ndexbio.common.models.object.network.Network;
+import org.ndexbio.model.object.network.Network;
 import org.ndexbio.common.models.object.network.Node;
 import org.ndexbio.common.models.object.network.ReifiedEdgeTerm;
 import org.ndexbio.common.models.object.network.Support;
@@ -73,16 +73,17 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.frames.VertexFrame;
 
-public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
+@Deprecated
+public class NetworkOrientdbDAO extends OrientdbDAO {
 
-	private static final Logger logger = Logger.getLogger(NetworkOrientdbDAO.class.getName());
+	//private static final Logger logger = Logger.getLogger(NetworkOrientdbDAO.class.getName());
 	
 	private NetworkOrientdbDAO() { super();}
 	
 	static NetworkOrientdbDAO createInstance() { return new NetworkOrientdbDAO() ; }
 
-	@Override
-	public Collection<String> autoSuggestTerms(String userId, String networkId,
+	
+/*	public Collection<String> autoSuggestTerms(String userId, String networkId,
 			String partialTerm) throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId),
 				"A user id is required ");
@@ -123,9 +124,8 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		} finally {
 			teardownDatabase();
 		}
-	}
+	} 
 
-	@Override
 	public Network createNetwork(String userId, Network newNetwork)
 			throws IllegalArgumentException, DuplicateObjectException,
 			NdexException {
@@ -207,7 +207,6 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
 	public Network addNetwork(String userId, String networkId,
 			String equivalenceMethod, Network sourceNetwork)
 			throws IllegalArgumentException, DuplicateObjectException,
@@ -291,7 +290,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
+	
 	public void deleteNetwork(String userId, String networkId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
@@ -351,7 +350,6 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 
 	}
 
-	@Override
 	public List<Network> findNetworks(String userId,
 			SearchParameters searchParameters, String searchOperator)
 			throws IllegalArgumentException, NdexException {
@@ -388,7 +386,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
+	//@Override
 	public Network getNetwork(String userId, String networkId)
 			throws IllegalArgumentException, SecurityException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required");
@@ -420,7 +418,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
+	
 	public Network getEdges(String userId, String networkId, int skip, int top)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required");
@@ -458,7 +456,8 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
+	
+	
 	public Network getNetworkByNonEdgeNodes(String userId, String networkId,
 			int skip, int top) throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required" );
@@ -498,7 +497,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
+	//@Override
 	public Network getEdgesByCitations(String userId, String networkId,
 			int skip, int top, String[] citations)
 			throws IllegalArgumentException, NdexException {
@@ -543,7 +542,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
+	//@Override
 	public List<BaseTerm> getTermsInNamespaces(String userId, String networkId,
 			String[] namespaces) throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required" );
@@ -599,7 +598,8 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
+	
+	//@Override
 	public Iterable<BaseTerm> getIntersectingTerms(String userId,
 			String networkId, String[] terms) throws IllegalArgumentException,
 			NdexException {
@@ -644,7 +644,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
+	
 	public Iterable<Namespace> getNamespaces( String networkId,
 			int skip, int top) throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId), "A network id is required" );
@@ -684,7 +684,6 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
 	public Iterable<BaseTerm> getTerms(String networkId,
 			int skip, int top) throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId), "A network id is required" );
@@ -724,7 +723,6 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 	}
 
-	@Override
 	public List<Citation> getCitations(String networkId,
 			int skip, int top) throws IllegalArgumentException, NdexException {
 		
@@ -763,7 +761,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 			}
 	}
 
-	@Override
+	//@Override
 	public Network queryNetwork( String networkId,
 			NetworkQueryParameters queryParameters)
 			throws IllegalArgumentException, NdexException {
@@ -774,7 +772,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 	
 		return network;
 	}
-
+*/
 /*	@Override
 	public Network queryNetwork2(String networkId,
 			NetworkQueryParameters queryParameters)
@@ -785,9 +783,8 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		Network network = dao.queryForSubnetwork(null, networkId, queryParameters, 0,0);
 	
 		return network;
-	} */
+	} 
 
-	@Override
 	public void removeMember(String userId, String networkId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			SecurityException, NdexException {
@@ -844,7 +841,6 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 
 	}
 
-	@Override
 	public void updateMember( String userId, String networkId,
 			Membership networkMember) throws IllegalArgumentException,
 			ObjectNotFoundException, SecurityException, NdexException {
@@ -910,7 +906,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 
 	}
 
-	@Override
+
 	public void updateNetwork( String userId, Network updatedNetwork)
 			throws IllegalArgumentException, SecurityException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId),  "A user id is required");
@@ -964,7 +960,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 
 	}
 
-	@Override
+	
 	public void uploadNetwork(String userId, UploadedFile uploadedNetwork)
 			throws IllegalArgumentException, SecurityException, NdexException {
 		try {
@@ -1037,7 +1033,8 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 			throw new NdexException(e.getMessage());
 		}
 	}
-
+*/
+	/*
 	// private methods
 	private void createNetworkMembers(final Network newNetwork,
 			final IUser networkOwner, final INetwork network) {
@@ -1293,11 +1290,11 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 
 		return null;
 	}
-
+*/
 	/**************************************************************************
 	 * Count the number of administrative members in the network.
 	 **************************************************************************/
-	private long countAdminMembers(final ORID networkRid) throws NdexException {
+/*	private long countAdminMembers(final ORID networkRid) throws NdexException {
 		final List<ODocument> adminCount = _ndexDatabase
 				.query(new OSQLSynchQuery<Integer>(
 						"SELECT COUNT(@RID) FROM NetworkMembership WHERE in_userNetworks = "
@@ -1547,7 +1544,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		// edges...
 		return newReifiedEdgeTermMap;
 	}
-
+*/
 	/**************************************************************************
 	 * Creating terms for an new network
 	 * 
@@ -1561,7 +1558,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 	 * @throws NdexException
 	 * 
 	 **************************************************************************/
-	private Map<ReifiedEdgeTerm, IReifiedEdgeTerm> createTerms(
+/*	private Map<ReifiedEdgeTerm, IReifiedEdgeTerm> createTerms(
 			final INetwork targetNetwork, final Network sourceNetwork,
 			final Map<String, VertexFrame> networkIndex) throws NdexException {
 		
@@ -1845,7 +1842,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		targetNetwork.addNdexEdge(newEdge);
 		networkIndex.put(newEdge.getJdexId(), newEdge);
 	}
-
+*/
 	/**************************************************************************
 	 * 
 	 * Finds terms in network by name
@@ -1854,7 +1851,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 	 * 
 	 * 
 	 **************************************************************************/
-	private List<Term> getBaseTermsByName(INetwork network, String baseTermName)
+/*	private List<Term> getBaseTermsByName(INetwork network, String baseTermName)
 			throws NdexException {
 		final List<Term> foundTerms = new ArrayList<Term>();
 		for (final ITerm networkTerm : network.getTerms()) {
@@ -1866,9 +1863,9 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 			}
 		}
 
-		return foundTerms;
+		return foundTerms; 
 	}
-
+*/
 	/**************************************************************************
 	 * 
 	 * Constructs and returns a self-sufficient network based on a set of edges
@@ -1877,7 +1874,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 	 * 
 	 * 
 	 **************************************************************************/
-	private Network getNetworkBasedOnFoundEdges(
+/*	private Network getNetworkBasedOnFoundEdges(
 			final Collection<IEdge> requiredIEdges, final INetwork network)
 			throws NdexException {
 		if (requiredIEdges.size() == 0)
@@ -2085,7 +2082,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		}
 
 	}
-
+*/
 	/**************************************************************************
 	 * Determines if the logged in user has sufficient permissions to a network.
 	 * 
@@ -2093,7 +2090,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 	 *            The network to test for permissions.
 	 * @return True if the member has permission, false otherwise.
 	 **************************************************************************/
-	private boolean hasPermission(String userId, Network targetNetwork,
+/*	private boolean hasPermission(String userId, Network targetNetwork,
 			Permissions requiredPermissions) {
 		if (null != this.findIuserById(userId)) {
 			User user = new User(this.findIuserById(userId), true);
@@ -2108,7 +2105,7 @@ public class NetworkOrientdbDAO extends OrientdbDAO implements NetworkDAO {
 		return false;
 	}
 
-
+*/
 	
 
 	/**************************************************************************

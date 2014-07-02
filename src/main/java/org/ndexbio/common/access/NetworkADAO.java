@@ -4,10 +4,10 @@ import java.util.List;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
-import org.ndexbio.common.models.object.network.BaseTerm;
-import org.ndexbio.common.models.object.network.Edge;
-import org.ndexbio.common.models.object.network.Network;
-import org.ndexbio.common.models.object.privilege.User;
+import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.Edge;
+import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.User;
 
 public interface NetworkADAO {
 

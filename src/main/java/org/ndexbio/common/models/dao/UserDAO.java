@@ -161,8 +161,18 @@ public interface UserDAO {
 	 * @throws NdexException
 	 *             Failed to change the password in the database.
 	 **************************************************************************/
+	@Deprecated
 	public abstract User getUser(String userId)
 			throws IllegalArgumentException, NdexException;
+	
+	
+	/**
+	 * Get User object from its accountName
+	 * @param accountName
+	 * @return The User object if found. Null if the given user is not found.
+	 */
+	public User getUserByAccountName(String accountName);
+	
 
 	/**************************************************************************
 	 * Updates a user.
