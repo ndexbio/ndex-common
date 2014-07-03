@@ -11,6 +11,7 @@ import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.common.models.object.privilege.Permissions;
 import org.ndexbio.common.persistence.NDExPersistenceService;
 import org.ndexbio.common.persistence.NDExPersistenceServiceFactory;
+import org.ndexbio.common.persistence.orientdb.NDExNoTxMemoryPersistence;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.model.object.User;
@@ -33,10 +34,10 @@ import com.google.common.base.Strings;
 
 public abstract class CommonNetworkService {
 
-	protected NDExPersistenceService persistenceService;
+	protected NDExNoTxMemoryPersistence persistenceService;
 	protected final Logger logger;
 
-	protected CommonNetworkService() {
+	protected CommonNetworkService() throws NdexException {
 		this.persistenceService = NDExPersistenceServiceFactory.INSTANCE
 				.getNDExPersistenceService();
 		logger = LoggerFactory.getLogger(this.getClass());
@@ -154,7 +155,7 @@ public abstract class CommonNetworkService {
 	 * expose persistence service to subclasses to provide access to database 
 	 * operations defined in service interface
 	 */
-	public final NDExPersistenceService getPersistenceService() {
+	public final NDExNoTxMemoryPersistence getPersistenceService() {
 		return this.persistenceService;
 	}
 	

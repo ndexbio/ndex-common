@@ -17,6 +17,7 @@ public class NdexAOrientDBConnectionPool {
 	
 	private ODatabaseDocumentPool pool;
 	
+	
 	private static final Logger logger = Logger
 			.getLogger(NdexAOrientDBConnectionPool.class.getName());
 
@@ -44,7 +45,12 @@ public class NdexAOrientDBConnectionPool {
 	}
 	
 	public ODatabaseDocumentTx acquire() {
-		return pool.acquire();
+		ODatabaseDocumentTx conn = pool.acquire();
+		
+	    logger.info("Connection to " 
+	    		 + Configuration.getInstance().getProperty(dbUserPropName) +
+	    		 "@" + Configuration.getInstance().getProperty(dbURLPropName) + " acquired.");
+	    return conn;
 	}
    	
    public static synchronized void close() { 	

@@ -1,4 +1,5 @@
 package org.ndexbio.common.persistence;
+import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.data.IBaseTerm;
@@ -30,7 +31,7 @@ public class NdexOrientdbConnection {
     private ODatabaseDocumentTx ndexDatabase = null;
     private FramedGraph<OrientBaseGraph> orientDbGraph = null;
     
-    public NdexOrientdbConnection() {
+    public NdexOrientdbConnection() throws NdexException {
     	 this.graphFactory = new FramedGraphFactory(new GremlinGroovyModule(),
                  new TypedGraphModuleBuilder()
                      .withClass(IGroup.class)

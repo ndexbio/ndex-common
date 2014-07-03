@@ -34,7 +34,7 @@ public class NdexTaskService
     private static final Logger logger = LoggerFactory.getLogger(NdexTaskService.class);
     private OrientDBNoTxConnectionService ndexService;
     
-    public NdexTaskService()
+    public NdexTaskService() throws NdexException
     {
     	ndexService = new OrientDBNoTxConnectionService();  
     }

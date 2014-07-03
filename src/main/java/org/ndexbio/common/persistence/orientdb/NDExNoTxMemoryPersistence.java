@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * as values
  */
 
-public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
+public class NDExNoTxMemoryPersistence  {
 
 	private OrientDBNoTxConnectionService ndexService;
 	private Set<Long> jdexIdSet;
@@ -62,7 +62,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	private long commitCounter = 0L;
 	private static Joiner idJoiner = Joiner.on(":").skipNulls();
 
-	public NDExNoTxMemoryPersistence() {
+	public NDExNoTxMemoryPersistence() throws NdexException {
 		ndexService = new OrientDBNoTxConnectionService();
 		jdexIdSet = Sets.newHashSet();
 		this.stopwatch = Stopwatch.createUnstarted();
@@ -267,7 +267,6 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 
 			});
 
-	@Override
 	public boolean isEntityPersisted(Long jdexId) {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
 				"A valid JDExId is required");
@@ -299,7 +298,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		return null;
 	}
 
-	@Override
+
 	public IBaseTerm findOrCreateIBaseTerm(Long jdexId)
 			throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
@@ -316,7 +315,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		return functionTermCache.get(jdexId);
 	}
 	
-	@Override
+
 	public IReifiedEdgeTerm findOrCreateIReifiedEdgeTerm(Long jdexId) throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
 				"A valid JDExId is required");
@@ -362,12 +361,12 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	}
 
 
-	@Override
+
 	public Network getCurrentNetwork() {
 		return this.network;
 	}
 	
-	@Override
+
 	public Network createNetwork(){
 		this.network = new Network();
 		this.network.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
@@ -410,7 +409,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		return this.user;
 	}
 
-	@Override
+
 	public Membership createNetworkMembership(String accountName, UUID networkUUID) {
 
 		Membership result = new Membership();
@@ -442,7 +441,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
      * @return a User object when found, otherwise returns null.
      * @throws NdexException
      */
-	@Override
+
 	public User findUserByAccountName(String accountName)
 			throws NdexException
 			{
@@ -472,7 +471,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 	 * Returns a collection of IUsers based on search criteria
 	 */
 
-	@Override
+
 	public SearchResult<IUser> findUsers(SearchParameters searchParameters)
 			throws NdexException {
 		if (searchParameters.getSearchString() == null
@@ -578,7 +577,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 
 	}
 
-	@Override
+
 	public void deleteNetwork() {
 		// TODO Implement deletion of network
 		System.out
@@ -586,7 +585,7 @@ public class NDExNoTxMemoryPersistence implements NDExPersistenceService {
 		
 	}
 
-	@Override
+
 	public Namespace findOrCreateNamespace(String uri, String prefix) throws Exception {
 		String namespaceIdentifier = null;
 		

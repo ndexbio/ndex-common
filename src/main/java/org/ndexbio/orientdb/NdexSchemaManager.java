@@ -1,10 +1,12 @@
 package org.ndexbio.orientdb;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
@@ -22,12 +24,22 @@ public class NdexSchemaManager
     public static final NdexSchemaManager INSTANCE = new NdexSchemaManager();
     
     private Boolean initialized = Boolean.FALSE;
+    
+    private static final String NdexDbVersion = "1.0";
+    private static final String NdexDbVersionKey = "NdexDbVer";
+    private static final String NdexVField= "n1";
+    
 
     //TODO: type property might not be needed because we can get them from the vertex type.
-    public synchronized void init(ODatabaseDocumentTx  orientDb)
+    public synchronized void init(ODatabaseDocumentTx  orientDb) throws NdexException
     {
-    	if(this.isInitialized()) {
+    	ODocument  versionDoc = orientDb.getDictionary().get(NdexDbVersionKey); 
+    	if( versionDoc != null ) {
+    	   if ( versionDoc.field(NdexVField).equals(NdexDbVersion))	
     		return;
+    	   else 
+    		throw new NdexException("Another version ("+versionDoc.field(NdexVField)+ 
+    				") of Ndex database found in the database. Please drop it before creating a new one.");
     	}
 //        orientDb.commit();
         
@@ -251,7 +263,9 @@ public class NdexSchemaManager
             supportClass.createProperty("text", OType.STRING);
         }
 
-
+        versionDoc = new ODocument(NdexVField, NdexDbVersion);
+        orientDb.getDictionary().put(NdexDbVersionKey, versionDoc);
+        
         // turn on initialized flag
         this.setInitialized(Boolean.TRUE);
     }

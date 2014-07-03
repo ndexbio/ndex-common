@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.data.IBaseTerm;
@@ -48,8 +49,9 @@ public abstract class OrientdbDAO {
 
 	/**************************************************************************
 	 * Opens a connection to OrientDB and initializes the OrientDB Graph ORM.
+	 * @throws NdexException 
 	 **************************************************************************/
-	protected void setupDatabase() {
+	protected void setupDatabase() throws NdexException {
 
 		
 		// When starting up this application, tell OrientDB's global

@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
 
+import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.privilege.User;
@@ -61,8 +62,9 @@ public abstract class TestDAO extends OrientdbDAO {
 	    * @param objectName
 	    *            The name of the object.
 	    * @return An ORID object containing the record ID.
+	 * @throws NdexException 
 	    **************************************************************************/
-	    protected ORID getRid(String objectName) throws IllegalArgumentException
+	    protected ORID getRid(String objectName) throws IllegalArgumentException, NdexException
 	    {
 	        objectName = objectName.replace("'", "\\'");
 	        this.setupDatabase();
@@ -95,8 +97,9 @@ public abstract class TestDAO extends OrientdbDAO {
 	    * 
 	    * @param username
 	    *            The username.
+	     * @throws NdexException 
 	    **************************************************************************/
-	    protected User getUser(final String username)
+	    protected User getUser(final String username) throws NdexException
 	    {
 	    	this.setupDatabase();
 	        final List<ODocument> matchingUsers = _ndexDatabase.query(new OSQLSynchQuery<Object>("select from User where username = '" + username + "'"));

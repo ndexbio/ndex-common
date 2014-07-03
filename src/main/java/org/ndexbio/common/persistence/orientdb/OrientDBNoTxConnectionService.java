@@ -1,6 +1,7 @@
 package org.ndexbio.common.persistence.orientdb;
 
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.data.IBaseTerm;
 import org.ndexbio.common.models.data.IFunctionTerm;
 import org.ndexbio.common.models.data.IGroup;
@@ -38,7 +39,7 @@ public class OrientDBNoTxConnectionService {
 	protected FramedGraph<OrientBaseGraph> _orientDbGraph = null;
 	private boolean setup;
 
-	public OrientDBNoTxConnectionService() {
+	public OrientDBNoTxConnectionService() throws NdexException {
 		this.setSetup(false);
 		
 		//TODO: Check if this is needed, this statement will hold a connection once an object
@@ -49,8 +50,9 @@ public class OrientDBNoTxConnectionService {
 	
 	/**************************************************************************
 	 * Opens a connection to OrientDB and initializes the OrientDB Graph ORM.
+	 * @throws NdexException 
 	 **************************************************************************/
-	protected void setupDatabase() {
+	protected void setupDatabase() throws NdexException {
 		// When starting up this application, tell OrientDB's global
 		// configuration to close the storage; this is required here otherwise
 		// OrientDB connection pooling doesn't work as expected

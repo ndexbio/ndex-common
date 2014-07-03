@@ -46,7 +46,7 @@ public class TestGroupDAO extends TestDAO
     }
     
    @Test
-    public void deleteGroup()
+    public void deleteGroup() throws IllegalArgumentException, NdexException
     {
     
         final ORID testGroupRid = getRid(this.testGroupName);

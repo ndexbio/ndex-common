@@ -1,5 +1,6 @@
 package org.ndexbio.common.persistence;
 
+import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.persistence.orientdb.NDExNoTxMemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public enum NDExPersistenceServiceFactory {
 	INSTANCE;
 	private static final Logger logger = LoggerFactory.getLogger(NDExPersistenceServiceFactory.class);
-	public NDExPersistenceService getNDExPersistenceService() {
+	public NDExNoTxMemoryPersistence getNDExPersistenceService() throws NdexException {
 		logger.info("NDExPersistenceServiceFactory  invoked...");
 		return  new NDExNoTxMemoryPersistence();
 	}

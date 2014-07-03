@@ -19,7 +19,7 @@ public class TestRequestDAO extends TestDAO {
 			.get().getRequestDAO();
 	
 	 @Test
-    public void createRequest()
+    public void createRequest() throws IllegalArgumentException, NdexException
     {
         Assert.assertTrue(createNewRequest());
     }
@@ -45,7 +45,7 @@ public class TestRequestDAO extends TestDAO {
     }
 
     @Test
-    public void deleteRequest()
+    public void deleteRequest() throws IllegalArgumentException, NdexException
     {
         Assert.assertTrue(createNewRequest());
 
@@ -114,7 +114,7 @@ public class TestRequestDAO extends TestDAO {
     }
     
 	
-	 private boolean createNewRequest()
+	 private boolean createNewRequest() throws IllegalArgumentException, NdexException
 	    {
 	        final Request newRequest = new Request();
 	        newRequest.setFrom(this.testUserName);

@@ -6,6 +6,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -22,7 +23,10 @@ public class NdexSchemaManagerTest {
 //		db = new ODatabaseDocumentTx(DB_URL);
 //		db.create();
 		db = NdexAOrientDBConnectionPool.getInstance().acquire();
-		
+		long s = db.getDictionary().size();
+		System.out.println(s);
+		for ( Object o : db.getDictionary().keys())
+			System.out.println(o.toString());
 	}
 
 	@AfterClass
@@ -31,7 +35,7 @@ public class NdexSchemaManagerTest {
 	}
 
 	@Test
-	public void test() {
+	public void test() throws NdexException {
 		NdexSchemaManager.INSTANCE.init(db);
 		
 		OSchema schema = db.getMetadata().getSchema();

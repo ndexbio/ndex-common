@@ -36,7 +36,7 @@ public class TestTaskDAO extends TestDAO
     }
 
     @Test
-    public void deleteTask()
+    public void deleteTask() throws IllegalArgumentException, NdexException
     {
         Assert.assertTrue(createNewTask());
 
