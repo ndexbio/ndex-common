@@ -9,12 +9,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.ndexbio.common.JdexIdService;
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cache.NdexIdentifierCache;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
+import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
@@ -34,6 +36,7 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -51,21 +54,42 @@ import org.slf4j.LoggerFactory;
 
 public class NDExNoTxMemoryPersistence  {
 
-	private OrientDBNoTxConnectionService ndexService;
+	private NdexDatabase database;
+	ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 	private Set<Long> jdexIdSet;
 	private Network network;
-	private IUser user;
+	private User user;
 	private static final Logger logger = LoggerFactory
 			.getLogger(NDExNoTxMemoryPersistence.class);
 	private static final Long CACHE_SIZE = 100000L;
 	private final Stopwatch stopwatch;
 	private long commitCounter = 0L;
 	private static Joiner idJoiner = Joiner.on(":").skipNulls();
+	
+	private LoadingCache<String, BaseTerm> baseTermStrCache;
+    private LoadingCache<String, Namespace> namespaceURICache;
+    private LoadingCache<String, Namespace> namespacePrefixCache;
 
-	public NDExNoTxMemoryPersistence() throws NdexException {
-		ndexService = new OrientDBNoTxConnectionService();
+	public NDExNoTxMemoryPersistence(NdexDatabase db) {
+		database = db;
+		localConnection = database.getAConnection();
 		jdexIdSet = Sets.newHashSet();
 		this.stopwatch = Stopwatch.createUnstarted();
+		
+		// intialize caches.
+		
+		namespaceURICache = CacheBuilder
+				.newBuilder().maximumSize(CACHE_SIZE)
+				.expireAfterAccess(240L, TimeUnit.MINUTES)
+				.build(new CacheLoader<String, Namespace>() {
+				   @Override
+				   public Namespace load(String key) throws Exception {
+					return ndexService._orientDbGraph.addVertex(
+							"class:baseTerm", IBaseTerm.class);
+
+				   }
+			    });
+				
 	}
 
 	// IBaseTerm cache

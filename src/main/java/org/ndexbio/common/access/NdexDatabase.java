@@ -11,7 +11,7 @@ public class NdexDatabase {
 	
 	private NdexAOrientDBConnectionPool pool;
 	
-	private ODatabaseDocumentTx ndexDatabase;
+	private ODatabaseDocumentTx ndexDatabase;  // this connection is used for transactions in this database object.
 	
 	private ODictionary dictionary;
 	
@@ -24,6 +24,7 @@ public class NdexDatabase {
 	public NdexDatabase() throws NdexException {
 		pool = NdexAOrientDBConnectionPool.getInstance();
 		ndexDatabase = pool.acquire();
+		ndexDatabase.begin();
 		dictionary = ndexDatabase.getDictionary();
 		NdexSchemaManager.INSTANCE.init(ndexDatabase);
 		vdoc = (ODocument) dictionary.get(sequenceKey);
@@ -50,4 +51,10 @@ public class NdexDatabase {
     	ndexDatabase.commit();
     	ndexDatabase.close();
     }
+    
+    public ODatabaseDocumentTx getAConnection() {
+    	return pool.acquire();
+    }
+    
+    public ODatabaseDocumentTx getTransactionConnection() {return ndexDatabase;}
 }
