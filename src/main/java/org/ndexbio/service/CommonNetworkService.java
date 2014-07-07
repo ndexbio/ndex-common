@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
@@ -32,14 +33,14 @@ import com.google.common.base.Strings;
  * abstract class containing functionality common to all network service classes
  */
 
+@Deprecated
 public abstract class CommonNetworkService {
 
 	protected NDExNoTxMemoryPersistence persistenceService;
 	protected final Logger logger;
 
 	protected CommonNetworkService() throws NdexException {
-		this.persistenceService = NDExPersistenceServiceFactory.INSTANCE
-				.getNDExPersistenceService();
+		this.persistenceService = new NDExNoTxMemoryPersistence(new NdexDatabase());
 		logger = LoggerFactory.getLogger(this.getClass());
 		logger.info("connection service instantiated");
 	}
@@ -54,7 +55,7 @@ public abstract class CommonNetworkService {
 				"A network owner name is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkTitle),
 				"A network title is required");
-		Network network = this.persistenceService.createNetwork();
+		Network network = this.persistenceService.createNetwork(networkTitle,null);
 		network.setProperties(new ArrayList<NdexProperty>());
 		network.setPresentationProperties(new ArrayList<NdexProperty>());
 		// find the network owner in the database
@@ -64,11 +65,11 @@ public abstract class CommonNetworkService {
 			throw new NdexException("User " +ownerName +" is not registered in the database");
 		}
 				
-		Membership membership = createNewMember(ownerName, network.getExternalId());
+	//	Membership membership = createNewMember(ownerName, network.getExternalId());
 		network.setVisibility(VisibilityType.PUBLIC);
 		network.setIsLocked(false);
 		network.setIsComplete(false);
-		network.getMembers().add(membership);
+	//	network.getMembers().add(membership);
 		network.setName(networkTitle);
 		logger.info("A new NDex network titled: " +network.getName()
 				+" owned by " +ownerName +" has been created");
@@ -121,7 +122,7 @@ public abstract class CommonNetworkService {
         }
 	 */
 	
-	public final SearchResult<IUser> findUsers(SearchParameters searchParameters)
+	public final SearchResult<User> findUsers(SearchParameters searchParameters)
 			throws NdexException {
 		return this.persistenceService.findUsers(searchParameters);
 	}	
@@ -130,16 +131,16 @@ public abstract class CommonNetworkService {
 		return this.persistenceService.getCurrentNetwork();
 	}
 
-	public final IUser createNewUser(String username) {
+/*	public final User createNewUser(String username) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(username));
-		IUser user = this.persistenceService.getCurrentUser();
-		user.setUsername(username);
+		User user = this.persistenceService.getCurrentUser();
+		user.setAccountName(username);
 		return user;
 	}
-
-	public final Membership createNewMember(String accountName, UUID networkUUID) {
+*/
+/*	public final Membership createNewMember(String accountName, UUID networkUUID) {
 		return this.persistenceService.createNetworkMembership(accountName, networkUUID);
-	}
+	} */
 
 	public final void persistNewNetwork() {
 		this.persistenceService.persistNetwork();

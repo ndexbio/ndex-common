@@ -29,7 +29,7 @@ public class NetworkPersistenceService {
 		ndexDatabase.close();
 	}
 
-	public Network getOrCreateNetwork(UUID networkId) {
+/*	public Network getOrCreateNetwork(UUID networkId) {
         NetworkDAO dao = new NetworkDAO(database);
         Network n = dao.getNetworkByID(networkId); 
 		if ( n != null)
@@ -41,5 +41,5 @@ public class NetworkPersistenceService {
 		return n;
 		
 	}
-	
+	*/
 }

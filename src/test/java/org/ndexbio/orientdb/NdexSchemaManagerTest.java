@@ -2,6 +2,11 @@ package org.ndexbio.orientdb;
 
 import static org.junit.Assert.*;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -15,6 +20,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NdexSchemaManagerTest {
 
@@ -63,10 +69,13 @@ public class NdexSchemaManagerTest {
 		ODocument network = new ODocument(NdexClasses.Network);
 		network.field("uuid", "2453");
 		network.field("name", "foo");
+		
 		ns.field("in_ns",network,OType.LINK);
 		ns.save();
 	//	String id1 = ns.getIdentity().toString();
-		network.field("out_ns", ns, OType.LINK);
+		Set<ODocument> s = new HashSet<ODocument> ();
+		s.add(ns);
+		network.field("out_ns", s, OType.LINKSET);
 		network.save();
 /*		String id2 = network.getIdentity().toString();
 		String query = "create edge ns from "+ id2 + " to " + id1;
@@ -76,7 +85,25 @@ public class NdexSchemaManagerTest {
         System.out.println(recordsUpdated);     
 	*/	db.commit();
 		
+		db.begin ();
+		ns = new ODocument(NdexClasses.Namespace);
+		ns.field("prefix", "ns2");
+		ns.field("uri", "http://example2.org/");
+		ns.field("id", (long)3);
 		
+		
+		List<ODocument> networks = db.query(
+					      new OSQLSynchQuery<ODocument>("select from network where uuid = '2453'"));
+
+		network=networks.get(0);
+        ns.field("in_ns",network,OType.LINK);
+		ns.save();
+		Collection<ODocument> s1 = network.field("out_ns");
+		s1.add(ns);
+		network.field("out_ns", s1, OType.LINKSET);
+		network.save();
+		
+		db.commit();
 		
 	}
 

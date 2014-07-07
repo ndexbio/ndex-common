@@ -1,11 +1,14 @@
 package org.ndexbio.common.persistence.orientdb;
 
 import java.security.Permissions;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import org.ndexbio.common.JdexIdService;
 import org.ndexbio.common.NdexClasses;
@@ -14,14 +17,17 @@ import org.ndexbio.common.cache.NdexIdentifierCache;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
+import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.common.persistence.NDExPersistenceService;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.User;
@@ -39,11 +45,10 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /*
  * An implementation of the NDExPersistenceService interface that uses a 
@@ -62,9 +67,9 @@ public class NDExNoTxMemoryPersistence  {
 	private Set<Long> jdexIdSet;
 	private Network network;
 	private User user;
+	private ODocument networkDoc;
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(NDExNoTxMemoryPersistence.class);
+	private static final Logger logger = Logger.getLogger(NDExNoTxMemoryPersistence.class.getName());
 	private static final Long CACHE_SIZE = 100000L;
 	private final Stopwatch stopwatch;
 	private long commitCounter = 0L;
@@ -73,9 +78,17 @@ public class NDExNoTxMemoryPersistence  {
 	private LoadingCache<String, BaseTerm> baseTermStrCache;
     private LoadingCache<RawNamespace, Namespace> rawNamespaceCache;
 
+    /*
+     * Currently, the procces flow of this class is:
+     * 
+     * 1. create object 
+     * 2. Create New network
+     */
+    
 	public NDExNoTxMemoryPersistence(NdexDatabase db) {
 		database = db;
 		localConnection = database.getAConnection();
+		localConnection.begin();
 		this.networkDAO = new NetworkDAO(db);
 		jdexIdSet = Sets.newHashSet();
 		this.stopwatch = Stopwatch.createUnstarted();
@@ -88,20 +101,40 @@ public class NDExNoTxMemoryPersistence  {
 				.build(new CacheLoader<RawNamespace, Namespace>() {
 				   @Override
 				   public Namespace load(RawNamespace key) throws Exception {
-					Namespace ns = networkDAO.getNamespace(key.getPrefix(), key.getUri(), key.getNetworkID());   
-					if ( ns != null )
-						return ns;
 					
-					return ndexService._orientDbGraph.addVertex(
-							"class:baseTerm", IBaseTerm.class);
+					return findOrCreateNamespace(key);
 
 				   }
 			    });
 				
 	}
 
+	//TODO: need to add membership etc later. Need to 
+	public void createNewNetwork(String ownerName, String networkTitle, String version) throws Exception {
+		Preconditions.checkNotNull(ownerName,"A network owner name is required");
+		Preconditions.checkNotNull(networkTitle,"A network title is required");
+		
+		createNetwork(networkTitle,version);
+		network.setProperties(new ArrayList<NdexProperty>());
+		network.setPresentationProperties(new ArrayList<NdexProperty>());
+		// find the network owner in the database
+		user =  findUserByAccountName(ownerName);
+		if( null == user){
+			logger.severe("User " +ownerName +" is not registered in the database/");
+			throw new NdexException("User " +ownerName +" is not registered in the database");
+		}
+				
+	//	Membership membership = createNewMember(ownerName, network.getExternalId());
+	//	network.getMembers().add(membership);
+
+		logger.info("A new NDex network titled: " +network.getName()
+				+" owned by " +ownerName +" has been created");
+
+	}
+
+
 	// IBaseTerm cache
-	private RemovalListener<Long, IBaseTerm> baseTermListener = new RemovalListener<Long, IBaseTerm>() {
+/*	private RemovalListener<Long, IBaseTerm> baseTermListener = new RemovalListener<Long, IBaseTerm>() {
 
 		public void onRemoval(RemovalNotification<Long, IBaseTerm> removal) {
 			logger.info("IBaseTerm removed from cache key= "
@@ -124,9 +157,9 @@ public class NDExNoTxMemoryPersistence  {
 
 				}
 			});
-
+*/
 	// IFunctionTerm cache
-	private RemovalListener<Long, IFunctionTerm> functionTermListener = new RemovalListener<Long, IFunctionTerm>() {
+/*	private RemovalListener<Long, IFunctionTerm> functionTermListener = new RemovalListener<Long, IFunctionTerm>() {
 
 		public void onRemoval(RemovalNotification<Long, IFunctionTerm> removal) {
 			logger.info("IFunctionTerm removed from cache key= "
@@ -204,9 +237,9 @@ public class NDExNoTxMemoryPersistence  {
 				}
 
 			});
-
+*/
 	// ICitation cache
-	private RemovalListener<Long, ICitation> citationListener = new RemovalListener<Long, ICitation>() {
+/*	private RemovalListener<Long, ICitation> citationListener = new RemovalListener<Long, ICitation>() {
 
 		public void onRemoval(RemovalNotification<Long, ICitation> removal) {
 			logger.info("ICitiation removed from cache key= "
@@ -354,21 +387,38 @@ public class NDExNoTxMemoryPersistence  {
 		this.jdexIdSet.add(jdexId);
 		return reifiedEdgeTermCache.get(jdexId);
 	}
-
+*/
 	private Namespace findOrCreateNamespace(RawNamespace key) {
 		Namespace ns = networkDAO.getNamespace(key.getPrefix(), 
 				key.getUri(), key.getNetworkID());   
 		if ( ns != null )
 			return ns;
 		
+		// persist the Namespace in db.
 		ns = new Namespace();
 		ns.setPrefix(key.getPrefix());
-		ns.setUri(key.getPrefix());
-		return ndexService._orientDbGraph.addVertex(
-				"class:baseTerm", IBaseTerm.class);
+		ns.setUri(key.getUri());
+		ns.setId(database.getNextId());
+		
 
+		ODocument nsDoc = new ODocument(NdexClasses.Namespace);
+		nsDoc.field("prefix", key.getPrefix())
+		  .field("uri", ns.getUri())
+		  .field("id", ns.getId())
+		  .field("in_" + NdexClasses.Network_E_NAMESPACE ,networkDoc,OType.LINK)
+		  .save();
+		
+		String nsField = "out_" + NdexClasses.Network_E_NAMESPACE;
+		Collection<ODocument> s1 = networkDoc.field(nsField);
+		s1.add(nsDoc);
+		
+		networkDoc.field(nsField, s1, OType.LINKSET)
+		.save();
+
+		return ns; 
 		
 	}
+/*	
 	public Namespace findOrCreateINamespace(Long jdexId)
 			throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
@@ -406,27 +456,39 @@ public class NDExNoTxMemoryPersistence  {
 		return supportCache.get(jdexId);
 	}
 
-
+*/
 
 	public Network getCurrentNetwork() {
 		return this.network;
 	}
 	
-
-	public Network createNetwork(){
+	public ODocument getNetworkDoc() { return this.networkDoc; } 
+	
+    //TODO: change this function to private void once migrate to 1.0 -- cj
+	public Network createNetwork(String title, String version){
 		this.network = new Network();
 		this.network.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
-        
-		ndexService._ndexDatabase.begin();
-		
-		ODocument networkNode = new ODocument (NdexClasses.Network);
-		networkNode.field("UUID",network.getExternalId());
-		networkNode.field("createdDate", network.getCreationDate());
-		networkNode.field("modificationDate", network.getModificationDate());
+		this.network.setName(title);
+		network.setVisibility(VisibilityType.PUBLIC);
+		network.setIsLocked(false);
+		network.setIsComplete(false);
 
-		networkNode.save();
+		if ( version != null)
+			this.network.setVersion(version);
+        
+//		ndexService._ndexDatabase.begin();
+		
+		networkDoc = new ODocument (NdexClasses.Network);
+		networkDoc.field(NdexClasses.Network_P_UUID,network.getExternalId())
+		  .field(NdexClasses.Network_P_cDate, network.getCreationDate())
+		  .field(NdexClasses.Network_P_mDate, network.getModificationDate())
+		  .field(NdexClasses.Network_P_name, network.getName())
+		  .field(NdexClasses.Network_P_isLocked, network.getIsLocked())
+		  .field(NdexClasses.Network_P_isComplete, network.getIsComplete())
+		  .field(NdexClasses.Network_P_visibility, network.getVisibility().toString())
+          .save();
 		    
-		ndexService._ndexDatabase.commit();
+//		ndexService._ndexDatabase.commit();
 		
 		return this.network;
 	}
@@ -435,7 +497,7 @@ public class NDExNoTxMemoryPersistence  {
 	 * find the ITerm (either Base, Function, or ReifiedEdge) by jdex id
 	 */
 
-	public ITerm findChildITerm(Long jdexId) throws ExecutionException {
+/*	public ITerm findChildITerm(Long jdexId) throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
 				"A valid JDExId is required");
 		
@@ -480,7 +542,7 @@ public class NDExNoTxMemoryPersistence  {
 
 		return result;
 	}
-
+*/
     /**
      * Find a user based on account name.
      * @param accountName
@@ -499,7 +561,7 @@ public class NDExNoTxMemoryPersistence  {
 				  " where accountName = '" + accountName + "'";
 				
 		User user = null;
-		List<ODocument> userDocumentList = ndexService._ndexDatabase
+		List<ODocument> userDocumentList = localConnection
 					.query(new OSQLSynchQuery<ODocument>(query));
 
 		if ( ! userDocumentList.isEmpty()) {
@@ -518,7 +580,7 @@ public class NDExNoTxMemoryPersistence  {
 	 */
 
 
-	public SearchResult<IUser> findUsers(SearchParameters searchParameters)
+	public SearchResult<User> findUsers(SearchParameters searchParameters)
 			throws NdexException {
 		if (searchParameters.getSearchString() == null
 				|| searchParameters.getSearchString().isEmpty())
@@ -527,8 +589,8 @@ public class NDExNoTxMemoryPersistence  {
 			searchParameters.setSearchString(searchParameters.getSearchString()
 					.toUpperCase().trim());
 
-		final List<IUser> foundUsers = Lists.newArrayList();
-		final SearchResult<IUser> result = new SearchResult<IUser>();
+		final List<User> foundUsers = Lists.newArrayList();
+		final SearchResult<User> result = new SearchResult<User>();
 		result.setResults(foundUsers);
 
 		// TODO: Remove these, they're unnecessary
@@ -551,19 +613,16 @@ public class NDExNoTxMemoryPersistence  {
 
 		try {
 
-			List<ODocument> userDocumentList = ndexService._orientDbGraph
-					.getBaseGraph().getRawGraph()
+			List<ODocument> userDocumentList = localConnection
 					.query(new OSQLSynchQuery<ODocument>(query));
 
 			for (final ODocument document : userDocumentList)
-				foundUsers.add(ndexService._orientDbGraph.getVertex(document,
-						IUser.class));
+				foundUsers.add(UserOrientdbDAO.getUserFromDocument(document));
 
 			result.setResults(foundUsers);
 
 			return result;
 		} catch (Exception e) {
-			ndexService._orientDbGraph.getBaseGraph().rollback();
 			throw new NdexException(e.getMessage());
 		}
 
@@ -579,14 +638,14 @@ public class NDExNoTxMemoryPersistence  {
 	public void abortTransaction() {
 		System.out.println(this.getClass().getName()
 				+ ".abortTransaction has been invoked.");
-		try {
-			// ndexService._orientDbGraph.getBaseGraph().rollback();
-			this.deleteNetwork();
-			System.out.println("Deleting network in order to rollback in response to error");
-		} finally {
-			ndexService.teardownDatabase();
-			System.out.println("Connection to orientdb database has been closed");
-		}
+
+		localConnection.rollback();
+		
+		// make sure everything relate to the network is deleted.
+		localConnection.begin();
+		deleteNetwork();
+		localConnection.commit();
+		System.out.println("Deleting network in order to rollback in response to error");
 	}
 
 	/*
@@ -596,8 +655,8 @@ public class NDExNoTxMemoryPersistence  {
 
 	public void persistNetwork() {
 		try {
-			network.setEdgeCount((int) this.edgeCache.size());
-			network.setNodeCount((int) this.nodeCache.size());
+	//		network.setEdgeCount((int) this.edgeCache.size());
+	//		network.setNodeCount((int) this.nodeCache.size());
 			network.setIsComplete(true);
 			NdexIdentifierCache.INSTANCE.accessIdentifierCache().invalidateAll();
 			NdexIdentifierCache.INSTANCE.accessTermCache().invalidateAll();
@@ -608,7 +667,8 @@ public class NDExNoTxMemoryPersistence  {
 			System.out.println("unexpected error in persist network...");
 			e.printStackTrace();
 		} finally {
-			ndexService.teardownDatabase();
+//			ndexService.teardownDatabase();
+			localConnection.commit();
 			System.out
 					.println("Connection to orientdb database has been closed");
 		}
@@ -618,7 +678,7 @@ public class NDExNoTxMemoryPersistence  {
 	public void networkProgressLogCheck() throws NdexException {
 		commitCounter++;
 		if (commitCounter % 1000 == 0) {
-			logger.info("Checkpoint: Number of edges " + this.edgeCache.size());
+			logger.info("Checkpoint: Number of edges " /*+this.edgeCache.size()*/);
 		}
 
 	}
@@ -631,7 +691,7 @@ public class NDExNoTxMemoryPersistence  {
 		
 	}
 
-
+/*
 	public Namespace findOrCreateNamespace(String uri, String prefix) throws Exception {
 		String namespaceIdentifier = null;
 		
@@ -671,7 +731,7 @@ public class NDExNoTxMemoryPersistence  {
 		logger.info("Created namespace " + iNamespace.getPrefix() + " " + iNamespace.getUri());
 		return iNamespace;
 	}
-
+*/
 
 	private static String findPrefixForNamespaceURI(String uri) {
 		if (uri.equals("http://biopax.org/generated/group/")) return "GROUP";

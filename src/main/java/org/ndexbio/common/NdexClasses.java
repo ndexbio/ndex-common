@@ -35,6 +35,10 @@ public class NdexClasses {
     public static final String Network_P_cDate   = "createdDate";
     public static final String Network_P_mDate   = "modificationDate";
     public static final String Network_P_name    = "name";
+    public static final String Network_P_visibility = "visibility";
+    public static final String Network_P_isLocked   = "isLocked";
+    public static final String Network_P_isComplete = "isComplete";
+    public static final String Network_P_desc    = "description";
     
     public static final String Network_E_NAMESPACE = "ns";
     

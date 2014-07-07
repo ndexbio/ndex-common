@@ -204,12 +204,13 @@ public class NdexSchemaManager
 //            reifiedEdgeTermClass.createProperty("type", OType.STRING);
         }
         
-        if (orientDbGraph.getVertexType(NdexClasses.Namespace) == null)
+        OClass nsClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Namespace);
+        if (nsClass == null)
         {
-            OClass namespaceClass = orientDbGraph.createVertexType("namespace");
-            namespaceClass.createProperty("id", OType.LONG);
-            namespaceClass.createProperty("prefix", OType.STRING);
-            namespaceClass.createProperty("uri", OType.STRING);
+            nsClass = orientDbGraph.createVertexType("namespace");
+            nsClass.createProperty("id", OType.LONG);
+            nsClass.createProperty("prefix", OType.STRING);
+            nsClass.createProperty("uri", OType.STRING);
         }
 
         if (orientDbGraph.getVertexType(NdexClasses.Network) == null)
@@ -227,6 +228,9 @@ public class NdexSchemaManager
             networkClass.createProperty("name", OType.STRING);
             networkClass.createProperty("version", OType.STRING);
             networkClass.createProperty("highestElementId", OType.INTEGER);
+            
+            networkClass.createProperty(NdexClasses.Network_E_NAMESPACE, OType.LINKSET, nsClass);
+            
         }
 
         if (orientDbGraph.getVertexType(NdexClasses.Node) == null)
@@ -263,6 +267,8 @@ public class NdexSchemaManager
             supportClass.createProperty("text", OType.STRING);
         }
 
+        orientDb.getMetadata().getSchema().save();
+        
         versionDoc = new ODocument(NdexVField, NdexDbVersion);
         orientDb.getDictionary().put(NdexDbVersionKey, versionDoc);
         

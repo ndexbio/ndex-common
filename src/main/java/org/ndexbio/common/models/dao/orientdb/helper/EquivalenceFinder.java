@@ -32,7 +32,7 @@ public interface EquivalenceFinder {
     
     Map<String, VertexFrame> getNetworkIndex();
     
-    INamespace getNamespace(RawNamespace namespace, String jdexId) throws NdexException;
+ //   INamespace getNamespace(RawNamespace namespace, String jdexId) throws NdexException;
     
     IBaseTerm getBaseTerm(BaseTerm baseTerm, String jdexId) throws NdexException;
     

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.Request;
 import org.ndexbio.common.models.object.privilege.Membership;
+import org.ndexbio.model.object.network.Namespace;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 /**
@@ -27,7 +28,7 @@ public class Network extends MetadataObject
     private boolean _isPublic;
     private List<Membership> _members;
     private String _name;
-    private Map<String, RawNamespace> _namespaces;
+    private Map<String, Namespace> _namespaces;
     private int _nodeCount;
     private Map<String, Node> _nodes;
     private List<Request> _requests;
@@ -117,7 +118,8 @@ public class Network extends MetadataObject
                 _citations.put(citation.getJdexId(), new Citation(citation));
 
             for (final INamespace namespace : network.getNamespaces())
-                _namespaces.put(namespace.getJdexId(), new RawNamespace(namespace));
+               // _namespaces.put(namespace.getJdexId(), new Namespace(namespace));
+            	_namespaces.put(namespace.getJdexId(), new Namespace());  //commented out for now by cj.
 
             for (final ISupport support : network.getSupports())
                 _supports.put(support.getJdexId(), new Support(support));
@@ -216,12 +218,12 @@ public class Network extends MetadataObject
         _name = name;
     }
 
-    public Map<String, RawNamespace> getNamespaces()
+    public Map<String, Namespace> getNamespaces()
     {
         return _namespaces;
     }
 
-    public void setNamespaces(Map<String, RawNamespace> namespaces)
+    public void setNamespaces(Map<String, Namespace> namespaces)
     {
         _namespaces = namespaces;
     }
@@ -286,7 +288,7 @@ public class Network extends MetadataObject
         _citations = new HashMap<String, Citation>();
         _edges = new HashMap<String, Edge>();
         _members = new ArrayList<Membership>();
-        _namespaces = new HashMap<String, RawNamespace>();
+        _namespaces = new HashMap<String, Namespace>();
         _nodes = new HashMap<String, Node>();
         _requests = new ArrayList<Request>();
         _supports = new HashMap<String, Support>();

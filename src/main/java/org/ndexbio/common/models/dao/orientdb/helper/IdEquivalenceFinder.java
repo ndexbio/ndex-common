@@ -58,7 +58,7 @@ public class IdEquivalenceFinder implements EquivalenceFinder {
 		return _networkIndex;
 	}
 
-	@Override
+/*	@Override
 	public INamespace getNamespace(RawNamespace namespace, String jdexId) {
 		INamespace ns = (INamespace) _networkIndex.get(jdexId);
 		if (null != ns) return ns;	
@@ -68,9 +68,9 @@ public class IdEquivalenceFinder implements EquivalenceFinder {
 			System.out.println("found Namespace " + ns.getJdexId() + " " + ns.getPrefix());
 		}
 		return ns;
-	}
+	} */
 	
-	private INamespace findNamespace(RawNamespace namespace){
+/*	private INamespace findNamespace(RawNamespace namespace){
 		final List<ODocument> namespaces = _ndexDatabase
 				.query(new OSQLSynchQuery<Object>(
 						"SELECT FROM (TRAVERSE out_networkNamespaces FROM " + 
@@ -84,7 +84,7 @@ public class IdEquivalenceFinder implements EquivalenceFinder {
 		return null;
 		
 	}
-
+*/
 	@Override
 	public IBaseTerm getBaseTerm(BaseTerm baseTerm, String jdexId) throws NdexException {
 		IBaseTerm bt = (IBaseTerm) _networkIndex.get(jdexId);
