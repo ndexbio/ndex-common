@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 
 import org.ndexbio.common.models.object.network.BaseTerm;
 import org.ndexbio.common.models.object.network.FunctionTerm;
-import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.ReifiedEdgeTerm;
 import org.ndexbio.common.models.object.network.Term;
 

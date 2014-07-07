@@ -15,7 +15,7 @@ import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.UploadedFile;
 import org.ndexbio.common.models.object.network.BaseTerm;
 import org.ndexbio.common.models.object.network.Citation;
-import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.Network;
 import org.ndexbio.common.models.object.privilege.Membership;
 
@@ -236,7 +236,7 @@ public interface NetworkDAO {
 	 *             Failed to query the database.
 	 * @return The edges of the network.
 	 **************************************************************************/
-	public abstract Iterable<Namespace> getNamespaces( String networkId,
+	public abstract Iterable<RawNamespace> getNamespaces( String networkId,
 			int skip, int top) throws IllegalArgumentException, NdexException;
 
 	/**************************************************************************

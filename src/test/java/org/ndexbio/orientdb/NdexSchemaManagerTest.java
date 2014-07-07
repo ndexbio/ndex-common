@@ -5,12 +5,16 @@ import static org.junit.Assert.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class NdexSchemaManagerTest {
 
@@ -46,6 +50,33 @@ public class NdexSchemaManagerTest {
 		}
 		
 		assertEquals (schema.countClasses(), 19+10);  // 10 internal classes.
+		
+	}
+	
+	@Test
+	public void testInsert() {
+		db.begin();
+		ODocument ns = new ODocument(NdexClasses.Namespace);
+		ns.field("prefix", "ns1");
+		ns.field("uri", "http://foo.bar.org/");
+		ns.field("id", (long)2);
+		ODocument network = new ODocument(NdexClasses.Network);
+		network.field("uuid", "2453");
+		network.field("name", "foo");
+		ns.field("in_ns",network,OType.LINK);
+		ns.save();
+	//	String id1 = ns.getIdentity().toString();
+		network.field("out_ns", ns, OType.LINK);
+		network.save();
+/*		String id2 = network.getIdentity().toString();
+		String query = "create edge ns from "+ id2 + " to " + id1;
+		Integer execute = db.command(
+			      new OCommandSQL(query)).execute();
+		int recordsUpdated = execute.intValue();
+        System.out.println(recordsUpdated);     
+	*/	db.commit();
+		
+		
 		
 	}
 

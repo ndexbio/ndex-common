@@ -5,7 +5,7 @@ import java.util.List;
 import org.ndexbio.common.models.object.network.BaseTerm;
 import org.ndexbio.common.models.object.network.Citation;
 import org.ndexbio.common.models.object.network.Edge;
-import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.Network;
 
 /*
@@ -21,10 +21,10 @@ public interface NdexDataModelService {
 	public List<Citation> getCitationsByNetworkId(String networkId);
 	public Network getSubnetworkByCitationId(String networkId, String citationId);
 	public List<Edge> getEdgesBySupportId(String supportId);
-	public List<Namespace> getNamespacesByNetworkId(String networkId);
+	public List<RawNamespace> getNamespacesByNetworkId(String networkId);
 	// internal & external annotations are persisted as namespaces
-	public List<Namespace> getInternalAnnotationsByNetworkId(String networkId);
-	public List<Namespace> getExternalAnnotationsByNetworkId(String networkId);
+	public List<RawNamespace> getInternalAnnotationsByNetworkId(String networkId);
+	public List<RawNamespace> getExternalAnnotationsByNetworkId(String networkId);
 	public List<BaseTerm> getBaseTermsByNamespace(String namespace, String networkId);
 
 }

@@ -16,7 +16,7 @@ import org.ndexbio.common.models.object.network.BaseTerm;
 import org.ndexbio.common.models.object.network.Citation;
 import org.ndexbio.common.models.object.network.Edge;
 import org.ndexbio.common.models.object.network.FunctionTerm;
-import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.Node;
 import org.ndexbio.common.models.object.network.ReifiedEdgeTerm;
 import org.ndexbio.common.models.object.network.Support;
@@ -32,7 +32,7 @@ public interface EquivalenceFinder {
     
     Map<String, VertexFrame> getNetworkIndex();
     
-    INamespace getNamespace(Namespace namespace, String jdexId) throws NdexException;
+    INamespace getNamespace(RawNamespace namespace, String jdexId) throws NdexException;
     
     IBaseTerm getBaseTerm(BaseTerm baseTerm, String jdexId) throws NdexException;
     

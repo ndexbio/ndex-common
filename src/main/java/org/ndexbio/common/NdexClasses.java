@@ -30,6 +30,19 @@ public class NdexClasses {
 	public static final String Subnetwork         = "Subnetwork";
 	public static final String Support            = "support";
 	
-	
+	// network properties and edges.
+    public static final String Network_P_UUID    = "UUID";
+    public static final String Network_P_cDate   = "createdDate";
+    public static final String Network_P_mDate   = "modificationDate";
+    public static final String Network_P_name    = "name";
+    
+    public static final String Network_E_NAMESPACE = "ns";
+    
+    // namespace 
+    public static final String ns_P_prefix = "prefix";
+    public static final String ns_P_uri    = "uri";
+    
+    
+    
 
 }

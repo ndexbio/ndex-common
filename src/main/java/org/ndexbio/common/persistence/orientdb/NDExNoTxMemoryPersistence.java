@@ -13,9 +13,11 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cache.NdexIdentifierCache;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ValidationException;
+import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.Membership;
@@ -55,10 +57,12 @@ import org.slf4j.LoggerFactory;
 public class NDExNoTxMemoryPersistence  {
 
 	private NdexDatabase database;
+    private NetworkDAO  networkDAO;
 	ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 	private Set<Long> jdexIdSet;
 	private Network network;
 	private User user;
+
 	private static final Logger logger = LoggerFactory
 			.getLogger(NDExNoTxMemoryPersistence.class);
 	private static final Long CACHE_SIZE = 100000L;
@@ -67,23 +71,27 @@ public class NDExNoTxMemoryPersistence  {
 	private static Joiner idJoiner = Joiner.on(":").skipNulls();
 	
 	private LoadingCache<String, BaseTerm> baseTermStrCache;
-    private LoadingCache<String, Namespace> namespaceURICache;
-    private LoadingCache<String, Namespace> namespacePrefixCache;
+    private LoadingCache<RawNamespace, Namespace> rawNamespaceCache;
 
 	public NDExNoTxMemoryPersistence(NdexDatabase db) {
 		database = db;
 		localConnection = database.getAConnection();
+		this.networkDAO = new NetworkDAO(db);
 		jdexIdSet = Sets.newHashSet();
 		this.stopwatch = Stopwatch.createUnstarted();
 		
 		// intialize caches.
 		
-		namespaceURICache = CacheBuilder
+		rawNamespaceCache = CacheBuilder
 				.newBuilder().maximumSize(CACHE_SIZE)
 				.expireAfterAccess(240L, TimeUnit.MINUTES)
-				.build(new CacheLoader<String, Namespace>() {
+				.build(new CacheLoader<RawNamespace, Namespace>() {
 				   @Override
-				   public Namespace load(String key) throws Exception {
+				   public Namespace load(RawNamespace key) throws Exception {
+					Namespace ns = networkDAO.getNamespace(key.getPrefix(), key.getUri(), key.getNetworkID());   
+					if ( ns != null )
+						return ns;
+					
 					return ndexService._orientDbGraph.addVertex(
 							"class:baseTerm", IBaseTerm.class);
 
@@ -347,6 +355,20 @@ public class NDExNoTxMemoryPersistence  {
 		return reifiedEdgeTermCache.get(jdexId);
 	}
 
+	private Namespace findOrCreateNamespace(RawNamespace key) {
+		Namespace ns = networkDAO.getNamespace(key.getPrefix(), 
+				key.getUri(), key.getNetworkID());   
+		if ( ns != null )
+			return ns;
+		
+		ns = new Namespace();
+		ns.setPrefix(key.getPrefix());
+		ns.setUri(key.getPrefix());
+		return ndexService._orientDbGraph.addVertex(
+				"class:baseTerm", IBaseTerm.class);
+
+		
+	}
 	public Namespace findOrCreateINamespace(Long jdexId)
 			throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,

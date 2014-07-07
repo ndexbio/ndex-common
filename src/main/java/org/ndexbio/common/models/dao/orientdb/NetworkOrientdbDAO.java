@@ -50,7 +50,7 @@ import org.ndexbio.common.models.object.network.BaseTerm;
 import org.ndexbio.common.models.object.network.Citation;
 import org.ndexbio.common.models.object.network.Edge;
 import org.ndexbio.common.models.object.network.FunctionTerm;
-import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.common.models.object.network.Node;
 import org.ndexbio.common.models.object.network.ReifiedEdgeTerm;

@@ -17,7 +17,7 @@ import org.ndexbio.common.models.object.network.BaseTerm;
 import org.ndexbio.common.models.object.network.Citation;
 import org.ndexbio.common.models.object.network.Edge;
 import org.ndexbio.common.models.object.network.FunctionTerm;
-import org.ndexbio.common.models.object.network.Namespace;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.Node;
 import org.ndexbio.common.models.object.network.ReifiedEdgeTerm;
 import org.ndexbio.common.models.object.network.Support;
@@ -59,7 +59,7 @@ public class IdEquivalenceFinder implements EquivalenceFinder {
 	}
 
 	@Override
-	public INamespace getNamespace(Namespace namespace, String jdexId) {
+	public INamespace getNamespace(RawNamespace namespace, String jdexId) {
 		INamespace ns = (INamespace) _networkIndex.get(jdexId);
 		if (null != ns) return ns;	
 		ns = findNamespace(namespace);
@@ -70,7 +70,7 @@ public class IdEquivalenceFinder implements EquivalenceFinder {
 		return ns;
 	}
 	
-	private INamespace findNamespace(Namespace namespace){
+	private INamespace findNamespace(RawNamespace namespace){
 		final List<ODocument> namespaces = _ndexDatabase
 				.query(new OSQLSynchQuery<Object>(
 						"SELECT FROM (TRAVERSE out_networkNamespaces FROM " + 
