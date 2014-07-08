@@ -11,29 +11,29 @@ public class RawNamespace implements Comparable<RawNamespace>
 {
     private String _prefix;
     private String _uri;
-    private UUID networkID;
+ //   private UUID networkID;
     
     
     
     /**************************************************************************
     * Default constructor.
     **************************************************************************/
-    public RawNamespace()
+ /*   public RawNamespace()
     {
         super();
-    }
+    } */
     
     /**************************************************************************
     * Populates the class (from the database) and removes circular references.
     * 
     * @param namespace The Namespace with source data.
     **************************************************************************/
-    public RawNamespace (UUID networkID,String prefix, String URI)
+    public RawNamespace (/*UUID networkID, */String prefix, String URI)
     {
         
         this._prefix = prefix;
         this._uri = URI;
-        this.setNetworkID(networkID);
+     //   this.setNetworkID(networkID);
     }
     
     public String getPrefix()
@@ -58,11 +58,11 @@ public class RawNamespace implements Comparable<RawNamespace>
 
 	@Override
 	public int compareTo(RawNamespace arg0) {
-		int c = this.networkID.compareTo ( arg0.getNetworkID());
+	/*	int c = this.networkID.compareTo ( arg0.getNetworkID());
 		if ( c!= 0)
-			return c;
+			return c; */
 		
-		c = _uri.compareTo(arg0.getUri());
+		int c = _uri.compareTo(arg0.getUri());
 		if ( c != 0)
 			return c;
 		if ( this._prefix == null ) {
@@ -88,11 +88,11 @@ public class RawNamespace implements Comparable<RawNamespace>
     	return false;
     }
 
-	public UUID getNetworkID() {
+/*	public UUID getNetworkID() {
 		return this.networkID;
 	}
 
 	public void setNetworkID(UUID networkID) {
 		this.networkID = networkID;
-	}
+	} */
 }

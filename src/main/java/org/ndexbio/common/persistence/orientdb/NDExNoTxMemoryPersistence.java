@@ -100,10 +100,8 @@ public class NDExNoTxMemoryPersistence  {
 				.expireAfterAccess(240L, TimeUnit.MINUTES)
 				.build(new CacheLoader<RawNamespace, Namespace>() {
 				   @Override
-				   public Namespace load(RawNamespace key) throws Exception {
-					
+				   public Namespace load(RawNamespace key) {
 					return findOrCreateNamespace(key);
-
 				   }
 			    });
 				
@@ -390,7 +388,7 @@ public class NDExNoTxMemoryPersistence  {
 */
 	private Namespace findOrCreateNamespace(RawNamespace key) {
 		Namespace ns = networkDAO.getNamespace(key.getPrefix(), 
-				key.getUri(), key.getNetworkID());   
+				key.getUri(), network.getExternalId());   
 		if ( ns != null )
 			return ns;
 		
@@ -691,6 +689,16 @@ public class NDExNoTxMemoryPersistence  {
 		
 	}
 
+	public Namespace getNamespace(RawNamespace rns) throws NdexException {
+		try {
+			return this.rawNamespaceCache.get(rns);
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			logger.severe(e.getMessage());
+			throw new NdexException ("Error occured when getting namespace " + rns.getUri() + ". " + e.getMessage());
+		}
+	}
+	
 /*
 	public Namespace findOrCreateNamespace(String uri, String prefix) throws Exception {
 		String namespaceIdentifier = null;
