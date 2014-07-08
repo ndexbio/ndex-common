@@ -41,28 +41,28 @@ public class RawNamespace implements Comparable<RawNamespace>
         return _prefix;
     }
     
-    public void setPrefix(String prefix)
+/*    public void setPrefix(String prefix)
     {
         _prefix = prefix;
     }
-    
-    public String getUri()
+*/    
+    public String getURI()
     {
         return this._uri;
     }
     
-    public void setUri(String uri)
+/*    public void setURI(String uri)
     {
         this._uri = uri;
     }
-
+*/
 	@Override
 	public int compareTo(RawNamespace arg0) {
 	/*	int c = this.networkID.compareTo ( arg0.getNetworkID());
 		if ( c!= 0)
 			return c; */
 		
-		int c = _uri.compareTo(arg0.getUri());
+		int c = _uri.compareTo(arg0.getURI());
 		if ( c != 0)
 			return c;
 		if ( this._prefix == null ) {

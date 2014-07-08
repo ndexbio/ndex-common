@@ -1,5 +1,7 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,6 +77,7 @@ public class NDExNoTxMemoryPersistence  {
 	private long commitCounter = 0L;
 	private static Joiner idJoiner = Joiner.on(":").skipNulls();
 	
+	// key is the full URI or other fully qualified baseTerm as a string.
 	private LoadingCache<String, BaseTerm> baseTermStrCache;
     private LoadingCache<RawNamespace, Namespace> rawNamespaceCache;
 
@@ -100,11 +103,21 @@ public class NDExNoTxMemoryPersistence  {
 				.expireAfterAccess(240L, TimeUnit.MINUTES)
 				.build(new CacheLoader<RawNamespace, Namespace>() {
 				   @Override
-				   public Namespace load(RawNamespace key) {
+				   public Namespace load(RawNamespace key) throws NdexException {
 					return findOrCreateNamespace(key);
 				   }
 			    });
-				
+
+		baseTermStrCache = CacheBuilder
+				.newBuilder().maximumSize(CACHE_SIZE)
+				.expireAfterAccess(240L, TimeUnit.MINUTES)
+				.build(new CacheLoader<String, BaseTerm>() {
+				   @Override
+				   public BaseTerm load(String key) throws NdexException {
+					return findOrCreateBaseTerm(key);
+				   }
+			    });
+		
 	}
 
 	//TODO: need to add membership etc later. Need to 
@@ -386,16 +399,23 @@ public class NDExNoTxMemoryPersistence  {
 		return reifiedEdgeTermCache.get(jdexId);
 	}
 */
-	private Namespace findOrCreateNamespace(RawNamespace key) {
+	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
 		Namespace ns = networkDAO.getNamespace(key.getPrefix(), 
-				key.getUri(), network.getExternalId());   
+				key.getURI(), network.getExternalId());
+		
+        if (key.getPrefix() !=null && key.getURI() !=null && 
+       		 !ns.getUri().equals(key.getURI()))
+       	   throw new NdexException("Namespace conflict: prefix " 
+       		       + key.getPrefix() + " maps to  " + 
+       			   ns.getUri() + " and " + key.getURI());
+
 		if ( ns != null )
 			return ns;
 		
 		// persist the Namespace in db.
 		ns = new Namespace();
 		ns.setPrefix(key.getPrefix());
-		ns.setUri(key.getUri());
+		ns.setUri(key.getURI());
 		ns.setId(database.getNextId());
 		
 
@@ -416,7 +436,75 @@ public class NDExNoTxMemoryPersistence  {
 		return ns; 
 		
 	}
-/*	
+
+	private BaseTerm findOrCreateBaseTerm(String termString) throws NdexException {
+		// case 1 : termString is a URI
+		// example: http://identifiers.org/uniprot/P19838
+		// treat the last element in the URI as the identifier and the rest as
+		// the namespace URI
+		// find or create the namespace based on the URI
+		// when creating, set the prefix based on the PREFIX-URI table for known
+		// namespaces, otherwise do not set.
+		//
+		BaseTerm iBaseTerm = null;
+		try {
+			URI termStringURI = new URI(termString);
+			String fragment = termStringURI.getFragment();
+			String prefix;
+			if ( fragment == null ) {
+				String path = termStringURI.getPath();
+				if (path != null && path.indexOf("/") != -1) {
+					fragment = path.substring(path.lastIndexOf('/') + 1);
+					prefix = termString.substring(0,
+							termString.lastIndexOf('/') + 1);
+				} else
+				  throw new NdexException ("Unsupported URI format in term: " + termString);
+			} else {
+				prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
+			}
+
+			RawNamespace rns = new RawNamespace(null, prefix);
+			Namespace namespace = getNamespace(rns);
+			
+			// search in db to find the base term
+			
+//			iBaseTerm = persistenceService.findNodeBaseTerm(fragment,namespace);
+			return iBaseTerm;
+			
+
+		} catch (URISyntaxException e) {
+			// ignore and move on to next case
+		}
+
+		// case 2: termString is of the form NamespacePrefix:Identifier
+		// find or create the namespace based on the prefix
+		// when creating, set the URI based on the PREFIX-URI table for known
+		// namespaces, otherwise do not set.
+		//
+		String[] termStringComponents = termString.split(":");
+/*		if (termStringComponents != null && termStringComponents.length == 2) {
+			String identifier = termStringComponents[1];
+			String prefix = termStringComponents[0];
+			INamespace namespace = findINamespace(null,
+					prefix);
+			iBaseTerm = this.networkService.findNodeBaseTerm(identifier,
+					namespace);
+			return iBaseTerm;
+		}
+
+		// case 3: termString cannot be parsed, use it as the identifier.
+		// find or create the namespace for prefix "LOCAL" and use that as the
+		// namespace.
+
+		iBaseTerm = this.networkService.findNodeBaseTerm(termString,
+				this.networkService.findINamespace(null, "LOCAL"));
+
+		return iBaseTerm;
+	*/	
+		return null;
+	}
+	
+	/*	
 	public Namespace findOrCreateINamespace(Long jdexId)
 			throws ExecutionException {
 		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
@@ -695,7 +783,7 @@ public class NDExNoTxMemoryPersistence  {
 		} catch (ExecutionException e) {
 			// TODO Auto-generated catch block
 			logger.severe(e.getMessage());
-			throw new NdexException ("Error occured when getting namespace " + rns.getUri() + ". " + e.getMessage());
+			throw new NdexException ("Error occured when getting namespace " + rns.getURI() + ". " + e.getMessage());
 		}
 	}
 	

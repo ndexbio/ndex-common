@@ -83,7 +83,7 @@ public class NetworkDAO {
 	}
 	
 	public Namespace getNamespace(String prefix, String URI, UUID networkID ) {
-		ODatabaseDocumentTx ndexDatabase = db.getAConnection();
+		ODatabaseDocumentTx ndexDatabase = this.db.getAConnection();
 		try {
 			String query = "select from (traverse out_" +
 		    		  NdexClasses.Network_E_NAMESPACE +" from (select from "
@@ -100,7 +100,8 @@ public class NetworkDAO {
 		     
 		     if (nss.isEmpty())
 		    	 return null;
-             return getNamespace(nss.get(0));
+             Namespace result = getNamespace(nss.get(0));
+             return result;
 		} finally {
    		  ndexDatabase.close();
 		}
