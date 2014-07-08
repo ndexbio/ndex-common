@@ -26,6 +26,7 @@ import org.ndexbio.model.object.network.Network;
  * object caches
  */
 
+@Deprecated
 public interface NDExPersistenceService {
 	
 	// find or create instances of domain objects

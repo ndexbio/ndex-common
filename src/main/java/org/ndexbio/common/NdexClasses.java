@@ -39,14 +39,19 @@ public class NdexClasses {
     public static final String Network_P_isLocked   = "isLocked";
     public static final String Network_P_isComplete = "isComplete";
     public static final String Network_P_desc    = "description";
+    public static final String Network_P_version = "version";
     
-    public static final String Network_E_NAMESPACE = "ns";
+    public static final String Network_E_Namespace = "ns";
+    
+    // element 
+    public static final String Element_ID  = "id";
     
     // namespace 
     public static final String ns_P_prefix = "prefix";
     public static final String ns_P_uri    = "uri";
     
-    
-    
+    //BaseTerm
+    public static final String BTerm_P_name        = "name";
+    public static final String BTerm_E_Namespace   = "ns";
 
 }

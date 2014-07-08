@@ -26,6 +26,7 @@ import com.tinkerpop.frames.FramedGraphFactory;
 import com.tinkerpop.frames.modules.gremlingroovy.GremlinGroovyModule;
 import com.tinkerpop.frames.modules.typedgraph.TypedGraphModuleBuilder;
 
+@Deprecated
 public class NdexOrientdbConnection {
 	private FramedGraphFactory graphFactory = null;
     private ODatabaseDocumentTx ndexDatabase = null;

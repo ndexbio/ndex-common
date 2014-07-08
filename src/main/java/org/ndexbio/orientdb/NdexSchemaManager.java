@@ -152,16 +152,29 @@ public class NdexSchemaManager
         
         // network data schema
         
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.BaseTerm);  
-        if (cls == null)
+        OClass nsClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Namespace);
+        if (nsClass == null)
         {
-            OClass termClass = orientDbGraph.createVertexType(NdexClasses.BaseTerm);
-            termClass.createProperty("name", OType.STRING);
+            nsClass = orientDbGraph.createVertexType("namespace");
+            nsClass.createProperty(NdexClasses.Element_ID, OType.LONG);
+            nsClass.createProperty(NdexClasses.ns_P_prefix, OType.STRING);
+            nsClass.createProperty(NdexClasses.ns_P_uri, OType.STRING);
+        }
 
-            termClass.createProperty("id", OType.LONG);
-            termClass.createProperty("type", OType.STRING);
+        OClass bTermClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.BaseTerm);  
+        if ( bTermClass == null)
+        {
+            bTermClass = orientDbGraph.createVertexType(NdexClasses.BaseTerm);
+            bTermClass.createProperty(NdexClasses.BTerm_P_name, OType.STRING);
 
-            termClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+            bTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
+            bTermClass.createProperty("type", OType.STRING);
+
+            bTermClass.createProperty(NdexClasses.BTerm_E_Namespace, OType.LINK, nsClass);
+            
+            bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+            
+            
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Citation);  
@@ -170,7 +183,7 @@ public class NdexSchemaManager
             OClass citationClass = orientDbGraph.createVertexType(NdexClasses.Citation);
 
             citationClass.createProperty("contributors", OType.EMBEDDEDLIST, OType.STRING);
-            citationClass.createProperty("id", OType.LONG);
+            citationClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             citationClass.createProperty("properties", OType.EMBEDDEDLIST);
             citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             citationClass.createProperty("title", OType.STRING);
@@ -181,7 +194,7 @@ public class NdexSchemaManager
         if (cls == null)
         {
             OClass edgeClass = orientDbGraph.createVertexType(NdexClasses.Edge);
-            edgeClass.createProperty("id", OType.LONG);
+            edgeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             edgeClass.createProperty("properties", OType.EMBEDDEDLIST);
             edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             edgeClass.createProperty("type", OType.STRING);
@@ -200,19 +213,10 @@ public class NdexSchemaManager
         if (orientDbGraph.getVertexType("reifiedEdgeTerm") == null)
         {
             OClass reifiedEdgeTermClass = orientDbGraph.createVertexType(NdexClasses.ReifiedEdgeTerm);
-            reifiedEdgeTermClass.createProperty("id", OType.LONG);
+            reifiedEdgeTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
 //            reifiedEdgeTermClass.createProperty("type", OType.STRING);
         }
         
-        OClass nsClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Namespace);
-        if (nsClass == null)
-        {
-            nsClass = orientDbGraph.createVertexType("namespace");
-            nsClass.createProperty("id", OType.LONG);
-            nsClass.createProperty("prefix", OType.STRING);
-            nsClass.createProperty("uri", OType.STRING);
-        }
-
         if (orientDbGraph.getVertexType(NdexClasses.Network) == null)
         {
             OClass networkClass = orientDbGraph.createVertexType(NdexClasses.Network);
@@ -225,11 +229,11 @@ public class NdexSchemaManager
 
             networkClass.createProperty("nodeCount", OType.INTEGER);
       //      networkClass.createProperty("source", OType.STRING);
-            networkClass.createProperty("name", OType.STRING);
-            networkClass.createProperty("version", OType.STRING);
+            networkClass.createProperty(NdexClasses.Network_P_name, OType.STRING);
+            networkClass.createProperty(NdexClasses.Network_P_version, OType.STRING);
             networkClass.createProperty("highestElementId", OType.INTEGER);
             
-            networkClass.createProperty(NdexClasses.Network_E_NAMESPACE, OType.LINKSET, nsClass);
+            networkClass.createProperty(NdexClasses.Network_E_Namespace, OType.LINKSET, nsClass);
             
         }
 
@@ -237,7 +241,7 @@ public class NdexSchemaManager
         {
             OClass nodeClass = orientDbGraph.createVertexType(NdexClasses.Node);
             nodeClass.createProperty("name", OType.STRING);
-            nodeClass.createProperty("id", OType.LONG);
+            nodeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             nodeClass.createProperty("properties", OType.EMBEDDEDLIST);
             nodeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
         }
@@ -253,7 +257,7 @@ public class NdexSchemaManager
         if (orientDbGraph.getVertexType(NdexClasses.Subnetwork) == null)
         {
             OClass clss = orientDbGraph.createVertexType(NdexClasses.Subnetwork);
-            clss.createProperty("id", OType.LONG);
+            clss.createProperty(NdexClasses.Element_ID, OType.LONG);
             clss.createProperty("subnetworktype", OType.STRING);
             clss.createProperty("name", OType.STRING);
             clss.createProperty("properties", OType.EMBEDDEDLIST);
@@ -263,7 +267,7 @@ public class NdexSchemaManager
         if (orientDbGraph.getVertexType(NdexClasses.Support) == null)
         {
             OClass supportClass = orientDbGraph.createVertexType(NdexClasses.Support);
-            supportClass.createProperty("id", OType.LONG);
+            supportClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             supportClass.createProperty("text", OType.STRING);
         }
 

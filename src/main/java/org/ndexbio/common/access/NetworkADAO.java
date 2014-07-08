@@ -9,6 +9,7 @@ import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.User;
 
+
 public interface NetworkADAO {
 
 	/*

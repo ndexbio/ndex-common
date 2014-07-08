@@ -9,16 +9,18 @@ import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NetworkDAO {
 	
-	private NdexDatabase db;
+	private ODatabaseDocumentTx db;
 //	Network network;
 	
-	public NetworkDAO (NdexDatabase db) {
+	public NetworkDAO (ODatabaseDocumentTx db) {
 		this.db = db;
 	}
 	
@@ -29,26 +31,19 @@ public class NetworkDAO {
 	} */
 	
 	public Network getNetworkById(UUID id) {
-		ODatabaseDocumentTx ndexDatabase = db.getAConnection();
-		try {
-		     String query = "select from " + NdexClasses.Network + " where UUID='"
+	     String query = "select from " + NdexClasses.Network + " where UUID='"
 		                    +id.toString()+"'";
-		     final List<ODocument> networks = ndexDatabase
-						.query(new OSQLSynchQuery<ODocument>(query));
+	     final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
 		     
-		     if (networks.isEmpty())
+	     if (networks.isEmpty())
 		    	 return null;
-             return getNetwork(networks.get(0));
-//		} catch ()
-//		{
-		} finally {
-   		  ndexDatabase.close();
-		}
+         return getNetwork(networks.get(0));
 	}
 	
 	
 	
-	private Network getNetwork(ODocument n) {
+	private static Network getNetwork(ODocument n) {
+		
 		Network result = new Network();
 		
 		result.setExternalId(UUID.fromString((String)n.field("UUID")));
@@ -58,35 +53,46 @@ public class NetworkDAO {
 		return result;
 	}
 	
-	public BaseTerm getBaseTerm(UUID networkID, String baseterm, long namespaceId) {
-     
-		ODatabaseDocumentTx ndexDatabase = db.getAConnection();
-		try {
-		     String query = "select from " + NdexClasses.BaseTerm + 
-		    		 " where name ='" + baseterm + "'";
-		     final List<ODocument> networks = ndexDatabase
-						.query(new OSQLSynchQuery<ODocument>(query));
-		     
-		     if (networks.isEmpty())
-		    	 return null;
-             return null; //getNetwork(networks.get(0));
-		} finally {
-   		  ndexDatabase.close();
+	// first parameter is namespaceID, second parameter is base term
+	final static private String baseTermQuery = "select from (traverse in_" + NdexClasses.BTerm_E_Namespace +
+			  " from (select from " + NdexClasses.Namespace + " where " + 
+			NdexClasses.Element_ID +"= ?)) where @class='" +NdexClasses.BaseTerm + "' and "+NdexClasses.BTerm_P_name +
+	    		 " =?"; 
+	final static private String baseTermQuery2 = "select from " + NdexClasses.BTerm_E_Namespace +
+			  " where out_" + NdexClasses.BTerm_E_Namespace + " is null and "+NdexClasses.BTerm_P_name +
+	    		 " =?"; 
+	
+	// namespaceID < 0 means baseTerm has a local namespace
+	public BaseTerm getBaseTerm(String baseterm, long namespaceID) {
+		List<ODocument> terms;
+		
+		if ( namespaceID > 0 ) {
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery);
+			terms = db.command((OCommandRequest) query.execute(namespaceID, baseterm));
+		} else {
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery2);
+			terms = db.command((OCommandRequest) query.execute( baseterm));
 		}
-		
-		
+		     
+		if (terms.isEmpty())
+		    	 return null;
+             return getBaseTerm(terms.get(0));
 	}
 	
 	private static BaseTerm getBaseTerm(ODocument o) {
 		BaseTerm t = new BaseTerm();
+		t.setId((long)o.field(NdexClasses.Element_ID));
+		t.setName((String)o.field(NdexClasses.BTerm_P_name));
+		
+		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
+		t.setNamespace((long)nsDoc.field(NdexClasses.Element_ID));
+		
 		return t;
 	}
 	
 	public Namespace getNamespace(String prefix, String URI, UUID networkID ) {
-		ODatabaseDocumentTx ndexDatabase = this.db.getAConnection();
-		try {
 			String query = "select from (traverse out_" +
-		    		  NdexClasses.Network_E_NAMESPACE +" from (select from "
+		    		  NdexClasses.Network_E_Namespace +" from (select from "
 		    		  + NdexClasses.Network + " where " +
 		    		  NdexClasses.Network_P_UUID + "='" + networkID + 
 		    		  "')) where @class='"+  NdexClasses.Namespace + "' and ";
@@ -95,16 +101,23 @@ public class NetworkDAO {
 			}   else {
 			  query = query + NdexClasses.ns_P_uri + "='"+ URI +"'";	
 			}	
-		    final List<ODocument> nss = ndexDatabase
-						.query(new OSQLSynchQuery<ODocument>(query));
+		    final List<ODocument> nss = db.query(new OSQLSynchQuery<ODocument>(query));
 		     
 		     if (nss.isEmpty())
 		    	 return null;
              Namespace result = getNamespace(nss.get(0));
              return result;
-		} finally {
-   		  ndexDatabase.close();
-		}
+	}
+	
+	//TODO: change this to direct index access in the future.
+	public ODocument getNamespaceDocByEId (long elementID) {
+		String query = "select from " + NdexClasses.Namespace + " where " + 
+	        NdexClasses.Element_ID + "=" +elementID;
+        final List<ODocument> nss = db.query(new OSQLSynchQuery<ODocument>(query));
+  
+        if (nss.isEmpty())
+ 	       return null;
+        return nss.get(0);
 	}
 	
     private static Namespace getNamespace(ODocument ns) {

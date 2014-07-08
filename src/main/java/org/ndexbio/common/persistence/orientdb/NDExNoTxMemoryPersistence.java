@@ -92,7 +92,7 @@ public class NDExNoTxMemoryPersistence  {
 		database = db;
 		localConnection = database.getAConnection();
 		localConnection.begin();
-		this.networkDAO = new NetworkDAO(db);
+		this.networkDAO = new NetworkDAO(localConnection);
 		jdexIdSet = Sets.newHashSet();
 		this.stopwatch = Stopwatch.createUnstarted();
 		
@@ -113,7 +113,7 @@ public class NDExNoTxMemoryPersistence  {
 				.expireAfterAccess(240L, TimeUnit.MINUTES)
 				.build(new CacheLoader<String, BaseTerm>() {
 				   @Override
-				   public BaseTerm load(String key) throws NdexException {
+				   public BaseTerm load(String key) throws NdexException, ExecutionException {
 					return findOrCreateBaseTerm(key);
 				   }
 			    });
@@ -402,15 +402,20 @@ public class NDExNoTxMemoryPersistence  {
 	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
 		Namespace ns = networkDAO.getNamespace(key.getPrefix(), 
 				key.getURI(), network.getExternalId());
-		
-        if (key.getPrefix() !=null && key.getURI() !=null && 
-       		 !ns.getUri().equals(key.getURI()))
-       	   throw new NdexException("Namespace conflict: prefix " 
-       		       + key.getPrefix() + " maps to  " + 
-       			   ns.getUri() + " and " + key.getURI());
 
-		if ( ns != null )
-			return ns;
+		if ( ns != null ) {
+	        // check if namespace definitions are consistent
+			if (key.getPrefix() !=null && key.getURI() !=null && 
+	          		 !ns.getUri().equals(key.getURI()))
+	          	   throw new NdexException("Namespace conflict: prefix " 
+	          		       + key.getPrefix() + " maps to  " + 
+	          			   ns.getUri() + " and " + key.getURI());
+
+	        return ns;
+		}
+		
+		if ( key.getPrefix() !=null && key.getURI() == null )
+			throw new NdexException ("Prefix " + key.getPrefix() + " is not defined." );
 		
 		// persist the Namespace in db.
 		ns = new Namespace();
@@ -423,10 +428,10 @@ public class NDExNoTxMemoryPersistence  {
 		nsDoc.field("prefix", key.getPrefix())
 		  .field("uri", ns.getUri())
 		  .field("id", ns.getId())
-		  .field("in_" + NdexClasses.Network_E_NAMESPACE ,networkDoc,OType.LINK)
+		  .field("in_" + NdexClasses.Network_E_Namespace ,networkDoc,OType.LINK)
 		  .save();
 		
-		String nsField = "out_" + NdexClasses.Network_E_NAMESPACE;
+		String nsField = "out_" + NdexClasses.Network_E_Namespace;
 		Collection<ODocument> s1 = networkDoc.field(nsField);
 		s1.add(nsDoc);
 		
@@ -437,7 +442,7 @@ public class NDExNoTxMemoryPersistence  {
 		
 	}
 
-	private BaseTerm findOrCreateBaseTerm(String termString) throws NdexException {
+	private BaseTerm findOrCreateBaseTerm(String termString) throws NdexException, ExecutionException {
 		// case 1 : termString is a URI
 		// example: http://identifiers.org/uniprot/P19838
 		// treat the last element in the URI as the identifier and the rest as
@@ -468,9 +473,12 @@ public class NDExNoTxMemoryPersistence  {
 			
 			// search in db to find the base term
 			
-//			iBaseTerm = persistenceService.findNodeBaseTerm(fragment,namespace);
-			return iBaseTerm;
+			iBaseTerm = networkDAO.getBaseTerm(fragment,namespace.getId());
+			if (iBaseTerm != null)
+			   return iBaseTerm;
 			
+			// create baseTerm in db
+			return createBaseTerm(fragment, namespace.getId());
 
 		} catch (URISyntaxException e) {
 			// ignore and move on to next case
@@ -482,26 +490,55 @@ public class NDExNoTxMemoryPersistence  {
 		// namespaces, otherwise do not set.
 		//
 		String[] termStringComponents = termString.split(":");
-/*		if (termStringComponents != null && termStringComponents.length == 2) {
+		if (termStringComponents != null && termStringComponents.length == 2) {
 			String identifier = termStringComponents[1];
 			String prefix = termStringComponents[0];
-			INamespace namespace = findINamespace(null,
-					prefix);
-			iBaseTerm = this.networkService.findNodeBaseTerm(identifier,
-					namespace);
-			return iBaseTerm;
+			Namespace namespace = rawNamespaceCache.get(new RawNamespace( prefix,null ));
+			
+			
+			iBaseTerm = networkDAO.getBaseTerm(identifier,namespace.getId());
+			if (iBaseTerm != null)
+			   return iBaseTerm;
+			
+			// create baseTerm in db
+			return createBaseTerm(identifier, namespace.getId());
 		}
 
 		// case 3: termString cannot be parsed, use it as the identifier.
 		// find or create the namespace for prefix "LOCAL" and use that as the
 		// namespace.
 
-		iBaseTerm = this.networkService.findNodeBaseTerm(termString,
-				this.networkService.findINamespace(null, "LOCAL"));
+		iBaseTerm = networkDAO.getBaseTerm(termString,-1);
+		if (iBaseTerm != null)
+			   return iBaseTerm;
+			
+			// create baseTerm in db
+     	return createBaseTerm(termString, -1);
+		
+	}
+	
+	private BaseTerm createBaseTerm(String localTerm, long nsId) {
+		BaseTerm bterm = new BaseTerm();
+		bterm.setId(database.getNextId());
+		bterm.setName(localTerm);
+		
+		ODocument btDoc = new ODocument(NdexClasses.BaseTerm);
+		btDoc.field(NdexClasses.BTerm_P_name, localTerm)
+		  .field(NdexClasses.Element_ID, bterm.getId());
+		
+		if ( nsId > 0) {
+  		  bterm.setNamespace(nsId);
+   		  ODocument nsDoc = networkDAO.getNamespaceDocByEId(nsId);
+		  btDoc.field("out_" + NdexClasses.BTerm_E_Namespace ,nsDoc,OType.LINK);
 
-		return iBaseTerm;
-	*/	
-		return null;
+		  String nsField = "in_" + NdexClasses.BTerm_E_Namespace;
+		  nsDoc.field(nsField, btDoc, OType.LINKSET)
+			.save();
+		}
+		  
+		btDoc.save();
+
+		return bterm;
 	}
 	
 	/*	
@@ -786,6 +823,17 @@ public class NDExNoTxMemoryPersistence  {
 			throw new NdexException ("Error occured when getting namespace " + rns.getURI() + ". " + e.getMessage());
 		}
 	}
+	
+	public BaseTerm getBaseTerm(String termString) throws NdexException {
+		try {
+			return this.baseTermStrCache.get(termString);
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			logger.severe(e.getMessage());
+			throw new NdexException ("Error occured when getting BaseTerm" + termString + ". " + e.getMessage());
+		}
+	}
+	
 	
 /*
 	public Namespace findOrCreateNamespace(String uri, String prefix) throws Exception {
