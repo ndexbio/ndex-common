@@ -8,6 +8,7 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.Node;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -90,6 +91,16 @@ public class NetworkDAO {
 		return t;
 	}
 	
+	public ODocument getDocumentByElementId(String NdexClassName, long id) {
+		String query = "select from " + NdexClassName + " where " + 
+		        NdexClasses.Element_ID + "=" +id;
+	        final List<ODocument> nss = db.query(new OSQLSynchQuery<ODocument>(query));
+	  
+	        if (nss.isEmpty())
+	 	       return null;
+	        return nss.get(0);
+	}
+	
 	public Namespace getNamespace(String prefix, String URI, UUID networkID ) {
 			String query = "select from (traverse out_" +
 		    		  NdexClasses.Network_E_Namespace +" from (select from "
@@ -127,4 +138,26 @@ public class NetworkDAO {
        rns.setUri((String)ns.field(NdexClasses.ns_P_uri));
        return rns;
     } 
+    
+    private static final String nodeQuery = "select from (traverse in_" + 
+         NdexClasses.Node + " from (select from "+ NdexClasses.BaseTerm + " where " +
+         NdexClasses.Element_ID + " = ?)) where @class=’"+ NdexClasses.Node +"’";
+    
+    public Node findNode(long baseTermID) {
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(nodeQuery);
+		List<ODocument> nodes = db.command((OCommandRequest) query.execute( baseTermID));
+    	
+		if (nodes.isEmpty())
+			return null;
+		
+    	return getNode(nodes.get(0));
+    }
+    
+    private static Node getNode(ODocument nodeDoc) {
+    	Node n = new Node();
+
+    	n.setId((long)nodeDoc.field(NdexClasses.Element_ID));
+    	n.setName((String)nodeDoc.field(NdexClasses.Node_P_name));
+    	return n;
+    }
 }

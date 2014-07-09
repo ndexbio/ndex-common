@@ -40,7 +40,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 	
 	private static final Logger _logger = Logger.getLogger(NetworkAOrientDBDAO.class.getName());
 	
-	private Class stringlist = (Class<List<String>>) new ArrayList<String>().getClass();
+	private Class stringlist = new ArrayList<String>().getClass();
 
 	protected NetworkAOrientDBDAO() {
 		super();

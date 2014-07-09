@@ -1,5 +1,6 @@
 package org.ndexbio.common;
 
+@Deprecated
 public enum JdexIdService
 {
     INSTANCE;

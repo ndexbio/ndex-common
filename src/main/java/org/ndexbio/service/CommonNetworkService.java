@@ -10,8 +10,6 @@ import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.common.models.object.privilege.Permissions;
-import org.ndexbio.common.persistence.NDExPersistenceService;
-import org.ndexbio.common.persistence.NDExPersistenceServiceFactory;
 import org.ndexbio.common.persistence.orientdb.NDExNoTxMemoryPersistence;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.NdexProperty;

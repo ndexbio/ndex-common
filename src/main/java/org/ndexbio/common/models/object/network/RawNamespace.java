@@ -78,11 +78,13 @@ public class RawNamespace implements Comparable<RawNamespace>
 		return _prefix.compareTo ( arg0.getPrefix());
 	}
     
-    public int hashCode() {
+    @Override
+	public int hashCode() {
     	return this._uri.hashCode();
     }
     
-    public boolean equqls ( Object arg0) {
+    @Override
+	public boolean equals ( Object arg0) {
     	if (arg0 instanceof RawNamespace)
     		return compareTo((RawNamespace)arg0)==0;
     	return false;

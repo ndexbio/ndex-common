@@ -2,7 +2,6 @@ package org.ndexbio.common.persistence.orientdb;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -20,17 +19,17 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
-import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.NdexProperty;
-import org.ndexbio.common.persistence.NDExPersistenceService;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.Namespace;
@@ -80,6 +79,9 @@ public class NDExNoTxMemoryPersistence  {
 	// key is the full URI or other fully qualified baseTerm as a string.
 	private LoadingCache<String, BaseTerm> baseTermStrCache;
     private LoadingCache<RawNamespace, Namespace> rawNamespaceCache;
+    
+    // key is the element_id of a BaseTerm
+    private LoadingCache<Long, Node> nodeCache;
 
     /*
      * Currently, the procces flow of this class is:
@@ -117,7 +119,17 @@ public class NDExNoTxMemoryPersistence  {
 					return findOrCreateBaseTerm(key);
 				   }
 			    });
-		
+
+		nodeCache = CacheBuilder
+				.newBuilder().maximumSize(CACHE_SIZE)
+				.expireAfterAccess(240L, TimeUnit.MINUTES)
+				.build(new CacheLoader<Long, Node>() {
+				   @Override
+				   public Node load(Long key) throws NdexException, ExecutionException {
+					return findOrCreateNode(key);
+				   }
+			    });
+
 	}
 
 	//TODO: need to add membership etc later. Need to 
@@ -540,15 +552,30 @@ public class NDExNoTxMemoryPersistence  {
 
 		return bterm;
 	}
-	
-	/*	
-	public Namespace findOrCreateINamespace(Long jdexId)
-			throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		this.jdexIdSet.add(jdexId);
-		return namespaceCache.get(jdexId);
+
+	private Node findOrCreateNode(Long bTermId) {
+		Node node = networkDAO.findNode(bTermId.longValue());
+		
+		if (node != null) 
+			return node;
+		
+		// otherwise insert Node.
+		node = new Node();
+		node.setId(database.getNextId());
+
+		ODocument termDoc = networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, bTermId.longValue());
+		
+		ODocument nodeDoc = new ODocument(NdexClasses.Node);
+		nodeDoc.field(NdexClasses.Element_ID, node.getId())
+		   .field("out_"+NdexClasses.Node_E_represents, termDoc, OType.LINK)
+		   .save();
+		
+		termDoc.field("in_"+NdexClasses.Node_E_represents, nodeDoc, OType.LINK)
+		   .save();
+		
+		return node;
 	}
+	/*	
 
 	public ICitation findOrCreateICitation(Long jdexId)
 			throws ExecutionException {
@@ -834,49 +861,47 @@ public class NDExNoTxMemoryPersistence  {
 		}
 	}
 	
-	
-/*
-	public Namespace findOrCreateNamespace(String uri, String prefix) throws Exception {
-		String namespaceIdentifier = null;
-		
-		if (uri == null && prefix == null){
-			prefix = "LOCAL";
-			namespaceIdentifier = "NAMESPACE:LOCAL";
-		} else if (prefix != null){
-			namespaceIdentifier = idJoiner.join("NAMESPACE", prefix);
-		} else if (uri != null){
-			prefix = findPrefixForNamespaceURI(uri);
-			if (prefix != null){
-				namespaceIdentifier = idJoiner.join("NAMESPACE", prefix);				
-			} else {
-				namespaceIdentifier = idJoiner.join("NAMESPACE", uri);	
-			}	
-		}
-
-		
-		if (uri == null && prefix != null){
-			uri = findURIForNamespacePrefix(prefix);
-		}
-		
-		Long jdexId = NdexIdentifierCache.INSTANCE.accessIdentifierCache().get(
-				namespaceIdentifier);
-		boolean persisted = isEntityPersisted(jdexId);
-		Namespace iNamespace = findOrCreateINamespace(jdexId);
-		if (persisted) return iNamespace;
-
-		// Not persisted, fill out blank Namespace
-		iNamespace.setId(jdexId);
-		if (prefix == null) prefix = this.findPrefixForNamespaceURI(uri);
-		
-		if (prefix != null) 
-			 iNamespace.setPrefix(prefix);
-		if (uri != null) iNamespace.setUri(uri);
-		network.getNamespaces().add(iNamespace);
-		logger.info("Created namespace " + iNamespace.getPrefix() + " " + iNamespace.getUri());
-		return iNamespace;
+	public Node getNodeByBaseTerm(String termString) throws ExecutionException {
+		BaseTerm t = this.baseTermStrCache.get(termString);
+		return this.nodeCache.get(t.getId());
 	}
-*/
-
+	
+	public Edge createEdge(Node subjectNode, Node objectNode, BaseTerm predicate)
+			throws NdexException {
+		if (null != objectNode && null != subjectNode && null != predicate) {
+			
+			Edge edge = new Edge();
+			edge.setId(database.getNextId());
+			edge.setSubjectId(subjectNode.getId());
+			edge.setObjectId(objectNode.getId());
+			edge.setPredicateId(predicate.getId());
+			
+			ODocument subjectNodeDoc = networkDAO.getDocumentByElementId(NdexClasses.Node, subjectNode.getId());
+			ODocument objectNodeDoc  = networkDAO.getDocumentByElementId(NdexClasses.Node, objectNode.getId());
+			ODocument predicateDoc   = networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, objectNode.getId());
+			ODocument edgeDoc = new ODocument(NdexClasses.Edge);
+			edgeDoc.field(NdexClasses.Element_ID, edge.getId())
+			   .field("in_"+NdexClasses.Edge_E_subject, subjectNodeDoc)
+			   .field("out_"+ NdexClasses.Edge_E_object, objectNodeDoc)
+			   .field("out_"+NdexClasses.Edge_E_predicate, predicateDoc)
+			   .save();
+			
+			predicateDoc.field("in_"+NdexClasses.Edge_E_predicate, edgeDoc);
+			
+		//	Edge edge = persistenceService.findOrCreateIEdge(jdexId);
+			
+			
+			
+			
+//			this.persistenceService.getCurrentNetwork().addNdexEdge(edge);
+			return edge;
+			//System.out.println("Created edge " + edge.getJdexId());
+		} 
+		throw new NdexException("Null value for one of the parameter when creating Edge.");
+	}
+	
+	
+/*	
 	private static String findPrefixForNamespaceURI(String uri) {
 		if (uri.equals("http://biopax.org/generated/group/")) return "GROUP";
 		if (uri.equals("http://identifiers.org/uniprot/")) return "UniProt";
@@ -891,5 +916,5 @@ public class NDExNoTxMemoryPersistence  {
 		if (prefix.equals("UniProt")) return "http://identifiers.org/uniprot/";
 		return null;
 	}
-
+*/
 }

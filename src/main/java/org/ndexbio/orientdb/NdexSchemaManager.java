@@ -27,6 +27,7 @@ public class NdexSchemaManager
     
     private static final String NdexDbVersion = "1.0";
     private static final String NdexDbVersionKey = "NdexDbVer";
+    //name for the version field.
     private static final String NdexVField= "n1";
     
 
@@ -190,10 +191,10 @@ public class NdexSchemaManager
             citationClass.createProperty("type", OType.STRING);
         }
 
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Edge);  
-        if (cls == null)
+        OClass edgeClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Edge);  
+        if (edgeClass == null)
         {
-            OClass edgeClass = orientDbGraph.createVertexType(NdexClasses.Edge);
+            edgeClass = orientDbGraph.createVertexType(NdexClasses.Edge);
             edgeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             edgeClass.createProperty("properties", OType.EMBEDDEDLIST);
             edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
@@ -229,7 +230,7 @@ public class NdexSchemaManager
 
             networkClass.createProperty("nodeCount", OType.INTEGER);
       //      networkClass.createProperty("source", OType.STRING);
-            networkClass.createProperty(NdexClasses.Network_P_name, OType.STRING);
+            networkClass.createProperty(NdexClasses.Network_P_name,    OType.STRING);
             networkClass.createProperty(NdexClasses.Network_P_version, OType.STRING);
             networkClass.createProperty("highestElementId", OType.INTEGER);
             
@@ -240,10 +241,14 @@ public class NdexSchemaManager
         if (orientDbGraph.getVertexType(NdexClasses.Node) == null)
         {
             OClass nodeClass = orientDbGraph.createVertexType(NdexClasses.Node);
-            nodeClass.createProperty("name", OType.STRING);
-            nodeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
+            nodeClass.createProperty(NdexClasses.Node_P_name, OType.STRING);
+            nodeClass.createProperty(NdexClasses.Element_ID,  OType.LONG);
             nodeClass.createProperty("properties", OType.EMBEDDEDLIST);
             nodeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+            
+            nodeClass.createProperty(NdexClasses.Node_E_represents, OType.LINK, bTermClass);
+            nodeClass.createProperty(NdexClasses.Edge_E_subject, OType.LINKSET, edgeClass);
+            nodeClass.createProperty(NdexClasses.Edge_E_object, OType.LINKSET, edgeClass);
         }
 
         

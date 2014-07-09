@@ -104,7 +104,28 @@ public class NdexSchemaManagerTest {
 		network.save();
 		
 		db.commit();
+
 		
+		db.begin ();
+		ns = new ODocument(NdexClasses.Namespace);
+		ns.field("prefix", "ns3");
+		ns.field("uri", "http://cjtest3.org/");
+		ns.field("id", (long)4);
+		
+		
+		networks = db.query(
+					      new OSQLSynchQuery<ODocument>("select from network where uuid = '2453'"));
+
+		network=networks.get(0);
+
+		ns.field("in_ns",network,OType.LINK);
+		ns.save();
+		
+		network.field("out_ns", ns, OType.LINK);
+		network.save();
+		
+		db.commit();
+
 	}
 
 }
