@@ -473,38 +473,41 @@ public class NDExNoTxMemoryPersistence  {
 		// namespaces, otherwise do not set.
 		//
 		BaseTerm iBaseTerm = null;
-		try {
+		String startPart = termString.substring(0, 7);
+		if ( startPart.equalsIgnoreCase("http://") ) {
+  		  try {
 			URI termStringURI = new URI(termString);
-			String fragment = termStringURI.getFragment();
-			String prefix;
-			if ( fragment == null ) {
-				String path = termStringURI.getPath();
-				if (path != null && path.indexOf("/") != -1) {
-					fragment = path.substring(path.lastIndexOf('/') + 1);
-					prefix = termString.substring(0,
+//			String scheme = termStringURI.getScheme();
+				String fragment = termStringURI.getFragment();
+			
+			    String prefix;
+			    if ( fragment == null ) {
+				    String path = termStringURI.getPath();
+				    if (path != null && path.indexOf("/") != -1) {
+					   fragment = path.substring(path.lastIndexOf('/') + 1);
+					   prefix = termString.substring(0,
 							termString.lastIndexOf('/') + 1);
-				} else
-				  throw new NdexException ("Unsupported URI format in term: " + termString);
-			} else {
-				prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
-			}
+				    } else
+				       throw new NdexException ("Unsupported URI format in term: " + termString);
+			    } else {
+				    prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
+			    }
 
-			RawNamespace rns = new RawNamespace(null, prefix);
-			Namespace namespace = getNamespace(rns);
+			    RawNamespace rns = new RawNamespace(null, prefix);
+			    Namespace namespace = getNamespace(rns);
 			
-			// search in db to find the base term
+			    // search in db to find the base term
 			
-			iBaseTerm = networkDAO.getBaseTerm(fragment,namespace.getId());
-			if (iBaseTerm != null)
-			   return iBaseTerm;
+			    iBaseTerm = networkDAO.getBaseTerm(fragment,namespace.getId());
+			    if (iBaseTerm != null)
+			       return iBaseTerm;
 			
-			// create baseTerm in db
-			return createBaseTerm(fragment, namespace.getId());
-
-		} catch (URISyntaxException e) {
+			    // create baseTerm in db
+			    return createBaseTerm(fragment, namespace.getId());
+		  } catch (URISyntaxException e) {
 			// ignore and move on to next case
+		  }
 		}
-
 		// case 2: termString is of the form NamespacePrefix:Identifier
 		// find or create the namespace based on the prefix
 		// when creating, set the URI based on the PREFIX-URI table for known

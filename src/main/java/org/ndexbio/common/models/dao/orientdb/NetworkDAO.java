@@ -59,7 +59,7 @@ public class NetworkDAO {
 			  " from (select from " + NdexClasses.Namespace + " where " + 
 			NdexClasses.Element_ID +"= ?)) where @class='" +NdexClasses.BaseTerm + "' and "+NdexClasses.BTerm_P_name +
 	    		 " =?"; 
-	final static private String baseTermQuery2 = "select from " + NdexClasses.BTerm_E_Namespace +
+	final static private String baseTermQuery2 = "select from " + NdexClasses.BaseTerm +
 			  " where out_" + NdexClasses.BTerm_E_Namespace + " is null and "+NdexClasses.BTerm_P_name +
 	    		 " =?"; 
 	
@@ -69,10 +69,11 @@ public class NetworkDAO {
 		
 		if ( namespaceID > 0 ) {
 			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery);
-			terms = db.command((OCommandRequest) query.execute(namespaceID, baseterm));
+			terms = db.command(query).execute((Long)namespaceID, baseterm);
 		} else {
 			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery2);
-			terms = db.command((OCommandRequest) query.execute( baseterm));
+			terms = db.command(query).execute( baseterm);
+			
 		}
 		     
 		if (terms.isEmpty())
@@ -145,7 +146,7 @@ public class NetworkDAO {
     
     public Node findNode(long baseTermID) {
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(nodeQuery);
-		List<ODocument> nodes = db.command((OCommandRequest) query.execute( baseTermID));
+		List<ODocument> nodes = db.command(query).execute( baseTermID);
     	
 		if (nodes.isEmpty())
 			return null;
