@@ -38,7 +38,7 @@ public class NdexDatabase {
     	vdoc = (ODocument)dictionary.get(sequenceKey);
     	long nextval= vdoc.field(seqField);
     	dictionary.put(sequenceKey, vdoc.field(seqField,nextval+1));
-    //	vdoc.save();
+    	vdoc.save();
     	return nextval;
     }
     
@@ -47,9 +47,14 @@ public class NdexDatabase {
     }
     
     public void close () {
-    	vdoc.save();
+    //	vdoc.save();
     	ndexDatabase.commit();
     	ndexDatabase.close();
+    }
+    
+    public void commit() {
+    	ndexDatabase.commit();
+    	ndexDatabase.begin();
     }
     
     public ODatabaseDocumentTx getAConnection() {

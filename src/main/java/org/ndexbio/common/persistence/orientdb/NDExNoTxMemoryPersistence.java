@@ -49,6 +49,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 
 /*
@@ -64,11 +66,13 @@ public class NDExNoTxMemoryPersistence  {
 
 	private NdexDatabase database;
     private NetworkDAO  networkDAO;
-	ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
+	private ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
+	private OrientGraph graph;
 	private Set<Long> jdexIdSet;
 	private Network network;
 	private User user;
 	private ODocument networkDoc;
+	private OrientVertex networkVertex; 
 
 	private static final Logger logger = Logger.getLogger(NDExNoTxMemoryPersistence.class.getName());
 	private static final Long CACHE_SIZE = 100000L;
@@ -93,7 +97,8 @@ public class NDExNoTxMemoryPersistence  {
 	public NDExNoTxMemoryPersistence(NdexDatabase db) {
 		database = db;
 		localConnection = database.getAConnection();
-		localConnection.begin();
+		graph = new OrientGraph(localConnection);
+//		graph.setAutoStartTx(false);
 		this.networkDAO = new NetworkDAO(localConnection);
 		jdexIdSet = Sets.newHashSet();
 		this.stopwatch = Stopwatch.createUnstarted();
@@ -440,16 +445,20 @@ public class NDExNoTxMemoryPersistence  {
 		nsDoc.field("prefix", key.getPrefix())
 		  .field("uri", ns.getUri())
 		  .field("id", ns.getId())
-		  .field("in_" + NdexClasses.Network_E_Namespace ,networkDoc,OType.LINK)
+//		  .field("in_" + NdexClasses.Network_E_Namespace ,networkDoc,OType.LINK)
 		  .save();
 		
-		String nsField = "out_" + NdexClasses.Network_E_Namespace;
+/*		String nsField = "out_" + NdexClasses.Network_E_Namespace;
 		Collection<ODocument> s1 = networkDoc.field(nsField);
 		s1.add(nsDoc);
 		
-		networkDoc.field(nsField, s1, OType.LINKSET)
-		.save();
-
+		networkDoc.field(nsField, s1, OType.LINKSET)  
+		.save();  */
+        
+		OrientVertex nsV = graph.getVertex(nsDoc);
+		OrientVertex networkV = graph.getVertex(getNetworkDoc());
+		networkV.addEdge(NdexClasses.Network_E_Namespace, nsV);
+		
 		return ns; 
 		
 	}
@@ -537,19 +546,19 @@ public class NDExNoTxMemoryPersistence  {
 		ODocument btDoc = new ODocument(NdexClasses.BaseTerm);
 		btDoc.field(NdexClasses.BTerm_P_name, localTerm)
 		  .field(NdexClasses.Element_ID, bterm.getId());
+		btDoc.save();
+
+		OrientVertex basetermV = graph.getVertex(btDoc);
 		
 		if ( nsId > 0) {
   		  bterm.setNamespace(nsId);
-   		  ODocument nsDoc = networkDAO.getNamespaceDocByEId(nsId);
-		  btDoc.field("out_" + NdexClasses.BTerm_E_Namespace ,nsDoc,OType.LINK);
-
-		  String nsField = "in_" + NdexClasses.BTerm_E_Namespace;
-		  nsDoc.field(nsField, btDoc, OType.LINKSET)
-			.save();
+  		  
+  		  OrientVertex nsV = graph.getVertex(networkDAO.getNamespaceDocByEId(nsId));
+  		
+  		  basetermV.addEdge(NdexClasses.BTerm_E_Namespace, nsV);
 		}
 		  
-		btDoc.save();
-
+        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
 		return bterm;
 	}
 
@@ -566,12 +575,14 @@ public class NDExNoTxMemoryPersistence  {
 		ODocument termDoc = networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, bTermId.longValue());
 		
 		ODocument nodeDoc = new ODocument(NdexClasses.Node);
+
 		nodeDoc.field(NdexClasses.Element_ID, node.getId())
-		   .field("out_"+NdexClasses.Node_E_represents, termDoc, OType.LINK)
 		   .save();
 		
-		termDoc.field("in_"+NdexClasses.Node_E_represents, nodeDoc, OType.LINK)
-		   .save();
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
+		nodeV.addEdge(NdexClasses.Node_E_represents, graph.getVertex(termDoc));
 		
 		return node;
 	}
@@ -612,7 +623,7 @@ public class NDExNoTxMemoryPersistence  {
 		return this.network;
 	}
 	
-	public ODocument getNetworkDoc() { return this.networkDoc; } 
+//	private ODocument getNetworkDoc() { return this.networkDoc; } 
 	
     //TODO: change this function to private void once migrate to 1.0 -- cj
 	public Network createNetwork(String title, String version){
@@ -626,10 +637,8 @@ public class NDExNoTxMemoryPersistence  {
 		if ( version != null)
 			this.network.setVersion(version);
         
-//		ndexService._ndexDatabase.begin();
-		
 		networkDoc = new ODocument (NdexClasses.Network);
-		networkDoc.field(NdexClasses.Network_P_UUID,network.getExternalId())
+		getNetworkDoc().field(NdexClasses.Network_P_UUID,network.getExternalId())
 		  .field(NdexClasses.Network_P_cDate, network.getCreationDate())
 		  .field(NdexClasses.Network_P_mDate, network.getModificationDate())
 		  .field(NdexClasses.Network_P_name, network.getName())
@@ -638,7 +647,7 @@ public class NDExNoTxMemoryPersistence  {
 		  .field(NdexClasses.Network_P_visibility, network.getVisibility().toString())
           .save();
 		    
-//		ndexService._ndexDatabase.commit();
+		networkVertex = graph.getVertex(getNetworkDoc());
 		
 		return this.network;
 	}
@@ -789,12 +798,14 @@ public class NDExNoTxMemoryPersistence  {
 		System.out.println(this.getClass().getName()
 				+ ".abortTransaction has been invoked.");
 
-		localConnection.rollback();
+		//localConnection.rollback();
+		graph.rollback();
 		
 		// make sure everything relate to the network is deleted.
-		localConnection.begin();
+		//localConnection.begin();
 		deleteNetwork();
-		localConnection.commit();
+		//localConnection.commit();
+		graph.commit();
 		System.out.println("Deleting network in order to rollback in response to error");
 	}
 
@@ -808,9 +819,12 @@ public class NDExNoTxMemoryPersistence  {
 	//		network.setEdgeCount((int) this.edgeCache.size());
 	//		network.setNodeCount((int) this.nodeCache.size());
 			network.setIsComplete(true);
+			getNetworkDoc().field(NdexClasses.Network_P_isComplete,true)
+			  .save();
+			
 			NdexIdentifierCache.INSTANCE.accessIdentifierCache().invalidateAll();
 			NdexIdentifierCache.INSTANCE.accessTermCache().invalidateAll();
-			JdexIdService.INSTANCE.reset();
+//			JdexIdService.INSTANCE.reset();
 			System.out.println("The new network " + network.getName()
 					+ " is complete");
 		} catch (Exception e) {
@@ -818,7 +832,7 @@ public class NDExNoTxMemoryPersistence  {
 			e.printStackTrace();
 		} finally {
 //			ndexService.teardownDatabase();
-			localConnection.commit();
+			commit();
 			System.out
 					.println("Connection to orientdb database has been closed");
 		}
@@ -879,28 +893,35 @@ public class NDExNoTxMemoryPersistence  {
 			ODocument subjectNodeDoc = networkDAO.getDocumentByElementId(NdexClasses.Node, subjectNode.getId());
 			ODocument objectNodeDoc  = networkDAO.getDocumentByElementId(NdexClasses.Node, objectNode.getId());
 			ODocument predicateDoc   = networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, objectNode.getId());
+			
 			ODocument edgeDoc = new ODocument(NdexClasses.Edge);
-			edgeDoc.field(NdexClasses.Element_ID, edge.getId())
-			   .field("in_"+NdexClasses.Edge_E_subject, subjectNodeDoc)
-			   .field("out_"+ NdexClasses.Edge_E_object, objectNodeDoc)
-			   .field("out_"+NdexClasses.Edge_E_predicate, predicateDoc)
-			   .save();
+			edgeDoc.field(NdexClasses.Element_ID, edge.getId()).save();
+			OrientVertex edgeVertex = graph.getVertex(edgeDoc);
+
+			networkVertex.addEdge(NdexClasses.Network_E_Edges, edgeVertex);
+			edgeVertex.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(predicateDoc));
+			edgeVertex.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectNodeDoc));
+			graph.getVertex(subjectNodeDoc).addEdge(NdexClasses.Edge_E_subject, edgeVertex);
 			
-			predicateDoc.field("in_"+NdexClasses.Edge_E_predicate, edgeDoc);
-			
-		//	Edge edge = persistenceService.findOrCreateIEdge(jdexId);
-			
-			
-			
-			
-//			this.persistenceService.getCurrentNetwork().addNdexEdge(edge);
 			return edge;
-			//System.out.println("Created edge " + edge.getJdexId());
 		} 
 		throw new NdexException("Null value for one of the parameter when creating Edge.");
 	}
 	
 	
+	private void commit () {
+		graph.commit();
+		database.commit();
+	}
+
+	public ODocument getNetworkDoc() {
+		return networkDoc;
+	}
+
+/*	public void setNetworkDoc(ODocument networkDoc) {
+		this.networkDoc = networkDoc;
+	}
+*/	
 /*	
 	private static String findPrefixForNamespaceURI(String uri) {
 		if (uri.equals("http://biopax.org/generated/group/")) return "GROUP";

@@ -42,6 +42,10 @@ public class NdexClasses {
     public static final String Network_P_version = "version";
     
     public static final String Network_E_Namespace = "ns";
+    public static final String Network_E_BaseTerms = "BaseTerms";
+    public static final String Network_E_Nodes     = "networkNodes";
+    public static final String Network_E_Edges     = "networkedges";
+    public static final String Network_E_FunctionTerms = "FunctionTerms";
     
     // element 
     public static final String Element_ID  = "id";
