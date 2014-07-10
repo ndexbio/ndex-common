@@ -2,6 +2,7 @@ package org.ndexbio.common.models.dao;
 
 import org.ndexbio.common.exceptions.NdexException;
 
+@Deprecated
 public interface FeedbackDAO {
 
 	/**************************************************************************

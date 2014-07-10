@@ -5,7 +5,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.object.Request;
 
-
+@Deprecated
 public interface RequestDAO {
 
 	/**************************************************************************

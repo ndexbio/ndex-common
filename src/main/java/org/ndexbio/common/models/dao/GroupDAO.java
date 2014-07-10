@@ -9,7 +9,7 @@ import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.privilege.Group;
 import org.ndexbio.common.models.object.privilege.Membership;
 
-
+@Deprecated
 public interface GroupDAO {
 
 	/**************************************************************************

@@ -13,6 +13,7 @@ import org.ndexbio.common.models.object.network.Network;
 import org.ndexbio.model.object.NewUser;
 import org.ndexbio.model.object.User;
 
+@Deprecated
 public interface UserDAO {
 
 	/**************************************************************************

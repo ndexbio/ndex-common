@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.dao;
 
+@Deprecated
 public abstract class DAOFactory {
 	
 

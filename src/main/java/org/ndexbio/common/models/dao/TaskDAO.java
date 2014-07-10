@@ -4,7 +4,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.object.Task;
 
-
+@Deprecated
 public interface TaskDAO {
 
 	/**************************************************************************

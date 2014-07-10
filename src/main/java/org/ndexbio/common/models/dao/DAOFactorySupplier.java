@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.dao;
 
+
 import org.ndexbio.common.models.dao.orientdb.ObjectFactory;
 
 import com.google.common.base.Preconditions;
@@ -7,6 +8,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
+@Deprecated
 public enum DAOFactorySupplier {
 	INSTANCE;
 
