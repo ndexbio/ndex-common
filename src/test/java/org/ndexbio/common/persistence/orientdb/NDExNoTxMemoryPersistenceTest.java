@@ -9,7 +9,9 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Namespace;
+import org.ndexbio.model.object.network.Node;
 
 
 public class NDExNoTxMemoryPersistenceTest {
@@ -38,6 +40,7 @@ public class NDExNoTxMemoryPersistenceTest {
 		RawNamespace rns3 = new RawNamespace("ns1", "http://foo.bar.com/"); 
 		Namespace ns3 = service.getNamespace(rns3);
 
+		
 		String s3 = "http://foo.newdomain.com/P001";
 		BaseTerm t3 = service.getBaseTerm(s3);
 
@@ -48,9 +51,16 @@ public class NDExNoTxMemoryPersistenceTest {
 		BaseTerm t2 = service.getBaseTerm(s2);
 		
 		
-		String s4 = "http://foo.bar.com/XYC002";
+		String s4 = "http://something.com/XYC002";
 		BaseTerm t4 = service.getBaseTerm(s4);
 		
+		String n1String = "term1";
+		Node n1 = service.getNodeByBaseTerm( n1String);
+
+		String n2String = "Y00002";
+		Node n2 = service.getNodeByBaseTerm(n2String);
+		
+		Edge e = service.createEdge(n1, n2, t4);
 		
 	    service.persistNetwork();
 	}

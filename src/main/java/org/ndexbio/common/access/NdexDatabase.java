@@ -24,14 +24,19 @@ public class NdexDatabase {
 	public NdexDatabase() throws NdexException {
 		pool = NdexAOrientDBConnectionPool.getInstance();
 		ndexDatabase = pool.acquire();
-		ndexDatabase.begin();
+//		ndexDatabase.begin();
 		dictionary = ndexDatabase.getDictionary();
 		NdexSchemaManager.INSTANCE.init(ndexDatabase);
 		vdoc = (ODocument) dictionary.get(sequenceKey);
 		if (vdoc == null ) {
+			ndexDatabase.begin();
 			vdoc = new ODocument(seqField, (long)0);
+			vdoc.save();
+			ndexDatabase.commit();	
 			dictionary.put(sequenceKey, vdoc);
 		}
+		ndexDatabase.begin();
+
 	}
 	
     public synchronized long  getNextId() {

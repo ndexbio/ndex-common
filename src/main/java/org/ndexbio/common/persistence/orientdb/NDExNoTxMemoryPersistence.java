@@ -4,7 +4,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -73,6 +75,8 @@ public class NDExNoTxMemoryPersistence  {
 	private User user;
 	private ODocument networkDoc;
 	private OrientVertex networkVertex; 
+	private Map<String, Namespace> prefixMap;
+	private Map<String, Namespace> URINamespaceMap;
 
 	private static final Logger logger = Logger.getLogger(NDExNoTxMemoryPersistence.class.getName());
 	private static final Long CACHE_SIZE = 100000L;
@@ -101,7 +105,10 @@ public class NDExNoTxMemoryPersistence  {
 //		graph.setAutoStartTx(false);
 		this.networkDAO = new NetworkDAO(localConnection);
 		jdexIdSet = Sets.newHashSet();
+		prefixMap = new HashMap<String,Namespace>();
+		URINamespaceMap = new HashMap<String,Namespace>();
 		this.stopwatch = Stopwatch.createUnstarted();
+
 		
 		// intialize caches.
 		
@@ -459,6 +466,11 @@ public class NDExNoTxMemoryPersistence  {
 		OrientVertex networkV = graph.getVertex(getNetworkDoc());
 		networkV.addEdge(NdexClasses.Network_E_Namespace, nsV);
 		
+		if (ns.getPrefix() != null) 
+			prefixMap.put(ns.getPrefix(), ns);
+		
+		if ( ns.getUri() != null) 
+			URINamespaceMap.put(ns.getUri(), ns);
 		return ns; 
 		
 	}
@@ -473,8 +485,7 @@ public class NDExNoTxMemoryPersistence  {
 		// namespaces, otherwise do not set.
 		//
 		BaseTerm iBaseTerm = null;
-		String startPart = termString.substring(0, 7);
-		if ( startPart.equalsIgnoreCase("http://") ) {
+		if ( termString.length() > 8 && termString.substring(0, 7).equalsIgnoreCase("http://") ) {
   		  try {
 			URI termStringURI = new URI(termString);
 //			String scheme = termStringURI.getScheme();
@@ -492,7 +503,7 @@ public class NDExNoTxMemoryPersistence  {
 			    } else {
 				    prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
 			    }
-
+                 
 			    RawNamespace rns = new RawNamespace(null, prefix);
 			    Namespace namespace = getNamespace(rns);
 			
@@ -517,7 +528,7 @@ public class NDExNoTxMemoryPersistence  {
 		if (termStringComponents != null && termStringComponents.length == 2) {
 			String identifier = termStringComponents[1];
 			String prefix = termStringComponents[0];
-			Namespace namespace = rawNamespaceCache.get(new RawNamespace( prefix,null ));
+			Namespace namespace = prefixMap.get(prefix);
 			
 			
 			iBaseTerm = networkDAO.getBaseTerm(identifier,namespace.getId());
@@ -553,10 +564,13 @@ public class NDExNoTxMemoryPersistence  {
 
 		OrientVertex basetermV = graph.getVertex(btDoc);
 		
-		if ( nsId > 0) {
+		
+		if ( nsId >= 0) {
   		  bterm.setNamespace(nsId);
+
+  		  ODocument nsDoc = networkDAO.getNamespaceDocByEId(nsId); 
   		  
-  		  OrientVertex nsV = graph.getVertex(networkDAO.getNamespaceDocByEId(nsId));
+  		  OrientVertex nsV = graph.getVertex(nsDoc);
   		
   		  basetermV.addEdge(NdexClasses.BTerm_E_Namespace, nsV);
 		}
@@ -586,6 +600,8 @@ public class NDExNoTxMemoryPersistence  {
 		
 		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
 		nodeV.addEdge(NdexClasses.Node_E_represents, graph.getVertex(termDoc));
+		
+		network.setNodeCount(network.getNodeCount()+1);
 		
 		return node;
 	}
@@ -819,15 +835,15 @@ public class NDExNoTxMemoryPersistence  {
 
 	public void persistNetwork() {
 		try {
-	//		network.setEdgeCount((int) this.edgeCache.size());
-	//		network.setNodeCount((int) this.nodeCache.size());
+			
 			network.setIsComplete(true);
 			getNetworkDoc().field(NdexClasses.Network_P_isComplete,true)
+			  .field(NdexClasses.Network_P_edgeCount, network.getEdgeCount())
+			  .field(NdexClasses.Network_P_nodeCount, network.getNodeCount())
 			  .save();
 			
 			NdexIdentifierCache.INSTANCE.accessIdentifierCache().invalidateAll();
 			NdexIdentifierCache.INSTANCE.accessTermCache().invalidateAll();
-//			JdexIdService.INSTANCE.reset();
 			System.out.println("The new network " + network.getName()
 					+ " is complete");
 		} catch (Exception e) {
@@ -860,6 +876,12 @@ public class NDExNoTxMemoryPersistence  {
 
 	public Namespace getNamespace(RawNamespace rns) throws NdexException {
 		try {
+			if (rns.getPrefix() == null) {
+				Namespace ns = URINamespaceMap.get(rns.getURI());
+				if ( ns != null ) {
+					return ns; 
+				}
+			}
 			return this.rawNamespaceCache.get(rns);
 		} catch (ExecutionException e) {
 			// TODO Auto-generated catch block
@@ -895,7 +917,7 @@ public class NDExNoTxMemoryPersistence  {
 			
 			ODocument subjectNodeDoc = networkDAO.getDocumentByElementId(NdexClasses.Node, subjectNode.getId());
 			ODocument objectNodeDoc  = networkDAO.getDocumentByElementId(NdexClasses.Node, objectNode.getId());
-			ODocument predicateDoc   = networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, objectNode.getId());
+			ODocument predicateDoc   = networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, predicate.getId());
 			
 			ODocument edgeDoc = new ODocument(NdexClasses.Edge);
 			edgeDoc.field(NdexClasses.Element_ID, edge.getId()).save();
@@ -905,14 +927,16 @@ public class NDExNoTxMemoryPersistence  {
 			edgeVertex.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(predicateDoc));
 			edgeVertex.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectNodeDoc));
 			graph.getVertex(subjectNodeDoc).addEdge(NdexClasses.Edge_E_subject, edgeVertex);
-			
+
+		    network.setEdgeCount(network.getEdgeCount()+1);
+		    
 			return edge;
 		} 
 		throw new NdexException("Null value for one of the parameter when creating Edge.");
 	}
 	
 	
-	private void commit () {
+	public void commit () {
 		graph.commit();
 		database.commit();
 	}

@@ -40,8 +40,10 @@ public class NdexClasses {
     public static final String Network_P_isComplete = "isComplete";
     public static final String Network_P_desc    = "description";
     public static final String Network_P_version = "version";
+    public static final String Network_P_nodeCount = "nodeCount";
+    public static final String Network_P_edgeCount = "edgeCount";
     
-    public static final String Network_E_Namespace = "ns";
+    public static final String Network_E_Namespace = "networkNS";
     public static final String Network_E_BaseTerms = "BaseTerms";
     public static final String Network_E_Nodes     = "networkNodes";
     public static final String Network_E_Edges     = "networkedges";
@@ -56,7 +58,7 @@ public class NdexClasses {
     
     //BaseTerm
     public static final String BTerm_P_name        = "name";
-    public static final String BTerm_E_Namespace   = "ns";
+    public static final String BTerm_E_Namespace   = "baseTermNS";
 
     //node
     public static final String Node_P_name         = "name";

@@ -12,6 +12,7 @@ import org.ndexbio.model.object.network.Node;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -67,9 +68,15 @@ public class NetworkDAO {
 	public BaseTerm getBaseTerm(String baseterm, long namespaceID) {
 		List<ODocument> terms;
 		
-		if ( namespaceID > 0 ) {
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery);
-			terms = db.command(query).execute((Long)namespaceID, baseterm);
+		if ( namespaceID >= 0 ) {
+		/*	OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery);
+			terms = db.command(query).execute((Long)namespaceID, baseterm); */
+			String query = "select from (traverse in_" + NdexClasses.BTerm_E_Namespace +
+			  " from (select from " + NdexClasses.Namespace + " where " + 
+			NdexClasses.Element_ID +"= "+ namespaceID+ ")) where @class='" +NdexClasses.BaseTerm + 
+			     "' and "+NdexClasses.BTerm_P_name +  " ='" + baseterm +"'";
+			terms = db.query(new OSQLSynchQuery<ODocument>(query));
+			
 		} else {
 			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery2);
 			terms = db.command(query).execute( baseterm);
@@ -92,14 +99,21 @@ public class NetworkDAO {
 		return t;
 	}
 	
-	public ODocument getDocumentByElementId(String NdexClassName, long id) {
+	public ODocument getDocumentByElementId(String NdexClassName, long elementID) {
 		String query = "select from " + NdexClassName + " where " + 
-		        NdexClasses.Element_ID + "=" +id;
+		        NdexClasses.Element_ID + "=" +elementID;
 	        final List<ODocument> nss = db.query(new OSQLSynchQuery<ODocument>(query));
 	  
-	        if (nss.isEmpty())
-	 	       return null;
-	        return nss.get(0);
+	        if (!nss.isEmpty())
+	  	       return nss.get(0);
+	         
+	         List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClassName);
+	         for (ORecordOperation op : txOperations) {
+	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
+	         if (id == elementID)
+	            return (ODocument) op.getRecord();
+	         }
+	         return null;
 	}
 	
 	public Namespace getNamespace(String prefix, String URI, UUID networkID ) {
@@ -127,9 +141,16 @@ public class NetworkDAO {
 	        NdexClasses.Element_ID + "=" +elementID;
         final List<ODocument> nss = db.query(new OSQLSynchQuery<ODocument>(query));
   
-        if (nss.isEmpty())
- 	       return null;
-        return nss.get(0);
+        if (!nss.isEmpty())
+ 	       return nss.get(0);
+        
+        List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClasses.Namespace);
+        for (ORecordOperation op : txOperations) {
+        	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
+        if (id == elementID)
+           return (ODocument) op.getRecord();
+        }
+        return null;
 	}
 	
     private static Namespace getNamespace(ODocument ns) {

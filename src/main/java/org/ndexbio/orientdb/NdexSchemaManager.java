@@ -49,7 +49,7 @@ public class NdexSchemaManager
         /**********************************************************************
         * Create base types first. 
         **********************************************************************/
-        orientDbGraph.getRawGraph().commit();
+        //orientDbGraph.getRawGraph().commit();
 
         OClass clsNdxExternalObj = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexExternalObject);
         
