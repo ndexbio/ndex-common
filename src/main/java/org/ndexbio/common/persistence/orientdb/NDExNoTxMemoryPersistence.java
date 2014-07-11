@@ -150,8 +150,7 @@ public class NDExNoTxMemoryPersistence  {
 		Preconditions.checkNotNull(networkTitle,"A network title is required");
 		
 		createNetwork(networkTitle,version);
-		network.setProperties(new ArrayList<NdexProperty>());
-		network.setPresentationProperties(new ArrayList<NdexProperty>());
+
 		// find the network owner in the database
 		user =  findUserByAccountName(ownerName);
 		if( null == user){
@@ -657,7 +656,7 @@ public class NDExNoTxMemoryPersistence  {
 			this.network.setVersion(version);
         
 		networkDoc = new ODocument (NdexClasses.Network);
-		getNetworkDoc().field(NdexClasses.Network_P_UUID,network.getExternalId())
+		getNetworkDoc().field(NdexClasses.Network_P_UUID,network.getExternalId().toString())
 		  .field(NdexClasses.Network_P_cDate, network.getCreationDate())
 		  .field(NdexClasses.Network_P_mDate, network.getModificationDate())
 		  .field(NdexClasses.Network_P_name, network.getName())
@@ -842,15 +841,12 @@ public class NDExNoTxMemoryPersistence  {
 			  .field(NdexClasses.Network_P_nodeCount, network.getNodeCount())
 			  .save();
 			
-			NdexIdentifierCache.INSTANCE.accessIdentifierCache().invalidateAll();
-			NdexIdentifierCache.INSTANCE.accessTermCache().invalidateAll();
 			System.out.println("The new network " + network.getName()
 					+ " is complete");
 		} catch (Exception e) {
 			System.out.println("unexpected error in persist network...");
 			e.printStackTrace();
 		} finally {
-//			ndexService.teardownDatabase();
 			commit();
 			System.out
 					.println("Connection to orientdb database has been closed");

@@ -20,12 +20,10 @@ import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
-//import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
-//import org.ndexbio.common.models.object.network.Term;
 import org.ndexbio.model.object.User;
 
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;

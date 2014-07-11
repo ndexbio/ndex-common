@@ -1,20 +1,20 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Node;
+import org.ndexbio.model.object.network.VisibilityType;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NetworkDAO {
@@ -181,5 +181,22 @@ public class NetworkDAO {
     	n.setId((long)nodeDoc.field(NdexClasses.Element_ID));
     	n.setName((String)nodeDoc.field(NdexClasses.Node_P_name));
     	return n;
+    }
+    
+    public static NetworkSummary getNetworkSummary(ODocument doc) {
+    	NetworkSummary networkSummary = new NetworkSummary();
+    	
+    	networkSummary.setCreationDate((Date)doc.field(NdexClasses.Network_P_cDate));
+    	networkSummary.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
+    	networkSummary.setName((String)doc.field(NdexClasses.Network_P_name));
+    	networkSummary.setDescription((String)doc.field(NdexClasses.Network_P_desc));
+    	
+    	networkSummary.setModificationDate((Date)doc.field(NdexClasses.Network_P_mDate));
+    	networkSummary.setEdgeCount((int)doc.field(NdexClasses.Network_P_edgeCount));
+    	networkSummary.setNodeCount((int)doc.field(NdexClasses.Network_P_nodeCount));
+    	networkSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
+        networkSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
+    	
+    	return networkSummary;
     }
 }
