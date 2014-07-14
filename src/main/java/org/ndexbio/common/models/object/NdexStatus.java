@@ -1,7 +1,9 @@
 package org.ndexbio.common.models.object;
 
 
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -10,6 +12,9 @@ public class NdexStatus extends NdexObject
     private Integer _networkCount;
     private Integer _userCount;
     private Integer _groupCount;
+    
+    private Map<String,String> _properties;
+   
 
 
 
@@ -19,6 +24,7 @@ public class NdexStatus extends NdexObject
     public NdexStatus()
     {
         super();
+        setProperties(new HashMap<String,String>());
     }
 
 
@@ -55,6 +61,18 @@ public class NdexStatus extends NdexObject
 
 	public void setGroupCount(Integer _groupCount) {
 		this._groupCount = _groupCount;
+	}
+
+
+
+	public Map<String,String> getProperties() {
+		return _properties;
+	}
+
+
+
+	public void setProperties(Map<String,String> _properties) {
+		this._properties = _properties;
 	}
 
 
