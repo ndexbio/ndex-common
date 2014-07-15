@@ -1,20 +1,28 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Node;
+import org.ndexbio.model.object.network.PropertyGraphEdge;
+import org.ndexbio.model.object.network.PropertyGraphNetwork;
+import org.ndexbio.model.object.network.PropertyGraphNode;
 import org.ndexbio.model.object.network.VisibilityType;
 
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NetworkDAO {
@@ -42,6 +50,84 @@ public class NetworkDAO {
          return getNetwork(networks.get(0));
 	}
 	
+	
+	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
+		PropertyGraphNetwork network = new PropertyGraphNetwork();
+		
+	     String query = "select from " + NdexClasses.Network + " where UUID='"
+                 +id.toString()+"'";
+         final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
+  
+         if (networks.isEmpty()) return null;
+         
+         network.setUuid(id);
+        
+         Collection<PropertyGraphNode> nodeList = network.getNodes();
+         for (OIdentifiable nodeDoc : new OTraverse()
+       	    .field("out_"+ NdexClasses.Network_E_Nodes )
+            .target(networks)
+            .predicate( new OSQLPredicate("$depth <= 1"))) {
+
+              ODocument doc = (ODocument) nodeDoc;
+          
+              if ( doc.getClassName().equals(NdexClasses.Node)) {
+          
+                  PropertyGraphNode nd = NetworkDAO.getPropertyGraphNode(doc);
+                  if ( nd != null)
+                	  nodeList.add(nd);
+                  else
+                	  throw new NdexException("Error occurred when getting node information from db "+ doc);
+              }
+         }
+         
+         Collection<PropertyGraphEdge> edgeList = network.getEdges();
+         for (OIdentifiable nodeDoc : new OTraverse()
+       	    .field("out_"+ NdexClasses.Network_E_Edges )
+            .target(networks)
+            .predicate( new OSQLPredicate("$depth <= 1"))) {
+
+              ODocument doc = (ODocument) nodeDoc;
+          
+              if ( doc.getClassName().equals(NdexClasses.Edge)) {
+          
+                  PropertyGraphEdge nd = NetworkDAO.getPropertyGraphEdge(doc);
+                  if ( nd != null)
+                	  edgeList.add(nd);
+                  else
+                	  throw new NdexException("Error occurred when getting edge information from db "+ doc);
+              }
+         }
+         
+		 return network; 
+	}
+	
+
+	private static PropertyGraphEdge getPropertyGraphEdge(ODocument doc) {
+		PropertyGraphEdge e = new PropertyGraphEdge();
+		e.setId((long)doc.field(NdexClasses.Element_ID));
+		
+		ODocument s =  doc.field("in_"+NdexClasses.Edge_E_subject);
+		e.setSubjectId((long) s.field(NdexClasses.Element_ID));
+		
+		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
+		e.setPredicate((String)predicateDoc.field(NdexClasses.BTerm_P_name));
+		
+		e.setSubjectId((long)
+			    ((ODocument)doc.field("out_"+NdexClasses.Edge_E_object))
+			        .field(NdexClasses.Element_ID));
+		
+		return e;
+	}
+	
+    private static PropertyGraphNode getPropertyGraphNode(ODocument doc) {
+    	PropertyGraphNode n = new PropertyGraphNode ();
+        n.setId((long)doc.field(NdexClasses.Element_ID));    	
+    	ODocument o = doc.field("out_" + NdexClasses.Node_E_represents);
+    	String name = o.field(NdexClasses.BTerm_P_name);
+
+    	n.setName(name);
+    	return n;
+    }
 	
 	
 	private static Network getNetwork(ODocument n) {
@@ -175,7 +261,7 @@ public class NetworkDAO {
     	return getNode(nodes.get(0));
     }
     
-    private static Node getNode(ODocument nodeDoc) {
+    public static Node getNode(ODocument nodeDoc) {
     	Node n = new Node();
 
     	n.setId((long)nodeDoc.field(NdexClasses.Element_ID));
