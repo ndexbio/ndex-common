@@ -27,12 +27,11 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.dao.CommonDAOValues;
-import org.ndexbio.common.models.dao.UserDAO;
 import org.ndexbio.common.models.data.INetwork;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.common.models.object.UploadedFile;
-import org.ndexbio.common.models.object.network.Network;
+import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.model.object.User;
 import org.ndexbio.common.util.Email;
 import org.ndexbio.common.util.NdexUUIDFactory;
@@ -57,14 +56,14 @@ import org.ndexbio.model.object.NewUser;
  * @author fcriscuo
  *
  */
-public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
+public class UserOrientdbDAO extends OrientdbDAO  {
 
 	private static final Logger logger = LoggerFactory.getLogger(UserOrientdbDAO.class);
 	private UserOrientdbDAO() { super(); }
 	
 	public static UserOrientdbDAO createInstance( ) { return new UserOrientdbDAO();}
 	
-	@Override
+	
 	public Iterable<Network> addNetworkToWorkSurface(String networkId, String userId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
@@ -105,7 +104,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 			final Iterable<INetwork> onWorkSurface = user.getWorkSurface();
 			if (onWorkSurface != null) {
 				for (INetwork workSurfaceNetwork : onWorkSurface)
-					updatedWorkSurface.add(new Network(workSurfaceNetwork));
+					updatedWorkSurface.add(new Network());
 			}
 
 			return updatedWorkSurface;
@@ -127,7 +126,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#authenticateUser(java.lang.String, java.lang.String)
 	 */
-	@Override
+	
 	public User authenticateUser(String username, String password)
 			throws SecurityException, NdexException {
 		if (Strings.isNullOrEmpty(username)|| Strings.isNullOrEmpty(password))
@@ -151,7 +150,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#changePassword(java.lang.String)
 	 */
-	@Override
+	
 	public void changePassword(String password, String userId)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), 
@@ -192,7 +191,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#changeProfileImage(java.lang.String, org.ndexbio.common.models.object.UploadedFile)
 	 */
-	@Override
+	
 	public void changeProfileImage(String imageType, UploadedFile uploadedImage, String userId)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(imageType), "An image type is required");
@@ -310,7 +309,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#createUser(org.ndexbio.common.models.object.NewUser)
 	 */
-	@Override
+	
 	public User createUser(NewUser newUser) throws IllegalArgumentException,
 			DuplicateObjectException, NdexException {
 		Preconditions.checkArgument(null != newUser, 
@@ -373,7 +372,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#deleteNetworkFromWorkSurface(java.lang.String)
 	 */
-	@Override
+	
 	public Iterable<Network> deleteNetworkFromWorkSurface(String networkId, String userId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
@@ -403,7 +402,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 			final Iterable<INetwork> onWorkSurface = user.getWorkSurface();
 			if (onWorkSurface != null) {
 				for (INetwork workSurfaceNetwork : onWorkSurface)
-					updatedWorkSurface.add(new Network(workSurfaceNetwork));
+					updatedWorkSurface.add(new Network());
 			}
 
 			return updatedWorkSurface;
@@ -425,7 +424,6 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#deleteUser()
 	 */
-	@Override
 	public void deleteUser(String userId) throws NdexException {
 		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required");
@@ -494,7 +492,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#emailNewPassword(java.lang.String)
 	 */
-	@Override
+	
 	public Response emailNewPassword(String username)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(username), 
@@ -553,7 +551,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#findUsers(org.ndexbio.common.models.object.SearchParameters, java.lang.String)
 	 */
-	@Override
+	
 	public List<User> findUsers(SearchParameters searchParameters,
 			String searchOperator) throws IllegalArgumentException,
 			NdexException {
@@ -626,7 +624,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#getUser(java.lang.String)
 	 */
-	@Override
+	
 	@Deprecated
 	public User getUser(String userId) throws IllegalArgumentException,
 			NdexException {
@@ -662,7 +660,7 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 		return null; */
 	}
 	
-	@Override
+	
 	public User getUserByAccountName(String accountName) {
 		try {
 			setupDatabase();
@@ -687,7 +685,6 @@ public class UserOrientdbDAO extends OrientdbDAO implements UserDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#updateUser(org.ndexbio.common.models.object.User)
 	 */
-	@Override
 	public void updateUser(User updatedUser, String userId) throws IllegalArgumentException,
 			SecurityException, NdexException {
 		throw new NdexException("Unimplemented function UserOrientdbDAO.updateUser(User, String)");

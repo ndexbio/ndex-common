@@ -8,9 +8,6 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
-import org.ndexbio.common.models.object.network.BaseTerm;
-import org.ndexbio.common.models.object.network.Edge;
-import org.ndexbio.common.models.object.network.Network;
 import org.ndexbio.common.models.object.privilege.User;
 
 import com.fasterxml.jackson.core.JsonProcessingException;

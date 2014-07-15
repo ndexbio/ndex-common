@@ -9,11 +9,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NdexStatus extends NdexObject
 {
-    private Integer _networkCount;
+    
+	private static final String defaultStatus = "Online";
+	private Integer _networkCount;
     private Integer _userCount;
     private Integer _groupCount;
     
     private Map<String,String> _properties;
+    
+    private String _message;
    
 
 
@@ -25,6 +29,7 @@ public class NdexStatus extends NdexObject
     {
         super();
         setProperties(new HashMap<String,String>());
+        _message = defaultStatus;
     }
 
 
@@ -73,6 +78,18 @@ public class NdexStatus extends NdexObject
 
 	public void setProperties(Map<String,String> _properties) {
 		this._properties = _properties;
+	}
+
+
+
+	public String getMessage() {
+		return _message;
+	}
+
+
+
+	public void setMessage(String _message) {
+		this._message = _message;
 	}
 
 

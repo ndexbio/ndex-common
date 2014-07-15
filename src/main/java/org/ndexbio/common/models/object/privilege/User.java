@@ -15,7 +15,7 @@ import org.ndexbio.common.models.data.ITask;
 import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.Request;
 import org.ndexbio.common.models.object.Task;
-import org.ndexbio.common.models.object.network.Network;
+import org.ndexbio.model.object.network.Network;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class User extends Account
@@ -76,7 +76,7 @@ public class User extends Account
         _username = user.getUsername();
         
         for (final INetwork onWorkSurface : user.getWorkSurface())
-            _workSurface.add(new Network(onWorkSurface));
+            _workSurface.add(new Network());
         
         for (final ITask ownedTask : user.getTasks())
             _tasks.add(new Task(ownedTask));

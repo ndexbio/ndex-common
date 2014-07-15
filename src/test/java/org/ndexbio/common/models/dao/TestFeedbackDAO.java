@@ -10,6 +10,7 @@ import org.ndexbio.common.exceptions.NdexException;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestFeedbackDAO extends TestDAO
 {
+	/*
     private static final FeedbackDAO dao =
 			DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
 			.get().getFeedbackDAO();
@@ -49,5 +50,5 @@ public class TestFeedbackDAO extends TestDAO
         dao.emailFeedback("Bug", "XXXXXXXXXX","");
 
     }
-    
+    */
 }

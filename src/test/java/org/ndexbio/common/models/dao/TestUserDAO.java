@@ -11,6 +11,7 @@ import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
+import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
 import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.SearchParameters;
 import org.ndexbio.model.object.NewUser;
@@ -22,10 +23,10 @@ import com.orientechnologies.orient.core.id.ORID;
 public class TestUserDAO extends TestDAO {
 	
 	
-	private static final UserDAO dao = DAOFactorySupplier.INSTANCE.
+/*	private static final UserDAO dao = DAOFactorySupplier.INSTANCE.
 			resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
 			.get().getUserDAO();
-	
+	*/
 /*	
 	 @Test
     public void addNetworkToWorkSurface()
@@ -287,7 +288,7 @@ public class TestUserDAO extends TestDAO {
     }
     
 */    
-    @Test
+   /* @Test
 	public void createNewUser()
 	    {
 	        try
@@ -298,6 +299,8 @@ public class TestUserDAO extends TestDAO {
 	            newUser.setUsername("Support");
 	            newUser.setFirstname("foo");
 	            newUser.setLastname("bar");
+	            
+	            UserOrientdbDAO dao = UserOrientdbDAO.createInstance();
 	            
 	            final User createdUser = dao.createUser(newUser);
 	            Assert.assertNotNull(createdUser);
@@ -311,7 +314,7 @@ public class TestUserDAO extends TestDAO {
 	        
 	  
 	    }
-	
+	*/
 /*    
 	    private boolean deleteTargetUser()
 	    {

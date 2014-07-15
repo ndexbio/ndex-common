@@ -20,7 +20,7 @@ public class TestTaskDAO extends TestDAO
 {
    
 
-    private final TaskDAO taskDao = DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
+  /*  private final TaskDAO taskDao = DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
 			.get().getTaskDAO();
     
     @Test
@@ -152,5 +152,5 @@ public class TestTaskDAO extends TestDAO
         }
         
         return false;
-    }
+    } */
 }

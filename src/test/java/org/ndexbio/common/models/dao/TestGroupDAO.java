@@ -18,7 +18,7 @@ import com.orientechnologies.orient.core.id.ORID;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestGroupDAO extends TestDAO
 {
-    private static final GroupDAO dao = DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
+  /*  private static final GroupDAO dao = DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
 			.get().getGroupDAO();
     
     
@@ -337,4 +337,5 @@ public class TestGroupDAO extends TestDAO
         
         return false;
     }
+    */
 }

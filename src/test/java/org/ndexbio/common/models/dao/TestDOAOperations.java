@@ -7,7 +7,7 @@ import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.object.SearchParameters;
-import org.ndexbio.common.models.object.network.Network;
+import org.ndexbio.model.object.network.Network;
 
 public class TestDOAOperations {
 
@@ -23,11 +23,11 @@ public class TestDOAOperations {
 	
 	private void performTests() {
 		try {
-			this.testChangePassword();
+//			this.testChangePassword();
 	//		this.testFindNetworks();
 		//	String networkId = this.testCreateNetwork();
 		//	this.deleteNetwork(networkId);
-		} catch (IllegalArgumentException | NdexException e) {
+		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -54,8 +54,8 @@ public class TestDOAOperations {
 		final Network newNetwork = new Network();
         newNetwork.setDescription("This is a test network.");
         newNetwork.setIsComplete(true);
-        newNetwork.getMetadata().put("Copyright", "2013 Cytoscape Consortium");
-        newNetwork.getMetadata().put("Format", "JDEX");
+     //   newNetwork.getMetadata().put("Copyright", "2013 Cytoscape Consortium");
+      //  newNetwork.getMetadata().put("Format", "JDEX");
         newNetwork.setName("Test Network");
    //     final Network createdNetwork = dao.createNetwork(this.testUserId,newNetwork);
     //    System.out.println("Created network: " +createdNetwork.getName());
@@ -79,7 +79,7 @@ public class TestDOAOperations {
 		System.out.println("Found " +networksFound.size() +" networks.");
 	}
 */	
-	private void testChangePassword() throws IllegalArgumentException, NdexException{
+/*	private void testChangePassword() throws IllegalArgumentException, NdexException{
 		System.out.println("++++++Test change password ");
 	 UserDAO userDAO = DAOFactorySupplier.INSTANCE
 				.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE).get()
@@ -97,5 +97,5 @@ public class TestDOAOperations {
 	
 
 	}
-
+*/
 }

@@ -24,9 +24,9 @@ public class TestCommonDAO {
 	}
 	
 	private void performTests() {
-		this.testTaskDAO();
+		//this.testTaskDAO();
 	}
-
+/*
 	private void testTaskDAO() {
 		TaskDAO dao =
 				DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
@@ -144,5 +144,5 @@ public class TestCommonDAO {
 	 test.performTests();
 
 	}
-
+ */
 }

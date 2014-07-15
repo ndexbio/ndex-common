@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.id.ORID;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestRequestDAO extends TestDAO {
 	
+	/*
 	// instantiate the correct type of dao for testing
 	private static final RequestDAO dao = DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
 			.get().getRequestDAO();
@@ -159,5 +160,5 @@ public class TestRequestDAO extends TestDAO {
 	        
 	        return false;
 	    }
-
+*/
 }

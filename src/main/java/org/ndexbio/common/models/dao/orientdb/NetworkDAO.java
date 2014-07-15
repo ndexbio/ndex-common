@@ -155,6 +155,7 @@ public class NetworkDAO {
 		List<ODocument> terms;
 		
 		if ( namespaceID >= 0 ) {
+			//TODO: check out why this method throws exceptions from Orientdb.
 		/*	OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery);
 			terms = db.command(query).execute((Long)namespaceID, baseterm); */
 			String query = "select from (traverse in_" + NdexClasses.BTerm_E_Namespace +
