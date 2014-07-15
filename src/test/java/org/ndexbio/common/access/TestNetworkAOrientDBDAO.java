@@ -16,7 +16,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class TestNetworkAOrientDBDAO {
 	
-	private static final NetworkADAO noi = new NetworkAOrientDBDAO();
+	private static final NetworkAOrientDBDAO noi = new NetworkAOrientDBDAO();
 	
 	private final ObjectMapper jsonMapper = new ObjectMapper();
 /*	

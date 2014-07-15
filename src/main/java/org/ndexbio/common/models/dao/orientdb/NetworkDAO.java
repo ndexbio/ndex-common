@@ -3,11 +3,14 @@ package org.ndexbio.common.models.dao.orientdb;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -40,32 +43,162 @@ public class NetworkDAO {
 		
 	} */
 	
-	public Network getNetworkById(UUID id) {
-	     String query = "select from " + NdexClasses.Network + " where UUID='"
-		                    +id.toString()+"'";
-	     final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
-		     
-	     if (networks.isEmpty())
-		    	 return null;
-         return getNetwork(networks.get(0));
+	
+	/**
+	 * Returns a subnetwork based on a block of edges selected from the network specified by networkUUID 
+	 *     based on the specified blockSize and number of blocks to skip. It is intended to be used to 
+	 *     incrementally "page" through a network by edges and forms the basis for operations like incremental copy. 
+	 *     The returned network is fully poplulated and 'self-sufficient', including all nodes, terms, supports, 
+	 *     citations, and namespaces referenced by the edges. 
+	 *     The query selects a number of edges specified by the 'blockSize' parameter, 
+	 *     starting at an offset specified by the 'skipBlocks' parameter. 
+	 * @param networkID
+	 * @param skipBlocks
+	 * @param blockSize
+	 * @return the subnetwork as a Network Object.   
+	 */
+	public Network getNetwork (UUID networkID, int skipBlocks, int blockSize) {
+		ODocument nDoc = getNetworkDocByUUID(networkID);
+		
+	    if (nDoc == null) return null;
+	    
+	    Network network = new Network();  //result holder
+	    
+	    int startPosition = skipBlocks * blockSize;
+	    int counter = 0;
+	    int endPosition = skipBlocks * blockSize + blockSize;
+	    
+	    // get Edges
+	    Map<Long, Edge> edgeMap = network.getEdges();
+	    
+	    network.getNodes();
+        for (OIdentifiable nodeDoc : new OTraverse()
+      	              	.field("out_"+ NdexClasses.Network_E_Edges )
+      	              	.target(nDoc)
+                      	.predicate( new OSQLPredicate("$depth <= 1"))) {
+  
+
+            ODocument doc = (ODocument) nodeDoc;
+         
+            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
+
+            	if ( counter >= endPosition) break;
+
+                counter ++;
+            	
+            	if ( counter >= startPosition )  {
+              	   Edge e = new Edge();
+            	 
+            	   ODocument subDoc = doc.field(NdexClasses.Edge_E_subject);
+            	   
+            	   //TODO: populate the content in Network
+/*            	   ODocument 
+                   Edge nd = NetworkDAO.getEdge(doc);
+                   if ( nd != null)
+               	      edgeList.add(nd);
+                   else
+               	     throw new NdexException("Error occurred when getting edge information from db "+ doc); */
+                }
+            } 	
+        }
+        
+		 return network; 
+		
 	}
 	
 	
-	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
-		PropertyGraphNetwork network = new PropertyGraphNetwork();
+	public Network getNetworkById(UUID id) {
+		ODocument nDoc = getNetworkDocByUUID(id);
 		
+        return (nDoc!=null) ? getNetwork(nDoc): null;
+	}
+	
+    private ODocument getNetworkDocByUUID(UUID id) {
 	     String query = "select from " + NdexClasses.Network + " where UUID='"
                  +id.toString()+"'";
          final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
   
-         if (networks.isEmpty()) return null;
+         if (networks.isEmpty())
+ 	        return null;
          
-         network.setUuid(id);
+    	return networks.get(0);
+    }
+
+    
+	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) {
+		ODocument nDoc = getNetworkDocByUUID(networkID);
+		
+	    if (nDoc == null) return null;
+	    
+	    PropertyGraphNetwork network = new PropertyGraphNetwork();
+	    
+	    int startPosition = skipBlocks * blockSize;
+	    int counter = 0;
+	    int endPosition = skipBlocks * blockSize + blockSize;
+	    
+	    // get Edges
+        Collection<PropertyGraphNode> nodeList = network.getNodes();
+        Collection<PropertyGraphEdge> edgeList = network.getEdges();
+        TreeSet<Long> nodeIdSet = new TreeSet<Long>();
+
+        for (OIdentifiable nodeDoc : new OTraverse()
+      	              	.field("out_"+ NdexClasses.Network_E_Edges )
+      	              	.target(nDoc)
+                      	.predicate( new OSQLPredicate("$depth <= 1"))) {
+  
+
+            ODocument doc = (ODocument) nodeDoc;
+         
+            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
+
+            	if ( counter >= endPosition) break;
+
+                counter ++;
+            	
+            	if ( counter >= startPosition )  {
+              	   
+            	    PropertyGraphEdge e = NetworkDAO.getPropertyGraphEdge(doc);
         
-         Collection<PropertyGraphNode> nodeList = network.getNodes();
+            	    edgeList.add(e);
+            	    
+            	    if ( ! nodeIdSet.contains(e.getSubjectId())) {
+            	        ODocument subDoc = doc.field("in_" +  NdexClasses.Edge_E_subject);
+            	        PropertyGraphNode node = NetworkDAO.getPropertyGraphNode(subDoc);
+            	        nodeList.add(node);
+            	        nodeIdSet.add(e.getSubjectId());
+            	    }    
+            	    
+            	    if ( ! nodeIdSet.contains(e.getSubjectId())) {
+                	    ODocument objDoc = doc.field("out_" + NdexClasses.Edge_E_object);
+            	        PropertyGraphNode node = NetworkDAO.getPropertyGraphNode(objDoc);
+            	        nodeList.add(node);
+            	        nodeIdSet.add(e.getSubjectId());
+            	    }    
+                }
+            } 	
+        }
+        
+        
+   	    return network; 
+		
+	}
+    
+    
+    
+	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
+		
+		ODocument networkDoc = getNetworkDocByUUID(id);
+		
+		if (networkDoc == null) return null;
+
+		PropertyGraphNetwork network = new PropertyGraphNetwork();
+
+        network.setUuid(id);
+        
+        Collection<PropertyGraphNode> nodeList = network.getNodes();
          for (OIdentifiable nodeDoc : new OTraverse()
        	    .field("out_"+ NdexClasses.Network_E_Nodes )
-            .target(networks)
+            .target(networkDoc)
             .predicate( new OSQLPredicate("$depth <= 1"))) {
 
               ODocument doc = (ODocument) nodeDoc;
@@ -83,7 +216,7 @@ public class NetworkDAO {
          Collection<PropertyGraphEdge> edgeList = network.getEdges();
          for (OIdentifiable nodeDoc : new OTraverse()
        	    .field("out_"+ NdexClasses.Network_E_Edges )
-            .target(networks)
+            .target(networkDoc)
             .predicate( new OSQLPredicate("$depth <= 1"))) {
 
               ODocument doc = (ODocument) nodeDoc;
@@ -270,20 +403,25 @@ public class NetworkDAO {
     	return n;
     }
     
+ 
+
+    private static NetworkSummary SetNetworkSummary(ODocument doc, NetworkSummary nSummary) {
+    	nSummary.setCreationDate((Date)doc.field(NdexClasses.Network_P_cDate));
+    	nSummary.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
+    	nSummary.setName((String)doc.field(NdexClasses.Network_P_name));
+    	nSummary.setDescription((String)doc.field(NdexClasses.Network_P_desc));
+    	
+    	nSummary.setModificationDate((Date)doc.field(NdexClasses.Network_P_mDate));
+    	nSummary.setEdgeCount((int)doc.field(NdexClasses.Network_P_edgeCount));
+    	nSummary.setNodeCount((int)doc.field(NdexClasses.Network_P_nodeCount));
+    	nSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
+        nSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
+
+        return nSummary;
+    }
+    
     public static NetworkSummary getNetworkSummary(ODocument doc) {
     	NetworkSummary networkSummary = new NetworkSummary();
-    	
-    	networkSummary.setCreationDate((Date)doc.field(NdexClasses.Network_P_cDate));
-    	networkSummary.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
-    	networkSummary.setName((String)doc.field(NdexClasses.Network_P_name));
-    	networkSummary.setDescription((String)doc.field(NdexClasses.Network_P_desc));
-    	
-    	networkSummary.setModificationDate((Date)doc.field(NdexClasses.Network_P_mDate));
-    	networkSummary.setEdgeCount((int)doc.field(NdexClasses.Network_P_edgeCount));
-    	networkSummary.setNodeCount((int)doc.field(NdexClasses.Network_P_nodeCount));
-    	networkSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
-        networkSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
-    	
-    	return networkSummary;
+    	return SetNetworkSummary(doc,networkSummary);
     }
 }

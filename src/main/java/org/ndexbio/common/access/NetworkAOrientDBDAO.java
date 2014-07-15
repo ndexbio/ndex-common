@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO {
+public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 	private static NetworkAOrientDBDAO INSTANCE = null;
 	
@@ -59,7 +59,6 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#getTerms(java.lang.String, int, int)
 	 */
-	@Override
 	public List<BaseTerm> getTerms(User user, final String networkId,
 			final int skipBlocks, final int blockSize)
 			throws IllegalArgumentException, NdexException {
@@ -145,7 +144,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#queryForEdges(java.lang.String, org.ndexbio.common.models.object.NetworkQueryParameters, int, int)
 	 */
-	@Override
+	
 	public List<Edge> queryForEdges(final User user, final String networkId,
 			final NetworkQueryParameters parameters, final int skipBlocks,
 			final int blockSize) throws IllegalArgumentException, NdexException {
@@ -173,7 +172,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO implements NetworkADAO
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#queryForSubnetwork(java.lang.String, org.ndexbio.common.models.object.NetworkQueryParameters, int, int)
 	 */
-	@Override
+	
 	public Network queryForSubnetwork(final User user, final String networkId,
 			final NetworkQueryParameters parameters, final int skipBlocks,
 			final int blockSize) throws IllegalArgumentException, NdexException {
