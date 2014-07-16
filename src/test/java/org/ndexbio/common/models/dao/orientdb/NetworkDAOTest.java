@@ -14,6 +14,8 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,10 +40,21 @@ public class NetworkDAOTest {
 	}
 
 	@Test
-    public void test() throws NdexException {
+    public void test() throws NdexException, JsonProcessingException {
 		NetworkDAO dao = new NetworkDAO(db);
-		PropertyGraphNetwork n = dao.getProperytGraphNetworkById( UUID.fromString("5164cf01-0942-11e4-8380-90b11c72aefa"));
-		System.out.println ( n);
+		PropertyGraphNetwork n = dao.getProperytGraphNetworkById( 
+				UUID.fromString("c16614aa-094a-11e4-b7e2-001f3bca188f"),
+				0,12);
+		ObjectMapper mapper = new ObjectMapper(); // create once, reuse
+		String s = mapper.writeValueAsString( n);
+		System.out.println ( s);
+
+		n = dao.getProperytGraphNetworkById( 
+				UUID.fromString("c16614aa-094a-11e4-b7e2-001f3bca188f"),
+				1,12);
+		s = mapper.writeValueAsString( n);
+		System.out.println ( s);
+		
 		
 	}
 
