@@ -12,11 +12,10 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.helpers.Validation;
 import org.ndexbio.common.models.dao.CommonDAOValues;
-import org.ndexbio.common.models.dao.GroupDAO;
 import org.ndexbio.common.models.data.IGroup;
 import org.ndexbio.common.models.data.IGroupMembership;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.SearchParameters;
+import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.common.models.object.privilege.Group;
 import org.ndexbio.common.models.object.privilege.Membership;
 import org.ndexbio.common.models.object.privilege.Permissions;
@@ -36,7 +35,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientElement;
  * @author fcriscuo
  * 
  */
-public class GroupOrientdbDAO extends OrientdbDAO implements GroupDAO {
+public class GroupOrientdbDAO extends OrientdbDAO {
 
 	private final Logger logger = LoggerFactory
 			.getLogger(GroupOrientdbDAO.class);
@@ -46,7 +45,7 @@ public class GroupOrientdbDAO extends OrientdbDAO implements GroupDAO {
 	 static GroupOrientdbDAO createInstance() { return new GroupOrientdbDAO() ; }
 
 	
-	@Override
+	
 	public Group createGroup(Group newGroup, String userId)
 			throws IllegalArgumentException, DuplicateObjectException,
 			NdexException {
@@ -90,7 +89,7 @@ public class GroupOrientdbDAO extends OrientdbDAO implements GroupDAO {
 	 * 
 	 * @see org.ndexbio.common.models.dao.GroupDAO#deleteGroup(java.lang.String)
 	 */
-	@Override
+	
 	public void deleteGroup(String groupId, String userId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			SecurityException, NdexException {
@@ -157,7 +156,7 @@ public class GroupOrientdbDAO extends OrientdbDAO implements GroupDAO {
 	 * org.ndexbio.common.models.dao.GroupDAO#findGroups(org.ndexbio.common.
 	 * models.object.SearchParameters, java.lang.String)
 	 */
-	@Override
+	
 	public List<Group> findGroups(SearchParameters searchParameters,
 			String searchOperator) throws IllegalArgumentException,
 			NdexException {
@@ -247,7 +246,7 @@ public class GroupOrientdbDAO extends OrientdbDAO implements GroupDAO {
 	 * 
 	 * @see org.ndexbio.common.models.dao.GroupDAO#getGroup(java.lang.String)
 	 */
-	@Override
+	
 	public Group getGroup(String groupId) throws IllegalArgumentException,
 			NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId),
@@ -285,7 +284,7 @@ public class GroupOrientdbDAO extends OrientdbDAO implements GroupDAO {
 	 * org.ndexbio.common.models.dao.GroupDAO#removeMember(java.lang.String,
 	 * java.lang.String)
 	 */
-	@Override
+	
 	public void removeMember(String groupId, String memberId, String userId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			SecurityException, NdexException {
@@ -350,7 +349,7 @@ public class GroupOrientdbDAO extends OrientdbDAO implements GroupDAO {
 	 * org.ndexbio.common.models.dao.GroupDAO#updateGroup(org.ndexbio.common
 	 * .models.object.Group)
 	 */
-	@Override
+	
 	public void updateGroup(Group updatedGroup, String userId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			SecurityException, NdexException {
@@ -413,7 +412,7 @@ public class GroupOrientdbDAO extends OrientdbDAO implements GroupDAO {
 	 * org.ndexbio.common.models.dao.GroupDAO#updateMember(java.lang.String,
 	 * org.ndexbio.common.models.object.Membership)
 	 */
-	@Override
+	
 	public void updateMember(String groupId, Membership groupMember,
 			String userId) throws IllegalArgumentException,
 			ObjectNotFoundException, SecurityException, NdexException {
