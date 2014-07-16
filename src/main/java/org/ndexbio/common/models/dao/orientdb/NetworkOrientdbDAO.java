@@ -39,7 +39,7 @@ import org.ndexbio.common.models.data.ITerm;
 import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.MetaParameter;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
-import org.ndexbio.common.models.object.SearchParameters;
+import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.common.models.object.Status;
 import org.ndexbio.common.models.object.TaskType;
 import org.ndexbio.common.models.object.UploadedFile;

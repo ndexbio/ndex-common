@@ -6,7 +6,7 @@ import org.junit.Assert;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.models.object.SearchParameters;
+import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.model.object.network.Network;
 
 public class TestDOAOperations {

@@ -6,12 +6,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.object.SearchParameters;
-import org.ndexbio.common.models.object.privilege.Group;
-import org.ndexbio.common.models.object.privilege.Membership;
-import org.ndexbio.common.models.object.privilege.Permissions;
+import org.ndexbio.model.object.SearchParameters;
 
 import com.orientechnologies.orient.core.id.ORID;
 

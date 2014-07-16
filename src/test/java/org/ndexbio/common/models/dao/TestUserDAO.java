@@ -13,7 +13,7 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.SearchParameters;
+import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.model.object.NewUser;
 import org.ndexbio.model.object.User;
 
