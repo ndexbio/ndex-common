@@ -1,7 +1,7 @@
 package org.ndexbio.common.models.dao;
 
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.models.object.NdexStatus;
+import org.ndexbio.model.object.NdexStatus;
 
 @Deprecated
 public interface AdminDAO {

@@ -20,7 +20,7 @@ import org.ndexbio.common.models.data.IReifiedEdgeTerm;
 import org.ndexbio.common.models.data.ISupport;
 import org.ndexbio.common.models.data.ITerm;
 import org.ndexbio.common.models.object.MetaParameter;
-import org.ndexbio.common.models.object.SearchParameters;
+import org.ndexbio.model.object.SearchParameters;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;

@@ -14,9 +14,9 @@ import org.ndexbio.common.models.data.INetwork;
 import org.ndexbio.common.models.data.ITask;
 import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.Status;
-import org.ndexbio.common.models.object.Task;
+import org.ndexbio.model.object.Task;
 import org.ndexbio.common.models.object.TaskType;
-import org.ndexbio.common.models.object.privilege.Priority;
+import org.ndexbio.model.object.Priority;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
  * @author fcriscuo
  *
  */
-public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
+public class TaskOrientdbDAO extends OrientdbDAO  {
 	 private static final Logger _logger = LoggerFactory.getLogger(TaskOrientdbDAO.class);
 	
 	private TaskOrientdbDAO(){
@@ -40,7 +40,6 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.TaskDAO#createTask(org.ndexbio.common.models.object.Task)
 	 */
-	@Override
 	public Task createTask(Task newTask, String userId) throws IllegalArgumentException,
 			NdexException {
 		Preconditions.checkArgument(null != newTask, 
@@ -59,13 +58,13 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
             final ITask task = _orientDbGraph.addVertex("class:task", ITask.class);
             task.setDescription(newTask.getDescription());
             task.setOwner(taskOwner);
-            task.setPriority(newTask.getPriority());
+         //   task.setPriority(newTask.getPriority());
             task.setProgress(newTask.getProgress());
             task.setResource(newTask.getResource());
-            task.setStatus(newTask.getStatus());
-            task.setStartTime(newTask.getCreatedDate());
-            task.setType(newTask.getType());
-            newTask.setId(IdConverter.toJid((ORID) task.asVertex().getId()));
+//            task.setStatus(newTask.getStatus());
+//            task.setStartTime(newTask.getCreatedDate());
+ //           task.setType(newTask.getType());
+ //           newTask.setId(IdConverter.toJid((ORID) task.asVertex().getId()));
             return newTask;
         }
         catch (Exception e)
@@ -82,7 +81,7 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.TaskDAO#deleteTask(java.lang.String)
 	 */
-	@Override
+	
 	public void deleteTask(String taskId, String userId) throws IllegalArgumentException,
 			ObjectNotFoundException, SecurityException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(taskId), 
@@ -129,7 +128,7 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.TaskDAO#getTask(java.lang.String)
 	 */
-	@Override
+	
 	public Task getTask(String taskId, String userId) throws IllegalArgumentException,
 			SecurityException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(taskId),"A task id is required");
@@ -146,7 +145,7 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	                if (!task.getOwner().getUsername().equals(userName))
 	                    throw new SecurityException("Access denied.");
 	                else
-	                    return new Task(task);
+	                    return new Task();
 	            }
 	        }
 	        catch (SecurityException se)
@@ -169,14 +168,14 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.TaskDAO#updateTask(org.ndexbio.common.models.object.Task)
 	 */
-	@Override
+	
 	public void updateTask(Task updatedTask, String userId) throws IllegalArgumentException,
 			ObjectNotFoundException, SecurityException, NdexException {
 		Preconditions.checkArgument(null != updatedTask, 
 	    		   "A task is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required");
 	    	
-	        ORID taskRid = IdConverter.toRid(updatedTask.getId());
+	/*        ORID taskRid = IdConverter.toRid(updatedTask.getId());
 	        String userName ="";
 	        try
 	        {
@@ -189,7 +188,7 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	            else if (!taskToUpdate.getOwner().getUsername().equals(userName))
 	                throw new SecurityException("Access denied.");
 	            taskToUpdate.setDescription(updatedTask.getDescription());
-	            taskToUpdate.setPriority(updatedTask.getPriority());
+	   //         taskToUpdate.setPriority(updatedTask.getPriority());
 	            taskToUpdate.setProgress(updatedTask.getProgress());
 	            taskToUpdate.setStatus(updatedTask.getStatus());
 	            taskToUpdate.setType(updatedTask.getType());
@@ -208,8 +207,8 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	            _logger.error("Failed to update task: " + updatedTask.getId() + ".", e);
 	           
 	            throw new NdexException("Failed to update task: " + updatedTask.getId() + ".");
-	        }
-	        finally
+	        } */
+//	        finally
 	        {
 	            teardownDatabase();
 	        }
@@ -219,7 +218,6 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.TaskDAO#setTaskStatus(java.lang.String, java.lang.String)
 	 */
-	@Override
 	public Task setTaskStatus(String taskId, String status, String userId)
 			throws NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(taskId),
@@ -249,7 +247,7 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 			Status s = Status.valueOf(status);
 
 			taskToUpdate.setStatus(s);
-			Task updatedTask = new Task(taskToUpdate);
+			Task updatedTask = new Task(); //taskToUpdate);
 			return updatedTask;
 		} catch (Exception e) {
 			_logger.error("Error changing task status for: "
@@ -263,7 +261,6 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.TaskDAO#createXBELExportNetworkTask(java.lang.String)
 	 */
-	@Override
 	public Task createXBELExportNetworkTask(String networkId, String userId)
 			throws IllegalArgumentException, SecurityException, NdexException {
 		Preconditions
@@ -290,14 +287,14 @@ public class TaskOrientdbDAO extends OrientdbDAO implements TaskDAO {
 		processNetworkTask.setDescription(network.getName() + ".xbel");
 		processNetworkTask.setType(TaskType.EXPORT_NETWORK_TO_FILE);
 		processNetworkTask.setOwner(taskOwner);
-		processNetworkTask.setPriority(Priority.LOW);
+	//	processNetworkTask.setPriority(Priority.LOW);
 		processNetworkTask.setProgress(0);
 		processNetworkTask.setResource(networkId);
 		processNetworkTask.setStartTime(new Date());
 		processNetworkTask.setStatus(Status.QUEUED);
 		// retain commit statement for planned return to transaction-based operation
 		_orientDbGraph.getBaseGraph().commit();
-		Task newTask = new Task(processNetworkTask);
+		Task newTask = new Task(); //processNetworkTask);
 		return newTask;
 	} 
 	catch (Exception e)

@@ -7,7 +7,7 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.Status;
-import org.ndexbio.common.models.object.Task;
+import org.ndexbio.model.object.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +111,7 @@ public class NdexTaskService
 			 final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
 					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
 			 for (final ODocument document : taskDocumentList)
-	                foundTasks.add(new Task(this.ndexService._orientDbGraph.getVertex(document, ITask.class)));
+	                foundTasks.add(new Task());//this.ndexService._orientDbGraph.getVertex(document, ITask.class)));
 
 	            return foundTasks;
 		} catch (Exception e) {

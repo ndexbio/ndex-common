@@ -1,6 +1,6 @@
 package org.ndexbio.common.models.data;
 
-import org.ndexbio.common.models.object.privilege.Permissions;
+import org.ndexbio.model.object.Permissions;
 
 import com.tinkerpop.frames.Property;
 import com.tinkerpop.frames.VertexFrame;

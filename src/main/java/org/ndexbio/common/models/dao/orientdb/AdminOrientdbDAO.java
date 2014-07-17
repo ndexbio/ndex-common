@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.AdminDAO;
-import org.ndexbio.common.models.object.NdexStatus;
+import org.ndexbio.model.object.NdexStatus;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;

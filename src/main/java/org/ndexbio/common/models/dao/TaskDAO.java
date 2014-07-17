@@ -2,7 +2,7 @@ package org.ndexbio.common.models.dao;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.models.object.Task;
+import org.ndexbio.model.object.Task;
 
 @Deprecated
 public interface TaskDAO {

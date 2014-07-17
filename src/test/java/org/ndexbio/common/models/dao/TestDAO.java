@@ -7,7 +7,7 @@ import java.util.Properties;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.common.models.object.privilege.User;
+import org.ndexbio.model.object.User;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -105,7 +105,7 @@ public abstract class TestDAO extends OrientdbDAO {
 	        final List<ODocument> matchingUsers = _ndexDatabase.query(new OSQLSynchQuery<Object>("select from User where username = '" + username + "'"));
 	        
 	        if (!matchingUsers.isEmpty())
-	            return new User(_orientDbGraph.getVertex(matchingUsers.get(0), IUser.class), true);
+	            return new User();//_orientDbGraph.getVertex(matchingUsers.get(0), IUser.class), true);
 	        else
 	            return null;
 	    }

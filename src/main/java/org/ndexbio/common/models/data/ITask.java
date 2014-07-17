@@ -9,7 +9,7 @@ import java.util.Date;
 
 import org.ndexbio.common.models.object.Status;
 import org.ndexbio.common.models.object.TaskType;
-import org.ndexbio.common.models.object.privilege.Priority;
+import org.ndexbio.model.object.Priority;
 
 public interface ITask extends VertexFrame
 {
