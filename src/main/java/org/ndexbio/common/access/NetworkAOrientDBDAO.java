@@ -444,7 +444,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		String edgeIdCsv = ridsToCsv(edgeRids);
 		Map<Long, Edge> edges = network.getEdges();
 		Map<Long,Node> nodes = network.getNodes();
-		Map<Long,BaseTerm> terms = network.getBaseTermIds();
+		Map<Long,BaseTerm> terms = network.getBaseTerms();
 		
 		final String query = 
 				"SELECT id, in_edgeSubject.jdexId as sId, in_edgeSubject.@rid as sRid, "
@@ -605,7 +605,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 					baseTerm.setNamespace(namespaceId);
 					namespaceIdRidMap.put(namespaceId, namespaceRid);
 				}
-				network.getBaseTermIds().put(termId, baseTerm);
+				network.getBaseTerms().put(termId, baseTerm);
 			} else if (null != reifiedEdgeId){
 				ReifiedEdgeTerm reifiedEdgeTerm = new ReifiedEdgeTerm();
 				reifiedEdgeTerm.setEdgeId(reifiedEdgeId);
