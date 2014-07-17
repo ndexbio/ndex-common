@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.cache.NdexIdentifierCache;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
@@ -62,7 +61,6 @@ public class NDExNoTxMemoryPersistence  {
     private NetworkDAO  networkDAO;
 	private ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 	private OrientGraph graph;
-	private Set<Long> jdexIdSet;
 	private Network network;
 	private User user;
 	private ODocument networkDoc;
@@ -91,12 +89,11 @@ public class NDExNoTxMemoryPersistence  {
      */
     
 	public NDExNoTxMemoryPersistence(NdexDatabase db) {
-		database = db;
-		localConnection = database.getAConnection();
-		graph = new OrientGraph(localConnection);
+		this.database = db;
+		this.localConnection = this.database.getAConnection();
+		this.graph = new OrientGraph(this.localConnection);
 //		graph.setAutoStartTx(false);
 		this.networkDAO = new NetworkDAO(localConnection);
-		jdexIdSet = Sets.newHashSet();
 		prefixMap = new HashMap<String,Namespace>();
 		URINamespaceMap = new HashMap<String,Namespace>();
 		this.stopwatch = Stopwatch.createUnstarted();

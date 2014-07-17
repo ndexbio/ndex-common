@@ -4,9 +4,9 @@ import java.util.Date;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.object.Status;
-import org.ndexbio.common.models.object.Task;
+import org.ndexbio.model.object.Task;
 import org.ndexbio.common.models.object.TaskType;
-import org.ndexbio.common.models.object.privilege.Priority;
+import org.ndexbio.model.object.Priority;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

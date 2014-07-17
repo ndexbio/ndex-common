@@ -20,6 +20,7 @@ import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
+import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
@@ -442,8 +443,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			Set<ORID> edgeRids, Map<Long, ORID> nodeIdRidMap, Map<Long, ORID> termIdRidMap) {
 		String edgeIdCsv = ridsToCsv(edgeRids);
 		Map<Long, Edge> edges = network.getEdges();
-		List<Long> nodes = network.getNodes();
-		List<Long> terms = network.getBaseTermIds();
+		Map<Long,Node> nodes = network.getNodes();
+		Map<Long,BaseTerm> terms = network.getBaseTermIds();
 		
 		final String query = 
 				"SELECT id, in_edgeSubject.jdexId as sId, in_edgeSubject.@rid as sRid, "
@@ -499,7 +500,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			node.setId(nodeId);
 			if (null != name) node.setName(name);
 			if (null != repId) node.setRepresents(repId);
-			network.getNodes().add(nodeId);
+			network.getNodes().put(nodeId,node);
 			
 			ORID repRid = doc.field("repRid", ORID.class);
 			if (null != repRid) termIdRidMap.put(repId, repRid);
@@ -604,22 +605,22 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 					baseTerm.setNamespace(namespaceId);
 					namespaceIdRidMap.put(namespaceId, namespaceRid);
 				}
-				network.getBaseTermIds().add(termId);
+				network.getBaseTermIds().put(termId, baseTerm);
 			} else if (null != reifiedEdgeId){
 				ReifiedEdgeTerm reifiedEdgeTerm = new ReifiedEdgeTerm();
 				reifiedEdgeTerm.setEdgeId(reifiedEdgeId);
 				
-				network.getReifiedEdgeTerms().add(termId);
+				network.getReifiedEdgeTerms().put(termId, reifiedEdgeTerm);
 			} else if (null != parameters){
-		/*		FunctionTerm functionTerm = new FunctionTerm();
-				
-				functionTerm.setTermFunction(functionId);
+				FunctionTerm functionTerm = new FunctionTerm();
+				//TODO: need to fix this
+			//	functionTerm.setTermFunction(functionId);
 			    Integer parameterIndex = 0;
 				for (Long parameterId : parameters){
 					functionTerm.getParameters().add(parameterId);
 					parameterIndex++;
-				} */
-				network.getFunctionTerms().add(functionId);
+				} 
+				network.getFunctionTerms().put(functionId,functionTerm);
 			}
 			
 		}
@@ -652,7 +653,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			namespace.setId((Long)doc.field("id"));
 			if (null != prefix) namespace.setPrefix(prefix);
 			if (null != uri) namespace.setUri(uri);
-			network.getNamespaces().add( namespace);
+			network.getNamespaces().put( namespace.getId(), namespace);
 		}
 		
 	}
