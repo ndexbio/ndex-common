@@ -19,8 +19,10 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
 import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
+import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
@@ -40,6 +42,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -55,7 +58,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * as values
  */
 
-public class NDExNoTxMemoryPersistence  {
+public class NdexPersistenceService  {
 
 	private NdexDatabase database;
     private NetworkDAO  networkDAO;
@@ -68,7 +71,7 @@ public class NDExNoTxMemoryPersistence  {
 	private Map<String, Namespace> prefixMap;
 	private Map<String, Namespace> URINamespaceMap;
 
-	private static final Logger logger = Logger.getLogger(NDExNoTxMemoryPersistence.class.getName());
+	private static final Logger logger = Logger.getLogger(NdexPersistenceService.class.getName());
 	private static final Long CACHE_SIZE = 100000L;
 	private final Stopwatch stopwatch;
 	private long commitCounter = 0L;
@@ -77,6 +80,7 @@ public class NDExNoTxMemoryPersistence  {
 	// key is the full URI or other fully qualified baseTerm as a string.
 	private LoadingCache<String, BaseTerm> baseTermStrCache;
     private LoadingCache<RawNamespace, Namespace> rawNamespaceCache;
+    private LoadingCache<RawCitation, Citation>   rawCitationCache;
     
     // key is the element_id of a BaseTerm
     private LoadingCache<Long, Node> nodeCache;
@@ -88,7 +92,7 @@ public class NDExNoTxMemoryPersistence  {
      * 2. Create New network
      */
     
-	public NDExNoTxMemoryPersistence(NdexDatabase db) {
+	public NdexPersistenceService(NdexDatabase db) {
 		this.database = db;
 		this.localConnection = this.database.getAConnection();
 		this.graph = new OrientGraph(this.localConnection);
@@ -111,6 +115,17 @@ public class NDExNoTxMemoryPersistence  {
 				   }
 			    });
 
+		rawCitationCache = CacheBuilder
+				.newBuilder().maximumSize(CACHE_SIZE)
+				.expireAfterAccess(240L, TimeUnit.MINUTES)
+				.build(new CacheLoader<RawCitation, Citation>() {
+				   @Override
+				   public Citation load(RawCitation key) throws NdexException {
+					return findOrCreateCitation(key);
+				   }
+			    });
+
+		
 		baseTermStrCache = CacheBuilder
 				.newBuilder().maximumSize(CACHE_SIZE)
 				.expireAfterAccess(240L, TimeUnit.MINUTES)
@@ -261,156 +276,8 @@ public class NDExNoTxMemoryPersistence  {
 
 			});
 */
-	// ICitation cache
-/*	private RemovalListener<Long, ICitation> citationListener = new RemovalListener<Long, ICitation>() {
-
-		public void onRemoval(RemovalNotification<Long, ICitation> removal) {
-			logger.info("ICitiation removed from cache key= "
-					+ removal.getKey().toString() + " "
-					+ removal.getCause().toString());
-
-		}
-
-	};
-	private LoadingCache<Long, ICitation> citationCache = CacheBuilder
-			.newBuilder().maximumSize(CACHE_SIZE)
-			.expireAfterAccess(240L, TimeUnit.MINUTES)
-			.removalListener(citationListener)
-			.build(new CacheLoader<Long, ICitation>() {
-				@Override
-				public ICitation load(Long key) throws Exception {
-					return ndexService._orientDbGraph.addVertex(
-							"class:citation", ICitation.class);
-				}
-
-			});
-
-	// IEdge cache
-	private RemovalListener<Long, IEdge> edgeListener = new RemovalListener<Long, IEdge>() {
-
-		public void onRemoval(RemovalNotification<Long, IEdge> removal) {
-			logger.info("IEdge removed from cache key= "
-					+ removal.getKey().toString() + " "
-					+ removal.getCause().toString());
-
-		}
-
-	};
-	private LoadingCache<Long, IEdge> edgeCache = CacheBuilder.newBuilder()
-			.maximumSize(CACHE_SIZE).expireAfterAccess(240L, TimeUnit.MINUTES)
-			.removalListener(edgeListener)
-			.build(new CacheLoader<Long, IEdge>() {
-				@Override
-				public IEdge load(Long key) throws Exception {
-					return ndexService._orientDbGraph.addVertex("class:edge",
-							IEdge.class);
-				}
-
-			});
-
-	// INode cache
-	private RemovalListener<Long, INode> nodeListener = new RemovalListener<Long, INode>() {
-
-		public void onRemoval(RemovalNotification<Long, INode> removal) {
-			logger.info("INode removed from cache key= "
-					+ removal.getKey().toString() + " "
-					+ removal.getCause().toString());
-
-		}
-
-	};
-	private LoadingCache<Long, INode> nodeCache = CacheBuilder.newBuilder()
-			.maximumSize(CACHE_SIZE).expireAfterAccess(240L, TimeUnit.MINUTES)
-			.removalListener(nodeListener)
-			.build(new CacheLoader<Long, INode>() {
-				@Override
-				public INode load(Long key) throws Exception {
-					return ndexService._orientDbGraph.addVertex("class:node",
-							INode.class);
-				}
-
-			});
-
-	// ISupport cache
-	private RemovalListener<Long, ISupport> supportListener = new RemovalListener<Long, ISupport>() {
-
-		public void onRemoval(RemovalNotification<Long, ISupport> removal) {
-			logger.info("ISupport removed from cache key= "
-					+ removal.getKey().toString() + " "
-					+ removal.getCause().toString());
-
-		}
-
-	};
-	private LoadingCache<Long, ISupport> supportCache = CacheBuilder
-			.newBuilder().maximumSize(CACHE_SIZE)
-			.expireAfterAccess(240L, TimeUnit.MINUTES)
-			.removalListener(supportListener)
-			.build(new CacheLoader<Long, ISupport>() {
-				@Override
-				public ISupport load(Long key) throws Exception {
-					return ndexService._orientDbGraph.addVertex(
-							"class:support", ISupport.class);
-				}
-
-			});
-
-	public boolean isEntityPersisted(Long jdexId) {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		return (this.jdexIdSet.contains(jdexId));
-
-	}
-
-	// To find a namespace by its prefix, first try to find a jdexid by looking
-	// up the prefix in the identifier cache.
-	// If a jdexid is found, then lookup the INamespace by jdexid in the
-	// namespaceCache and return it.
-	public Namespace findNamespaceByPrefix(String prefix) {
-		
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix),
-				"A namespace prefix is required");
-		String namespaceIdentifier = idJoiner.join("NAMESPACE", prefix);
-		Preconditions.checkArgument(
-				!NdexIdentifierCache.INSTANCE.isNovelIdentifier(namespaceIdentifier),
-				"The namespace identifier " + namespaceIdentifier + " is not registered");
-		try {
-			Long jdexId = NdexIdentifierCache.INSTANCE.accessIdentifierCache()
-					.get(namespaceIdentifier);
-			Namespace ns = this.namespaceCache.getIfPresent(jdexId);
-			return ns;
-		} catch (ExecutionException e) {
-
-			e.printStackTrace();
-		}
-		return null;
-	}
 
 
-	public IBaseTerm findOrCreateIBaseTerm(Long jdexId)
-			throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		this.jdexIdSet.add(jdexId);
-		return baseTermCache.get(jdexId);
-	}
-
-	public IFunctionTerm findOrCreateIFunctionTerm(Long jdexId)
-			throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		this.jdexIdSet.add(jdexId);
-		return functionTermCache.get(jdexId);
-	}
-	
-
-	public IReifiedEdgeTerm findOrCreateIReifiedEdgeTerm(Long jdexId) throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		this.jdexIdSet.add(jdexId);
-		return reifiedEdgeTermCache.get(jdexId);
-	}
-*/
 	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
 		Namespace ns = networkDAO.getNamespace(key.getPrefix(), 
 				key.getURI(), network.getExternalId());
@@ -463,6 +330,50 @@ public class NDExNoTxMemoryPersistence  {
 		
 	}
 
+	
+	private Citation findOrCreateCitation(RawCitation key) throws NdexException {
+		Citation citation = networkDAO.getCitation(key.getTitle(), 
+				key.getIdType(), key.getIdentifier(), network.getExternalId());
+
+		if ( citation != null ) {
+	        return citation;
+		}
+		
+		// persist the citation object in db.
+		citation = new Citation();
+		citation.setId(database.getNextId());
+		citation.setTitle(key.getTitle());
+		citation.setContributors(key.getContributors());
+		
+		NdexProperty p = new NdexProperty();
+		p.setPredicateString(key.getIdType());
+		p.setValue(key.getIdentifier());
+		citation.getProperties().add(p);
+		
+
+		ODocument pDoc = new ODocument(NdexClasses.NdexProperty);
+		pDoc.field(NdexClasses.ndexProp_P_predicateStr,key.getIdType())
+		   .field(NdexClasses.ndexProp_P_value, key.getIdentifier());
+		
+		ODocument citationDoc = new ODocument(NdexClasses.Citation);
+		citationDoc.field(NdexClasses.Element_ID, citation.getId())
+		  .field(NdexClasses.Citation_P_title, key.getTitle())
+		  .field(NdexClasses.Citaion_P_contributors, key.getContributors(), OType.EMBEDDEDLIST)
+		  .save();
+		
+        
+		OrientVertex pV = graph.getVertex(pDoc);
+		OrientVertex citationV = graph.getVertex(citationDoc);
+		OrientVertex networkV = graph.getVertex(getNetworkDoc());
+		citationV.addEdge(NdexClasses.E_ndexProperties, pV);
+		networkV.addEdge(NdexClasses.Network_E_Citations, citationV);
+
+		return citation; 
+		
+	}
+	
+	
+	
 	private BaseTerm findOrCreateBaseTerm(String termString) throws NdexException, ExecutionException {
 		// case 1 : termString is a URI
 		// example: http://identifiers.org/uniprot/P19838
@@ -859,6 +770,12 @@ public class NDExNoTxMemoryPersistence  {
 		
 	}
 
+	/**
+	 * Find or create a namespace object from database;
+	 * @param rns
+	 * @return
+	 * @throws NdexException
+	 */
 	public Namespace getNamespace(RawNamespace rns) throws NdexException {
 		try {
 			if (rns.getPrefix() == null) {
@@ -874,6 +791,19 @@ public class NDExNoTxMemoryPersistence  {
 			throw new NdexException ("Error occured when getting namespace " + rns.getURI() + ". " + e.getMessage());
 		}
 	}
+	
+	public Citation getCitation(String title, String idType, String identifier, 
+			List<String> contributors) throws NdexException {
+		RawCitation rCitation = new RawCitation(title, idType, identifier, contributors);
+		try {
+			return this.rawCitationCache.get(rCitation);
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			logger.severe(e.getMessage());
+			throw new NdexException ("Error occured when getting citation " + rCitation.getTitle() + ". " + e.getMessage());
+		}
+	}
+	
 	
 	public BaseTerm getBaseTerm(String termString) throws NdexException {
 		try {

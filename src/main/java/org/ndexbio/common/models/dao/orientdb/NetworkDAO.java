@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
@@ -306,6 +307,8 @@ public class NetworkDAO {
 		if (terms.isEmpty())
 		    	 return null;
              return getBaseTerm(terms.get(0));
+             
+       //TODO: need to check the current transaction.      
 	}
 	
 	private static BaseTerm getBaseTerm(ODocument o) {
@@ -353,6 +356,59 @@ public class NetworkDAO {
 		    	 return null;
              Namespace result = getNamespace(nss.get(0));
              return result;
+	}
+	
+	
+	public Citation getCitation(String title, String idType, String identifier, UUID networkID) {
+		String query = "select from " + NdexClasses.Citation + " where " +
+	    		  NdexClasses.Citation_P_title + "='" + title +"'";
+	    final List<ODocument> citations = db.query(new OSQLSynchQuery<ODocument>(query));
+	    
+	    ODocument c = null;
+        for (ODocument x : citations ) {
+        	ODocument networkDoc = x.field("in_" + NdexClasses.Network_E_Citations);
+        	String uuidStr = networkDoc.field(NdexClasses.Network_P_UUID);
+        	if (networkID.toString().equals(uuidStr)) {
+
+        		if ( identifier != null) {  // check identifier
+        			for (OIdentifiable ndexPropertyDoc : new OTraverse()
+        	       	    .field("out_"+ NdexClasses.E_ndexProperties )
+        	            .target(x)
+        	            .predicate( new OSQLPredicate("$depth <= 1"))) {
+
+        	              ODocument doc = (ODocument) ndexPropertyDoc;
+        	          
+        	              if ( doc.getClassName().equals(NdexClasses.NdexProperty)) {
+        	                  if ( doc.field(NdexClasses.ndexProp_P_predicateStr).equals(idType)
+        	                		&& 
+        	                	   doc.field(NdexClasses.ndexProp_P_value).equals(identifier)) {
+        	                	  c = x;
+        	                	  break;
+        	                  }
+        	              }
+        	         }
+        		} else {	
+        		  c = x;
+        		  break;
+        		}
+        	}
+        }
+        
+        if (c == null) return null;
+        
+        // construct the object
+        return getCitationFromDoc(c);
+	}
+	
+	
+	private Citation getCitationFromDoc(ODocument doc) {
+		Citation result = new Citation();
+		result.setId((long)doc.field(NdexClasses.Element_ID));
+		result.setTitle((String)doc.field(NdexClasses.Citation_P_title));
+		
+		
+		//TODO: load more fields
+		return result;
 	}
 	
 	//TODO: change this to direct index access in the future.

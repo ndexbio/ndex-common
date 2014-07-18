@@ -14,12 +14,12 @@ import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Node;
 
 
-public class NDExNoTxMemoryPersistenceTest {
+public class NdexPersistenceServiceTest {
 
-	private static NDExNoTxMemoryPersistence service;
+	private static NdexPersistenceService service;
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		service = new NDExNoTxMemoryPersistence(new NdexDatabase());
+		service = new NdexPersistenceService(new NdexDatabase());
 	}
 
 	@AfterClass

@@ -48,13 +48,24 @@ public class NdexClasses {
     public static final String Network_E_Nodes     = "networkNodes";
     public static final String Network_E_Edges     = "networkedges";
     public static final String Network_E_FunctionTerms = "FunctionTerms";
+    public static final String Network_E_Citations  = "citations";
+    public static final String Network_E_Supports   = "supports";
     
     // element 
     public static final String Element_ID  = "id";
     
+    // propertiedObject
+    public static final String E_ndexProperties = "ndexProps";
+    public static final String E_ndexPresentationProps = "ndexPresProp";
+    
+    
     // namespace 
     public static final String ns_P_prefix = "prefix";
     public static final String ns_P_uri    = "uri";
+    
+    // citation
+    public static final String Citation_P_title = "title";
+    public static final String Citaion_P_contributors = "authors";
     
     //BaseTerm
     public static final String BTerm_P_name        = "name";
@@ -70,4 +81,8 @@ public class NdexClasses {
     public static final String Edge_E_predicate  = "edgePredicate";
     public static final String Edge_E_subject    = "edgeSubject";
     public static final String Edge_E_object     = "edgeObject";
+    
+    // ndexProperty
+    public static final String ndexProp_P_predicateStr = "predicateStr";
+    public static final String ndexProp_P_value        = "value";
 }
