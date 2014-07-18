@@ -67,6 +67,10 @@ public class NdexClasses {
     public static final String Citation_P_title = "title";
     public static final String Citaion_P_contributors = "authors";
     
+    //support
+    public static final String Support_P_text = "text";
+    public static final String Support_E_citation = "citeFrom";
+    
     //BaseTerm
     public static final String BTerm_P_name        = "name";
     public static final String BTerm_E_Namespace   = "baseTermNS";

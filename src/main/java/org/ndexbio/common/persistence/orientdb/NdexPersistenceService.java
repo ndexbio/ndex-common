@@ -21,11 +21,13 @@ import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawNamespace;
+import org.ndexbio.common.models.object.network.RawSupport;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
+import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.NdexProperty;
@@ -81,6 +83,7 @@ public class NdexPersistenceService  {
 	private LoadingCache<String, BaseTerm> baseTermStrCache;
     private LoadingCache<RawNamespace, Namespace> rawNamespaceCache;
     private LoadingCache<RawCitation, Citation>   rawCitationCache;
+    private LoadingCache<RawSupport, Support>     rawSupportCache;
     
     // key is the element_id of a BaseTerm
     private LoadingCache<Long, Node> nodeCache;
@@ -97,7 +100,7 @@ public class NdexPersistenceService  {
 		this.localConnection = this.database.getAConnection();
 		this.graph = new OrientGraph(this.localConnection);
 //		graph.setAutoStartTx(false);
-		this.networkDAO = new NetworkDAO(localConnection);
+		this.networkDAO = new NetworkDAO(localConnection,true);
 		prefixMap = new HashMap<String,Namespace>();
 		URINamespaceMap = new HashMap<String,Namespace>();
 		this.stopwatch = Stopwatch.createUnstarted();
@@ -125,6 +128,15 @@ public class NdexPersistenceService  {
 				   }
 			    });
 
+        rawSupportCache =  CacheBuilder
+				.newBuilder().maximumSize(CACHE_SIZE)
+				.expireAfterAccess(240L, TimeUnit.MINUTES)
+				.build(new CacheLoader<RawSupport, Support>() {
+				   @Override
+				   public Support load(RawSupport key) throws NdexException {
+					return findOrCreateSupport(key);
+				   }
+			    }); 
 		
 		baseTermStrCache = CacheBuilder
 				.newBuilder().maximumSize(CACHE_SIZE)
@@ -331,7 +343,7 @@ public class NdexPersistenceService  {
 	}
 
 	
-	private Citation findOrCreateCitation(RawCitation key) throws NdexException {
+	private Citation findOrCreateCitation(RawCitation key) {
 		Citation citation = networkDAO.getCitation(key.getTitle(), 
 				key.getIdType(), key.getIdentifier(), network.getExternalId());
 
@@ -369,6 +381,37 @@ public class NdexPersistenceService  {
 		networkV.addEdge(NdexClasses.Network_E_Citations, citationV);
 
 		return citation; 
+		
+	}
+	
+
+	private Support findOrCreateSupport(RawSupport key) {
+		Support support = networkDAO.getSupport(key.getSupportText(),key.getCitationId());
+
+		if ( support != null ) {
+	        return support;
+		}
+		
+		// persist the support object in db.
+		support = new Support();
+		support.setId(database.getNextId());
+		support.setCitation(key.getCitationId());
+		support.setText(key.getSupportText());
+
+		ODocument supportDoc = new ODocument(NdexClasses.Support);
+		supportDoc.field(NdexClasses.Element_ID, support.getId())
+		   .field(NdexClasses.Support_P_text, key.getSupportText())	
+		   .save();
+
+		ODocument citationDoc = networkDAO.getDocumentByElementId(NdexClasses.Citation, key.getCitationId());
+        
+		OrientVertex supportV = graph.getVertex(supportDoc);
+		OrientVertex citationV = graph.getVertex(citationDoc);
+		OrientVertex networkV = graph.getVertex(getNetworkDoc());
+		supportV.addEdge(NdexClasses.Support_E_citation, citationV);
+		networkV.addEdge(NdexClasses.Network_E_Supports, supportV);
+
+		return support; 
 		
 	}
 	
@@ -804,6 +847,11 @@ public class NdexPersistenceService  {
 		}
 	}
 	
+	public Support getSupport(String literal, long citationId) throws ExecutionException {
+		RawSupport r = new RawSupport(literal, citationId);
+		return this.rawSupportCache.get(r);
+		
+	}
 	
 	public BaseTerm getBaseTerm(String termString) throws NdexException {
 		try {

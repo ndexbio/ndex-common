@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -19,6 +20,7 @@ import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphEdge;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.network.PropertyGraphNode;
+import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
 
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
@@ -32,12 +34,22 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class NetworkDAO {
 	
 	private ODatabaseDocumentTx db;
-//	Network network;
+	
+	//flag to specify whether need to search in the current un-commited transaction. 
+	//This is used to work around the problem that sql query doesn't search the current 
+	// uncommited transaction in OriantDB.
+	private boolean searchCurrentTx;  
 	
 	public NetworkDAO (ODatabaseDocumentTx db) {
 		this.db = db;
+		this.searchCurrentTx = false;
 	}
-	
+
+	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {
+		this.db = db;
+		this.searchCurrentTx = searchCurrentTransaction;
+	}
+
 /*	public NetworkDAO(NdexDatabase db, UUID networkID) {
 		this.db = db;
 		this.network = getNetworkById(networkID);
@@ -104,7 +116,6 @@ public class NetworkDAO {
         }
         
 		 return network; 
-		
 	}
 	
 	
@@ -138,7 +149,7 @@ public class NetworkDAO {
 	    int endPosition = skipBlocks * blockSize + blockSize;
 	    
 	    // get Edges
-        Collection<PropertyGraphNode> nodeList = network.getNodes();
+        Map<Long,PropertyGraphNode> nodeMap = network.getNodes();
         Collection<PropertyGraphEdge> edgeList = network.getEdges();
         TreeSet<Long> nodeIdSet = new TreeSet<Long>();
 
@@ -165,14 +176,14 @@ public class NetworkDAO {
             	    if ( ! nodeIdSet.contains(e.getSubjectId())) {
             	        ODocument subDoc = doc.field("in_" +  NdexClasses.Edge_E_subject);
             	        PropertyGraphNode node = NetworkDAO.getPropertyGraphNode(subDoc);
-            	        nodeList.add(node);
+            	        nodeMap.put(node.getId(),node);
             	        nodeIdSet.add(e.getSubjectId());
             	    }    
             	    
             	    if ( ! nodeIdSet.contains(e.getSubjectId())) {
                 	    ODocument objDoc = doc.field("out_" + NdexClasses.Edge_E_object);
             	        PropertyGraphNode node = NetworkDAO.getPropertyGraphNode(objDoc);
-            	        nodeList.add(node);
+            	        nodeMap.put(node.getId(),node);
             	        nodeIdSet.add(e.getSubjectId());
             	    }    
                 }
@@ -196,7 +207,7 @@ public class NetworkDAO {
 
         network.setUuid(id);
         
-        Collection<PropertyGraphNode> nodeList = network.getNodes();
+        Map<Long,PropertyGraphNode> nodeList = network.getNodes();
          for (OIdentifiable nodeDoc : new OTraverse()
        	    .field("out_"+ NdexClasses.Network_E_Nodes )
             .target(networkDoc)
@@ -208,7 +219,7 @@ public class NetworkDAO {
           
                   PropertyGraphNode nd = NetworkDAO.getPropertyGraphNode(doc);
                   if ( nd != null)
-                	  nodeList.add(nd);
+                	  nodeList.put(nd.getId(),nd);
                   else
                 	  throw new NdexException("Error occurred when getting node information from db "+ doc);
               }
@@ -268,9 +279,9 @@ public class NetworkDAO {
 		
 		Network result = new Network();
 		
-		result.setExternalId(UUID.fromString((String)n.field("UUID")));
-		result.setName((String)n.field("name"));
-        //TODO: populate all fields.
+		SetNetworkSummary(n, result);
+
+		//TODO: populate all fields.
 		
 		return result;
 	}
@@ -407,8 +418,27 @@ public class NetworkDAO {
 		result.setTitle((String)doc.field(NdexClasses.Citation_P_title));
 		
 		
-		//TODO: load more fields
+        for (OIdentifiable propRec : new OTraverse()
+   	                  .field("out_"+ NdexClasses.E_ndexProperties )
+   	                  .target(doc)
+   	                  .predicate( new OSQLPredicate("$depth <= 1"))) {
+
+             ODocument propDoc = (ODocument) propRec;
+                 
+             if ( doc.getClassName().equals(NdexClasses.NdexProperty)) {
+            	 result.getProperties().add(getNdexPropertyFromDoc(propDoc));
+             }
+        }
+
 		return result;
+	}
+	
+	
+	private NdexProperty getNdexPropertyFromDoc(ODocument doc) {
+		NdexProperty p = new NdexProperty();
+		p.setPredicateString((String)doc.field(NdexClasses.ndexProp_P_predicateStr));
+		p.setValue((String)doc.field(NdexClasses.ndexProp_P_value)) ;
+		return p;
 	}
 	
 	//TODO: change this to direct index access in the future.
@@ -479,5 +509,69 @@ public class NetworkDAO {
     public static NetworkSummary getNetworkSummary(ODocument doc) {
     	NetworkSummary networkSummary = new NetworkSummary();
     	return SetNetworkSummary(doc,networkSummary);
+    }
+    
+    public Citation getCitationById(long elementId) {
+    	ODocument doc = getDocumentByElementId(NdexClasses.Citation,elementId);
+    	if ( doc == null) return null;
+    	return getCitationFromDoc(doc);
+    	
+    }
+    
+    public Support getSupport(String text, long citationId) {
+		String query = "select from " + NdexClasses.Citation + " where " + 
+		        NdexClasses.Element_ID + "=" + citationId;
+	    final List<ODocument> citations = db.query(new OSQLSynchQuery<ODocument>(query));
+	  
+	    if ( !citations.isEmpty()) {
+   			for (OIdentifiable supportRec : new OTraverse()
+       	       	    .field("in_"+ NdexClasses.Support_E_citation )
+       	            .target(citations.get(0))
+       	            .predicate( new OSQLPredicate("$depth <= 1"))) {
+
+   	              ODocument doc = (ODocument) supportRec;
+        	          
+        	      if ( doc.getClassName().equals(NdexClasses.Support)) {
+        	         if ( doc.field(NdexClasses.Support_P_text).equals(text) ) {
+        	             return getSupportFromDoc(doc);
+        	         }
+       	          }
+        	}
+	    }
+        
+    	if ( this.searchCurrentTx) {
+	         List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClasses.Citation);
+	         for (ORecordOperation op : txOperations) {
+	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
+	            if (id == citationId) {
+	            	for (OIdentifiable supportRec : new OTraverse()
+       	       	    			.field("in_"+ NdexClasses.Support_E_citation )
+       	       	    			.target((ODocument) op.getRecord())
+       	       	    			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+	       				ODocument doc = (ODocument) supportRec;
+        	          
+	       				if ( doc.getClassName().equals(NdexClasses.Support)) {
+	       					if ( doc.field(NdexClasses.Support_P_text).equals(text) ) {
+	       						return getSupportFromDoc(doc);
+	       					}
+	       				}
+	       			}
+	        	    
+	            }
+	         }
+    	}
+    	return null;
+    }
+    
+    private static Support getSupportFromDoc(ODocument doc) {
+    	Support s = new Support();
+    	s.setText((String)doc.field(NdexClasses.Support_P_text));
+    	s.setId((long)doc.field(NdexClasses.Element_ID));
+    	ODocument citationDoc = doc.field("out_" + NdexClasses.Support_E_citation);
+    	s.setCitation((long)citationDoc.field(NdexClasses.Element_ID));
+    	
+    	return s;
+    	
     }
 }
