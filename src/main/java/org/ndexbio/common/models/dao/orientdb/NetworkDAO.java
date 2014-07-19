@@ -151,7 +151,6 @@ public class NetworkDAO {
 	    // get Edges
         Map<Long,PropertyGraphNode> nodeMap = network.getNodes();
         Collection<PropertyGraphEdge> edgeList = network.getEdges();
-        TreeSet<Long> nodeIdSet = new TreeSet<Long>();
 
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
@@ -173,19 +172,18 @@ public class NetworkDAO {
         
             	    edgeList.add(e);
             	    
-            	    if ( ! nodeIdSet.contains(e.getSubjectId())) {
+            	    if ( ! nodeMap.containsKey(e.getSubjectId())) {
             	        ODocument subDoc = doc.field("in_" +  NdexClasses.Edge_E_subject);
             	        PropertyGraphNode node = NetworkDAO.getPropertyGraphNode(subDoc);
             	        nodeMap.put(node.getId(),node);
-            	        nodeIdSet.add(e.getSubjectId());
             	    }    
             	    
-            	    if ( ! nodeIdSet.contains(e.getSubjectId())) {
+            	    if ( ! nodeMap.containsKey(e.getObjectId())) {
                 	    ODocument objDoc = doc.field("out_" + NdexClasses.Edge_E_object);
             	        PropertyGraphNode node = NetworkDAO.getPropertyGraphNode(objDoc);
             	        nodeMap.put(node.getId(),node);
-            	        nodeIdSet.add(e.getSubjectId());
-            	    }    
+            	    }
+            	    
                 }
             } 	
         }
@@ -257,7 +255,7 @@ public class NetworkDAO {
 		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
 		e.setPredicate((String)predicateDoc.field(NdexClasses.BTerm_P_name));
 		
-		e.setSubjectId((long)
+		e.setObjectId((long)
 			    ((ODocument)doc.field("out_"+NdexClasses.Edge_E_object))
 			        .field(NdexClasses.Element_ID));
 		
