@@ -8,11 +8,11 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.jboss.resteasy.util.Base64;
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
 import org.ndexbio.model.object.User;
-
-import java.util.UUID;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -20,6 +20,44 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class Security
 {
+	/**************************************************************************
+	    * Authenticates the user against the OrientDB database. (1.0)
+	    * 
+	    * @param authInfo
+	    *            A string array containing the username/password.
+	    * @throws Exception
+	    *            Accessing the database failed.
+	    * @returns True if the user is authenticated, false otherwise.
+	    **************************************************************************/
+	    public static User authenticateUser(final String userName, final String password, ODatabaseDocumentTx db) 
+	    		throws Exception {
+	    	
+	        try {
+	        	
+	        	//replace this with method from UserDAO
+	            List<ODocument> usersFound = db
+	                .command(new OCommandSQL("select from " + NdexClasses.User + " where accountName = ?"))
+	                .execute(userName);
+	            
+	            if (usersFound.size() < 1)
+	                return null;
+
+	            ODocument OUserDoc = usersFound.get(0);
+	            String hashedPassword = Security.hashText(password);
+	            
+	            if ( ((String)OUserDoc.field("password")).equals(hashedPassword)) {
+	            	return UserDAO._getUserFromDocument(OUserDoc); 
+	            }
+	            
+	            return null;
+	            
+	        } catch (Exception e) {
+	        	
+	        	throw e;
+	        	
+	        }
+	        
+	    }
     /**************************************************************************
     * Authenticates the user against the OrientDB database.
     * 
@@ -29,6 +67,7 @@ public class Security
     *            Accessing the database failed.
     * @returns True if the user is authenticated, false otherwise.
     **************************************************************************/
+	    @Deprecated
     public static User authenticateUser(final String userName, final String password ) throws Exception
     {
     	ODatabaseDocumentTx ndexDatabase = null;
@@ -47,7 +86,7 @@ public class Security
             String hashedPassword = Security.hashText(password);
             if ( ((String)OUserDoc.field("password")).equals(hashedPassword)) {
             	return UserOrientdbDAO.getUserFromDocument(OUserDoc);
-            };
+            }
             
             return null;
         }
@@ -56,6 +95,7 @@ public class Security
             if (ndexDatabase != null)
                 ndexDatabase.close();
         }
+	    
     }
 
     /**************************************************************************
