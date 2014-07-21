@@ -175,6 +175,23 @@ public class UserDAO {
 	}
 	
 	/**************************************************************************
+	    * Get a user
+	    * 
+	    * @param accountName
+	    *            accountName for User
+	    * @throws NdexException
+	    *            Attempting to query the database
+	    * @returns User object, from the NDEx Object Model
+	    **************************************************************************/
+	public User getUserByAccountName(String accountName) 
+		throws NdexException, ObjectNotFoundException {
+
+		final ODocument user = _getUserByAccountName(accountName);
+	    return _getUserFromDocument(user);
+
+	}
+	
+	/**************************************************************************
 	    * Find users
 	    * 
 	    * @param id
@@ -249,14 +266,7 @@ public class UserDAO {
 		
 		try {
 
-			final List<ODocument> usersFound = this.db.command(
-					new OCommandSQL("select from " + NdexClasses.User + " where accountName = ?"))
-					.execute(accountName);
-
-			if (usersFound.size() < 1)
-				throw new ObjectNotFoundException("User", accountName);
-			
-			ODocument userToSave = usersFound.get(0);
+			ODocument userToSave = _getUserByAccountName(accountName);
 
 			final User authUser = _getUserFromDocument(userToSave);
 			final String newPassword = Security.generatePassword();
@@ -427,6 +437,34 @@ public class UserDAO {
 		return users.get(0);
 		
 	}
+	private ODocument _getUserByAccountName(String accountName) 
+			throws NdexException, ObjectNotFoundException {
+
+		final List<ODocument> users;
+
+		String query = "select from " + NdexClasses.User 
+		 		+ " where accountName = ?";
+ 
+		try {
+
+		     users = db.command( new OCommandSQL(query))
+					   .execute(accountName);
+
+		} catch (Exception e) {
+
+			 throw new NdexException(e.getMessage());
+
+		}
+
+		if (users.isEmpty()) {
+
+			 throw new ObjectNotFoundException("User", accountName);
+
+		}
+
+		return users.get(0);
+	}
+	
 	/*
 	 * Convert the database results into our object model
 	 * TODO should this be moved to util? being used by other classes, not really a data object but a helper class

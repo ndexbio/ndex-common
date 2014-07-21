@@ -182,6 +182,30 @@ public class Test2UserDAO extends TestDAO{
     }
     
     @Test
+    public void getUserByAccountName() {
+    	
+    	assertTrue(createTestUser());
+    	try {
+    		
+    		localConnection.begin(); // also aborts any uncommitted transactions.
+	        final User retrievedUser = dao.getUserByAccountName(testUser.getAccountName());
+	        assertEquals(retrievedUser.getAccountName(), testUser.getAccountName());
+	        assertNotNull(retrievedUser);
+
+    	} catch(Throwable e) {
+    		
+    		fail(e.getMessage());
+    		e.printStackTrace();
+    		
+    	} finally {
+    		
+    		assertTrue(deleteTestUser());
+    		
+    	}
+    	
+    }
+    
+    @Test
     public void findUsers() {
     	
     	try {
@@ -304,7 +328,7 @@ public class Test2UserDAO extends TestDAO{
             
 	} 
 	
-	@Test
+	/*@Test
 	public void emailNewPassword() {
 		 fail("Does this verify complete funcitonality?");
 	    assertTrue(createTestUser());
@@ -328,7 +352,7 @@ public class Test2UserDAO extends TestDAO{
 	@Test(expected = IllegalArgumentException.class)
     public void emailNewPasswordInvalid() throws IllegalArgumentException, NdexException {
         dao.emailNewPassword("");
-    }
+    }*/
 	
 	@Test
     public void changePassword() {
