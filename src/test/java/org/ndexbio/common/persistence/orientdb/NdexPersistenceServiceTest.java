@@ -60,7 +60,7 @@ public class NdexPersistenceServiceTest {
 		String n2String = "Y00002";
 		Node n2 = service.getNodeByBaseTerm(n2String);
 		
-		//Edge e = service.createEdge(n1, n2, t4);
+		Edge e = service.createEdge(n1, n2, t4, null, null, null);
 		
 	    service.persistNetwork();
 	}

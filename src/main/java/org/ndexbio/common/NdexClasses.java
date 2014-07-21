@@ -81,6 +81,8 @@ public class NdexClasses {
     //node
     public static final String Node_P_name         = "name";
     
+    public static final String Node_E_ciations     = "nCitation";
+    public static final String Node_E_supports     = "nSupport";
     public static final String Node_E_represents   = "represents";
     
     //edge
