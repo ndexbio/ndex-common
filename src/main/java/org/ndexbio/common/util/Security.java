@@ -1,13 +1,9 @@
 package org.ndexbio.common.util;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.List;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MultivaluedMap;
-
-import org.jboss.resteasy.util.Base64;
+//import javax.ws.rs.container.ContainerRequestContext;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
@@ -169,30 +165,7 @@ public class Security
         return convertByteToHex(sha512.digest());
     }
 
-    /**************************************************************************
-    * Base64-decodes and parses the Authorization header to get the username
-    * and password.
-    * 
-    * @param requestContext
-    *            The servlet HTTP request context.
-    * @throws IOException
-    *            Decoding the Authorization header failed.
-    * @return a String array containing the username and password.
-    **************************************************************************/
-    public static String[] parseCredentials(ContainerRequestContext requestContext) throws IOException
-    {
-        final MultivaluedMap<String, String> headers = requestContext.getHeaders();
-        final List<String> authHeader = headers.get("Authorization");
-        
-        if (authHeader == null || authHeader.isEmpty())
-            return null;
-
-        final String encodedAuthInfo = authHeader.get(0).replaceFirst("Basic" + " ", "");
-        final String decodedAuthInfo = new String(Base64.decode(encodedAuthInfo));
-        
-        return decodedAuthInfo.split(":");
-    }
-    
+       
     /**************************************************************************
     * Generates a random number between the two values.
     * 

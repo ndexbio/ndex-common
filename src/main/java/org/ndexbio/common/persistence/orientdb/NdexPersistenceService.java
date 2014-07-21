@@ -79,7 +79,7 @@ public class NdexPersistenceService  {
 	private static final long CACHE_SIZE = 100000L;
 	private final Stopwatch stopwatch;
 	private long commitCounter = 0L;
-	private static Joiner idJoiner = Joiner.on(":").skipNulls();
+//	private static Joiner idJoiner = Joiner.on(":").skipNulls();
 	
 	// key is the full URI or other fully qualified baseTerm as a string.
 	private LoadingCache<String, BaseTerm> baseTermStrCache;
@@ -1000,10 +1000,49 @@ public class NdexPersistenceService  {
 		return this.functionTermNodeCache.get(funcTerm.getId());
 	}
 	
-	public Node getNodeByReifiedEdgeTerm(FunctionTerm funcTerm) throws ExecutionException {
-		return this.reifiedEdgeTermNodeCache.get(funcTerm.getId());
+	public Node getNodeByReifiedEdgeTerm(ReifiedEdgeTerm reifiedTerm) throws ExecutionException {
+		return this.reifiedEdgeTermNodeCache.get(reifiedTerm.getId());
 	}
 
+
+	//TODO: generalize this function so that createEdge(....) can use it.
+	public void addMetaDataToNode (Node subjectNode, Support support, Citation citation,  Map<String,String> annotations) {
+        ODocument nodeDoc = networkDAO.getDocumentByElementId(NdexClasses.Node, subjectNode.getId());
+    	OrientVertex nodeVertex = graph.getVertex(nodeDoc);
+		        
+        if ( support != null) {
+			ODocument supportDoc = networkDAO.getDocumentByElementId(
+					NdexClasses.Support, support.getId());
+	    	OrientVertex supportV = graph.getVertex(supportDoc);
+	    	nodeVertex.addEdge(NdexClasses.Node_E_supports, supportV);
+	    	
+	    	subjectNode.getSupports().add(support.getId());
+        }
+
+	    if (citation != null) {
+			ODocument citationDoc = networkDAO.getDocumentByElementId(
+					NdexClasses.Citation, citation.getId());
+	    	OrientVertex citationV = graph.getVertex(citationDoc);
+	    	nodeVertex.addEdge(NdexClasses.Node_E_ciations, citationV);
+	    	
+	    	subjectNode.getCitations().add(citation.getId());
+	    }
+
+		if ( annotations != null) {
+			for (Map.Entry<String, String> e : annotations.entrySet()) {
+				ODocument pDoc = this.createNdexPropertyDoc(e.getKey(),e.getValue());
+                OrientVertex pV = graph.getVertex(pDoc);
+                nodeVertex.addEdge(NdexClasses.E_ndexProperties, pV);
+                
+                NdexProperty p = new NdexProperty();
+                p.setPredicateString(e.getKey());
+                p.setDataType(e.getValue());
+                subjectNode.getProperties().add(p);
+			}
+		}
+
+	}
+	
 	public Edge createEdge(Node subjectNode, Node objectNode, BaseTerm predicate, 
 			 Support support, Citation citation, Map<String,String> annotation )
 			throws NdexException {
