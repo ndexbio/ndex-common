@@ -50,7 +50,7 @@ public class NdexClasses {
     public static final String Network_E_FunctionTerms = "FunctionTerms";
     public static final String Network_E_Citations  = "citations";
     public static final String Network_E_Supports   = "supports";
-    
+    public static final String Network_E_ReifedEdgeTerms = "reifiedETerms";    
     // element 
     public static final String Element_ID  = "id";
     
@@ -75,6 +75,9 @@ public class NdexClasses {
     public static final String BTerm_P_name        = "name";
     public static final String BTerm_E_Namespace   = "baseTermNS";
 
+    //ReifiedEdgeTerm
+    public static final String ReifedEdge_E_edge  ="reify";
+    
     //node
     public static final String Node_P_name         = "name";
     
@@ -85,6 +88,8 @@ public class NdexClasses {
     public static final String Edge_E_predicate  = "edgePredicate";
     public static final String Edge_E_subject    = "edgeSubject";
     public static final String Edge_E_object     = "edgeObject";
+    public static final String Edge_E_citations  = "eCitation";
+    public static final String Edge_E_supports   = "eSupport";
     
     // ndexProperty
     public static final String ndexProp_P_predicateStr = "predicateStr";

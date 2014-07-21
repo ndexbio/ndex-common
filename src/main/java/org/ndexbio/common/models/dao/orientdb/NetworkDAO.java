@@ -20,6 +20,7 @@ import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphEdge;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.network.PropertyGraphNode;
+import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
 
@@ -466,10 +467,10 @@ public class NetworkDAO {
     } 
     
     private static final String nodeQuery = "select from (traverse in_" + 
-         NdexClasses.Node + " from (select from "+ NdexClasses.BaseTerm + " where " +
-         NdexClasses.Element_ID + " = ?)) where @class=’"+ NdexClasses.Node +"’";
+         NdexClasses.Node_E_represents + " from (select from "+ NdexClasses.BaseTerm + " where " +
+         NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
     
-    public Node findNode(long baseTermID) {
+    public Node findNodeByBaseTermId(long baseTermID) {
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(nodeQuery);
 		List<ODocument> nodes = db.command(query).execute( baseTermID);
     	
@@ -478,6 +479,87 @@ public class NetworkDAO {
 		
     	return getNode(nodes.get(0));
     }
+
+    private static final String functionTermNodeQuery = 
+    		"select from (traverse in_" + NdexClasses.Node_E_represents + 
+    		" from (select from "+ NdexClasses.FunctionTerm + " where " +
+            NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
+       
+    public Node findNodeByFunctionTermId(long functionTermID) {
+   		OSQLSynchQuery<ODocument> query = 
+   				new OSQLSynchQuery<ODocument>(functionTermNodeQuery);
+   		List<ODocument> nodes = db.command(query).execute( functionTermID);
+       	
+   		if (nodes.isEmpty())
+   			return null;
+   		
+       	return getNode(nodes.get(0));
+    }
+    
+    private static final String reifedEdgeTermNodeQuery = 
+    		"select from (traverse in_" + NdexClasses.Node_E_represents + 
+    		" from (select from "+ NdexClasses.ReifiedEdgeTerm + " where " +
+            NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
+
+    public Node findNodeByReifiedEdgeTermId (long reifiedEdgeTermId) {
+   		OSQLSynchQuery<ODocument> query = 
+   				new OSQLSynchQuery<ODocument>(functionTermNodeQuery);
+   		List<ODocument> nodes = db.command(query).execute( reifiedEdgeTermId);
+       	
+   		if (nodes.isEmpty())
+   			return null;
+   		
+       	return getNode(nodes.get(0));
+    }
+    
+    private static final String refiedEdgeTermQuery = 
+    		"select from (traverse in_" + NdexClasses.ReifedEdge_E_edge + 
+    		" from (select from "+ NdexClasses.Edge + " where " +
+            NdexClasses.Element_ID + " = ?)) where @class='"+ 
+    		NdexClasses.ReifiedEdgeTerm +"'";
+       
+    public ReifiedEdgeTerm findReifiedEdgeTermByEdgeId(long edgeId) {
+   		OSQLSynchQuery<ODocument> query = 
+   				new OSQLSynchQuery<ODocument>(functionTermNodeQuery);
+   		List<ODocument> nodes = this.db.command(query).execute( edgeId);
+       	
+   		if (!nodes.isEmpty()) {
+   			ReifiedEdgeTerm t = new ReifiedEdgeTerm();
+   			t.setId((long)nodes.get(0).field(NdexClasses.Element_ID));
+   			t.setEdgeId(edgeId);
+   			return t;
+   		}
+
+   		if ( this.searchCurrentTx ) {
+	         List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClasses.Edge);
+	         for (ORecordOperation op : txOperations) {
+	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
+	            if (id == edgeId) {
+	            	for (OIdentifiable reifiedTRec : new OTraverse()
+      	       	    			.field("in_"+ NdexClasses.ReifedEdge_E_edge )
+      	       	    			.target((ODocument) op.getRecord())
+      	       	    			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+	       				ODocument doc = (ODocument) reifiedTRec;
+       	          
+	       				if ( doc.getClassName().equals(NdexClasses.ReifiedEdgeTerm)) {
+	       		   				ReifiedEdgeTerm t = new ReifiedEdgeTerm();
+	       		   				t.setId((long)doc.field(NdexClasses.Element_ID));
+	       		   				t.setEdgeId(edgeId);
+	       						return t;
+	       					
+	       				}
+	       			}
+	            }
+	         }
+   		}
+       	return null;
+    }
+    /*
+    private ReifiedEdgeTerm getReifiedTermFromDocument(ODocument doc) {
+    	ReifiedEdgeTerm rt = new ReifiedEdgeTerm();
+    	rt.setEdgeId(termEdge);
+    } */
     
     public static Node getNode(ODocument nodeDoc) {
     	Node n = new Node();
