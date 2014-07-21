@@ -116,8 +116,14 @@ public class UserDAO {
 			result.setEmailAddress(newUser.getEmailAddress());
 		    result.setFirstName(newUser.getFirstName());
 			result.setLastName(newUser.getLastName());
+			result.setWebsite(newUser.getWebsite());
+			result.setDescription(newUser.getDescription());
+			result.setImage(newUser.getImage());
 			
 			ODocument user = new ODocument(NdexClasses.User);
+			user.field("description", newUser.getDescription());
+			user.field("websiteURL", newUser.getWebsite());
+			user.field("imageURL", newUser.getImage());
 			user.field("emailAddress", newUser.getEmailAddress());
 			user.field("firstName", newUser.getFirstName());
 		    user.field("lastName", newUser.getLastName());
@@ -392,7 +398,10 @@ public class UserDAO {
 		ODocument user =  _getUserById(id);
 		
 		try {
-			
+
+			user.field("description", updatedUser.getDescription());
+			user.field("websiteURL", updatedUser.getWebsite());
+			user.field("imageURL", updatedUser.getImage());
 			user.field("emailAddress", updatedUser.getEmailAddress());
 			user.field("firstName", updatedUser.getFirstName());
 			user.field("lastName", updatedUser.getLastName());
@@ -478,6 +487,9 @@ public class UserDAO {
 		result.setEmailAddress((String)n.field("emailAddress"));
 		result.setFirstName((String)n.field("firstName"));
 		result.setLastName((String)n.field("lastName"));
+		result.setWebsite((String)n.field("websiteURL"));
+		result.setDescription((String)n.field("description"));
+		result.setImage((String)n.field("imageURL"));
 		
 		return result;
 	}
