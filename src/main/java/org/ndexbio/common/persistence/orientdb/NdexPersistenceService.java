@@ -30,6 +30,7 @@ import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
+import org.ndexbio.model.object.network.Term;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.NdexProperty;
@@ -69,7 +70,7 @@ public class NdexPersistenceService  {
 	private ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 	private OrientGraph graph;
 	private Network network;
-	private User user;
+	private ODocument ownerDoc;
 	private ODocument networkDoc;
 	private OrientVertex networkVertex; 
 	private Map<String, Namespace> prefixMap;
@@ -78,7 +79,7 @@ public class NdexPersistenceService  {
 	private static final Logger logger = Logger.getLogger(NdexPersistenceService.class.getName());
 	private static final long CACHE_SIZE = 100000L;
 	private final Stopwatch stopwatch;
-	private long commitCounter = 0L;
+//	private long commitCounter = 0L;
 //	private static Joiner idJoiner = Joiner.on(":").skipNulls();
 	
 	// key is the full URI or other fully qualified baseTerm as a string.
@@ -86,6 +87,8 @@ public class NdexPersistenceService  {
     private LoadingCache<RawNamespace, Namespace> rawNamespaceCache;
     private LoadingCache<RawCitation, Citation>   rawCitationCache;
     private LoadingCache<RawSupport, Support>     rawSupportCache;
+    
+    private LoadingCache<Long, ODocument>  elementIdCache;
     
     // key is the element_id of a BaseTerm
     private LoadingCache<Long, Node> baseTermNodeCache;
@@ -96,6 +99,11 @@ public class NdexPersistenceService  {
     private LoadingCache<Long, ReifiedEdgeTerm> reifiedEdgeTermCache;
     
     private LoadingCache<Long, Node> reifiedEdgeTermNodeCache;
+    
+    // key is a "rawFunctionTerm", which has element id as -1. This table
+    // matches the key to a functionTerm that has been stored in the db.
+    private LoadingCache<FunctionTerm, FunctionTerm> functionTermCache;
+    
     /*
      * Currently, the procces flow of this class is:
      * 
@@ -111,6 +119,8 @@ public class NdexPersistenceService  {
 		this.networkDAO = new NetworkDAO(localConnection,true);
 		prefixMap = new HashMap<String,Namespace>();
 		URINamespaceMap = new HashMap<String,Namespace>();
+		this.network = null;
+		this.ownerDoc = null;
 		this.stopwatch = Stopwatch.createUnstarted();
 
 		
@@ -141,7 +151,7 @@ public class NdexPersistenceService  {
 				.expireAfterAccess(240L, TimeUnit.MINUTES)
 				.build(new CacheLoader<RawSupport, Support>() {
 				   @Override
-				   public Support load(RawSupport key) throws NdexException {
+				   public Support load(RawSupport key) throws NdexException, ExecutionException {
 					return findOrCreateSupport(key);
 				   }
 			    }); 
@@ -197,10 +207,31 @@ public class NdexPersistenceService  {
 				   }
 			    });
 		
+		functionTermCache = CacheBuilder
+				.newBuilder().maximumSize(CACHE_SIZE)
+				.expireAfterAccess(240L, TimeUnit.MINUTES)
+				.build(new CacheLoader<FunctionTerm, FunctionTerm>() {
+				   @Override
+				   public FunctionTerm load(FunctionTerm key) throws NdexException, ExecutionException {
+					return findOrCreateFunctionTerm  (key);
+				   }
+			    });
 		
+		elementIdCache = CacheBuilder
+				.newBuilder().maximumSize(CACHE_SIZE*5)
+				.expireAfterAccess(240L, TimeUnit.MINUTES)
+				.build(new CacheLoader<Long, ODocument>() {
+				   @Override
+				   public ODocument load(Long key) throws NdexException, ExecutionException {
+					ODocument o = networkDAO.getDocumentByElementId(key);
+                    if ( o == null )
+                    	throw new NdexException ("Document is not found for element id: " + key);
+					return o;
+				   }
+			    }); 
 	}
 
-	private ReifiedEdgeTerm findOrCreateReifiedEdgeTermFromEdgeId(Long key) {
+	private ReifiedEdgeTerm findOrCreateReifiedEdgeTermFromEdgeId(Long key) throws ExecutionException {
 		ReifiedEdgeTerm eTerm = networkDAO.findReifiedEdgeTermByEdgeId(key);
 		if (eTerm != null)	
 			return eTerm;
@@ -211,17 +242,18 @@ public class NdexPersistenceService  {
 		eTerm.setId(this.database.getNextId());
 		
 		ODocument eTermdoc = new ODocument ();
-		eTermdoc.field(NdexClasses.Element_ID, eTerm.getId())
-		.save();
+		eTermdoc = eTermdoc.field(NdexClasses.Element_ID, eTerm.getId())
+				.save();
 		
 		OrientVertex etV = graph.getVertex(eTermdoc);
-		ODocument edgeDoc = networkDAO.getDocumentByElementId(NdexClasses.Edge, key);
+		ODocument edgeDoc = elementIdCache.get(key);
 		
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
 		etV.addEdge(NdexClasses.ReifedEdge_E_edge, edgeV);
 		networkVertex.addEdge(NdexClasses.Network_E_ReifedEdgeTerms,
 				etV);
 		
+		elementIdCache.put(eTerm.getId(), eTermdoc);
 		return eTerm;
 	}
 				
@@ -232,17 +264,16 @@ public class NdexPersistenceService  {
 		Preconditions.checkNotNull(ownerName,"A network owner name is required");
 		Preconditions.checkNotNull(networkTitle,"A network title is required");
 		
-		createNetwork(networkTitle,version);
 
 		// find the network owner in the database
-		user =  findUserByAccountName(ownerName);
-		if( null == user){
-			logger.severe("User " +ownerName +" is not registered in the database/");
-			throw new NdexException("User " +ownerName +" is not registered in the database");
+		ownerDoc =  findUserByAccountName(ownerName);
+		if( null == ownerDoc){
+			String message = "Account " +ownerName +" is not registered in the database"; 
+			logger.severe(message);
+			throw new NdexException(message);
 		}
 				
-	//	Membership membership = createNewMember(ownerName, network.getExternalId());
-	//	network.getMembers().add(membership);
+		createNetwork(networkTitle,version);
 
 		logger.info("A new NDex network titled: " +network.getName()
 				+" owned by " +ownerName +" has been created");
@@ -250,111 +281,6 @@ public class NdexPersistenceService  {
 	}
 
 
-	// IBaseTerm cache
-/*	private RemovalListener<Long, IBaseTerm> baseTermListener = new RemovalListener<Long, IBaseTerm>() {
-
-		public void onRemoval(RemovalNotification<Long, IBaseTerm> removal) {
-			logger.info("IBaseTerm removed from cache key= "
-					+ removal.getKey().toString() + " "
-					+ removal.getCause().toString());
-
-		}
-
-	};
-
-	private LoadingCache<Long, IBaseTerm> baseTermCache = CacheBuilder
-			.newBuilder().maximumSize(CACHE_SIZE)
-			.expireAfterAccess(240L, TimeUnit.MINUTES)
-			.removalListener(baseTermListener)
-			.build(new CacheLoader<Long, IBaseTerm>() {
-				@Override
-				public IBaseTerm load(Long key) throws Exception {
-					return ndexService._orientDbGraph.addVertex(
-							"class:baseTerm", IBaseTerm.class);
-
-				}
-			});
-*/
-	// IFunctionTerm cache
-/*	private RemovalListener<Long, IFunctionTerm> functionTermListener = new RemovalListener<Long, IFunctionTerm>() {
-
-		public void onRemoval(RemovalNotification<Long, IFunctionTerm> removal) {
-			logger.info("IFunctionTerm removed from cache key= "
-					+ removal.getKey().toString() + " "
-					+ removal.getCause().toString());
-
-		}
-
-	};
-	
-	private LoadingCache<Long, IFunctionTerm> functionTermCache = CacheBuilder
-			.newBuilder().maximumSize(CACHE_SIZE)
-			.expireAfterAccess(240L, TimeUnit.MINUTES)
-			.removalListener(functionTermListener)
-			.build(new CacheLoader<Long, IFunctionTerm>() {
-				@Override
-				public IFunctionTerm load(Long key) throws Exception {
-					return ndexService._orientDbGraph.addVertex(
-							"class:functionTerm", IFunctionTerm.class);
-				}
-
-			});
-
-	// IReifiedEdgeTerm cache
-	private RemovalListener<Long, IReifiedEdgeTerm> reifiedEdgeListener = new RemovalListener<Long, IReifiedEdgeTerm>() {
-
-		public void onRemoval(RemovalNotification<Long, IReifiedEdgeTerm> removal) {
-			logger.info("IReifiedEdgeTerm removed from cache key= "
-					+ removal.getKey().toString() + " "
-					+ removal.getCause().toString());
-
-		}
-
-	};
-	
-	private LoadingCache<Long, IReifiedEdgeTerm> reifiedEdgeTermCache = CacheBuilder
-			.newBuilder().maximumSize(CACHE_SIZE)
-			.expireAfterAccess(240L, TimeUnit.MINUTES)
-			.removalListener(reifiedEdgeListener)
-			.build(new CacheLoader<Long, IReifiedEdgeTerm>() {
-				@Override
-				public IReifiedEdgeTerm load(Long key) throws Exception {
-					return ndexService._orientDbGraph.addVertex(
-							"class:reifiedEdgeTerm", IReifiedEdgeTerm.class);
-				}
-
-			});
-	
-	// INamespace cache
-	private RemovalListener<Long, Namespace> namespaceListener = new RemovalListener<Long, Namespace>() {
-
-		@Override
-		public void onRemoval(RemovalNotification<Long, Namespace> removal) {
-			logger.info("INamespace removed from cache key= "
-					+ removal.getKey().toString() + " "
-					+ removal.getCause().toString());
-
-		}
-
-	};
-
-	private LoadingCache<Long, Namespace> namespaceCache = CacheBuilder
-			.newBuilder().maximumSize(CACHE_SIZE)
-			.expireAfterAccess(240L, TimeUnit.MINUTES)
-			.removalListener(namespaceListener)
-			.build(new CacheLoader<Long, Namespace>() {
-				@Override
-				//TODO: Check to make sure Namespaces are persisted when network is persisted. 
-				 // and we are not storing them here. Risk: over cache size limit will have problem in data.
-				public Namespace load(Long key) throws Exception {
-					Namespace ns = new Namespace();
-					 ns.setId(key);
-					 
-					return ns; 
-				}
-
-			});
-*/
 
 
 	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
@@ -405,6 +331,8 @@ public class NdexPersistenceService  {
 		
 		if ( ns.getUri() != null) 
 			URINamespaceMap.put(ns.getUri(), ns);
+		
+		elementIdCache.put(ns.getId(),nsDoc);
 		return ns; 
 		
 	}
@@ -444,12 +372,13 @@ public class NdexPersistenceService  {
 		citationV.addEdge(NdexClasses.E_ndexProperties, pV);
 		networkV.addEdge(NdexClasses.Network_E_Citations, citationV);
 
+		elementIdCache.put(citation.getId(), citationDoc);
 		return citation; 
 		
 	}
 	
 
-	private Support findOrCreateSupport(RawSupport key) {
+	private Support findOrCreateSupport(RawSupport key) throws ExecutionException {
 		Support support = networkDAO.getSupport(key.getSupportText(),key.getCitationId());
 
 		if ( support != null ) {
@@ -467,7 +396,8 @@ public class NdexPersistenceService  {
 		   .field(NdexClasses.Support_P_text, key.getSupportText())	
 		   .save();
 
-		ODocument citationDoc = networkDAO.getDocumentByElementId(NdexClasses.Citation, key.getCitationId());
+		ODocument citationDoc = elementIdCache.get(key.getCitationId());
+			//	networkDAO.getDocumentByElementId(NdexClasses.Citation, key.getCitationId());
         
 		OrientVertex supportV = graph.getVertex(supportDoc);
 		OrientVertex citationV = graph.getVertex(citationDoc);
@@ -475,11 +405,39 @@ public class NdexPersistenceService  {
 		supportV.addEdge(NdexClasses.Support_E_citation, citationV);
 		networkV.addEdge(NdexClasses.Network_E_Supports, supportV);
 
+		elementIdCache.put(support.getId(), supportDoc);
 		return support; 
 		
 	}
 	
-	
+	// input parameter is a "rawFunctionTerm", which has element_id as -1;
+	private FunctionTerm findOrCreateFunctionTerm(FunctionTerm func) throws ExecutionException {
+		FunctionTerm f = networkDAO.getFunctionTerm(func);
+		if ( f != null) return f;
+		
+		f = new FunctionTerm();
+		f.setId(database.getNextId());
+		f.setFunctionTermId(func.getFunctionTermId());
+		f.setParameters(func.getParameters());
+		
+	    ODocument fTerm = new ODocument(NdexClasses.FunctionTerm);
+	    fTerm.field(NdexClasses.Element_ID, f.getId())
+	       .save();
+	    
+        OrientVertex fTermV = graph.getVertex(fTerm);
+        
+        ODocument bTermDoc = elementIdCache.get(func.getFunctionTermId()); 
+        		//networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, func.getFunctionTermId());
+        fTermV.addEdge(NdexClasses.FunctionTerm_E_baseTerm, graph.getVertex(bTermDoc));
+        
+        for (Long id : func.getParameters()) {
+        	ODocument o = elementIdCache.get(id);
+        	fTermV.addEdge(NdexClasses.FunctionTerm_E_paramter, graph.getVertex(o));
+        }
+	    
+        elementIdCache.put(f.getId(), fTerm);
+        return f;
+	}
 	
 	private BaseTerm findOrCreateBaseTerm(String termString) throws NdexException, ExecutionException {
 		// case 1 : termString is a URI
@@ -558,15 +516,15 @@ public class NdexPersistenceService  {
 		
 	}
 	
-	private BaseTerm createBaseTerm(String localTerm, long nsId) {
+	private BaseTerm createBaseTerm(String localTerm, long nsId) throws ExecutionException {
 		BaseTerm bterm = new BaseTerm();
 		bterm.setId(database.getNextId());
 		bterm.setName(localTerm);
 		
 		ODocument btDoc = new ODocument(NdexClasses.BaseTerm);
-		btDoc.field(NdexClasses.BTerm_P_name, localTerm)
-		  .field(NdexClasses.Element_ID, bterm.getId());
-		btDoc.save();
+		btDoc = btDoc.field(NdexClasses.BTerm_P_name, localTerm)
+		  .field(NdexClasses.Element_ID, bterm.getId())
+		  .save();
 
 		OrientVertex basetermV = graph.getVertex(btDoc);
 		
@@ -574,7 +532,8 @@ public class NdexPersistenceService  {
 		if ( nsId >= 0) {
   		  bterm.setNamespace(nsId);
 
-  		  ODocument nsDoc = networkDAO.getNamespaceDocByEId(nsId); 
+  		  ODocument nsDoc = elementIdCache.get(nsId); 
+  				  //networkDAO.getNamespaceDocByEId(nsId); 
   		  
   		  OrientVertex nsV = graph.getVertex(nsDoc);
   		
@@ -582,11 +541,12 @@ public class NdexPersistenceService  {
 		}
 		  
         networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
+        elementIdCache.put(bterm.getId(), btDoc);
 		return bterm;
 	}
 
 	
-	private Node findOrCreateNodeFromBaseTermId(Long bTermId) {
+	private Node findOrCreateNodeFromBaseTermId(Long bTermId) throws ExecutionException {
 		Node node = networkDAO.findNodeByBaseTermId(bTermId.longValue());
 		
 		if (node != null) 
@@ -596,11 +556,12 @@ public class NdexPersistenceService  {
 		node = new Node();
 		node.setId(database.getNextId());
 
-		ODocument termDoc = networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, bTermId.longValue());
+		ODocument termDoc = elementIdCache.get(bTermId); 
+				//networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, bTermId.longValue());
 		
 		ODocument nodeDoc = new ODocument(NdexClasses.Node);
 
-		nodeDoc.field(NdexClasses.Element_ID, node.getId())
+		nodeDoc =nodeDoc.field(NdexClasses.Element_ID, node.getId())
 		   .save();
 		
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
@@ -610,12 +571,13 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
+		elementIdCache.put(node.getId(), nodeDoc);
 		return node;
 	}
 	
 	 
 	
-	private Node findOrCreateNodeFromFunctionTermId(Long fTermId) {
+	private Node findOrCreateNodeFromFunctionTermId(Long fTermId) throws ExecutionException {
 		Node node = networkDAO.findNodeByFunctionTermId(fTermId.longValue());
 		
 		if (node != null) 
@@ -625,12 +587,13 @@ public class NdexPersistenceService  {
 		node = new Node();
 		node.setId(database.getNextId());
 
-		ODocument termDoc = networkDAO.getDocumentByElementId(NdexClasses.FunctionTerm, fTermId.longValue());
+		ODocument termDoc = elementIdCache.get(fTermId); 
+				//networkDAO.getDocumentByElementId(NdexClasses.FunctionTerm, fTermId.longValue());
 		
 		ODocument nodeDoc = new ODocument(NdexClasses.Node);
 
-		nodeDoc.field(NdexClasses.Element_ID, node.getId())
-		   .save();
+		nodeDoc = nodeDoc.field(NdexClasses.Element_ID, node.getId())
+				.save();
 		
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
 		
@@ -639,11 +602,12 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
+		elementIdCache.put(node.getId(), nodeDoc);
 		return node;
 	}
 
 
-	private Node findOrCreateNodeFromReifiedTermId(Long key) {
+	private Node findOrCreateNodeFromReifiedTermId(Long key) throws ExecutionException {
 		Node node = networkDAO.findNodeByReifiedEdgeTermId(key.longValue());
 		
 		if (node != null) 
@@ -653,12 +617,12 @@ public class NdexPersistenceService  {
 		node = new Node();
 		node.setId(database.getNextId());
 
-		ODocument termDoc = networkDAO.getDocumentByElementId(NdexClasses.ReifiedEdgeTerm,
-				key.longValue());
+		ODocument termDoc = elementIdCache.get(key); 
+				//networkDAO.getDocumentByElementId(NdexClasses.ReifiedEdgeTerm,key.longValue());
 		
 		ODocument nodeDoc = new ODocument(NdexClasses.Node);
 
-		nodeDoc.field(NdexClasses.Element_ID, node.getId())
+		nodeDoc = nodeDoc.field(NdexClasses.Element_ID, node.getId())
 		   .save();
 		
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
@@ -668,47 +632,15 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
+		elementIdCache.put(node.getId(), nodeDoc);
 		return node;
 	}
 	
-	/*	
-
-	public ICitation findOrCreateICitation(Long jdexId)
-			throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		this.jdexIdSet.add(jdexId);
-		return citationCache.get(jdexId);
-	}
-
-	public IEdge findOrCreateIEdge(Long jdexId) throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		this.jdexIdSet.add(jdexId);
-		return edgeCache.get(jdexId);
-	}
-
-	public INode findOrCreateINode(Long jdexId) throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		this.jdexIdSet.add(jdexId);
-		return nodeCache.get(jdexId);
-	}
-
-	public ISupport findOrCreateISupport(Long jdexId) throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		this.jdexIdSet.add(jdexId);
-		return supportCache.get(jdexId);
-	}
-
-*/
 
 	public Network getCurrentNetwork() {
 		return this.network;
 	}
 	
-//	private ODocument getNetworkDoc() { return this.networkDoc; } 
 	
     //TODO: change this function to private void once migrate to 1.0 -- cj
 	public Network createNetwork(String title, String version){
@@ -734,103 +666,51 @@ public class NdexPersistenceService  {
 		    
 		networkVertex = graph.getVertex(getNetworkDoc());
 		
+		OrientVertex ownerV = graph.getVertex(ownerDoc);
+		ownerV.addEdge(NdexClasses.E_admin, networkVertex);
+		
 		return this.network;
 	}
 
-	/*
-	 * find the ITerm (either Base, Function, or ReifiedEdge) by jdex id
-	 */
-
-/*	public ITerm findChildITerm(Long jdexId) throws ExecutionException {
-		Preconditions.checkArgument(null != jdexId && jdexId.longValue() > 0,
-				"A valid JDExId is required");
-		
-		ITerm term = (ITerm) this.baseTermCache.getIfPresent(jdexId);
-		if (null != term) return term;
-		term = (ITerm) this.functionTermCache.getIfPresent(jdexId);
-		if (null != term) return term;
-		term = (ITerm) this.reifiedEdgeTermCache.getIfPresent(jdexId);
-		return term;
-	}
-
-	public IUser getCurrentUser() {
-		if (null == this.user) {
-			this.user = ndexService._orientDbGraph.addVertex("class:user",
-					IUser.class);
-		}
-		return this.user;
-	}
-
-
-	public Membership createNetworkMembership(String accountName, UUID networkUUID) {
-
-		Membership result = new Membership();
-		
-		UUID uuid = NdexUUIDFactory.INSTANCE.getNDExUUID();
-		
-		result.setExternalId(uuid);
-		result.setPermissions( org.ndexbio.model.object.Permissions.ADMIN);
-		result.setMembershipType(MembershipType.NETWORK);
-		ndexService._ndexDatabase.begin();
-		
-		 ODocument membership = new ODocument(NdexClasses.Membership);
-		    membership.field("membershipType", result.getMembershipType());
-		    membership.field("permissions", result.getPermissions());
-		    //TODO: need to turn this into a link
-		    membership.field("resourceUUID", networkUUID);
-		    membership.field("accountName", accountName);
-
-		    membership.save();
-   		    
-			ndexService._ndexDatabase.commit();
-
-		return result;
-	}
-*/
     /**
      * Find a user based on account name.
      * @param accountName
-     * @return a User object when found, otherwise returns null.
+     * @return ODocument object that hold data for this user account
      * @throws NdexException
      */
 
-	public User findUserByAccountName(String accountName)
+	private ODocument findUserByAccountName(String accountName)
 			throws NdexException
 			{
 		if (accountName == null	)
 			throw new ValidationException("No accountName was specified.");
 
 
-		final String query = "select * from " + NdexClasses.User + 
+		final String query = "select * from " + NdexClasses.Account + 
 				  " where accountName = '" + accountName + "'";
 				
-		User user = null;
 		List<ODocument> userDocumentList = localConnection
 					.query(new OSQLSynchQuery<ODocument>(query));
 
 		if ( ! userDocumentList.isEmpty()) {
-				ODocument userDoc = userDocumentList.get(0);
-				user = new User();
-				user.setAccountName((String)userDoc.field("accountName"));
-				
-				//TODO: populate all fields in User class.
+				return userDocumentList.get(0);
 				
 		}
-		return user;
+		return null;
 	}
 
 	/*
 	 * Returns a collection of IUsers based on search criteria
 	 */
-
+/*
 
 	public SearchResult<User> findUsers(SearchParameters searchParameters)
 			throws NdexException {
 		if (searchParameters.getSearchString() == null
 				|| searchParameters.getSearchString().isEmpty())
 			throw new ValidationException("No search string was specified.");
-		else
-			searchParameters.setSearchString(searchParameters.getSearchString()
+		
+		searchParameters.setSearchString(searchParameters.getSearchString()
 					.toUpperCase().trim());
 
 		final List<User> foundUsers = Lists.newArrayList();
@@ -871,7 +751,7 @@ public class NdexPersistenceService  {
 		}
 
 	}
-	
+*/	
 	
 	/*
 	 * public method to allow xbel parsing components to rollback the
@@ -908,6 +788,7 @@ public class NdexPersistenceService  {
 			  .field(NdexClasses.Network_P_nodeCount, network.getNodeCount())
 			  .save();
 			
+			
 			System.out.println("The new network " + network.getName()
 					+ " is complete");
 		} catch (Exception e) {
@@ -920,15 +801,15 @@ public class NdexPersistenceService  {
 		}
 	}
 
-
-	public void networkProgressLogCheck() throws NdexException {
+/*
+	public void networkProgressLogCheck() {
 		commitCounter++;
 		if (commitCounter % 1000 == 0) {
-			logger.info("Checkpoint: Number of edges " /*+this.edgeCache.size()*/);
+			logger.info("Checkpoint: Number of edges " + this.edgeCache.size());
 		}
 
 	}
-
+*/
 
 	public void deleteNetwork() {
 		// TODO Implement deletion of network
@@ -969,6 +850,17 @@ public class NdexPersistenceService  {
 			logger.severe(e.getMessage());
 			throw new NdexException ("Error occured when getting citation " + rCitation.getTitle() + ". " + e.getMessage());
 		}
+	}
+	
+	public FunctionTerm getFunctionTerm (Long baseTermId, List<Term> termList) throws ExecutionException {
+		FunctionTerm rawFunctionTerm = new FunctionTerm();
+		rawFunctionTerm.setFunctionTermId(baseTermId);
+		
+		for ( Term t : termList) {
+		  rawFunctionTerm.getParameters().add(t.getId());
+		}		  
+		 
+	    return this.functionTermCache.get(rawFunctionTerm);
 	}
 	
 	public Support getSupport(String literal, long citationId) throws ExecutionException {
@@ -1045,7 +937,7 @@ public class NdexPersistenceService  {
 	
 	public Edge createEdge(Node subjectNode, Node objectNode, BaseTerm predicate, 
 			 Support support, Citation citation, Map<String,String> annotation )
-			throws NdexException {
+			throws NdexException, ExecutionException {
 		if (null != objectNode && null != subjectNode && null != predicate) {
 			
 			Edge edge = new Edge();
@@ -1054,12 +946,16 @@ public class NdexPersistenceService  {
 			edge.setObjectId(objectNode.getId());
 			edge.setPredicateId(predicate.getId());
 			
-			ODocument subjectNodeDoc = networkDAO.getDocumentByElementId(NdexClasses.Node, subjectNode.getId());
-			ODocument objectNodeDoc  = networkDAO.getDocumentByElementId(NdexClasses.Node, objectNode.getId());
-			ODocument predicateDoc   = networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, predicate.getId());
+			ODocument subjectNodeDoc = elementIdCache.get(subjectNode.getId()) ;
+					//networkDAO.getDocumentByElementId(NdexClasses.Node, subjectNode.getId());
+			ODocument objectNodeDoc  = elementIdCache.get(objectNode.getId()) ;
+					//networkDAO.getDocumentByElementId(NdexClasses.Node, objectNode.getId());
+			ODocument predicateDoc   = elementIdCache.get(predicate.getId()) ;
+					// networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, predicate.getId());
 			
 			ODocument edgeDoc = new ODocument(NdexClasses.Edge);
-			edgeDoc.field(NdexClasses.Element_ID, edge.getId()).save();
+			edgeDoc = edgeDoc.field(NdexClasses.Element_ID, edge.getId())
+					.save();
 			OrientVertex edgeVertex = graph.getVertex(edgeDoc);
 			
 			if ( annotation != null) {
@@ -1101,6 +997,7 @@ public class NdexPersistenceService  {
 		    	edge.getSupports().add(support.getId());
 		    }
 		    
+		    elementIdCache.put(edge.getId(), edgeDoc);
 			return edge;
 		} 
 		throw new NdexException("Null value for one of the parameter when creating Edge.");
@@ -1126,10 +1023,39 @@ public class NdexPersistenceService  {
 		
 
 	}
-/*	public void setNetworkDoc(ODocument networkDoc) {
-		this.networkDoc = networkDoc;
+	
+	// alias is treated as a baseTerm
+	public void addAliasToNode(long nodeId, String[] aliases) throws ExecutionException, NdexException {
+		ODocument nodeDoc = elementIdCache.get(nodeId);
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		for (String alias : aliases) {
+			BaseTerm b= this.getBaseTerm(alias);
+		
+			ODocument bDoc = elementIdCache.get(b.getId());
+			nodeV.addEdge(NdexClasses.Node_E_alias, graph.getVertex(bDoc));
+		//	elementIdCache.put(b.getId(), bDoc);
+		}
+		
+		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
-*/	
+	
+	// alias is treated as a baseTerm
+	public void addRelatedTermToNode(long nodeId, String[] relatedTerms) throws ExecutionException, NdexException {
+		ODocument nodeDoc = elementIdCache.get(nodeId);
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		for (String rT : relatedTerms) {
+			BaseTerm b= this.getBaseTerm(rT);
+		
+			ODocument bDoc = elementIdCache.get(b.getId());
+			nodeV.addEdge(NdexClasses.Node_E_relateTo, graph.getVertex(bDoc));
+		//	elementIdCache.put(b.getId(), bDoc);
+		}
+		
+		elementIdCache.put(nodeId, nodeV.getRecord());
+	}
+	
 /*	
 	private static String findPrefixForNamespaceURI(String uri) {
 		if (uri.equals("http://biopax.org/generated/group/")) return "GROUP";

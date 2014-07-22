@@ -30,7 +30,7 @@ public class NdexDatabase {
 		vdoc = (ODocument) dictionary.get(sequenceKey);
 		if (vdoc == null ) {
 			ndexDatabase.begin();
-			vdoc = new ODocument(seqField, (long)0);
+			vdoc = new ODocument(seqField, (long)1); // ids start with 1.
 			vdoc.save();
 			ndexDatabase.commit();	
 			dictionary.put(sequenceKey, vdoc);

@@ -30,6 +30,10 @@ public class NdexClasses {
 	public static final String Subnetwork         = "Subnetwork";
 	public static final String Support            = "support";
 	
+	
+	//account edges
+	public static final String E_admin              = "admin";
+	
 	// network properties and edges.
     public static final String Network_P_UUID    = "UUID";
     public static final String Network_P_cDate   = "createdDate";
@@ -64,11 +68,11 @@ public class NdexClasses {
     public static final String ns_P_uri    = "uri";
     
     // citation
-    public static final String Citation_P_title = "title";
+    public static final String Citation_P_title       = "title";
     public static final String Citaion_P_contributors = "authors";
     
     //support
-    public static final String Support_P_text = "text";
+    public static final String Support_P_text     = "text";
     public static final String Support_E_citation = "citeFrom";
     
     //BaseTerm
@@ -78,12 +82,18 @@ public class NdexClasses {
     //ReifiedEdgeTerm
     public static final String ReifedEdge_E_edge  ="reify";
     
+    //FunctionTerm
+    public static final String FunctionTerm_E_baseTerm = "FuncBaseTerm";
+    public static final String FunctionTerm_E_paramter = "FuncArguments";
+    
     //node
     public static final String Node_P_name         = "name";
     
     public static final String Node_E_ciations     = "nCitation";
     public static final String Node_E_supports     = "nSupport";
     public static final String Node_E_represents   = "represents";
+    public static final String Node_E_alias		   = "alias";
+    public static final String Node_E_relateTo	   = "relateTo";
     
     //edge
     
@@ -96,4 +106,7 @@ public class NdexClasses {
     // ndexProperty
     public static final String ndexProp_P_predicateStr = "predicateStr";
     public static final String ndexProp_P_value        = "value";
+    
+    //user
+      
 }

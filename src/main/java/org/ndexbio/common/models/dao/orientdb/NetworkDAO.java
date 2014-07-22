@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
@@ -13,6 +12,7 @@ import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
+import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -349,6 +349,30 @@ public class NetworkDAO {
 	         return null;
 	}
 	
+	//TODO: make a better implementation for this function.
+	public ODocument getDocumentByElementId(long elementID) {
+		ODocument result = getDocumentByElementId(NdexClasses.Node, elementID);
+		if ( result != null) return result;
+		
+		result = getDocumentByElementId(NdexClasses.Edge, elementID);
+		if ( result != null) return result;
+		
+		result = getDocumentByElementId(NdexClasses.BaseTerm, elementID);
+		if ( result != null) return result;
+
+		result = getDocumentByElementId(NdexClasses.Citation, elementID);
+		if ( result != null) return result;
+		result = getDocumentByElementId(NdexClasses.FunctionTerm, elementID);
+		if ( result != null) return result;
+		result = getDocumentByElementId(NdexClasses.Namespace, elementID);
+		if ( result != null) return result;
+		result = getDocumentByElementId(NdexClasses.ReifiedEdgeTerm, elementID);
+		if ( result != null) return result;
+		result = getDocumentByElementId(NdexClasses.Support, elementID);
+		if ( result != null) return result;
+		return null;
+	}
+	
 	public Namespace getNamespace(String prefix, String URI, UUID networkID ) {
 			String query = "select from (traverse out_" +
 		    		  NdexClasses.Network_E_Namespace +" from (select from "
@@ -503,7 +527,7 @@ public class NetworkDAO {
 
     public Node findNodeByReifiedEdgeTermId (long reifiedEdgeTermId) {
    		OSQLSynchQuery<ODocument> query = 
-   				new OSQLSynchQuery<ODocument>(functionTermNodeQuery);
+   				new OSQLSynchQuery<ODocument>(reifedEdgeTermNodeQuery);
    		List<ODocument> nodes = db.command(query).execute( reifiedEdgeTermId);
        	
    		if (nodes.isEmpty())
@@ -520,7 +544,7 @@ public class NetworkDAO {
        
     public ReifiedEdgeTerm findReifiedEdgeTermByEdgeId(long edgeId) {
    		OSQLSynchQuery<ODocument> query = 
-   				new OSQLSynchQuery<ODocument>(functionTermNodeQuery);
+   				new OSQLSynchQuery<ODocument>(refiedEdgeTermQuery);
    		List<ODocument> nodes = this.db.command(query).execute( edgeId);
        	
    		if (!nodes.isEmpty()) {
@@ -654,4 +678,64 @@ public class NetworkDAO {
     	return s;
     	
     }
+
+    
+    private static final String functionTermQuery = "select from (traverse in_" + 
+            NdexClasses.FunctionTerm_E_baseTerm + " from (select from "+ NdexClasses.BaseTerm + " where " +
+            NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.FunctionTerm +"'";
+
+    // input parameter is a "rawFunctionTerm", which as elementid = -1;
+    // This function will find the correspondent FunctionTerm from db.
+    public FunctionTerm getFunctionTerm(FunctionTerm func) {
+   		OSQLSynchQuery<ODocument> query = 
+   				new OSQLSynchQuery<ODocument>(functionTermQuery);
+   		List<ODocument> nodes = db.command(query).execute( func.getFunctionTermId());
+       	
+   		if (nodes.isEmpty())
+   			return null;
+   	
+   		// check the parameters.
+   		for ( ODocument n : nodes ) {
+   			int counter = 0;
+   			for (OIdentifiable parameterRec : new OTraverse()
+	       	    .field("out_"+ NdexClasses.FunctionTerm_E_paramter )
+	            .target(n)
+	            .predicate( new OSQLPredicate("$depth <= 1"))) {
+
+             ODocument doc = (ODocument) parameterRec;
+	         
+             String clsName = doc.getClassName();
+             if ( clsName.equals(NdexClasses.BaseTerm) ||
+            	  clsName.equals(NdexClasses.ReifiedEdgeTerm) || 
+            	  clsName.equals(NdexClasses.FunctionTerm)) {
+            	 if ( doc.field(NdexClasses.Element_ID).equals(func.getParameters().get(counter)) ) {
+            		 counter ++;
+            	 } else 
+            		 break;
+	         
+             }
+   			}
+   			if ( counter == func.getParameters().size()) {
+   				FunctionTerm result = new FunctionTerm();
+   				result.setId((long)n.field(NdexClasses.Element_ID));
+   				result.setFunctionTermId(func.getFunctionTermId());
+   				for (Long pid : func.getParameters()) 
+   				  result.getParameters().add(pid);
+   				
+   				return result;
+   				
+   			}
+   		}
+   		
+   		return null;
+    }
+    
+/*    public FunctionTerm getFunctionTermFromDoc(ODocument doc) {
+    	FunctionTerm result = new FunctionTerm();
+    	result.setId((long)doc.field(NdexClasses.Element_ID));
+    	
+    	
+    	return result;
+    } */
+    
 }
