@@ -16,7 +16,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.dao.CommonDAOValues;
-import org.ndexbio.model.object.SearchParameters;
+import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.Email;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
@@ -206,33 +206,30 @@ public class UserDAO {
 	    *            Attempting to query the database
 	    * @returns User object, from the NDEx Object Model
 	    **************************************************************************/
-	public List<User> findUsers(SearchParameters searchParameters) 
+	public List<User> findUsers(SimpleUserQuery simpleQuery, int skip, int top) 
 			throws IllegalArgumentException,
 			NdexException {
-		Preconditions.checkArgument(null != searchParameters, "Search parameters are required");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(searchParameters.getSearchString()), 
+		Preconditions.checkArgument(null != simpleQuery, "Search parameters are required");
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(simpleQuery.getSearchString()), 
 				"A search string is required");
-		Preconditions.checkArgument(searchParameters.getSkip() == 
-				searchParameters.getSkip(), "Integer of blocks to skip is required");
-		Preconditions.checkArgument(searchParameters.getTop() == searchParameters.getTop(), "Integer of block size is required");
 		
-		searchParameters.setSearchString(searchParameters.getSearchString()
+		simpleQuery.setSearchString(simpleQuery.getSearchString()
 					.toLowerCase().trim());
 
 		final List<User> foundUsers = new ArrayList<User>();
 
-		final int startIndex = searchParameters.getSkip()
-				* searchParameters.getTop();
+		final int startIndex = skip
+				* top;
 
 		String query = "SELECT FROM " + NdexClasses.User + " "
 					+ "WHERE accountName.toLowerCase() LIKE '%"
-					+ searchParameters.getSearchString() + "%'"
+					+ simpleQuery.getSearchString() + "%'"
 					+ "  OR lastName.toLowerCase() LIKE '%"
-					+ searchParameters.getSearchString() + "%'"
+					+ simpleQuery.getSearchString() + "%'"
 					+ "  OR firstName.toLowerCase() LIKE '%"
-					+ searchParameters.getSearchString() + "%'"
+					+ simpleQuery.getSearchString() + "%'"
 					+ "  ORDER BY creation_date DESC " + " SKIP " + startIndex
-					+ " LIMIT " + searchParameters.getTop();
+					+ " LIMIT " + top;
 		
 		try {
 			

@@ -15,7 +15,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
-import org.ndexbio.model.object.SearchParameters;
+import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.User;
 
@@ -211,12 +211,10 @@ public class Test2UserDAO extends TestDAO{
     	try {
 	    		
     		localConnection.begin();
-	    	final SearchParameters searchParam = new SearchParameters();
-	    	searchParam.setSearchString("support");
-	    	searchParam.setSkip(0);
-	    	searchParam.setTop(5);
+	    	final SimpleUserQuery simpleQuery = new SimpleUserQuery();
+	    	simpleQuery.setSearchString("support");
 	    	
-	    	assertTrue(!dao.findUsers(searchParam).isEmpty());
+	    	assertTrue(!dao.findUsers(simpleQuery, 0, 5).isEmpty());
     	
 		} catch (Exception e) {
 			
@@ -229,7 +227,7 @@ public class Test2UserDAO extends TestDAO{
     
     @Test(expected = IllegalArgumentException.class)
     public void findUsersInvalid() throws IllegalArgumentException, NdexException {
-        dao.findUsers(null);
+        dao.findUsers(null,0,0);
     }
     
 	@Test(expected = NdexException.class)
