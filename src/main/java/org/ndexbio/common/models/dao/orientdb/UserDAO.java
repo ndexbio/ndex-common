@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response;
 
@@ -16,6 +17,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.dao.CommonDAOValues;
+import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.Email;
 import org.ndexbio.common.util.NdexUUIDFactory;
@@ -32,6 +34,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class UserDAO {
 
 	private ODatabaseDocumentTx db;
+	private static final Logger logger = Logger.getLogger(UserDAO.class.getName());
 	
 	/*
 	 * User operations can be achieved with Orient Document API methods.
@@ -74,7 +77,10 @@ public class UserDAO {
 				}
 				return _getUserFromDocument(OAuthUser);
 			} catch (SecurityException se) {
+				logger.info("Authentication failed: " + se.getMessage());
 				throw se;
+			} catch (ObjectNotFoundException e) {
+				throw new SecurityException(e.getMessage());
 			} catch (Exception e) {
 				throw new NdexException("There's a problem with the authentication server. Please try again later.");
 			}
@@ -134,9 +140,12 @@ public class UserDAO {
 		   
 			user.save();
 			
+			logger.info("A new user with accountName " + newUser.getAccountName() + " has been created");
+			
 			return result;
 		} 
 		catch(Exception e) {
+			logger.severe("Could not save new user to the database");
 			throw new NdexException(e.getMessage());
 		}
 	}
@@ -157,6 +166,7 @@ public class UserDAO {
 				user.delete();
 			}
 			catch (Exception e) {
+				logger.severe("Could not delete user from the database");
 				throw new NdexException(e.getMessage());
 			}
 		
@@ -240,7 +250,7 @@ public class UserDAO {
 			return foundUsers;
 			
 		} catch (Exception e) {
-			
+			logger.severe("Unable to query the database");
 			throw new NdexException("Failed to search for users.\n" + e.getMessage());
 			
 		} 
@@ -278,9 +288,11 @@ public class UserDAO {
 			final File forgotPasswordFile = new File(Configuration
 					.getInstance().getProperty("Forgot-Password-File"));
 			
-			if (!forgotPasswordFile.exists())
+			if (!forgotPasswordFile.exists()) {
+				logger.severe("Could not retrieve forgot password file");
 				throw new java.io.FileNotFoundException(
 						"File containing forgot password email content doesn't exist.");
+			}
 
 			final BufferedReader fileReader = Files.newBufferedReader(
 					forgotPasswordFile.toPath(), Charset.forName("US-ASCII"));
@@ -298,7 +310,7 @@ public class UserDAO {
 					authUser.getEmailAddress(), "Password Recovery",
 					forgotPasswordText.toString());
 
-			
+			logger.info("Sent password recovery email to user " + accountName);
 			return Response.ok().build();
 			
 		} catch (ObjectNotFoundException onfe) {
@@ -346,8 +358,11 @@ public class UserDAO {
 
 			user.save();
 			
+			logger.info("Changed password for user with UUID " + id);
+			
 		} catch (Exception e) {
 			
+			logger.severe("An error occured while saving password for user with UUID " + id);
 			throw new NdexException("Failed to change your password.\n" + e.getMessage());
 			
 		} 
@@ -371,9 +386,7 @@ public class UserDAO {
 	    **************************************************************************/
 	public User updateUser(User updatedUser, UUID id)
 			throws IllegalArgumentException, NdexException, ObjectNotFoundException {
-
-		try {
-			
+		
 			Preconditions.checkNotNull(id, 
 					"A user id is required");
 			Preconditions.checkNotNull(updatedUser, 
@@ -384,12 +397,6 @@ public class UserDAO {
 					"An first name is required");
 			Preconditions.checkNotNull(updatedUser.getLastName(), 
 					"An last name is required");
-			
-		} catch (Exception e) {
-			
-			throw new IllegalArgumentException(e.getMessage());
-			
-		}
 		
 		ODocument user =  _getUserById(id);
 		
@@ -403,11 +410,13 @@ public class UserDAO {
 			user.field("lastName", updatedUser.getLastName());
 
 			user.save();
+			logger.info("Updted user profile with UUID " + id);
 			
 			return _getUserFromDocument(user);
 			
 		} catch (Exception e) {
 			
+			logger.severe("An error occured while updating user profile with UUID " + id);
 			throw new NdexException("Failed to change your password.\n" + e.getMessage());
 			
 		} 
@@ -429,13 +438,15 @@ public class UserDAO {
 		     
 		} catch (Exception e) {
 			
-			 throw new NdexException(e.getMessage());
+			logger.severe("An error occured while attempting to query the database");
+			throw new NdexException(e.getMessage());
 			 
 		}
 		
 		if (users.isEmpty()) {
 			
-			 throw new ObjectNotFoundException("User", id.toString());
+			logger.info("User with UUID " + id + " does not exist");
+			throw new ObjectNotFoundException("User", id.toString());
 			 
 		}
 		
@@ -456,14 +467,16 @@ public class UserDAO {
 					   .execute(accountName);
 
 		} catch (Exception e) {
-
-			 throw new NdexException(e.getMessage());
+			
+			logger.severe("An error occured while attempting to query the database");
+			throw new NdexException(e.getMessage());
 
 		}
 
 		if (users.isEmpty()) {
 
-			 throw new ObjectNotFoundException("User", accountName);
+			logger.info("User with accountName " + accountName + " does not exist");
+			throw new ObjectNotFoundException("User", accountName);
 
 		}
 
@@ -502,19 +515,22 @@ public class UserDAO {
 						"SELECT FROM " + NdexClasses.User
 						+ " WHERE accountName = '" + newUser.getAccountName() + "'"));
 		
-		if (!existingUsers.isEmpty())
+		if (!existingUsers.isEmpty()) {
+			logger.info("User with accountName " + newUser.getAccountName() + " already exists");
 			throw new DuplicateObjectException(
 					CommonDAOValues.DUPLICATED_ACCOUNT_FLAG);
+		}
 
 		existingUsers =db.query(
 				new OSQLSynchQuery<Object>(
 						"SELECT FROM " + NdexClasses.User
 						+ " WHERE emailAddress = '" + newUser.getEmailAddress() + "'"));
 		
-		if (!existingUsers.isEmpty())
+		if (!existingUsers.isEmpty()){
+			logger.info("User with accountName " + newUser.getAccountName() + " already exists");
 			throw new DuplicateObjectException(
 					CommonDAOValues.DUPLICATED_EMAIL_FLAG);
-
+		}
 	}
 	
 }

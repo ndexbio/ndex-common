@@ -2,11 +2,11 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
-import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.SimpleNetworkQuery;
 
@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class NetworkSearchDAO {
 	
 	private ODatabaseDocumentTx db;
+	private static final Logger logger = Logger.getLogger(NetworkSearchDAO.class.getName());
 	
 	/**************************************************************************
 	    * NetworkSearchDAO
@@ -55,6 +56,7 @@ public class NetworkSearchDAO {
 			
 		} catch (Exception e) {
 			
+			logger.severe("An error occured while attempting to query the database for networks");
 			throw new NdexException("Failed to search for users.\n" + e.getMessage());
 			
 		} 
