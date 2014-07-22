@@ -127,7 +127,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	 * @see org.ndexbio.common.models.dao.UserDAO#authenticateUser(java.lang.String, java.lang.String)
 	 */
 	
-	public User authenticateUser(String username, String password)
+	/*public User authenticateUser(String username, String password)
 			throws SecurityException, NdexException {
 		if (Strings.isNullOrEmpty(username)|| Strings.isNullOrEmpty(password))
 			throw new SecurityException("Invalid username or password.");
@@ -145,7 +145,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 			throw new NdexException(
 					"There's a problem with the authentication server. Please try again later.");
 		}
-	}
+	}*/
 
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#changePassword(java.lang.String)

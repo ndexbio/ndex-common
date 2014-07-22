@@ -68,12 +68,11 @@ public class UserDAO {
 				throw new SecurityException("No accountName or password entered.");
 
 			try {
-				final User authUser = Security.authenticateUser(accountName, password, 
-								this.db);
-				if (authUser == null)
+				final ODocument OAuthUser = _getUserByAccountName(accountName);
+				if(!Security.authenticateUser(password, OAuthUser)) {
 					throw new SecurityException("Invalid accountName or password.");
-
-				return authUser;
+				}
+				return _getUserFromDocument(OAuthUser);
 			} catch (SecurityException se) {
 				throw se;
 			} catch (Exception e) {

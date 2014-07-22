@@ -25,27 +25,27 @@ public class Security
 	    *            Accessing the database failed.
 	    * @returns True if the user is authenticated, false otherwise.
 	    **************************************************************************/
-	    public static User authenticateUser(final String userName, final String password, ODatabaseDocumentTx db) 
+	    public static Boolean authenticateUser(String password, ODocument OUserDoc) 
 	    		throws Exception {
 	    	
 	        try {
 	        	
 	        	//replace this with method from UserDAO
-	            List<ODocument> usersFound = db
+	           /* List<ODocument> usersFound = db
 	                .command(new OCommandSQL("select from " + NdexClasses.User + " where accountName = ?"))
 	                .execute(userName);
 	            
 	            if (usersFound.size() < 1)
 	                return null;
 
-	            ODocument OUserDoc = usersFound.get(0);
+	            ODocument OUserDoc = usersFound.get(0);*/
 	            String hashedPassword = Security.hashText(password);
 	            
 	            if ( ((String)OUserDoc.field("password")).equals(hashedPassword)) {
-	            	return UserDAO._getUserFromDocument(OUserDoc); 
+	            	return true;
 	            }
 	            
-	            return null;
+	            return false;
 	            
 	        } catch (Exception e) {
 	        	
@@ -63,7 +63,7 @@ public class Security
     *            Accessing the database failed.
     * @returns True if the user is authenticated, false otherwise.
     **************************************************************************/
-	    @Deprecated
+	/*(    @Deprecated
     public static User authenticateUser(final String userName, final String password ) throws Exception
     {
     	ODatabaseDocumentTx ndexDatabase = null;
@@ -92,7 +92,7 @@ public class Security
                 ndexDatabase.close();
         }
 	    
-    }
+    }*/
 
     /**************************************************************************
     * Converts bytes into hexadecimal text.
