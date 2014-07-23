@@ -24,6 +24,7 @@ import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -39,11 +40,14 @@ public class NetworkDAO {
 	//flag to specify whether need to search in the current un-commited transaction. 
 	//This is used to work around the problem that sql query doesn't search the current 
 	// uncommited transaction in OriantDB.
-	private boolean searchCurrentTx;  
+	private boolean searchCurrentTx;
+	
+	private ObjectMapper mapper;
 	
 	public NetworkDAO (ODatabaseDocumentTx db) {
 		this.db = db;
 		this.searchCurrentTx = false;
+		mapper = new ObjectMapper();
 	}
 
 	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {
@@ -145,6 +149,8 @@ public class NetworkDAO {
 	    
 	    PropertyGraphNetwork network = new PropertyGraphNetwork();
 	    
+		this.populatePropetyGraphNetworkFromDoc(network, nDoc);
+	    
 	    int startPosition = skipBlocks * blockSize;
 	    int counter = 0;
 	    int endPosition = skipBlocks * blockSize + blockSize;
@@ -206,8 +212,8 @@ public class NetworkDAO {
 
 		PropertyGraphNetwork network = new PropertyGraphNetwork();
 
-        network.getProperties().add(new NdexProperty(PropertyGraphNetwork.uuid, id.toString()));
-        
+		this.populatePropetyGraphNetworkFromDoc(network, networkDoc);
+		
         Map<Long,PropertyGraphNode> nodeList = network.getNodes();
          for (OIdentifiable nodeDoc : new OTraverse()
        	    .field("out_"+ NdexClasses.Network_E_Nodes )
@@ -245,6 +251,11 @@ public class NetworkDAO {
          }
          
 		 return network; 
+	}
+	
+	private void populatePropetyGraphNetworkFromDoc(PropertyGraphNetwork network, ODocument doc) {
+        network.getProperties().add(new NdexProperty(
+        		PropertyGraphNetwork.uuid, doc.field(NdexClasses.Network_P_UUID).toString()));
 	}
 	
 

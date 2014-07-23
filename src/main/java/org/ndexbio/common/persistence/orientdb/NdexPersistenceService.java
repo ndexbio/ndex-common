@@ -823,11 +823,28 @@ public class NdexPersistenceService  {
 	}
 */
 
+	/**
+	 * performing delete the current network but not commiting it.
+	 */
 	public void deleteNetwork() {
 		// TODO Implement deletion of network
 		System.out
 		.println("deleteNetwork called. Not yet implemented");
 		
+		
+	}
+
+	public void setNetworkTitleAndDescription(String title, String description) {
+	   if ( description != null ) {
+		   this.network.setDescription(description);
+		   this.networkDoc.field(NdexClasses.Network_P_desc, title).save();
+	   }
+	   
+	   if ( title != null) {
+		   this.network.setName(title);
+		   this.networkDoc.field(NdexClasses.Network_P_name, title).save();
+	   }
+	   
 	}
 
 	/**
@@ -1026,7 +1043,7 @@ public class NdexPersistenceService  {
 		database.commit();
 	}
 
-	public ODocument getNetworkDoc() {
+	private ODocument getNetworkDoc() {
 		return networkDoc;
 	}
 
