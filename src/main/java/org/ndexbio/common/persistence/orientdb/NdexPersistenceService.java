@@ -473,7 +473,7 @@ public class NdexPersistenceService  {
 			
 			    // search in db to find the base term
 			
-			    iBaseTerm = networkDAO.getBaseTerm(fragment,namespace.getId());
+			    iBaseTerm = networkDAO.getBaseTerm(fragment,namespace.getId(), network.getExternalId().toString());
 			    if (iBaseTerm != null)
 			       return iBaseTerm;
 			
@@ -494,8 +494,13 @@ public class NdexPersistenceService  {
 			String prefix = termStringComponents[0];
 			Namespace namespace = prefixMap.get(prefix);
 			
+			if ( namespace == null) {
+				namespace = createLocalNamespaceforPrefix(prefix);
+				logger.warning("Prefix '" + prefix + "' is not defined in the network. URI "+
+				namespace.getUri()	+ " has been created for it by Ndex." );
+			}
 			
-			iBaseTerm = networkDAO.getBaseTerm(identifier,namespace.getId());
+			iBaseTerm = networkDAO.getBaseTerm(identifier,namespace.getId(),network.getExternalId().toString());
 			if (iBaseTerm != null)
 			   return iBaseTerm;
 			
@@ -507,13 +512,20 @@ public class NdexPersistenceService  {
 		// find or create the namespace for prefix "LOCAL" and use that as the
 		// namespace.
 
-		iBaseTerm = networkDAO.getBaseTerm(termString,-1);
+		iBaseTerm = networkDAO.getBaseTerm(termString,-1, network.getExternalId().toString());
 		if (iBaseTerm != null)
 			   return iBaseTerm;
 			
 			// create baseTerm in db
      	return createBaseTerm(termString, -1);
 		
+	}
+	
+	private Namespace createLocalNamespaceforPrefix (String prefix) throws NdexException {
+		String urlprefix = prefix.replace(' ', '_');
+		return findOrCreateNamespace(
+				new RawNamespace(prefix, "http://uri.ndexbio.org/ns/"+this.network.getExternalId()
+						+"/" + urlprefix + "/"));
 	}
 	
 	private BaseTerm createBaseTerm(String localTerm, long nsId) throws ExecutionException {
@@ -840,6 +852,11 @@ public class NdexPersistenceService  {
 		}
 	}
 	
+	public void createNamespace(String prefix, String URI) throws NdexException {
+		RawNamespace r = new RawNamespace(prefix, URI);
+		getNamespace(r);
+	}
+	
 	public Citation getCitation(String title, String idType, String identifier, 
 			List<String> contributors) throws NdexException {
 		RawCitation rCitation = new RawCitation(title, idType, identifier, contributors);
@@ -1054,6 +1071,29 @@ public class NdexPersistenceService  {
 		}
 		
 		elementIdCache.put(nodeId, nodeV.getRecord());
+	}
+	
+	public void addCitationToElement(long elementId, Citation c, String className) throws ExecutionException {
+		ODocument elementRec = elementIdCache.get(elementId);
+		OrientVertex nodeV = graph.getVertex(elementRec);
+		
+		ODocument citationRec = elementIdCache.get(c.getId());
+		OrientVertex citationV = graph.getVertex(citationRec);
+		
+		if ( className.equals(NdexClasses.Node) ) {
+ 	       	nodeV.addEdge(NdexClasses.Node_E_ciations, graph.getVertex(citationV));
+		} else if ( className.equals(NdexClasses.Edge) ) {
+			nodeV.addEdge(NdexClasses.Edge_E_citations, graph.getVertex(citationV));
+		}
+		
+		elementIdCache.put(elementId, nodeV.getRecord());
+	}
+	
+	public void setNodeName(long nodeId, String name) throws ExecutionException {
+		ODocument nodeDoc = elementIdCache.get(nodeId);
+		
+		nodeDoc = nodeDoc.field(NdexClasses.Node_P_name, name).save();
+		elementIdCache.put(nodeId, nodeDoc);
 	}
 	
 /*	

@@ -24,15 +24,35 @@ public class RawCitation implements Comparable <RawCitation>{
 
 	@Override
 	public int compareTo(RawCitation o) {
-		// TODO: check nulls in some cases
-		int c = title.compareTo(o.getTitle());
-		if ( c!=0) return c;
-	
-		c =identifier.compareTo(o.getIdentifier());
-		if ( c != 0 ) return c;
-		
-		c = idType.compareTo(o.getIdType());
-		return c;
+        if ( identifier == null ) {
+        	if (o.getIdentifier() != null)
+        		return -1;
+        } else {
+            if (o.getIdentifier() == null) return 1;
+        
+            int c = identifier.compareTo(o.getIdentifier());
+            if (c !=0) return c;
+        }
+        
+        if ( idType == null ) {
+        	 if ( o.getIdType() != null)
+        		return -1;
+        } else {
+            if ( o.getIdType() == null) return 1;
+        
+	   	    int c =idType.compareTo(o.getIdType());
+		    if ( c != 0 ) return c;
+        }
+
+        if (title == null) {
+        	if ( o.getTitle() != null) return -1;
+        } else {
+        	if ( o.getTitle() == null) return 1;
+    		int c = title.compareTo(o.getTitle());
+    		if ( c!=0) return c;
+        }
+
+		return 0;
 	}
 
 

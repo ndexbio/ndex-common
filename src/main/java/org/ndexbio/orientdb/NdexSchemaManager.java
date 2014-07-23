@@ -49,7 +49,7 @@ public class NdexSchemaManager
         /**********************************************************************
         * Create base types first. 
         **********************************************************************/
-        //orientDbGraph.getRawGraph().commit();
+        orientDbGraph.getRawGraph().commit();
 
         OClass clsNdxExternalObj = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexExternalObject);
         
@@ -178,10 +178,10 @@ public class NdexSchemaManager
             
         }
 
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Citation);  
+        OClass citationClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Citation);  
         if (cls == null)
         {
-            OClass citationClass = orientDbGraph.createVertexType(NdexClasses.Citation);
+            citationClass = orientDbGraph.createVertexType(NdexClasses.Citation);
 
             citationClass.createProperty("contributors", OType.EMBEDDEDLIST, OType.STRING);
             citationClass.createProperty(NdexClasses.Element_ID, OType.LONG);
@@ -191,6 +191,15 @@ public class NdexSchemaManager
             citationClass.createProperty("type", OType.STRING);
         }
 
+        OClass supportClass = orientDbGraph.getVertexType(NdexClasses.Support);
+        if (supportClass == null)
+        {
+            supportClass = orientDbGraph.createVertexType(NdexClasses.Support);
+            supportClass.createProperty(NdexClasses.Element_ID, OType.LONG);
+            supportClass.createProperty("text", OType.STRING);
+        }
+
+        
         OClass edgeClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Edge);  
         if (edgeClass == null)
         {
@@ -199,6 +208,10 @@ public class NdexSchemaManager
             edgeClass.createProperty("properties", OType.EMBEDDEDLIST);
             edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             edgeClass.createProperty("type", OType.STRING);
+
+            edgeClass.createProperty(NdexClasses.Edge_E_citations, OType.LINKSET, citationClass);
+
+        
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.FunctionTerm);  
@@ -249,6 +262,11 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_E_represents, OType.LINK, bTermClass);
             nodeClass.createProperty(NdexClasses.Edge_E_subject, OType.LINKSET, edgeClass);
             nodeClass.createProperty(NdexClasses.Edge_E_object, OType.LINKSET, edgeClass);
+            
+            nodeClass.createProperty(NdexClasses.Node_E_alias, OType.LINKSET, bTermClass);
+            nodeClass.createProperty(NdexClasses.Node_E_relateTo, OType.LINKSET, bTermClass);
+            nodeClass.createProperty(NdexClasses.Node_E_ciations, OType.LINKSET, citationClass);
+            nodeClass.createProperty(NdexClasses.Node_E_supports, OType.LINKSET, supportClass);
         }
 
         
@@ -269,12 +287,6 @@ public class NdexSchemaManager
             clss.createProperty("presentationProperties", OType.EMBEDDEDLIST);
         }
 
-        if (orientDbGraph.getVertexType(NdexClasses.Support) == null)
-        {
-            OClass supportClass = orientDbGraph.createVertexType(NdexClasses.Support);
-            supportClass.createProperty(NdexClasses.Element_ID, OType.LONG);
-            supportClass.createProperty("text", OType.STRING);
-        }
 
         orientDb.getMetadata().getSchema().save();
         

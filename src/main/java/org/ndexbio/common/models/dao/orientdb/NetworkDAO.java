@@ -198,13 +198,15 @@ public class NetworkDAO {
     
 	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
 		
+		//TODO: populate namespace, citations and support
+		
 		ODocument networkDoc = getNetworkDocByUUID(id);
 		
 		if (networkDoc == null) return null;
 
 		PropertyGraphNetwork network = new PropertyGraphNetwork();
 
-        network.setUuid(id);
+        network.getProperties().add(new NdexProperty(PropertyGraphNetwork.uuid, id.toString()));
         
         Map<Long,PropertyGraphNode> nodeList = network.getNodes();
          for (OIdentifiable nodeDoc : new OTraverse()
@@ -266,10 +268,28 @@ public class NetworkDAO {
     private static PropertyGraphNode getPropertyGraphNode(ODocument doc) {
     	PropertyGraphNode n = new PropertyGraphNode ();
         n.setId((long)doc.field(NdexClasses.Element_ID));    	
+       
+        //populate node name
+        String name = doc.field(NdexClasses.Node_P_name);
+        if ( name != null) {
+        	n.getProperties().add(new NdexProperty(PropertyGraphNode.name, name));
+        }
+        
     	ODocument o = doc.field("out_" + NdexClasses.Node_E_represents);
-    	String name = o.field(NdexClasses.BTerm_P_name);
-
-    	n.setName(name);
+    	String termId = o.field(NdexClasses.BTerm_P_name);
+    	
+    	ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
+    	NdexProperty p ; 
+    	if ( nsDoc == null ) {
+    		p = new NdexProperty( PropertyGraphNode.represents,termId );
+    	} else {
+    		String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
+    		p = new NdexProperty(PropertyGraphNode.represents, prefix + ":"+termId);
+    	}	
+   		n.getProperties().add(p);
+   		
+   		//TODO: populate citations etc.
+   		
     	return n;
     }
 	
@@ -294,8 +314,12 @@ public class NetworkDAO {
 			  " where out_" + NdexClasses.BTerm_E_Namespace + " is null and "+NdexClasses.BTerm_P_name +
 	    		 " =?"; 
 	
+	final static private String baseTermQuery3 = "select from (traverse out_" + NdexClasses.Network_E_BaseTerms +
+			" from (select from " + NdexClasses.Network + " where " +
+  		  NdexClasses.Network_P_UUID + "= ?)) where @class='"+  NdexClasses.BaseTerm + "' and " + 
+	       NdexClasses.BTerm_P_name +  " =?";
 	// namespaceID < 0 means baseTerm has a local namespace
-	public BaseTerm getBaseTerm(String baseterm, long namespaceID) {
+	public BaseTerm getBaseTerm(String baseterm, long namespaceID, String networkId) {
 		List<ODocument> terms;
 		
 		if ( namespaceID >= 0 ) {
@@ -309,9 +333,13 @@ public class NetworkDAO {
 			terms = db.query(new OSQLSynchQuery<ODocument>(query));
 			
 		} else {
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery2);
-			terms = db.command(query).execute( baseterm);
-			
+/*			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(baseTermQuery3);
+			terms = db.command(query).execute( baseterm, networkId); */
+			String query = "select from (traverse out_" + NdexClasses.Network_E_BaseTerms +
+					" from (select from " + NdexClasses.Network + " where " +
+			  		  NdexClasses.Network_P_UUID + "= '" + networkId + "')) where @class='"+  NdexClasses.BaseTerm + "' and " + 
+				       NdexClasses.BTerm_P_name +  " ='" + baseterm + "'";
+			terms = db.query(new OSQLSynchQuery<ODocument>(query));
 		}
 		     
 		if (terms.isEmpty())
@@ -327,7 +355,10 @@ public class NetworkDAO {
 		t.setName((String)o.field(NdexClasses.BTerm_P_name));
 		
 		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
-		t.setNamespace((long)nsDoc.field(NdexClasses.Element_ID));
+		if ( nsDoc != null) 
+			t.setNamespace((long)nsDoc.field(NdexClasses.Element_ID));
+		else
+			t.setNamespace(-1);
 		
 		return t;
 	}
