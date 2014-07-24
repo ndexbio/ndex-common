@@ -17,7 +17,6 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.dao.CommonDAOValues;
-import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.Email;
 import org.ndexbio.common.util.NdexUUIDFactory;
@@ -90,7 +89,7 @@ public class UserDAO {
 	    * Create a new user
 	    * 
 	    * @param newUser
-	    *            A NewUser object, from the NDEx Object Model
+	    *            A User object, from the NDEx Object Model
 	    * @throws NdexException
 	    *            Attempting to save an ODocument to the database
 	    * @throws IllegalArgumentException
@@ -453,6 +452,7 @@ public class UserDAO {
 		return users.get(0);
 		
 	}
+	
 	private ODocument _getUserByAccountName(String accountName) 
 			throws NdexException, ObjectNotFoundException {
 
