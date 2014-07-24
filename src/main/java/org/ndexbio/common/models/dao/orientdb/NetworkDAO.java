@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -287,18 +288,19 @@ public class NetworkDAO {
         }
         
     	ODocument o = doc.field("out_" + NdexClasses.Node_E_represents);
-    	String termId = o.field(NdexClasses.BTerm_P_name);
+    	if ( o != null) {
+    		String termId = o.field(NdexClasses.BTerm_P_name);
     	
-    	ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
-    	NdexProperty p ; 
-    	if ( nsDoc == null ) {
-    		p = new NdexProperty( PropertyGraphNode.represents,termId );
-    	} else {
-    		String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
-    		p = new NdexProperty(PropertyGraphNode.represents, prefix + ":"+termId);
-    	}	
-   		n.getProperties().add(p);
-   		
+    		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
+    		NdexProperty p ; 
+    		if ( nsDoc == null ) {
+    			p = new NdexProperty( PropertyGraphNode.represents,termId );
+    		} else {
+    			String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
+    			p = new NdexProperty(PropertyGraphNode.represents, prefix + ":"+termId);
+    		}	
+    		n.getProperties().add(p);
+    	}
    		//TODO: populate citations etc.
    		
     	return n;
@@ -779,5 +781,32 @@ public class NetworkDAO {
     	
     	return result;
     } */
+ 
+    /**
+     * 
+     * @param name
+     * @param networkId
+     * @return
+     */
+    public List<Node> findNodesByName(String name, String networkId) {
+    	String query = "select from (traverse out_" + NdexClasses.Network_E_Nodes +
+				" from (select from " + NdexClasses.Network + " where " +
+		  		  NdexClasses.Network_P_UUID + "= '" + networkId + "')) where @class='"+  NdexClasses.Node + "' and " + 
+			       NdexClasses.Node_P_name +  " ='" + name + "'";	
+    	
+	    final List<ODocument> nodes = db.query(new OSQLSynchQuery<ODocument>(query));
+	    
+    	List<Node> results = new ArrayList<Node>();
+	    if ( !nodes.isEmpty()) {
+	    	for ( ODocument doc : nodes) {
+	    		results.add(getNode(doc));
+	    	}
+	    	return results;
+	    }
+	    
+	    //TODO: check the current Transaction.
+	    return results;
+    	
     
+    }
 }

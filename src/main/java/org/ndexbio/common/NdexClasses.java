@@ -106,6 +106,7 @@ public class NdexClasses {
     // ndexProperty
     public static final String ndexProp_P_predicateStr = "predicateStr";
     public static final String ndexProp_P_value        = "value";
+    public static final String ndexProp_P_datatype		= "dType";
     
     //user
       

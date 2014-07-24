@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +28,7 @@ import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
@@ -103,6 +105,12 @@ public class NdexPersistenceService  {
     // key is a "rawFunctionTerm", which has element id as -1. This table
     // matches the key to a functionTerm that has been stored in the db.
     private LoadingCache<FunctionTerm, FunctionTerm> functionTermCache;
+    
+    //key is the name of the node. This cache is for loading simple SIF 
+    // for now
+    private LoadingCache<String, Node> namedNodeCache;
+    
+    private Map<Long, Node> externalIdNodeMap;
     
     /*
      * Currently, the procces flow of this class is:
@@ -228,7 +236,56 @@ public class NdexPersistenceService  {
                     	throw new NdexException ("Document is not found for element id: " + key);
 					return o;
 				   }
+			    });
+		
+		namedNodeCache = CacheBuilder
+				.newBuilder().maximumSize(CACHE_SIZE*5)
+				.expireAfterAccess(240L, TimeUnit.MINUTES)
+				.build(new CacheLoader<String, Node>() {
+				   @Override
+				   public Node load(String key) throws NdexException, ExecutionException {
+					   return findOrCreateNodeByName(key);
+				   }
 			    }); 
+
+		
+		externalIdNodeMap = new TreeMap<Long,Node>(); 
+
+	}
+
+	private Node findOrCreateNodeByName(String key) throws NdexException {
+		List<Node> nodes = networkDAO.findNodesByName (key, network.getExternalId().toString());
+		
+		if ( !nodes.isEmpty()) {
+			if (nodes.size() != 1) 
+				throw new NdexException ("More then one node has name " + key + " in current network.");
+			return nodes.get(0);
+		}
+		
+		// otherwise insert Node.
+		Node node = new Node();
+		node.setId(database.getNextId());
+		node.setName(key);
+
+		ODocument nodeDoc = new ODocument(NdexClasses.Node);
+
+		nodeDoc =nodeDoc.field(NdexClasses.Element_ID, node.getId())
+				.field(NdexClasses.Node_P_name, key)
+				.save();
+		
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
+		
+		network.setNodeCount(network.getNodeCount()+1);
+		
+		elementIdCache.put(node.getId(), nodeDoc);
+		return node;
+		
+	}
+	
+	public Node getNodeByName(String name) throws ExecutionException {
+		return this.namedNodeCache.get(name);
 	}
 
 	private ReifiedEdgeTerm findOrCreateReifiedEdgeTermFromEdgeId(Long key) throws ExecutionException {
@@ -257,10 +314,39 @@ public class NdexPersistenceService  {
 		return eTerm;
 	}
 				
-	
 				
-	//TODO: need to add membership etc later. Need to 
 	public void createNewNetwork(String ownerName, String networkTitle, String version) throws Exception {
+		createNewNetwork(ownerName, networkTitle, version,NdexUUIDFactory.INSTANCE.getNDExUUID() );
+	}
+	
+	public Node findOrCreateNodeByExternalId(Long id) {
+		Node node = this.externalIdNodeMap.get(id);
+		if ( node != null) return node;
+		
+		//create a node for this external id.
+		node = new Node();
+		node.setId(database.getNextId());
+
+		ODocument nodeDoc = new ODocument(NdexClasses.Node);
+
+		nodeDoc =nodeDoc.field(NdexClasses.Element_ID, node.getId())
+				.save();
+		
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
+		
+		network.setNodeCount(network.getNodeCount()+1);
+		
+		elementIdCache.put(node.getId(), nodeDoc);
+		
+		externalIdNodeMap.put(id, node);
+		return node;
+
+	}
+
+	
+	public void createNewNetwork(String ownerName, String networkTitle, String version, UUID uuid) throws NdexException  {
 		Preconditions.checkNotNull(ownerName,"A network owner name is required");
 		Preconditions.checkNotNull(networkTitle,"A network title is required");
 		
@@ -273,14 +359,12 @@ public class NdexPersistenceService  {
 			throw new NdexException(message);
 		}
 				
-		createNetwork(networkTitle,version);
+		createNetwork(networkTitle,version, uuid);
 
 		logger.info("A new NDex network titled: " +network.getName()
 				+" owned by " +ownerName +" has been created");
-
+		
 	}
-
-
 
 
 	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
@@ -655,9 +739,9 @@ public class NdexPersistenceService  {
 	
 	
     //TODO: change this function to private void once migrate to 1.0 -- cj
-	public Network createNetwork(String title, String version){
+	public Network createNetwork(String title, String version, UUID uuid){
 		this.network = new Network();
-		this.network.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
+		this.network.setExternalId(uuid);
 		this.network.setName(title);
 		network.setVisibility(VisibilityType.PUBLIC);
 		network.setIsLocked(false);
@@ -711,59 +795,6 @@ public class NdexPersistenceService  {
 		return null;
 	}
 
-	/*
-	 * Returns a collection of IUsers based on search criteria
-	 */
-/*
-
-	public SearchResult<User> findUsers(SearchParameters searchParameters)
-			throws NdexException {
-		if (searchParameters.getSearchString() == null
-				|| searchParameters.getSearchString().isEmpty())
-			throw new ValidationException("No search string was specified.");
-		
-		searchParameters.setSearchString(searchParameters.getSearchString()
-					.toUpperCase().trim());
-
-		final List<User> foundUsers = Lists.newArrayList();
-		final SearchResult<User> result = new SearchResult<User>();
-		result.setResults(foundUsers);
-
-		// TODO: Remove these, they're unnecessary
-		result.setPageSize(searchParameters.getTop());
-		result.setSkip(searchParameters.getSkip());
-
-		final int startIndex = searchParameters.getSkip()
-				* searchParameters.getTop();
-
-		String whereClause = " where username.toUpperCase() like '%"
-				+ searchParameters.getSearchString()
-				+ "%' OR lastName.toUpperCase() like '%"
-				+ searchParameters.getSearchString()
-				+ "%' OR firstName.toUpperCase() like '%"
-				+ searchParameters.getSearchString() + "%'";
-
-		final String query = "select from User " + whereClause
-				+ " order by creation_date desc skip " + startIndex + " limit "
-				+ searchParameters.getTop();
-
-		try {
-
-			List<ODocument> userDocumentList = localConnection
-					.query(new OSQLSynchQuery<ODocument>(query));
-
-			for (final ODocument document : userDocumentList)
-				foundUsers.add(UserOrientdbDAO.getUserFromDocument(document));
-
-			result.setResults(foundUsers);
-
-			return result;
-		} catch (Exception e) {
-			throw new NdexException(e.getMessage());
-		}
-
-	}
-*/	
 	
 	/*
 	 * public method to allow xbel parsing components to rollback the
@@ -1037,6 +1068,80 @@ public class NdexPersistenceService  {
 		throw new NdexException("Null value for one of the parameter when creating Edge.");
 	}
 	
+
+	public Edge createEdge(Node subjectNode, Node objectNode, BaseTerm predicate, 
+			 Support support, Citation citation, List<NdexProperty> properties, List<NdexProperty> presentationProps )
+			throws NdexException, ExecutionException {
+		if (null != objectNode && null != subjectNode && null != predicate) {
+			
+			Edge edge = new Edge();
+			edge.setId(database.getNextId());
+			edge.setSubjectId(subjectNode.getId());
+			edge.setObjectId(objectNode.getId());
+			edge.setPredicateId(predicate.getId());
+			
+			ODocument subjectNodeDoc = elementIdCache.get(subjectNode.getId()) ;
+					//networkDAO.getDocumentByElementId(NdexClasses.Node, subjectNode.getId());
+			ODocument objectNodeDoc  = elementIdCache.get(objectNode.getId()) ;
+					//networkDAO.getDocumentByElementId(NdexClasses.Node, objectNode.getId());
+			ODocument predicateDoc   = elementIdCache.get(predicate.getId()) ;
+					// networkDAO.getDocumentByElementId(NdexClasses.BaseTerm, predicate.getId());
+			
+			ODocument edgeDoc = new ODocument(NdexClasses.Edge);
+			edgeDoc = edgeDoc.field(NdexClasses.Element_ID, edge.getId())
+					.save();
+			OrientVertex edgeVertex = graph.getVertex(edgeDoc);
+			
+			if ( properties != null) {
+				for (NdexProperty e : properties) {
+					ODocument pDoc = this.createNdexPropertyDoc(e.getPredicateString(),e.getValue());
+					pDoc.field(NdexClasses.ndexProp_P_datatype, e.getDataType())
+					.save();
+                   OrientVertex pV = graph.getVertex(pDoc);
+                   edgeVertex.addEdge(NdexClasses.E_ndexProperties, pV);
+                   
+                   // Not adding it for now because we just need to store the skeleton during loading.
+/*                   NdexProperty p = new NdexProperty();
+                   p.setPredicateString(e.getKey());
+                   p.setDataType(e.getValue());
+                   edge.getProperties().add(p); */
+				}
+			
+			}
+
+			networkVertex.addEdge(NdexClasses.Network_E_Edges, edgeVertex);
+			edgeVertex.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(predicateDoc));
+			edgeVertex.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectNodeDoc));
+			graph.getVertex(subjectNodeDoc).addEdge(NdexClasses.Edge_E_subject, edgeVertex);
+
+		    network.setEdgeCount(network.getEdgeCount()+1);
+		    
+		    if (citation != null) {
+				ODocument citationDoc = networkDAO.getDocumentByElementId(
+						NdexClasses.Citation, citation.getId());
+		    	OrientVertex citationV = graph.getVertex(citationDoc);
+		    	edgeVertex.addEdge(NdexClasses.Edge_E_citations, citationV);
+		    	
+		    	edge.getCitations().add(citation.getId());
+		    }
+		    
+		    if ( support != null) {
+				ODocument supportDoc = networkDAO.getDocumentByElementId(
+						NdexClasses.Support, support.getId());
+		    	OrientVertex supportV = graph.getVertex(supportDoc);
+		    	edgeVertex.addEdge(NdexClasses.Edge_E_supports, supportV);
+		    	
+		    	edge.getSupports().add(support.getId());
+		    }
+		    
+		    elementIdCache.put(edge.getId(), edgeDoc);
+			return edge;
+		} 
+		throw new NdexException("Null value for one of the parameter when creating Edge.");
+	}
+	
+	
+	
 	
 	public void commit () {
 		graph.commit();
@@ -1090,6 +1195,19 @@ public class NdexPersistenceService  {
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
 	
+	public void addPropertyToNode(long nodeId, NdexProperty p, boolean isPresentationProperty) throws ExecutionException {
+		ODocument nodeDoc = elementIdCache.get(nodeId);
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+
+		ODocument pDoc = this.createNdexPropertyDoc(p.getPredicateString(),p.getValue());
+        OrientVertex pV = graph.getVertex(pDoc);
+        
+        if ( isPresentationProperty) 
+        	nodeV.addEdge(NdexClasses.E_ndexPresentationProps, pV);
+        else
+        	nodeV.addEdge(NdexClasses.E_ndexProperties, pV);
+	}
+	
 	public void addCitationToElement(long elementId, Citation c, String className) throws ExecutionException {
 		ODocument elementRec = elementIdCache.get(elementId);
 		OrientVertex nodeV = graph.getVertex(elementRec);
@@ -1113,20 +1231,21 @@ public class NdexPersistenceService  {
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 	
-/*	
-	private static String findPrefixForNamespaceURI(String uri) {
-		if (uri.equals("http://biopax.org/generated/group/")) return "GROUP";
-		if (uri.equals("http://identifiers.org/uniprot/")) return "UniProt";
-		if (uri.equals("http://purl.org/pc2/4/")) return "PathwayCommons2";
-		//System.out.println("No Prefix for " + uri);
+	public NetworkSummary getSummaryOfCurrentNetwork() {
+		NetworkSummary summary = new NetworkSummary ();
 		
-		return null;
+		summary.setCreationDate(network.getCreationDate());
+		summary.setDescription(network.getDescription());
+		summary.setEdgeCount(network.getEdgeCount());
+		summary.setExternalId(network.getExternalId());
+		summary.setIsComplete(network.getIsComplete());
+		summary.setIsLocked(network.getIsLocked());
+		summary.setModificationDate(network.getModificationDate());
+		summary.setName(network.getName());
+		summary.setNodeCount(network.getNodeCount());
+		summary.setVersion(network.getVersion());
+		summary.setVisibility(network.getVisibility());
+		
+		return summary;
 	}
-	
-	// TODO: check if this function need to be the same as the function above 
-	private static String findURIForNamespacePrefix(String prefix){
-		if (prefix.equals("UniProt")) return "http://identifiers.org/uniprot/";
-		return null;
-	}
-*/
 }
