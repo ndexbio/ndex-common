@@ -56,7 +56,7 @@ public class PropertyGraphLoader {
         String version = null;
         List<NdexProperty> otherAttributes = new ArrayList<NdexProperty>();
         
-
+        Namespace[] namespaces = null;
         for ( NdexProperty p : network.getProperties()) {
 			if ( p.getPredicateString().equals(PropertyGraphNetwork.name) ) {
 				title = p.getValue();
@@ -65,12 +65,7 @@ public class PropertyGraphLoader {
 			} else if ( p.getPredicateString().equals(PropertyGraphNetwork.description) ) {
 				description = p.getValue();
 			} else if (p.getPredicateString().equals(PropertyGraphNetwork.namspaces)) {
-				Namespace[] namespaces = mapper.readValue(p.getValue(), Namespace[].class);
-				if ( namespaces != null) {
-					for ( Namespace ns : namespaces ) {
-						persistenceService.createNamespace(ns.getPrefix(), ns.getUri());
-					}
-				}
+				namespaces = mapper.readValue(p.getValue(), Namespace[].class);
 			} else if (p.getPredicateString().equals(PropertyGraphNetwork.supports)) {
 				Support[] supports = mapper.readValue(p.getValue(), Support[].class);
 			} else if (p.getPredicateString().equals(PropertyGraphNetwork.citations)) {
@@ -82,7 +77,13 @@ public class PropertyGraphLoader {
 		
 		persistenceService.createNewNetwork(accountName, title, version, uuid);
 		persistenceService.setNetworkTitleAndDescription(title, description);
-		
+
+		if ( namespaces != null) {
+			for ( Namespace ns : namespaces ) {
+				persistenceService.createNamespace(ns.getPrefix(), ns.getUri());
+			}
+		}
+
 		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
 		
 		for ( PropertyGraphNode n : network.getNodes().values()) {

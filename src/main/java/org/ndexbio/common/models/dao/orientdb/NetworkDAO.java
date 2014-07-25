@@ -279,7 +279,7 @@ public class NetworkDAO {
       
           if ( nsDoc.getClassName().equals(NdexClasses.Namespace)) {
       
-        	  nsList.add(getNamespace(doc));
+        	  nsList.add(getNamespace(nsDoc));
           }
           if ( ! nsList.isEmpty()) 
         	  network.getProperties().add(new NdexProperty(
