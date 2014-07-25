@@ -257,12 +257,16 @@ public class NetworkDAO {
 			throws JsonProcessingException {
         network.getProperties().add(new NdexProperty(
         		PropertyGraphNetwork.uuid, doc.field(NdexClasses.Network_P_UUID).toString()));
+        
         network.getProperties().add(new NdexProperty(
         		PropertyGraphNetwork.name, (String)doc.field(NdexClasses.Network_P_name)));
-        network.getProperties().add(new NdexProperty(
-        		PropertyGraphNetwork.description, (String)doc.field(NdexClasses.Network_P_desc)));
-        network.getProperties().add(new NdexProperty(
-        		PropertyGraphNetwork.version, (String)doc.field(NdexClasses.Network_P_version)));
+        
+        String desc = doc.field(NdexClasses.Network_P_desc);
+        if ( desc != null) 
+        	network.getProperties().add(new NdexProperty(PropertyGraphNetwork.description, desc));
+        String version = doc.field(NdexClasses.Network_P_version);
+        if ( version != null) 
+        	network.getProperties().add(new NdexProperty(PropertyGraphNetwork.version, version));
         
         //namespace
         List<Namespace> nsList = new ArrayList<Namespace>();
