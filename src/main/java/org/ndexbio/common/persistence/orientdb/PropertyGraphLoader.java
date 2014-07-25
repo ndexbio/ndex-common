@@ -71,6 +71,10 @@ public class PropertyGraphLoader {
 						persistenceService.createNamespace(ns.getPrefix(), ns.getUri());
 					}
 				}
+			} else if (p.getPredicateString().equals(PropertyGraphNetwork.supports)) {
+				Support[] supports = mapper.readValue(p.getValue(), Support[].class);
+			} else if (p.getPredicateString().equals(PropertyGraphNetwork.citations)) {
+				
 			} else if ( !p.getPredicateString().equals(PropertyGraphNetwork.uuid) ) {
 				otherAttributes.add(p);
 			} 
@@ -79,9 +83,7 @@ public class PropertyGraphLoader {
 		persistenceService.createNewNetwork(accountName, title, version, uuid);
 		persistenceService.setNetworkTitleAndDescription(title, description);
 		
-		
-		// maps old node Ids(in uploaded graph) to new Ndex node Ids.
-//		TreeMap<Long, Long>  nodeIdmap = new TreeMap<Long,Long>();
+		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
 		
 		for ( PropertyGraphNode n : network.getNodes().values()) {
 			
@@ -98,21 +100,15 @@ public class PropertyGraphLoader {
 				  otherProperties.add(p);
 			}
 			
-			Node node;
+			Node node = persistenceService.findOrCreateNodeByExternalId(n.getId());;
 			if (baseTerm != null) {
-				node =  persistenceService.getNodeByBaseTerm(baseTerm);
-			}  else {
-				node = persistenceService.findOrCreateNodeByExternalId(n.getId());
+				BaseTerm term =  persistenceService.getBaseTerm(baseTerm);
+				persistenceService.setNodeRepresentTerm(node.getId(), term.getId());
 			}
-				
 			if ( nodeName != null ) 
 				persistenceService.setNodeName(node.getId(), nodeName);
 
-	        for ( NdexProperty op : otherProperties) {
-	        	persistenceService.addPropertyToNode(node.getId(), op, false);
-	        }
-//			nodeIdmap.put(n.getId(), node.getId());
-			
+			persistenceService.setNodeProperties(node.getId(), otherProperties, n.getPresentationProperties());
 		}
 		
 		// persist edges

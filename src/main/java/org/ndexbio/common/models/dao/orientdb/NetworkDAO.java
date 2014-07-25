@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -25,6 +26,7 @@ import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -143,7 +145,7 @@ public class NetworkDAO {
     }
 
     
-	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) {
+	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) throws JsonProcessingException {
 		ODocument nDoc = getNetworkDocByUUID(networkID);
 		
 	    if (nDoc == null) return null;
@@ -176,36 +178,33 @@ public class NetworkDAO {
             	
             	if ( counter >= startPosition )  {
               	   
-            	    PropertyGraphEdge e = NetworkDAO.getPropertyGraphEdge(doc);
+            	    PropertyGraphEdge e = getPropertyGraphEdge(doc);
         
             	    edgeList.add(e);
             	    
             	    if ( ! nodeMap.containsKey(e.getSubjectId())) {
             	        ODocument subDoc = doc.field("in_" +  NdexClasses.Edge_E_subject);
-            	        PropertyGraphNode node = NetworkDAO.getPropertyGraphNode(subDoc);
+            	        PropertyGraphNode node = getPropertyGraphNode(subDoc);
             	        nodeMap.put(node.getId(),node);
             	    }    
             	    
             	    if ( ! nodeMap.containsKey(e.getObjectId())) {
                 	    ODocument objDoc = doc.field("out_" + NdexClasses.Edge_E_object);
-            	        PropertyGraphNode node = NetworkDAO.getPropertyGraphNode(objDoc);
+            	        PropertyGraphNode node = getPropertyGraphNode(objDoc);
             	        nodeMap.put(node.getId(),node);
             	    }
             	    
                 }
             } 	
         }
-        
-        
    	    return network; 
-		
 	}
     
     
     
-	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
+	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException, JsonProcessingException {
 		
-		//TODO: populate namespace, citations and support
+		//TODO: populate citations and support
 		
 		ODocument networkDoc = getNetworkDocByUUID(id);
 		
@@ -225,7 +224,7 @@ public class NetworkDAO {
           
               if ( doc.getClassName().equals(NdexClasses.Node)) {
           
-                  PropertyGraphNode nd = NetworkDAO.getPropertyGraphNode(doc);
+                  PropertyGraphNode nd = getPropertyGraphNode(doc);
                   if ( nd != null)
                 	  nodeList.put(nd.getId(),nd);
                   else
@@ -243,7 +242,7 @@ public class NetworkDAO {
           
               if ( doc.getClassName().equals(NdexClasses.Edge)) {
           
-                  PropertyGraphEdge nd = NetworkDAO.getPropertyGraphEdge(doc);
+                  PropertyGraphEdge nd = getPropertyGraphEdge(doc);
                   if ( nd != null)
                 	  edgeList.add(nd);
                   else
@@ -254,13 +253,41 @@ public class NetworkDAO {
 		 return network; 
 	}
 	
-	private void populatePropetyGraphNetworkFromDoc(PropertyGraphNetwork network, ODocument doc) {
+	private void populatePropetyGraphNetworkFromDoc(PropertyGraphNetwork network, ODocument doc)
+			throws JsonProcessingException {
         network.getProperties().add(new NdexProperty(
         		PropertyGraphNetwork.uuid, doc.field(NdexClasses.Network_P_UUID).toString()));
+        network.getProperties().add(new NdexProperty(
+        		PropertyGraphNetwork.name, (String)doc.field(NdexClasses.Network_P_name)));
+        network.getProperties().add(new NdexProperty(
+        		PropertyGraphNetwork.description, (String)doc.field(NdexClasses.Network_P_desc)));
+        network.getProperties().add(new NdexProperty(
+        		PropertyGraphNetwork.version, (String)doc.field(NdexClasses.Network_P_version)));
+        
+        //namespace
+        List<Namespace> nsList = new ArrayList<Namespace>();
+        for (OIdentifiable nodeDoc : new OTraverse()
+   	    	.field("out_"+ NdexClasses.Network_E_Namespace )
+   	    	.target(doc)
+   	    	.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+          ODocument nsDoc = (ODocument) nodeDoc;
+      
+          if ( nsDoc.getClassName().equals(NdexClasses.Namespace)) {
+      
+        	  nsList.add(getNamespace(doc));
+          }
+          if ( ! nsList.isEmpty()) 
+        	  network.getProperties().add(new NdexProperty(
+            		PropertyGraphNetwork.namspaces, 
+            		mapper.writeValueAsString(nsList)));
+       }
+
+       this.getPropertiesFromDocument(network,doc);
 	}
 	
 
-	private static PropertyGraphEdge getPropertyGraphEdge(ODocument doc) {
+	private  PropertyGraphEdge getPropertyGraphEdge(ODocument doc) {
 		PropertyGraphEdge e = new PropertyGraphEdge();
 		e.setId((long)doc.field(NdexClasses.Element_ID));
 		
@@ -274,10 +301,11 @@ public class NetworkDAO {
 			    ((ODocument)doc.field("out_"+NdexClasses.Edge_E_object))
 			        .field(NdexClasses.Element_ID));
 		
+		getPropertiesFromDocument(e,doc);
 		return e;
 	}
 	
-    private static PropertyGraphNode getPropertyGraphNode(ODocument doc) {
+    private PropertyGraphNode getPropertyGraphNode(ODocument doc) {
     	PropertyGraphNode n = new PropertyGraphNode ();
         n.setId((long)doc.field(NdexClasses.Element_ID));    	
        
@@ -301,11 +329,46 @@ public class NetworkDAO {
     		}	
     		n.getProperties().add(p);
     	}
-   		//TODO: populate citations etc.
+		
+    	//Populate properties
+    	getPropertiesFromDocument(n, doc);
+    	
+		//TODO: populate citations etc.
    		
     	return n;
     }
 	
+    // set properties in the passed in object by the information stored in a db document. 
+    private void getPropertiesFromDocument(PropertiedObject obj, ODocument doc) {
+    	for (OIdentifiable ndexPropertyDoc : new OTraverse()
+    			.field("out_"+ NdexClasses.E_ndexProperties )
+    			.target(doc)
+    			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument propDoc = (ODocument) ndexPropertyDoc;
+  
+    		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
+				
+    			obj.getProperties().add( getNdexPropertyFromDoc(propDoc));
+    		}
+    	}
+
+    	//Populate presentation properties
+	
+    	for (OIdentifiable ndexPropertyDoc : new OTraverse()
+    			.field("out_"+ NdexClasses.E_ndexPresentationProps )
+    			.target(doc)
+    			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument propDoc = (ODocument) ndexPropertyDoc;
+  
+    		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
+				
+    			obj.getPresentationProperties().add( getNdexPropertyFromDoc(propDoc));
+    		}
+    	}
+    	
+    }
 	
 	private static Network getNetwork(ODocument n) {
 		
@@ -501,11 +564,13 @@ public class NetworkDAO {
 	}
 	
 	
-	private NdexProperty getNdexPropertyFromDoc(ODocument doc) {
+	private static NdexProperty getNdexPropertyFromDoc(ODocument doc) {
 		NdexProperty p = new NdexProperty();
 		p.setPredicateString((String)doc.field(NdexClasses.ndexProp_P_predicateStr));
 		p.setValue((String)doc.field(NdexClasses.ndexProp_P_value)) ;
+    	p.setDataType((String)doc.field(NdexClasses.ndexProp_P_datatype));
 		return p;
+
 	}
 	
 	//TODO: change this to direct index access in the future.
