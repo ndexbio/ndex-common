@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.Date;
 
 import javax.ws.rs.core.Response;
 
@@ -17,11 +18,12 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.dao.CommonDAOValues;
-import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.Email;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
 import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.NewUser;
+import org.ndexbio.model.object.SimpleUserQuery;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -98,7 +100,7 @@ public class UserDAO {
 	    * 			 The account name and/or email already exist
 	    * @returns User object, from the NDEx Object Model
 	    **************************************************************************/
-	public User createNewUser(User newUser)
+	public User createNewUser(NewUser newUser)
 		throws NdexException, IllegalArgumentException, DuplicateObjectException {
 
 		Preconditions.checkArgument(null != newUser, 
@@ -159,6 +161,10 @@ public class UserDAO {
 	    **************************************************************************/
 	public void deleteUserById(UUID id) 
 		throws NdexException, ObjectNotFoundException{
+		//TODO cannot orphan networks
+		//TODO cannot orphan groups
+		Preconditions.checkArgument(null != id, 
+				"UUID required");
 		
 			ODocument user = _getUserById(id);
 			try {
@@ -181,7 +187,10 @@ public class UserDAO {
 	    * @returns User object, from the NDEx Object Model
 	    **************************************************************************/
 	public User getUserById(UUID id) 
-		throws NdexException, ObjectNotFoundException {
+		throws NdexException, IllegalArgumentException, ObjectNotFoundException {
+		
+		Preconditions.checkArgument(null != id, 
+				"UUID required");
 		
 		final ODocument user = _getUserById(id);
 	    return _getUserFromDocument(user);
@@ -198,7 +207,10 @@ public class UserDAO {
 	    * @returns User object, from the NDEx Object Model
 	    **************************************************************************/
 	public User getUserByAccountName(String accountName) 
-		throws NdexException, ObjectNotFoundException {
+		throws NdexException, IllegalArgumentException, ObjectNotFoundException {
+		
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(accountName), 
+				"accountName required");
 
 		final ODocument user = _getUserByAccountName(accountName);
 	    return _getUserFromDocument(user);
@@ -210,6 +222,10 @@ public class UserDAO {
 	    * 
 	    * @param id
 	    *            UUID for User
+	    * @param skip
+	    * 			amount of blocks to skip
+	    * @param top
+	    * 			block size
 	    * @throws NdexException
 	    *            Attempting to query the database
 	    * @returns User object, from the NDEx Object Model
@@ -281,8 +297,8 @@ public class UserDAO {
 
 			final User authUser = _getUserFromDocument(userToSave);
 			final String newPassword = Security.generatePassword();
-			authUser.setPassword(Security.hashText(newPassword));
-			userToSave.field("password", authUser.getPassword());
+			final String password = Security.hashText(newPassword);
+			userToSave.field("password", password);
 
 			final File forgotPasswordFile = new File(Configuration
 					.getInstance().getProperty("Forgot-Password-File"));
@@ -328,6 +344,8 @@ public class UserDAO {
 	    * 
 	    * @param id
 	    *            UUID for user
+	    * @param password
+	    * 			 new password for user
 	    * @throws NdexException
 	    *            Attempting to access the database
 	    * @throws IllegalArgumentException
@@ -369,6 +387,91 @@ public class UserDAO {
 	}
 	
 	/**************************************************************************
+	    * Change a user's email Address
+	    * 
+	    * @param id
+	    *            UUID for user
+	    * @param emailAddress 
+	    * 		     new email address
+	    * @throws NdexException
+	    *            Attempting to access the database
+	    * @throws IllegalArgumentException
+	    * 			 new password and user id are required
+	    * @throws ObjectNotFoundException
+	    * 			 user does not exist
+	    * @returns response
+	    **************************************************************************/
+	public Response changeEmailAddress(String emailAddress, UUID id)
+			throws IllegalArgumentException, NdexException, ObjectNotFoundException, DuplicateObjectException {
+		
+		Preconditions.checkNotNull(id, 
+				"A user id is required");
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(emailAddress), 
+				"A password is required");
+		
+		ODocument user =  _getUserById(id);
+		
+		try {
+			
+			// check for unique emailAddress
+			String query = "select emailAddress from " + NdexClasses.User + " where emailAddress = ?";
+			List<ODocument> existingUser = db.command( new OCommandSQL(query))
+			   .execute(emailAddress);
+			
+			if(!existingUser.isEmpty()) {
+				logger.severe("Email address already exists in the database.");
+				throw new NdexException("email address is taken");
+			}
+			
+			final String oldEmail = (String) user.field("emailAddress");
+			user.field("emailAddress", emailAddress);
+			user.save();
+			
+			//send emails to new and old address
+			final File ChangeEmailFile = new File(Configuration
+					.getInstance().getProperty("Change-Email-File"));
+			
+			if (!ChangeEmailFile.exists()) {
+				logger.severe("Could not retrieve change email file");
+				throw new java.io.FileNotFoundException(
+						"File containing change email content doesn't exist.");
+			}
+
+			final BufferedReader fileReader = Files.newBufferedReader(
+					ChangeEmailFile.toPath(), Charset.forName("US-ASCII"));
+			
+			final StringBuilder changeEmailText = new StringBuilder();
+
+			String lineOfText = null;
+			while ((lineOfText = fileReader.readLine()) != null)
+				changeEmailText.append(lineOfText.replace("{oldEmail}",
+						oldEmail).replace("{newEmail}", emailAddress));
+
+			Email.sendEmail(
+					Configuration.getInstance().getProperty(
+							"Change-Email-Email"),
+					oldEmail, "Email Change",
+					changeEmailText.toString());
+			Email.sendEmail(
+					Configuration.getInstance().getProperty(
+							"Change-Email-Email"),
+					emailAddress, "Email Change",
+					changeEmailText.toString());
+
+			logger.info("Changed email address for user with UUID " + id);
+			
+			return Response.ok().build();
+			
+		} catch (Exception e) {
+			
+			logger.severe("An error occured while changing email for user with UUID " + id);
+			throw new NdexException("Failed to change your email.\n" + e.getMessage());
+			
+		} 
+
+	}
+	
+	/**************************************************************************
 	    * Update a user
 	    * 
 	    * @param updatedUser
@@ -386,37 +489,31 @@ public class UserDAO {
 	public User updateUser(User updatedUser, UUID id)
 			throws IllegalArgumentException, NdexException, ObjectNotFoundException {
 		
-			Preconditions.checkNotNull(id, 
+			Preconditions.checkArgument(id != null, 
 					"A user id is required");
-			Preconditions.checkNotNull(updatedUser, 
+			Preconditions.checkArgument(updatedUser != null, 
 					"An updated user is required");
-			Preconditions.checkNotNull(updatedUser.getEmailAddress(), 
-					"An email is required");
-			Preconditions.checkNotNull(updatedUser.getFirstName(), 
-					"An first name is required");
-			Preconditions.checkNotNull(updatedUser.getLastName(), 
-					"An last name is required");
 		
 		ODocument user =  _getUserById(id);
 		
 		try {
-
-			user.field("description", updatedUser.getDescription());
-			user.field("websiteURL", updatedUser.getWebsite());
-			user.field("imageURL", updatedUser.getImage());
-			user.field("emailAddress", updatedUser.getEmailAddress());
-			user.field("firstName", updatedUser.getFirstName());
-			user.field("lastName", updatedUser.getLastName());
+			//updatedUser.getDescription().isEmpty();
+			if(!Strings.isNullOrEmpty(updatedUser.getDescription())) user.field("description", updatedUser.getDescription());
+			if(!Strings.isNullOrEmpty(updatedUser.getWebsite())) user.field("websiteURL", updatedUser.getWebsite());
+			if(!Strings.isNullOrEmpty(updatedUser.getImage())) user.field("imageURL", updatedUser.getImage());
+			if(!Strings.isNullOrEmpty(updatedUser.getFirstName())) user.field("firstName", updatedUser.getFirstName());
+			if(!Strings.isNullOrEmpty(updatedUser.getLastName())) user.field("lastName", updatedUser.getLastName());
+			user.field("modificationDate", updatedUser.getModificationDate());
 
 			user.save();
-			logger.info("Updted user profile with UUID " + id);
+			logger.info("Updated user profile with UUID " + id);
 			
 			return _getUserFromDocument(user);
 			
 		} catch (Exception e) {
 			
 			logger.severe("An error occured while updating user profile with UUID " + id);
-			throw new NdexException("Failed to change your password.\n" + e.getMessage());
+			throw new NdexException(e.getMessage());
 			
 		} 
 
@@ -499,15 +596,17 @@ public class UserDAO {
 		result.setWebsite((String)n.field("websiteURL"));
 		result.setDescription((String)n.field("description"));
 		result.setImage((String)n.field("imageURL"));
+		result.setCreationDate((Date)n.field("creationDate"));
+		result.setModificationDate((Date)n.field("modificationDate"));
 		
 		return result;
 	}
 	
 	/*
-	 * Both a User's username and emailAddress must be unique in the database.
+	 * Both a User's AccountName and emailAddress must be unique in the database.
 	 * Throw a DuplicateObjectException if that is not the case
 	 */
-	private void _checkForExistingUser(final User newUser) 
+	private void _checkForExistingUser(final NewUser newUser) 
 			throws DuplicateObjectException {
 		
 		List<ODocument> existingUsers = db.query(
