@@ -2,10 +2,10 @@ package org.ndexbio.common.persistence.orientdb;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -17,9 +17,6 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
-import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
-import org.ndexbio.model.object.SearchParameters;
-import org.ndexbio.common.models.object.SearchResult;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.RawSupport;
@@ -34,20 +31,15 @@ import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.Term;
 import org.ndexbio.model.object.network.VisibilityType;
-import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.common.util.NdexUUIDFactory;
-import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.Namespace;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -877,7 +869,62 @@ public class NdexPersistenceService  {
 	   }
 	   
 	}
+	
+	public void setNodeProperties(Long nodeId, Collection<NdexProperty> properties, 
+			Collection<NdexProperty> presentationProperties) throws ExecutionException {
+		ODocument nodeDoc = this.elementIdCache.get(nodeId);
+		OrientVertex v = graph.getVertex(nodeDoc);
+		addPropertiesToVertex ( v, properties, presentationProperties);
+	}
+	
+	public void setNetworkProperties(Collection<NdexProperty> properties, 
+			Collection<NdexProperty> presentationProperties) {
+		addPropertiesToVertex ( networkVertex, properties, presentationProperties);
+	}
+	
 
+	/**
+	 *  create a represent edge from a node to a term.
+	 * @param nodeId
+	 * @param TermId
+	 * @throws ExecutionException 
+	 */
+	public void setNodeRepresentTerm(long nodeId, long termId) throws ExecutionException {
+		ODocument nodeDoc = this.elementIdCache.get(nodeId);
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		ODocument termDoc = this.elementIdCache.get(termId);
+		OrientVertex termV = graph.getVertex(termDoc);
+		
+		nodeV.addEdge(NdexClasses.Node_E_represents, termV);
+	}
+	
+	
+	private void addPropertiesToVertex (OrientVertex vertex, Collection<NdexProperty> properties, 
+			Collection<NdexProperty> presentationProperties) {
+
+		if ( properties != null) {
+			for (NdexProperty e : properties) {
+				ODocument pDoc = this.createNdexPropertyDoc(e.getPredicateString(),e.getValue());
+				pDoc.field(NdexClasses.ndexProp_P_datatype, e.getDataType())
+				.save();
+               OrientVertex pV = graph.getVertex(pDoc);
+               vertex.addEdge(NdexClasses.E_ndexProperties, pV);
+			}
+		
+		}
+
+		if ( presentationProperties !=null ) {
+			for (NdexProperty e : presentationProperties) {
+				ODocument pDoc = this.createNdexPropertyDoc(e.getPredicateString(),e.getValue());
+				pDoc.field(NdexClasses.ndexProp_P_datatype, e.getDataType())
+				.save();
+               OrientVertex pV = graph.getVertex(pDoc);
+               vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
+			}
+		}
+	}
+	
 	/**
 	 * Find or create a namespace object from database;
 	 * @param rns
@@ -1092,23 +1139,8 @@ public class NdexPersistenceService  {
 					.save();
 			OrientVertex edgeVertex = graph.getVertex(edgeDoc);
 			
-			if ( properties != null) {
-				for (NdexProperty e : properties) {
-					ODocument pDoc = this.createNdexPropertyDoc(e.getPredicateString(),e.getValue());
-					pDoc.field(NdexClasses.ndexProp_P_datatype, e.getDataType())
-					.save();
-                   OrientVertex pV = graph.getVertex(pDoc);
-                   edgeVertex.addEdge(NdexClasses.E_ndexProperties, pV);
-                   
-                   // Not adding it for now because we just need to store the skeleton during loading.
-/*                   NdexProperty p = new NdexProperty();
-                   p.setPredicateString(e.getKey());
-                   p.setDataType(e.getValue());
-                   edge.getProperties().add(p); */
-				}
+			this.addPropertiesToVertex(edgeVertex, properties, presentationProps);
 			
-			}
-
 			networkVertex.addEdge(NdexClasses.Network_E_Edges, edgeVertex);
 			edgeVertex.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(predicateDoc));
 			edgeVertex.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectNodeDoc));
