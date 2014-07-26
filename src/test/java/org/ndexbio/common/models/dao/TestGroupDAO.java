@@ -1,18 +1,325 @@
 package org.ndexbio.common.models.dao;
 
-import org.junit.Assert;
-import org.junit.FixMethodOrder;
+import static org.junit.Assert.*;
+
+import org.junit.AfterClass;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
+
+import java.util.UUID;
+
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.model.object.SearchParameters;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.UserDAO;
+import org.ndexbio.common.models.dao.orientdb.GroupDAO;
+import org.ndexbio.model.object.SimpleUserQuery;
+import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.object.Group;
+import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.NewUser;
 
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+
 public class TestGroupDAO extends TestDAO
 {
+	private static UserDAO	userDAO;
+	private static GroupDAO dao;
+	private static NdexDatabase database;
+	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
+	private static Group testGroup;
+	private static User testUser;
+	private static Group group;
+	private static Group group2;
+	private static Group group3;
+	
+	@BeforeClass
+	public static void setUpBeforeClass() throws Exception {
+		// For acquiring connections from the pool
+		database = new NdexDatabase();
+		localConnection = database.getAConnection();
+		userDAO = new UserDAO(localConnection);
+		dao = new GroupDAO(localConnection);
+		
+		localConnection.begin();
+		Group newGroup = new Group();
+        newGroup.setOrganizationName("testGroup");
+        newGroup.setAccountName("testGroup");
+        newGroup.setDescription("testGroup");
+        newGroup.setWebsite("testGroup");
+        group = dao.createNewGroup(newGroup);
+        
+        newGroup = new Group();
+        newGroup.setOrganizationName("testGroup2");
+        newGroup.setAccountName("testGroup2");
+        newGroup.setDescription("testGroup2");
+        newGroup.setWebsite("testGroup2");
+        group2 = dao.createNewGroup(newGroup);
+        
+        newGroup = new Group();
+        newGroup.setOrganizationName("testGroup2");
+        newGroup.setAccountName("testGroup2");
+        newGroup.setDescription("testGroup2");
+        newGroup.setWebsite("testGroup2");
+        group3 = dao.createNewGroup(newGroup);
+        
+        localConnection.commit();
+        
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		
+		localConnection.begin();	
+		dao.deleteGroupById(group.getExternalId());
+		dao.deleteGroupById(group2.getExternalId());
+		dao.deleteGroupById(group3.getExternalId());
+		localConnection.commit();
+		localConnection.close();
+		database.close();
+		
+	}
+
+	// initialize testGroup for test suite
+	@Before
+	public void setup() {
+		//assertTrue(createTestUser());
+		assertTrue(createTestGroup());
+	}
+	//cleanup testGroup
+	@After
+	public void teardown() {
+		//assertTrue(deleteTestUser());
+		assertTrue(deleteTestGroup());
+	}
+	
+	
+	@Test
+	public void createGroup() {
+		
+		try {
+			
+			localConnection.begin(); // also aborts any uncommitted transactions.
+			
+			final Group newGroup = new Group();
+            newGroup.setOrganizationName("create");
+            newGroup.setAccountName("create");
+            newGroup.setDescription("create");
+            newGroup.setWebsite("create");
+            
+            assertNotNull(dao.createNewGroup(newGroup));
+           
+		} catch (Throwable e){
+			
+			fail(e.getMessage());
+			
+		}
+		
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+    public void createGroupInvalid() throws IllegalArgumentException, NdexException {
+		
+		localConnection.begin();
+		
+        dao.createNewGroup(null);
+        
+    }
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void createGroupInvalidAccountName() throws NdexException, IllegalArgumentException {
+		
+			localConnection.begin(); // also aborts any uncommitted transactions.
+			
+			final Group newGroup = new Group();
+            newGroup.setOrganizationName("test");
+            newGroup.setAccountName("");
+            newGroup.setDescription("test");
+            newGroup.setWebsite("test");
+            
+            dao.createNewGroup(newGroup);
+            
+	}
+	
+	@Test(expected = DuplicateObjectException.class)
+	public void createGroupExistingGroup() throws IllegalArgumentException, NdexException, DuplicateObjectException {
+		
+				localConnection.begin(); // also aborts any uncommitted transactions.	
+	  
+				final Group newGroup = new Group();
+	            newGroup.setOrganizationName("test");
+	            newGroup.setAccountName("test");
+	            newGroup.setDescription("test");
+	            newGroup.setWebsite("test");
+				
+	            dao.createNewGroup(newGroup);
+			
+	}
+	
+	@Test
+    public void getGroupByUUID() {
+    	
+    	try {
+    		
+    		localConnection.begin(); // also aborts any uncommitted transactions.
+	        final Group retrievedGroup = dao.getGroupById(testGroup.getExternalId());
+	        assertNotNull(retrievedGroup);
+	        
+    	} catch(Exception e) {
+    		
+    		fail(e.getMessage());
+    		e.printStackTrace();
+    		
+    	} 
+    	
+    }
+	
+	@Test
+    public void updateGroup() {
+        try {
+        	
+            //Group Group = dao.getGroupById(testGroup.getExternalId());
+            final Group updated = new Group();
+            updated.setDescription("changed");
+            
+            localConnection.begin();
+            dao.updateGroup(updated, testGroup.getExternalId());
+            localConnection.commit();
+            
+            assertEquals(updated.getDescription(), dao.getGroupById(testGroup.getExternalId()).getDescription());
+            assertEquals(testGroup.getOrganizationName(), dao.getGroupById(testGroup.getExternalId()).getOrganizationName());
+            
+        } catch (Exception e) {
+        	
+            fail(e.getMessage());
+            e.printStackTrace();
+            
+        } 
+        
+    }
+	
+	 @Test(expected = IllegalArgumentException.class)
+	    public void updateGroupInvalid() throws IllegalArgumentException, SecurityException, NdexException {
+	    	
+	        dao.updateGroup(null, group.getExternalId());
+	        
+	    }
+	
+	  @Test
+	    public void findGroups() {
+	    	
+	    	try {
+		    		
+	    		localConnection.begin();
+		    	final SimpleUserQuery simpleQuery = new SimpleUserQuery();
+		    	simpleQuery.setSearchString("test");
+		    	
+		    	assertTrue(!dao.findGroups(simpleQuery, 0, 5).isEmpty());
+	    	
+			} catch (Exception e) {
+				
+				fail(e.getMessage());
+				e.printStackTrace();
+				
+			} 
+	    	
+	    }
+	  
+	  @Test(expected = IllegalArgumentException.class)
+	    public void findGroupsInvalid() throws IllegalArgumentException, NdexException {
+	        dao.findGroups(null,0,0);
+	    }
+	
+	private boolean createTestGroup() {
+		
+		try {
+			
+			localConnection.begin();
+			final Group newGroup = new Group();
+            newGroup.setOrganizationName("test");
+            newGroup.setAccountName("test");
+            newGroup.setDescription("test");
+            newGroup.setWebsite("test");
+			
+	        testGroup = dao.createNewGroup(newGroup);
+	        localConnection.commit();
+        
+        	return true;
+        	
+		} catch (Exception e) {
+			//System.out.println(e.getMessage());
+			return false;
+			
+		}
+	}
+	
+	private boolean deleteTestGroup() {
+		
+		try {
+			
+			localConnection.begin();
+			dao.deleteGroupById(testGroup.getExternalId());
+			localConnection.commit();
+			testGroup = null;
+			
+			return true;
+			
+		} catch (Exception e) {
+			
+			return false;
+			
+		}
+		
+	}
+	
+	private boolean createTestUser() {
+		
+		try {
+			
+			localConnection.begin();
+			final NewUser newUser = new NewUser();
+            newUser.setEmailAddress("test");
+            newUser.setPassword("test");
+            newUser.setAccountName("test");
+            newUser.setFirstName("test");
+            newUser.setLastName("test");
+			
+	        testUser = userDAO.createNewUser(newUser);
+	        localConnection.commit();
+        
+        	return true;
+        	
+		} catch (Throwable e) {
+			
+			return false;
+			
+		}
+	}
+	
+	private boolean deleteTestUser() {
+		
+		try {
+			
+			localConnection.begin();
+			userDAO.deleteUserById(testUser.getExternalId());
+			localConnection.commit();
+			testUser = null;
+			
+			return true;
+			
+		} catch (Throwable e) {
+			
+			return false;
+			
+		}
+		
+	}
+	
   /*  private static final GroupDAO dao = DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
 			.get().getGroupDAO();
     

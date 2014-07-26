@@ -1,382 +1,464 @@
 package org.ndexbio.common.models.dao;
 
-import java.util.Collection;
 
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.FixMethodOrder;
+import static org.junit.Assert.*;
+
+import org.junit.AfterClass;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
+
+
+import java.util.UUID;
+
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
-import org.ndexbio.common.models.data.IUser;
-import org.ndexbio.model.object.SearchParameters;
-import org.ndexbio.model.object.NewUser;
+import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.UserDAO;
+import org.ndexbio.model.object.SimpleUserQuery;
+import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.NewUser;
 
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestUserDAO extends TestDAO {
+public class TestUserDAO extends TestDAO{
+
+	private static UserDAO dao;
+	private static NdexDatabase database;
+	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
+	private static OrientGraph graph;
+	private static User testUser;
+	private static User user;
+	private static User user2;
+	private static User user3;
 	
-	
-/*	private static final UserDAO dao = DAOFactorySupplier.INSTANCE.
-			resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
-			.get().getUserDAO();
-	*/
-/*	
-	 @Test
-    public void addNetworkToWorkSurface()
-    {
-        Assert.assertTrue(putNetworkOnWorkSurface());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void addNetworkToWorkSurfaceInvalid() throws IllegalArgumentException, ObjectNotFoundException, NdexException
-    {
-        dao.addNetworkToWorkSurface("",this.testUserId);
-    }
-
-    @Test
-    public void authenticateUser()
-    {
-        try
-        {
-            final User authenticatedUser = dao.authenticateUser(this.testUserName, this.testPassword);
-            Assert.assertNotNull(authenticatedUser);
-            Assert.assertEquals(authenticatedUser.getUsername(), this.testUserName);
-        }
-        catch (Exception e)
-        {
-            Assert.fail(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    @Test(expected = SecurityException.class)
-    public void authenticateUserInvalid() throws SecurityException, NdexException
-    {
-        dao.authenticateUser(this.testUserName, "xxxxx");
-    }
-
-    @Test(expected = SecurityException.class)
-    public void authenticateUserInvalidUsername() throws SecurityException, NdexException
-    {
-        dao.authenticateUser("", "insecure");
-    }
-
-    @Test(expected = SecurityException.class)
-    public void authenticateUserInvalidPassword() throws SecurityException, NdexException
-    {
-        dao.authenticateUser(this.testUserName, "");
-    }
-
-    //@Test
-    public void changePassword()
-    {
-        try
-        {
-            dao.changePassword("not-secure", this.testUserId);
-            
-            User authenticatedUser = dao.authenticateUser(this.testUserName, "not-secure");
-            Assert.assertNotNull(authenticatedUser);
-            
-            dao.changePassword(this.testPassword, this.testUserId);
-            authenticatedUser = dao.authenticateUser(this.testUserName, this.testPassword);
-            Assert.assertNotNull(authenticatedUser);
-        }
-        catch (Exception e)
-        {
-            Assert.fail(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void changePasswordInvalid() throws IllegalArgumentException, NdexException
-    {
-        dao.changePassword("",this.testUserId);
-    }
-
-  
-    @Test(expected = IllegalArgumentException.class)
-    public void createUserInvalid() throws IllegalArgumentException, NdexException
-    {
-        dao.createUser(null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void createUserInvalidUsername() throws IllegalArgumentException, NdexException
-    {
-        final NewUser newUser = new NewUser();
+	@BeforeClass
+	public static void setUpBeforeClass() throws Exception {
+		// For acquiring connections from the pool
+		database = new NdexDatabase();
+		
+		// For use with the Orient Document API
+		localConnection = database.getAConnection();
+		
+		// For use with the Orient Graph API. We do not need to issue a localConnection.begin()
+		// to start a Transaction as new OrientGraph() does it already
+		graph = new OrientGraph(localConnection);
+		
+		dao = new UserDAO(localConnection);
+		
+		// Create some users for testing. 
+		NewUser newUser = new NewUser();
         newUser.setEmailAddress("support@ndexbio.org");
         newUser.setPassword("probably-insecure");
+        newUser.setAccountName("Support");
+        newUser.setFirstName("foo");
+        newUser.setLastName("bar");
+        user = dao.createNewUser(newUser);
         
-        dao.createUser(newUser);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void createUserInvalidPassword() throws IllegalArgumentException, NdexException
-    {
-        final NewUser newUser = new NewUser();
-        newUser.setEmailAddress("support@ndexbio.org");
-        newUser.setUsername("Support");
+        newUser = new NewUser();
+        newUser.setEmailAddress("support2@ndexbio.org");
+        newUser.setPassword("probably-insecure2");
+        newUser.setAccountName("Support2");
+        newUser.setFirstName("foo2");
+        newUser.setLastName("bar2");
+        user2 = dao.createNewUser(newUser);
         
-        dao.createUser(newUser);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void createUserInvalidEmail() throws IllegalArgumentException, NdexException
-    {
-        final NewUser newUser = new NewUser();
-        newUser.setPassword("probably-insecure");
-        newUser.setUsername("Support");
+        newUser = new NewUser();
+        newUser.setEmailAddress("support3@ndexbio.org");
+        newUser.setPassword("probably-insecure3");
+        newUser.setAccountName("Support3");
+        newUser.setFirstName("foo3");
+        newUser.setLastName("bar3");
+        user3 = dao.createNewUser(newUser);
         
-        dao.createUser(newUser);
-    }
-
-    @Test
-    public void deleteNetworkFromWorkSurface()
-    {
-        Assert.assertTrue(putNetworkOnWorkSurface());
-        Assert.assertTrue(removeNetworkFromWorkSurface());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteNetworkFromWorkSurfaceInvalid() throws IllegalArgumentException, NdexException
-    {
-        dao.deleteNetworkFromWorkSurface("", this.testUserId);
-    }
-
-    @Test
-    public void deleteUser()
-    {
-        Assert.assertTrue(createNewUser());
-        Assert.assertTrue(deleteTargetUser());
-    }
-
-    @Test
-    public void emailNewPassword()
-    {
-        try
-        {
-            Assert.assertTrue(createNewUser());
-            
-            dao.emailNewPassword("Support");
-            
-            Assert.assertTrue(deleteTargetUser());
-        }
-        catch (Exception e)
-        {
-            Assert.fail(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-*/
+        localConnection.commit();
+        
+	}
 	
-/*	
-    @Test(expected = IllegalArgumentException.class)
-    public void emailNewPasswordInvalid() throws IllegalArgumentException, NdexException
-    {
-        dao.emailNewPassword("");
-    }
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		
+		localConnection.begin();	
+		dao.deleteUserById(user.getExternalId());
+		dao.deleteUserById(user2.getExternalId());
+		dao.deleteUserById(user3.getExternalId());
+		localConnection.commit();
+		localConnection.close();
+		database.close();
+		
+	}
+	
 
-    @Test
-    public void findUsers()
-    {
-        final SearchParameters searchParameters = new SearchParameters();
-        searchParameters.setSearchString("biologist");
-        searchParameters.setSkip(0);
-        searchParameters.setTop(25);
+	// initialize testUser for test suite
+	@Before
+	public void setup() {
+		assertTrue(createTestUser());
+	}
+	//cleanup testUser
+	@After
+	public void teardown() {
+		assertTrue(deleteTestUser());
+	}
+
+	
+	@Test
+    public void authenticateUser() {
+		
+        try {
+        	
+            final User authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "test");
+            assertNotNull(authenticatedUser);
+            assertEquals(authenticatedUser.getAccountName(), testUser.getAccountName());
+            
+        } catch (Exception e) {
+        	
+            fail(e.getMessage());
+            e.printStackTrace();
+            
+        }
         
-        try
-        {
-            final Collection<User> usersFound = dao.findUsers(searchParameters, "contains");
-            Assert.assertNotNull(usersFound);
-        }
-        catch (Exception e)
-        {
-            Assert.fail(e.getMessage());
-            e.printStackTrace();
-        }
     }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void findUsersInvalid() throws IllegalArgumentException, NdexException
-    {
-        dao.findUsers(null, null);
-    }
-
-    @Test
-    public void getUserById()
-    {
-        try
-        {
-            final ORID testUserRid = getRid(this.testUserName);
-            final User testUser = dao.getUser(IdConverter.toJid(testUserRid));
-            Assert.assertNotNull(testUser);
-        }
-        catch (Exception e)
-        {
-            Assert.fail(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void getUserByUsername()
-    {
-        try
-        {
-            final User testUser = dao.getUser(this.testUserName);
-            Assert.assertNotNull(testUser);
-        }
-        catch (Exception e)
-        {
-            Assert.fail(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void getUserInvalid() throws IllegalArgumentException, NdexException
-    {
-        dao.getUser("");
-    }
-
-    @Test
-    public void updateUser()
-    {
-        try
-        {
-            Assert.assertTrue(createNewUser());
-            
-            
-            User loggedInUser = getUser("Support");
-            User user = dao.getUser(this.testUserId);
-
-            user.setEmailAddress("updated-support@ndexbio.org");
-            dao.updateUser(user, this.testUserId);
-            Assert.assertEquals(dao.getUser(loggedInUser.getId()).getEmailAddress(), loggedInUser.getEmailAddress());
-
-            Assert.assertTrue(deleteTargetUser());
-        }
-        catch (Exception e)
-        {
-            Assert.fail(e.getMessage());
-            e.printStackTrace();
-        }
+	
+	@Test(expected = SecurityException.class)
+    public void authenticateUserInvalid() throws SecurityException, NdexException  {
+		// using user constructed in before class
+        dao.authenticateUser(user.getAccountName(), "xxxxx");
+        
     }
 
     @Test(expected = SecurityException.class)
-    public void updateUserInvalidUser() throws IllegalArgumentException, SecurityException, NdexException
-    {
-        Assert.assertTrue(createNewUser());
+    public void authenticateUserInvalidUsername() throws SecurityException, NdexException {
+    	// using password for user constructed in before class
+        dao.authenticateUser("", "probably-insecure");
         
-        dao.updateUser(dao.getUser("Support"),this.testUserId);
-        
-        Assert.assertTrue(deleteTargetUser());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void updateUserInvalid() throws IllegalArgumentException, SecurityException, NdexException
-    {
-        dao.updateUser(null,this.testUserId);
+    @Test(expected = SecurityException.class)
+    public void authenticateUserInvalidPassword() throws SecurityException, NdexException {
+    	// using user constructed in before class
+        dao.authenticateUser(user.getAccountName(), "");
+        
+    }
+	
+	@Test
+	public void createUser() {
+		
+		try {
+			
+			localConnection.begin(); // also aborts any uncommitted transactions.
+			
+			final NewUser newUser = new NewUser();
+            newUser.setEmailAddress("test2");
+            newUser.setPassword("test2");
+            newUser.setAccountName("test2");
+            newUser.setFirstName("test2");
+            newUser.setLastName("test2");
+            
+            assertNotNull(dao.createNewUser(newUser));
+           
+		} catch (Throwable e){
+			
+			fail(e.getMessage());
+			
+		}
+		
+	}
+	
+    @Test
+    public void getUserByUUID() {
+    	
+    	try {
+    		
+    		localConnection.begin(); // also aborts any uncommitted transactions.
+	        final User retrievedUser = dao.getUserById(testUser.getExternalId());
+	        assertNotNull(retrievedUser);
+	        
+    	} catch(Throwable e) {
+    		
+    		fail(e.getMessage());
+    		e.printStackTrace();
+    		
+    	} 
+    	
     }
     
-*/    
-   /* @Test
-	public void createNewUser()
-	    {
-	        try
-	        {
-	            final NewUser newUser = new NewUser();
-	            newUser.setEmailAddress("support@ndexbio.org");
-	            newUser.setPassword("probably-insecure");
-	            newUser.setUsername("Support");
-	            newUser.setFirstname("foo");
-	            newUser.setLastname("bar");
-	            
-	            UserOrientdbDAO dao = UserOrientdbDAO.createInstance();
-	            
-	            final User createdUser = dao.createUser(newUser);
-	            Assert.assertNotNull(createdUser);
-	           
-	        }
-	        catch (Throwable e)
-	        {
-	            Assert.fail(e.getMessage());
-	            e.printStackTrace();
-	        }
-	        
+    @Test
+    public void getUserByAccountName() {
+    	
+    	try {
+    		
+    		localConnection.begin(); // also aborts any uncommitted transactions.
+	        final User retrievedUser = dao.getUserByAccountName(testUser.getAccountName());
+	        assertEquals(retrievedUser.getAccountName(), testUser.getAccountName());
+	        assertNotNull(retrievedUser);
+
+    	} catch(Throwable e) {
+    		
+    		fail(e.getMessage());
+    		e.printStackTrace();
+    		
+    	} 
+    	
+    }
+    
+    @Test
+    public void findUsers() {
+    	
+    	try {
+	    		
+    		localConnection.begin();
+	    	final SimpleUserQuery simpleQuery = new SimpleUserQuery();
+	    	simpleQuery.setSearchString("support");
+	    	
+	    	assertTrue(!dao.findUsers(simpleQuery, 0, 5).isEmpty());
+    	
+		} catch (Exception e) {
+			
+			fail(e.getMessage());
+			e.printStackTrace();
+			
+		} 
+    	
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void findUsersInvalid() throws IllegalArgumentException, NdexException {
+        dao.findUsers(null,0,0);
+    }
+    
+	@Test(expected = NdexException.class)
+	public void deleteUserByUUID() throws NdexException {
+
+		final UUID id = testUser.getExternalId();
+		localConnection.begin();
+		dao.deleteUserById(id);
+		testUser = null;
+		localConnection.commit();
+		localConnection.begin();
+		try { 
+		dao.getUserById(id);
+		} catch(NdexException e) {
+			throw e;
+		} finally {
+			assertTrue(createTestUser());
+		}
+		
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+    public void createUserInvalid() throws IllegalArgumentException, NdexException {
+		
+		localConnection.begin();
+        dao.createNewUser(null);
+        
+    }
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void createUserInvalidAccountName() throws NdexException, IllegalArgumentException {
+		
+			localConnection.begin(); // also aborts any uncommitted transactions.
+			
+			final NewUser newUser = new NewUser();
+            newUser.setEmailAddress("test");
+            newUser.setPassword("test");
+            newUser.setAccountName("");
+            newUser.setFirstName("test");
+            newUser.setLastName("test");
+            
+            dao.createNewUser(newUser);
+            
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void createUserInvalidPassword() throws NdexException, IllegalArgumentException {
+		
+			localConnection.begin(); // also aborts any uncommitted transactions.
+			
+			final NewUser newUser = new NewUser();
+            newUser.setEmailAddress("test");
+            newUser.setPassword("");
+            newUser.setAccountName("test");
+            newUser.setFirstName("test");
+            newUser.setLastName("test");
+            
+            dao.createNewUser(newUser);
+            
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void createUserInvalidEmail() throws NdexException, IllegalArgumentException {
+		
+			localConnection.begin(); // also aborts any uncommitted transactions.
+			
+			final NewUser newUser = new NewUser();
+            newUser.setEmailAddress("");
+            newUser.setPassword("test");
+            newUser.setAccountName("test");
+            newUser.setFirstName("test");
+            newUser.setLastName("test");
+            
+            dao.createNewUser(newUser);
+            
+	}
+	
+	@Test(expected = DuplicateObjectException.class)
+	public void createUserExistingUser() throws IllegalArgumentException, NdexException, DuplicateObjectException {
+		
+				localConnection.begin(); // also aborts any uncommitted transactions.	
 	  
-	    }
-	*/
-/*    
-	    private boolean deleteTargetUser()
-	    {
-	        try
-	        {	            
-	            User user = getUser("Support");
-	            dao.deleteUser(user.getId());
-	            Assert.assertNull(dao.getUser(user.getId()));
-	            return true;
-	        }
-	        catch (Exception e)
-	        {
-	            Assert.fail(e.getMessage());
-	            e.printStackTrace();
-	        }
+				final NewUser newUser = new NewUser();
+	            newUser.setEmailAddress("test");
+	            newUser.setPassword("test");
+	            newUser.setAccountName("test");
+	            newUser.setFirstName("test");
+	            newUser.setLastName("test");
+				
+	            dao.createNewUser(newUser);
+			
+	}
+	
+	@Test(expected = ObjectNotFoundException.class)
+	public void deleteUser_nonExistant() throws NdexException, ObjectNotFoundException {
+	
+			localConnection.begin(); // also aborts any uncommitted transactions.
+            dao.deleteUserById(NdexUUIDFactory.INSTANCE.getNDExUUID());
+            
+	} 
+	
+	/*@Test
+	public void emailNewPassword() {
+		 //fail("Does this verify complete funcitonality?");
+	    try {
+		   
+           assertEquals(dao.emailNewPassword("Support").getStatus(), 200);
+		   
+	    } catch (Exception e)  {
+		   
+           fail(e.getMessage());
+           e.printStackTrace();
+           
+	    } 
 	        
-	        return false;
-	    }
-	    
-	    private boolean putNetworkOnWorkSurface()
-	    {
-	        try
-	        {
-	            final ORID testNetworkRid = getRid(this.testNetworkName);
-	            dao.addNetworkToWorkSurface(IdConverter.toJid(testNetworkRid),this.testUserId);
-	            
-	            final User testUser = dao.getUser(this.testUserName);
-	            Assert.assertEquals(testUser.getWorkSurface().size(), 1);
-	            return true;
-	        }
-	        catch (DuplicateObjectException doe)
-	        {
-	            return true;
-	        }
-	        catch (Exception e)
-	        {
-	            Assert.fail(e.getMessage());
-	            e.printStackTrace();
-	        }
-	        
-	        return false;
-	    }
-	    
-	    private boolean removeNetworkFromWorkSurface()
-	    {
-	        try
-	        {
-	            final ORID testNetworkRid = getRid(this.testNetworkName);
-	            dao.deleteNetworkFromWorkSurface(IdConverter.toJid(testNetworkRid),this.testUserId);
-	            
-	            final User testUser = dao.getUser(this.testUserName);
-	            Assert.assertEquals(testUser.getWorkSurface().size(), 0);
-	            
-	            return true;
-	        }
-	        catch (Exception e)
-	        {
-	            Assert.fail(e.getMessage());
-	            e.printStackTrace();
-	        }
-	        
-	        return false;
-	    }
-*/
+	}
+	/*
+	@Test(expected = IllegalArgumentException.class)
+    public void emailNewPasswordInvalid() throws IllegalArgumentException, NdexException {
+        dao.emailNewPassword("");
+    }*/
+	
+	@Test
+    public void changePassword() {
+		
+        try {
+        	
+            dao.changePassword("not-secure", testUser.getExternalId());
+            
+            User authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "not-secure");
+            assertNotNull(authenticatedUser);
+            
+            dao.changePassword("test", testUser.getExternalId());
+            authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "test");
+            
+            assertNotNull(authenticatedUser);
+            
+        } catch (Exception e) {
+        	
+            fail(e.getMessage());
+            e.printStackTrace();
+            
+        } 
+    }
+	
+	@Test(expected = IllegalArgumentException.class)
+    public void changePasswordInvalid() throws IllegalArgumentException, NdexException {
+		
+		try {
+			
+			dao.changePassword("", testUser.getExternalId());
+			
+		} catch (Throwable e){
+			
+			throw e;
+			
+		}
+    }
+	
+	@Test
+    public void updateUser() {
+        try {
+        	
+            //User user = dao.getUserById(testUser.getExternalId());
+            final User updated = new User();
+            updated.setDescription("changed");
+            
+            localConnection.begin();
+            dao.updateUser(updated, testUser.getExternalId());
+            localConnection.commit();
+            
+            assertEquals(updated.getDescription(), dao.getUserById(testUser.getExternalId()).getDescription());
+            assertEquals(testUser.getEmailAddress(), dao.getUserById(testUser.getExternalId()).getEmailAddress());
+            
+        } catch (Exception e) {
+        	
+            fail(e.getMessage());
+            e.printStackTrace();
+            
+        } 
+        
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void updateUserInvalid() throws IllegalArgumentException, SecurityException, NdexException {
+    	
+        dao.updateUser(null, user.getExternalId());
+        
+    }
+
+	private boolean createTestUser() {
+		
+		try {
+			
+			localConnection.begin();
+			final NewUser newUser = new NewUser();
+            newUser.setEmailAddress("test");
+            newUser.setPassword("test");
+            newUser.setAccountName("test");
+            newUser.setFirstName("test");
+            newUser.setLastName("test");
+			
+	        testUser = dao.createNewUser(newUser);
+	        localConnection.commit();
+        
+        	return true;
+        	
+		} catch (Throwable e) {
+			
+			return false;
+			
+		}
+	}
+	
+	private boolean deleteTestUser() {
+		
+		try {
+			
+			localConnection.begin();
+			dao.deleteUserById(testUser.getExternalId());
+			localConnection.commit();
+			testUser = null;
+			
+			return true;
+			
+		} catch (Throwable e) {
+			
+			return false;
+			
+		}
+		
+	}
+	
 }
