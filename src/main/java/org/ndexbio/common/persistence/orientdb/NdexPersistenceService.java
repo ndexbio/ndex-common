@@ -271,6 +271,7 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
+		nodeDoc.reload();
 		elementIdCache.put(node.getId(), nodeDoc);
 		return node;
 		
@@ -302,6 +303,7 @@ public class NdexPersistenceService  {
 		networkVertex.addEdge(NdexClasses.Network_E_ReifedEdgeTerms,
 				etV);
 		
+		eTermdoc.reload();
 		elementIdCache.put(eTerm.getId(), eTermdoc);
 		return eTerm;
 	}
@@ -330,6 +332,7 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
+		nodeDoc.reload();
 		elementIdCache.put(node.getId(), nodeDoc);
 		
 		externalIdNodeMap.put(id, node);
@@ -385,7 +388,7 @@ public class NdexPersistenceService  {
 		
 
 		ODocument nsDoc = new ODocument(NdexClasses.Namespace);
-		nsDoc.field("prefix", key.getPrefix())
+		nsDoc = nsDoc.field("prefix", key.getPrefix())
 		  .field("uri", ns.getUri())
 		  .field("id", ns.getId())
 //		  .field("in_" + NdexClasses.Network_E_Namespace ,networkDoc,OType.LINK)
@@ -408,6 +411,7 @@ public class NdexPersistenceService  {
 		if ( ns.getUri() != null) 
 			URINamespaceMap.put(ns.getUri(), ns);
 		
+		nsDoc.reload();
 		elementIdCache.put(ns.getId(),nsDoc);
 		return ns; 
 		
@@ -448,6 +452,7 @@ public class NdexPersistenceService  {
 		citationV.addEdge(NdexClasses.E_ndexProperties, pV);
 		networkV.addEdge(NdexClasses.Network_E_Citations, citationV);
 
+		citationDoc.reload();
 		elementIdCache.put(citation.getId(), citationDoc);
 		return citation; 
 		
@@ -481,6 +486,7 @@ public class NdexPersistenceService  {
 		supportV.addEdge(NdexClasses.Support_E_citation, citationV);
 		networkV.addEdge(NdexClasses.Network_E_Supports, supportV);
 
+		supportDoc.reload();
 		elementIdCache.put(support.getId(), supportDoc);
 		return support; 
 		
@@ -511,6 +517,7 @@ public class NdexPersistenceService  {
         	fTermV.addEdge(NdexClasses.FunctionTerm_E_paramter, graph.getVertex(o));
         }
 	    
+        fTerm.reload();
         elementIdCache.put(f.getId(), fTerm);
         return f;
 	}
@@ -629,6 +636,7 @@ public class NdexPersistenceService  {
 		}
 		  
         networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
+        btDoc.reload();
         elementIdCache.put(bterm.getId(), btDoc);
 		return bterm;
 	}
@@ -659,6 +667,7 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
+		nodeDoc.reload();
 		elementIdCache.put(node.getId(), nodeDoc);
 		return node;
 	}
@@ -690,6 +699,7 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
+		nodeDoc.reload();
 		elementIdCache.put(node.getId(), nodeDoc);
 		return node;
 	}
@@ -720,6 +730,7 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
+		nodeDoc.reload();
 		elementIdCache.put(node.getId(), nodeDoc);
 		return node;
 	}
@@ -882,7 +893,7 @@ public class NdexPersistenceService  {
 		addPropertiesToVertex ( networkVertex, properties, presentationProperties);
 	}
 	
-
+	
 	/**
 	 *  create a represent edge from a node to a term.
 	 * @param nodeId
@@ -1166,6 +1177,7 @@ public class NdexPersistenceService  {
 		    	edge.getSupports().add(support.getId());
 		    }
 		    
+		    edgeDoc.reload();
 		    elementIdCache.put(edge.getId(), edgeDoc);
 			return edge;
 		} 
@@ -1177,7 +1189,9 @@ public class NdexPersistenceService  {
 	
 	public void commit () {
 		graph.commit();
-		database.commit();
+		this.networkDoc.reload();
+		this.networkVertex = graph.getVertex(networkDoc);
+	//	database.commit();
 	}
 
 	private ODocument getNetworkDoc() {
@@ -1208,6 +1222,7 @@ public class NdexPersistenceService  {
 		//	elementIdCache.put(b.getId(), bDoc);
 		}
 		
+		nodeV.getRecord().reload();
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
 	
@@ -1224,6 +1239,7 @@ public class NdexPersistenceService  {
 		//	elementIdCache.put(b.getId(), bDoc);
 		}
 		
+		nodeV.getRecord().reload();
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
 	
@@ -1253,13 +1269,17 @@ public class NdexPersistenceService  {
 			nodeV.addEdge(NdexClasses.Edge_E_citations, graph.getVertex(citationV));
 		}
 		
-		elementIdCache.put(elementId, nodeV.getRecord());
+		ODocument o = nodeV.getRecord();
+		o.reload();
+		elementIdCache.put(elementId, o);
 	}
 	
 	public void setNodeName(long nodeId, String name) throws ExecutionException {
 		ODocument nodeDoc = elementIdCache.get(nodeId);
 		
 		nodeDoc = nodeDoc.field(NdexClasses.Node_P_name, name).save();
+		
+		nodeDoc.reload();
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 	

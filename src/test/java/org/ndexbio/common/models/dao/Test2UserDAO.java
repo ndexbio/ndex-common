@@ -80,11 +80,11 @@ public class Test2UserDAO extends TestDAO{
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		
-		localConnection.begin();	
+	/*	localConnection.begin();	
 		dao.deleteUserById(user.getExternalId());
 		dao.deleteUserById(user2.getExternalId());
 		dao.deleteUserById(user3.getExternalId());
-		localConnection.commit();
+		localConnection.commit(); */
 		localConnection.close();
 		
 	}
