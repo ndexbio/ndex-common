@@ -5,7 +5,6 @@ import java.util.List;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.data.*;
 import org.ndexbio.common.models.object.Status;
 import org.ndexbio.model.object.Task;
 import org.slf4j.Logger;
