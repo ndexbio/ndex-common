@@ -145,7 +145,7 @@ public class GroupDAO {
 				group.delete();
 			}
 			catch (Exception e) {
-				logger.severe("Could not delete user from the database");
+				logger.severe("Could not delete group from the database");
 				throw new NdexException(e.getMessage());
 			}
 		
@@ -304,7 +304,7 @@ public class GroupDAO {
 		}
 		
 		if (groups.isEmpty()) {
-			logger.info("User with UUID " + id + " does not exist");
+			logger.info("Group with UUID " + id + " does not exist");
 			throw new ObjectNotFoundException("Group", id.toString());
 		}
 		
@@ -330,7 +330,7 @@ public class GroupDAO {
 
 		if (groups.isEmpty()) {
 			logger.info("User with accountName " + accountName + " does not exist");
-			throw new ObjectNotFoundException("User", accountName);
+			throw new ObjectNotFoundException("Group", accountName);
 		}
 
 		return groups.get(0);
