@@ -10,17 +10,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.models.data.IBaseTerm;
-import org.ndexbio.common.models.data.ICitation;
-import org.ndexbio.common.models.data.IEdge;
-import org.ndexbio.common.models.data.IFunctionTerm;
-import org.ndexbio.common.models.data.INamespace;
-import org.ndexbio.common.models.data.INode;
-import org.ndexbio.common.models.data.IReifiedEdgeTerm;
-import org.ndexbio.common.models.data.ISupport;
-import org.ndexbio.common.models.data.ITerm;
 import org.ndexbio.common.models.object.MetaParameter;
 import org.ndexbio.model.object.SearchParameters;
+import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.Citation;
+import org.ndexbio.model.object.network.Edge;
+import org.ndexbio.model.object.network.Node;
+import org.ndexbio.model.object.network.Support;
+import org.ndexbio.model.object.network.Term;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -32,31 +29,31 @@ public class NetworkUtility {
 
 	private static Joiner csvJoiner = Joiner.on(',').skipNulls();
 	
-	public static String joinEdgeIdsToCsv(Collection<IEdge> iEdges) {
+	public static String joinEdgeIdsToCsv(Collection<Edge> iEdges) {
 		String resultString = "";
 		if (iEdges.size() < 1) return resultString;
-		for (final IEdge iEdge: iEdges) {
-			resultString += iEdge.asVertex().getId().toString() + ", ";
+		for (final Edge iEdge: iEdges) {
+			resultString += iEdge.getId() + ", ";
 		}
 		resultString = resultString.substring(0, resultString.length() - 2);
 		return resultString;
 	}
 
-	public static String joinNodeIdsToCsv(List<INode> iNodes) {
+	public static String joinNodeIdsToCsv(List<Node> iNodes) {
 		String resultString = "";
 		if (iNodes.size() < 1) return resultString;
-		for (final INode iNode: iNodes) {
-			resultString += iNode.asVertex().getId().toString() + ", ";
+		for (final Node iNode: iNodes) {
+			resultString += iNode.getId() + ", ";
 		}
 		resultString = resultString.substring(0, resultString.length() - 2);
 		return resultString;
 	}
 
-	public static String joinCitationIdsToCsv(List<ICitation> iCitations) {
+	public static String joinCitationIdsToCsv(List<Citation> iCitations) {
 		String resultString = "";
 		if (iCitations.size() < 1) return resultString;
-		for (final ICitation iCitation: iCitations) {
-			resultString += iCitation.asVertex().getId().toString() + ", ";
+		for (final Citation iCitation: iCitations) {
+			resultString += iCitation.getId() + ", ";
 		}
 		resultString = resultString.substring(0, resultString.length() - 2);
 		return resultString;
@@ -96,11 +93,11 @@ public class NetworkUtility {
 	 * @param vertexFrames
 	 * @return resultString
 	 **************************************************************************/
-	public static  String joinBaseTermIdsToCsv(List<IBaseTerm> iBaseTerms) {
+	public static  String joinBaseTermIdsToCsv(List<BaseTerm> iBaseTerms) {
 		String resultString = "";
 		if (iBaseTerms.size() < 1) return resultString;
-		for (final IBaseTerm iBaseTerm : iBaseTerms) {
-			resultString += iBaseTerm.asVertex().getId().toString() + ", ";
+		for (final BaseTerm iBaseTerm : iBaseTerms) {
+			resultString += iBaseTerm.getId() + ", ";
 		}
 		resultString = resultString.substring(0, resultString.length() - 2);
 		return resultString;
@@ -139,54 +136,53 @@ public class NetworkUtility {
 		return metadataParameters;
 	}
 
-	public  static Set<ISupport> getEdgeSupports(final Collection<IEdge> edges) {
-		final Set<ISupport> edgeSupports = new HashSet<ISupport>();
+	public  static Set<Long> getEdgeSupports(final Collection<Edge> edges) {
+		final Set<Long> edgeSupports = new HashSet<Long>();
 	
-		for (final IEdge edge : edges) {
-			for (final ISupport support : edge.getSupports())
+		for (final Edge edge : edges) {
+			for (final Long support : edge.getSupports())
 				edgeSupports.add(support);
 		}
 	
 		return edgeSupports;
 	}
 
-	public static Set<ICitation> getEdgeCitations(final Collection<IEdge> edges,
-			final Collection<ISupport> supports) {
-		final Set<ICitation> edgeCitations = new HashSet<ICitation>();
-		for (final IEdge edge : edges) {
-			for (final ICitation citation : edge.getCitations())
+	public static Set<Long> getEdgeCitations(final Collection<Edge> edges,
+			final Collection<Support> supports) {
+		final Set<Long> edgeCitations = new HashSet<Long>();
+		for (final Edge edge : edges) {
+			for (final Long citation : edge.getCitations())
 				edgeCitations.add(citation);
 		}
 	
-		for (final ISupport support : supports) {
-			if (support.getSupportCitation() != null)
-				edgeCitations.add(support.getSupportCitation());
+		for (final Support support : supports) {
+			if (support.getCitation() >0 ) 
+				edgeCitations.add(support.getCitation());
 		}
-	
 		return edgeCitations;
 	}
 
-	public static Set<INode> getEdgeNodes(final Collection<IEdge> edges) {
-		final Set<INode> edgeNodes = new HashSet<INode>();
+	public static Set<Long> getEdgeNodes(final Collection<Edge> edges) {
+		final Set<Long> edgeNodes = new HashSet<Long>();
 	
-		for (final IEdge edge : edges) {
-			edgeNodes.add(edge.getSubject());
-			edgeNodes.add(edge.getObject());
+		for (final Edge edge : edges) {
+			edgeNodes.add(edge.getSubjectId());
+			edgeNodes.add(edge.getObjectId());
 		}
 	
 		return edgeNodes;
 	}
 
-	public static Set<ITerm> getEdgeTerms(final Collection<IEdge> edges,
-			final Collection<INode> nodes) throws NdexException {
-		final Set<ITerm> edgeTerms = new HashSet<ITerm>();
+	public static Set<Long> getEdgeTerms(final Collection<Edge> edges,
+			final Collection<Node> nodes) throws NdexException {
+		final Set<Long> edgeTerms = new HashSet<Long>();
 	
 		if (null != edges){
-			for (final IEdge edge : edges)
-				edgeTerms.add(edge.getPredicate());
+			for (final Edge edge : edges)
+				edgeTerms.add(edge.getPredicateId());
 		}
 		
-		for (final INode node : nodes) {
+/*		for (final Node node : nodes) {
 			if (node.getRepresents() != null){
 				NetworkUtility.addTermAndFunctionalDependencies(node.getRepresents(),
 						edgeTerms);
@@ -204,10 +200,10 @@ public class NetworkUtility {
 				}
 			}
 		}
-	
+*/	
 		return edgeTerms;
 	}
-
+/*
 	public static void addTermAndFunctionalDependencies(final ITerm term,
 			final Set<ITerm> terms) throws NdexException {
 		if (terms.add(term)) {
@@ -248,5 +244,5 @@ public class NetworkUtility {
 	    }
 	    return (int) l;
 	}
-
+*/
 }

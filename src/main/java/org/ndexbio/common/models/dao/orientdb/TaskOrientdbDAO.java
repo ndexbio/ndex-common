@@ -10,9 +10,6 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.dao.TaskDAO;
-import org.ndexbio.common.models.data.INetwork;
-import org.ndexbio.common.models.data.ITask;
-import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.common.models.object.TaskType;
@@ -53,7 +50,7 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
             
            
             setupDatabase();
-            final IUser taskOwner = this.findIuserById(userId);
+     /*       final IUser taskOwner = this.findIuserById(userId);
             username = taskOwner.getUsername();
             final ITask task = _orientDbGraph.addVertex("class:task", ITask.class);
             task.setDescription(newTask.getDescription());
@@ -65,7 +62,8 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
 //            task.setStartTime(newTask.getCreatedDate());
  //           task.setType(newTask.getType());
  //           newTask.setId(IdConverter.toJid((ORID) task.asVertex().getId()));
-            return newTask;
+            return newTask; */
+            return null;
         }
         catch (Exception e)
         {
@@ -94,7 +92,7 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
         {
         	
             setupDatabase();
-            String userName = this.findIuserById(userId).getUsername();
+     /*       String userName = this.findIuserById(userId).getUsername();
             final ITask taskToDelete = _orientDbGraph.getVertex(taskRid, ITask.class);
             if (taskToDelete == null)
                 throw new ObjectNotFoundException("Task", taskId);
@@ -102,7 +100,7 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
                 throw new SecurityException("You cannot delete a task you don't own.");
     
             _orientDbGraph.removeVertex(taskToDelete.asVertex());
-           
+         */  
         }
         catch (SecurityException | ObjectNotFoundException onfe)
         {
@@ -138,15 +136,15 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
 	            final ORID taskRid = IdConverter.toRid(taskId);
 	           
 	            setupDatabase();
-	            String userName = this.findIuserById(userId).getUsername();
-	            final ITask task = _orientDbGraph.getVertex(taskRid, ITask.class);
+	     //       String userName = this.findIuserById(userId).getUsername();
+	   /*         final ITask task = _orientDbGraph.getVertex(taskRid, ITask.class);
 	            if (task != null)
 	            {
 	                if (!task.getOwner().getUsername().equals(userName))
 	                    throw new SecurityException("Access denied.");
 	                else
 	                    return new Task();
-	            }
+	            } */
 	        }
 	        catch (SecurityException se)
 	        {
@@ -230,7 +228,7 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
 		try {
 			 
 			setupDatabase();
-			userName = this.findIuserById(userId).getUsername();
+	/*		userName = this.findIuserById(userId).getUsername();
 			ORID taskRid = IdConverter.toRid(taskId);
 			final ITask taskToUpdate = _orientDbGraph.getVertex(taskRid,
 					ITask.class);
@@ -248,7 +246,8 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
 
 			taskToUpdate.setStatus(s);
 			Task updatedTask = new Task(); //taskToUpdate);
-			return updatedTask;
+			return updatedTask; */
+			return null;
 		} catch (Exception e) {
 			_logger.error("Error changing task status for: "
 					+ userName + ".", e);
@@ -274,7 +273,7 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
 	try {
 		
 		setupDatabase();
-		final IUser taskOwner = this.findIuserById(userId);
+/*		final IUser taskOwner = this.findIuserById(userId);
 		username = taskOwner.getUsername();
 		final INetwork network = _orientDbGraph.getVertex(
 				IdConverter.toRid(networkId), INetwork.class);
@@ -295,7 +294,8 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
 		// retain commit statement for planned return to transaction-based operation
 		_orientDbGraph.getBaseGraph().commit();
 		Task newTask = new Task(); //processNetworkTask);
-		return newTask;
+		return newTask;*/
+		return null;
 	} 
 	catch (Exception e)
     {

@@ -114,7 +114,7 @@ public class NdexPersistenceService  {
 	public NdexPersistenceService(NdexDatabase db) {
 		this.database = db;
 		this.localConnection = this.database.getAConnection();
-		this.graph = new OrientGraph(this.localConnection);
+		this.graph = new OrientGraph(this.localConnection,false);
 //		graph.setAutoStartTx(false);
 		this.networkDAO = new NetworkDAO(localConnection,true);
 		prefixMap = new HashMap<String,Namespace>();
@@ -842,6 +842,8 @@ public class NdexPersistenceService  {
 			e.printStackTrace();
 		} finally {
 			commit();
+			this.localConnection.close();
+			this.database.close();
 			System.out
 					.println("Connection to orientdb database has been closed");
 		}
@@ -1188,12 +1190,14 @@ public class NdexPersistenceService  {
 	
 	
 	public void commit () {
-		graph.commit();
+		//graph.commit();
+		this.localConnection.commit();
 		this.networkDoc.reload();
 		this.networkVertex = graph.getVertex(networkDoc);
 	//	database.commit();
 	}
 
+	
 	private ODocument getNetworkDoc() {
 		return networkDoc;
 	}

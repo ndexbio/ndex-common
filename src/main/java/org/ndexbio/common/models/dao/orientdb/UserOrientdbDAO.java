@@ -27,8 +27,6 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.dao.CommonDAOValues;
-import org.ndexbio.common.models.data.INetwork;
-import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.UploadedFile;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.SearchParameters;
@@ -81,7 +79,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 		try {
 			setupDatabase();
 
-			final IUser user = _orientDbGraph.getVertex(userRid, IUser.class);
+/*			final IUser user = _orientDbGraph.getVertex(userRid, IUser.class);
 			username = user.getUsername();
 			final INetwork network = _orientDbGraph.getVertex(networkRid,
 					INetwork.class);
@@ -107,7 +105,9 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 					updatedWorkSurface.add(new Network());
 			}
 
-			return updatedWorkSurface;
+			return updatedWorkSurface; 
+			*/
+			return null;
 		} catch (DuplicateObjectException | ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
@@ -170,11 +170,11 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 				password = password.substring(0, password.length() - 1);
 
 			setupDatabase();
-			username = this.findIuserById(userId).getUsername();
+	/*		username = this.findIuserById(userId).getUsername();
 			final IUser existingUser = _orientDbGraph.getVertex(userRid,
-					IUser.class);
-			
-			existingUser.setPassword(Security.hashText(password.trim()));
+	 				IUser.class);
+	*/		
+	//		existingUser.setPassword(Security.hashText(password.trim()));
 
 			
 		} catch (Exception e) {
@@ -206,7 +206,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 		try {
 			
 			setupDatabase();
-			final IUser user = this.findIuserById(userId);
+/*			final IUser user = this.findIuserById(userId);
 			if (user == null)
 				throw new ObjectNotFoundException("User", userRId);
 
@@ -236,7 +236,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 				ImageIO.write(resizedImage, "jpg", new File(Configuration
 						.getInstance().getProperty("Profile-Background-Path")
 						+ user.getUsername() + ".jpg"));
-			}
+			} */
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
@@ -387,7 +387,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 		String username = "";
 		try {
 			setupDatabase();
-			username = this.findIuserById(userId).getUsername();
+		/*	username = this.findIuserById(userId).getUsername();
 			final IUser user = _orientDbGraph.getVertex(userRid, IUser.class);
 
 			final INetwork network = _orientDbGraph.getVertex(networkRid,
@@ -396,16 +396,17 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 				throw new ObjectNotFoundException("Network", networkId);
 
 			user.removeNetworkFromWorkSurface(network);
-			
+		*/	
 
 			final ArrayList<Network> updatedWorkSurface = Lists.newArrayList();
-			final Iterable<INetwork> onWorkSurface = user.getWorkSurface();
+		/*	final Iterable<INetwork> onWorkSurface = user.getWorkSurface();
 			if (onWorkSurface != null) {
 				for (INetwork workSurfaceNetwork : onWorkSurface)
 					updatedWorkSurface.add(new Network());
 			}
 
-			return updatedWorkSurface;
+			return updatedWorkSurface; */
+			return null;
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
@@ -434,11 +435,11 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 		try {
 			
 			setupDatabase();
-			username = this.findIuserById(userId).getUsername();
+	/*		username = this.findIuserById(userId).getUsername();
 
 			final IUser userToDelete = _orientDbGraph.getVertex(userRid,
 					IUser.class);
-
+*/
 			final List<ODocument> adminGroups = _ndexDatabase
 					.query(new OSQLSynchQuery<Integer>(
 							"SELECT COUNT(@RID) FROM Membership WHERE in_groups = "
@@ -468,13 +469,13 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 			for (ODocument userChild : userChildren) {
 				final ORID childId = userChild.field("rid", OType.LINK);
 
-				final OrientElement element = _orientDbGraph.getBaseGraph()
+	/*			final OrientElement element = _orientDbGraph.getBaseGraph()
 						.getElement(childId);
 				if (element != null)
-					element.remove();
+					element.remove(); */
 			}
 
-			_orientDbGraph.removeVertex(userToDelete.asVertex());
+	//		_orientDbGraph.removeVertex(userToDelete.asVertex());
 			
 		} catch (NdexException ne) {
 			throw ne;
@@ -508,11 +509,11 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 			if (usersFound.size() < 1)
 				throw new ObjectNotFoundException("User", username);
 
-			final IUser authUser = _orientDbGraph.getVertex(
+/*			final IUser authUser = _orientDbGraph.getVertex(
 					usersFound.toArray()[0], IUser.class);
-
+*/
 			final String newPassword = Security.generatePassword();
-			authUser.setPassword(Security.hashText(newPassword));
+	//		authUser.setPassword(Security.hashText(newPassword));
 
 			final File forgotPasswordFile = new File(Configuration
 					.getInstance().getProperty("Forgot-Password-File"));
@@ -529,12 +530,12 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 				forgotPasswordText.append(lineOfText.replace("{password}",
 						newPassword));
 
-			Email.sendEmail(
+	/*		Email.sendEmail(
 					Configuration.getInstance().getProperty(
 							"Forgot-Password-Email"),
 					authUser.getEmailAddress(), "Password Recovery",
 					forgotPasswordText.toString());
-
+*/ 
 			
 			return Response.ok().build();
 		} catch (ObjectNotFoundException onfe) {

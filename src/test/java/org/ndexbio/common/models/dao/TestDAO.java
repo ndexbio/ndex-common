@@ -6,7 +6,6 @@ import java.util.Properties;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
-import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.model.object.User;
 
 import com.orientechnologies.orient.core.id.ORID;
@@ -66,7 +65,7 @@ public abstract class TestDAO extends OrientdbDAO {
 	    **************************************************************************/
 	    protected ORID getRid(String objectName) throws IllegalArgumentException, NdexException
 	    {
-	        objectName = objectName.replace("'", "\\'");
+	/*        objectName = objectName.replace("'", "\\'");
 	        this.setupDatabase();
 	        final List<ODocument> matchingUsers = _ndexDatabase.query(new OSQLSynchQuery<Object>("select from User where username = '" + objectName + "'"));
 	        if (!matchingUsers.isEmpty())
@@ -89,6 +88,10 @@ public abstract class TestDAO extends OrientdbDAO {
 	            return (ORID)_orientDbGraph.getVertex(matchingTasks.get(0)).getId();
 	        
 	        throw new IllegalArgumentException(objectName + " is not a user, group, network, request, or task.");
+	        */
+	    	return null;
+	        
+	         
 	    }
 
 	    /**************************************************************************

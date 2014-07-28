@@ -30,7 +30,7 @@ public class TestUserDAO extends TestDAO{
 	private static UserDAO dao;
 	private static NdexDatabase database;
 	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
-	private static OrientGraph graph;
+//	private static OrientGraph graph;
 	private static User testUser;
 	private static User user;
 	private static User user2;
@@ -46,7 +46,7 @@ public class TestUserDAO extends TestDAO{
 		
 		// For use with the Orient Graph API. We do not need to issue a localConnection.begin()
 		// to start a Transaction as new OrientGraph() does it already
-		graph = new OrientGraph(localConnection);
+	//	graph = new OrientGraph(localConnection);
 		
 		dao = new UserDAO(localConnection);
 		
@@ -74,8 +74,9 @@ public class TestUserDAO extends TestDAO{
         newUser.setFirstName("foo3");
         newUser.setLastName("bar3");
         user3 = dao.createNewUser(newUser);
-        
+     
         localConnection.commit();
+   //     graph.commit();
         
 	}
 	
@@ -83,13 +84,13 @@ public class TestUserDAO extends TestDAO{
 	public static void tearDownAfterClass() throws Exception {
 		
 		localConnection.begin();	
-		dao.deleteUserById(user.getExternalId());
+	//	dao.deleteUserById(user.getExternalId());
 		dao.deleteUserById(user2.getExternalId());
 		dao.deleteUserById(user3.getExternalId());
 		localConnection.commit();
 		localConnection.close();
 		database.close();
-		
+	
 	}
 	
 
@@ -110,7 +111,7 @@ public class TestUserDAO extends TestDAO{
 		
         try {
         	
-            final User authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "test");
+            final User authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "Support");
             assertNotNull(authenticatedUser);
             assertEquals(authenticatedUser.getAccountName(), testUser.getAccountName());
             
@@ -122,7 +123,7 @@ public class TestUserDAO extends TestDAO{
         }
         
     }
-	
+	/*
 	@Test(expected = SecurityException.class)
     public void authenticateUserInvalid() throws SecurityException, NdexException  {
 		// using user constructed in before class
@@ -344,12 +345,13 @@ public class TestUserDAO extends TestDAO{
 	    } 
 	        
 	}
+	*/
 	/*
 	@Test(expected = IllegalArgumentException.class)
     public void emailNewPasswordInvalid() throws IllegalArgumentException, NdexException {
         dao.emailNewPassword("");
     }*/
-	
+	/*
 	@Test
     public void changePassword() {
 		
@@ -417,7 +419,7 @@ public class TestUserDAO extends TestDAO{
         dao.updateUser(null, user.getExternalId());
         
     }
-
+*/
 	private boolean createTestUser() {
 		
 		try {

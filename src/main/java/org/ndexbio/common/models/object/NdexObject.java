@@ -8,9 +8,9 @@ import org.ndexbio.common.helpers.IdConverter;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.frames.VertexFrame;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public abstract class NdexObject
 {
     private String _id;
@@ -30,11 +30,11 @@ public abstract class NdexObject
     * Constructor that sets the ID using the given vertex. 
     **************************************************************************/
     @Deprecated
-    public NdexObject(VertexFrame vf)
+ /*   public NdexObject(VertexFrame vf)
     {
         _id = resolveVertexId(vf);
     }
-
+*/
     public NdexObject(ODocument ndexObj)
     {
         _id = ndexObj.getIdentity().toString();
@@ -68,11 +68,11 @@ public abstract class NdexObject
     * Converts the RID (OrientDB's ID) into the JID (which is safe for the
     * web). 
     **************************************************************************/
-    private String resolveVertexId(VertexFrame vf)
+ /*   private String resolveVertexId(VertexFrame vf)
     {
         if (null == vf)
             return null;
 
         return IdConverter.toJid((ORID)vf.asVertex().getId());
-    }
+    }*/
 }

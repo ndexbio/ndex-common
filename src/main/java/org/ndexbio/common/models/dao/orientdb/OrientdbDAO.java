@@ -4,16 +4,6 @@ import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.data.IBaseTerm;
-import org.ndexbio.common.models.data.IFunctionTerm;
-import org.ndexbio.common.models.data.IGroup;
-import org.ndexbio.common.models.data.IGroupInvitationRequest;
-import org.ndexbio.common.models.data.IGroupMembership;
-import org.ndexbio.common.models.data.IJoinGroupRequest;
-import org.ndexbio.common.models.data.INetworkAccessRequest;
-import org.ndexbio.common.models.data.INetworkMembership;
-import org.ndexbio.common.models.data.IReifiedEdgeTerm;
-import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
 import com.google.common.base.Preconditions;
@@ -21,19 +11,15 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.frames.FramedGraph;
-import com.tinkerpop.frames.FramedGraphFactory;
-import com.tinkerpop.frames.modules.gremlingroovy.GremlinGroovyModule;
-import com.tinkerpop.frames.modules.typedgraph.TypedGraphModuleBuilder;
 
 public abstract class OrientdbDAO {
-	protected FramedGraphFactory _graphFactory = null;
+//	protected FramedGraphFactory _graphFactory = null;
 	protected ODatabaseDocumentTx _ndexDatabase = null;
-	protected FramedGraph<OrientBaseGraph> _orientDbGraph = null;
+//	protected FramedGraph<OrientBaseGraph> _orientDbGraph = null;
 	
 
 	public OrientdbDAO() {
-		_graphFactory = new FramedGraphFactory(new GremlinGroovyModule(),
+/*		_graphFactory = new FramedGraphFactory(new GremlinGroovyModule(),
 				new TypedGraphModuleBuilder().withClass(IGroup.class)
 						.withClass(IUser.class)
 						.withClass(IGroupMembership.class)
@@ -44,7 +30,7 @@ public abstract class OrientdbDAO {
 						.withClass(IBaseTerm.class)
 						.withClass(IReifiedEdgeTerm.class)
 						.withClass(IFunctionTerm.class).build());
-
+*/
 	}
 
 	/**************************************************************************
@@ -61,14 +47,14 @@ public abstract class OrientdbDAO {
 
 		_ndexDatabase =  NdexAOrientDBConnectionPool.getInstance().acquire();
 
-		if (Boolean.parseBoolean(Configuration.getInstance().getProperty(
+	/*	if (Boolean.parseBoolean(Configuration.getInstance().getProperty(
 				"OrientDB-Use-Transactions")))
 			_orientDbGraph = _graphFactory
 					.create((OrientBaseGraph) new OrientGraph(_ndexDatabase));
 		else
 			_orientDbGraph = _graphFactory
 					.create((OrientBaseGraph) new OrientGraphNoTx(_ndexDatabase));
-
+*/
 		/*
 		 * only initialize the ORM once
 		 */
@@ -86,11 +72,11 @@ public abstract class OrientdbDAO {
 			_ndexDatabase.close();
 			_ndexDatabase = null;
 		}
-
+/*
 		if (_orientDbGraph != null) {
 			_orientDbGraph.shutdown();
 			_orientDbGraph = null;
-		}
+		} */
 	}
 
 	/*
@@ -98,7 +84,7 @@ public abstract class OrientdbDAO {
 	 * 
 	 */
 
-	protected IUser findIuserById(final String userId) {
+/*	protected IUser findIuserById(final String userId) {
 		Preconditions.checkState(null != this._ndexDatabase && null != this._orientDbGraph,
 				"findUserById invoked without database connection");	
 		try {
@@ -113,6 +99,6 @@ public abstract class OrientdbDAO {
 		return null;
 		
 		
-	}
+	} */
 
 }

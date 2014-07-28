@@ -8,7 +8,6 @@ import javax.mail.MessagingException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.dao.FeedbackDAO;
-import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.util.Email;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +41,7 @@ public class FeedbackOrientdbDAO extends OrientdbDAO implements FeedbackDAO {
         try
         {
         	this.setupDatabase();
-        	final IUser user = this.findIuserById(userId);
+   /*     	final User user = this.findIuserById(userId);
             if (user != null)
             {
                 Email.sendEmail(user.getEmailAddress(),
@@ -56,12 +55,7 @@ public class FeedbackOrientdbDAO extends OrientdbDAO implements FeedbackDAO {
                     Configuration.getInstance().getProperty("Feedback-Email"),
                     feedbackType,
                     feedbackText);
-            }
-        }
-        catch (MessagingException e)
-        {
-            this.logger.error("Failed to send feedback email.", e);
-            throw new NdexException("Sorry, we couldn't submit your feedback.");
+            }*/
         } finally {
         	this.teardownDatabase();
         }

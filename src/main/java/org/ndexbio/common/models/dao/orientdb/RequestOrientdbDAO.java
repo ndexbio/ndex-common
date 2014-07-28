@@ -8,15 +8,6 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.dao.RequestDAO;
-import org.ndexbio.common.models.data.IGroup;
-import org.ndexbio.common.models.data.IGroupInvitationRequest;
-import org.ndexbio.common.models.data.IGroupMembership;
-import org.ndexbio.common.models.data.IJoinGroupRequest;
-import org.ndexbio.common.models.data.INetwork;
-import org.ndexbio.common.models.data.INetworkAccessRequest;
-import org.ndexbio.common.models.data.INetworkMembership;
-import org.ndexbio.common.models.data.IRequest;
-import org.ndexbio.common.models.data.IUser;
 import org.ndexbio.common.models.object.Request;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.Permissions;
@@ -87,7 +78,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 			throw ne;
 		} catch (Exception e) {
 			logger.error("Failed to create a request.", e);
-			_orientDbGraph.getBaseGraph().rollback();
+	//		_orientDbGraph.getBaseGraph().rollback();
 			throw new NdexException("Failed to create your request.");
 		} finally {
 			teardownDatabase();
@@ -106,13 +97,13 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		try {
 			setupDatabase();
 
-			final IRequest requestToDelete = _orientDbGraph.getVertex(
+	/*		final IRequest requestToDelete = _orientDbGraph.getVertex(
 					requestRid, IRequest.class);
 			if (requestToDelete == null)
 				throw new ObjectNotFoundException("Request", requestId);
 
 			_orientDbGraph.removeVertex(requestToDelete.asVertex());
-			_orientDbGraph.getBaseGraph().commit();
+			_orientDbGraph.getBaseGraph().commit(); */
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
@@ -120,7 +111,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 				throw new ObjectNotFoundException("Request", requestId);
 
 			logger.error("Failed to delete request: " + requestId + ".", e);
-			_orientDbGraph.getBaseGraph().rollback();
+	//		_orientDbGraph.getBaseGraph().rollback();
 			throw new NdexException("Failed to delete the request.");
 		} finally {
 			teardownDatabase();
@@ -139,10 +130,10 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		try {
 			setupDatabase();
 
-			final IRequest request = _orientDbGraph.getVertex(requestRid,
-					IRequest.class);
-			if (request != null)
-				return new Request(request);
+//			final IRequest request = _orientDbGraph.getVertex(requestRid,
+//					IRequest.class);
+//			if (request != null)
+//				return new Request(request);
 		} catch (Exception e) {
 			logger.error("Failed to get request: " + requestId + ".", e);
 			throw new NdexException("Failed to get the request.");
@@ -164,8 +155,8 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		try {
 			setupDatabase();
 
-			final IRequest requestToUpdate = _orientDbGraph.getVertex(
-					requestRid, IRequest.class);
+/*			final IRequest requestToUpdate = _orientDbGraph.getVertex(
+					requestRid, IRequest.class); 
 			if (requestToUpdate == null)
 				throw new ObjectNotFoundException("Request",
 						updatedRequest.getId());
@@ -183,7 +174,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 					processNetworkAccess(updatedRequest);
 			}
 
-			_orientDbGraph.getBaseGraph().commit();
+			_orientDbGraph.getBaseGraph().commit(); */
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
@@ -193,7 +184,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 
 			logger.error("Failed to update request: " + updatedRequest.getId()
 					+ ".", e);
-			_orientDbGraph.getBaseGraph().rollback();
+		//	_orientDbGraph.getBaseGraph().rollback();
 			throw new NdexException("Failed to update the request.");
 		} finally {
 			teardownDatabase();
@@ -218,7 +209,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 	private void createGroupInvitationRequest(final ORID fromRid,
 			final ORID toRid, final Request requestToCreate)
 			throws ObjectNotFoundException, NdexException {
-		final IGroup requestingGroup = _orientDbGraph.getVertex(fromRid,
+/*		final IGroup requestingGroup = _orientDbGraph.getVertex(fromRid,
 				IGroup.class);
 		if (requestingGroup == null)
 			throw new ObjectNotFoundException("Group", fromRid);
@@ -240,7 +231,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		_orientDbGraph.getBaseGraph().commit();
 
 		requestToCreate.setId(IdConverter.toJid((ORID) newRequest.asVertex()
-				.getId()));
+				.getId())); */
 	}
 
 	/**************************************************************************
@@ -260,7 +251,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 	private void createJoinGroupRequest(final ORID fromRid, final ORID toRid,
 			final Request requestToCreate) throws ObjectNotFoundException,
 			NdexException {
-		final IUser requestOwner = _orientDbGraph.getVertex(fromRid,
+	/*	final IUser requestOwner = _orientDbGraph.getVertex(fromRid,
 				IUser.class);
 		if (requestOwner == null)
 			throw new ObjectNotFoundException("User", fromRid);
@@ -283,7 +274,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		_orientDbGraph.getBaseGraph().commit();
 
 		requestToCreate.setId(IdConverter.toJid((ORID) newRequest.asVertex()
-				.getId()));
+				.getId())); */
 	}
 
 	/**************************************************************************
@@ -303,7 +294,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 	private void createNetworkAccessRequest(final ORID fromRid,
 			final ORID toRid, final Request requestToCreate)
 			throws ObjectNotFoundException, NdexException {
-		final IUser requestOwner = _orientDbGraph.getVertex(fromRid,
+/*		final IUser requestOwner = _orientDbGraph.getVertex(fromRid,
 				IUser.class);
 		if (requestOwner == null)
 			throw new ObjectNotFoundException("User", fromRid);
@@ -326,7 +317,7 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		_orientDbGraph.getBaseGraph().commit();
 
 		requestToCreate.setId(IdConverter.toJid((ORID) newRequest.asVertex()
-				.getId()));
+				.getId())); */
 	}
 
 	/**************************************************************************
@@ -340,8 +331,8 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		final ORID groupId = IdConverter.toRid(requestToProcess.getFromId());
 		final ORID userId = IdConverter.toRid(requestToProcess.getToId());
 
-		IGroup group = _orientDbGraph.getVertex(groupId, IGroup.class);
-		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
+//	IGroup group = _orientDbGraph.getVertex(groupId, IGroup.class);
+//		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
 
 		Membership newMember = new Membership();// _orientDbGraph.addVertex("class:groupMembership",
 												// IGroupMembership.class);
@@ -364,8 +355,8 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		final ORID groupId = IdConverter.toRid(requestToProcess.getToId());
 		final ORID userId = IdConverter.toRid(requestToProcess.getFromId());
 
-		IGroup group = _orientDbGraph.getVertex(groupId, IGroup.class);
-		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
+//		IGroup group = _orientDbGraph.getVertex(groupId, IGroup.class);
+//		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
 
 		Membership newMember = new Membership();// _orientDbGraph.addVertex("class:groupMembership",
 												// IGroupMembership.class);
@@ -388,8 +379,8 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		final ORID networkId = IdConverter.toRid(requestToProcess.getToId());
 		final ORID userId = IdConverter.toRid(requestToProcess.getFromId());
 
-		INetwork network = _orientDbGraph.getVertex(networkId, INetwork.class);
-		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
+//		INetwork network = _orientDbGraph.getVertex(networkId, INetwork.class);
+//		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
 
 		Membership newMember = new Membership(); // _orientDbGraph.addVertex("class:networkMembership",
 													// INetworkMembership.class);

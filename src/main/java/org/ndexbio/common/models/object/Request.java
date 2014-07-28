@@ -2,10 +2,6 @@ package org.ndexbio.common.models.object;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.data.IGroupInvitationRequest;
-import org.ndexbio.common.models.data.IJoinGroupRequest;
-import org.ndexbio.common.models.data.INetworkAccessRequest;
-import org.ndexbio.common.models.data.IRequest;
 import com.orientechnologies.orient.core.id.ORID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,7 +32,7 @@ public class Request extends NdexObject
     * 
     * @param request The Request with source data.
     **************************************************************************/
-    public Request(IRequest request)
+/*    public Request(IRequest request)
     {
         super(request);
         
@@ -75,7 +71,7 @@ public class Request extends NdexObject
         }
     }
 
-    
+  */  
     
     
     public String getFrom()

@@ -35,8 +35,9 @@ public class NdexSchemaManagerTest {
 		db = NdexAOrientDBConnectionPool.getInstance().acquire();
 		long s = db.getDictionary().size();
 		System.out.println(s);
-		for ( Object o : db.getDictionary().keys())
+		/*for ( Object o : db.getDictionary().keys())
 			System.out.println(o.toString());
+		*/
 	}
 
 	@AfterClass
