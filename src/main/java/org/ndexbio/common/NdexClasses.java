@@ -33,6 +33,8 @@ public class NdexClasses {
 	
 	//account edges
 	public static final String E_admin              = "admin";
+    public static final String account_E_canRead       ="canRead";
+    public static final String account_E_canEdit       ="edit";
 	
 	// network properties and edges.
     public static final String Network_P_UUID    = "UUID";
@@ -109,5 +111,9 @@ public class NdexClasses {
     public static final String ndexProp_P_datatype		= "dType";
     
     //user
+
+    public static final String user_E_memberOf        ="member";
+    public static final String user_E_grp_admin	      = "grpAdmin";
+    
       
 }
