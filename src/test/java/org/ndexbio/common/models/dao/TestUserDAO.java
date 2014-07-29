@@ -142,7 +142,7 @@ public class TestUserDAO extends TestDAO{
         
     }
 	
-	@Test
+	/*@Test
 	public void createUser() {
 		
 		try {
@@ -164,7 +164,7 @@ public class TestUserDAO extends TestDAO{
 			
 		}
 		
-	}
+	}*/
 	
     @Test
     public void getUserByUUID() {
