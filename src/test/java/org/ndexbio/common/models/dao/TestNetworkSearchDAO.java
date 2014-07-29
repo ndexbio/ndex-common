@@ -56,7 +56,29 @@ public class TestNetworkSearchDAO  extends TestDAO {
 	    	simpleQuery.setSearchString("ca");
 	    	simpleQuery.setAccountName("support");
 	    	
-	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 5).isEmpty());
+	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1).isEmpty());
+	    	assertTrue(dao.findNetworks(simpleQuery, 0, 1).size() == 1);
+    	
+		} catch (Exception e) {
+			
+			fail(e.getMessage());
+			e.printStackTrace();
+			
+		} 
+    	
+    }
+	
+	@Test
+    public void findAllNetworks() {
+    	
+    	try {
+
+	    	final SimpleNetworkQuery simpleQuery = new SimpleNetworkQuery();
+	    	simpleQuery.setSearchString("*");
+	    	simpleQuery.setAccountName("support");
+	    	
+	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1).isEmpty());
+	    	assertTrue(dao.findNetworks(simpleQuery, 0, 1).size() == 1);
     	
 		} catch (Exception e) {
 			

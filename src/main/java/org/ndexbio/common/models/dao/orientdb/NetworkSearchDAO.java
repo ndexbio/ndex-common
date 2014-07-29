@@ -42,9 +42,13 @@ public class NetworkSearchDAO {
 				"An account name or search string is required");
 		
 		final List<NetworkSummary> foundNetworks = new ArrayList<NetworkSummary>();
-
+		
 		final int startIndex = skip
 				* top;
+		
+		if (simpleNetworkQuery.getSearchString().equals("*")) {
+			simpleNetworkQuery.setSearchString("");
+		}
 		
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 			"SELECT FROM"
@@ -54,7 +58,9 @@ public class NetworkSearchDAO {
 				+ "  WHILE $depth <=1)"
 			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			+ " AND visibility <> 'PRIVATE'"
-			+ " AND @class = '"+ NdexClasses.Network +"'");
+			+ " AND @class = '"+ NdexClasses.Network +"'"
+			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+			+ " LIMIT " + top);
 		
 		try {
 			
