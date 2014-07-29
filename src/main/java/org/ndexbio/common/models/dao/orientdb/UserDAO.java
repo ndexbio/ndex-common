@@ -626,7 +626,7 @@ public class UserDAO {
 						+ " WHERE emailAddress = '" + newUser.getEmailAddress() + "'"));
 		
 		if (!existingUsers.isEmpty()){
-			logger.info("User with accountName " + newUser.getAccountName() + " already exists");
+			logger.info("User with emailAddress " + newUser.getEmailAddress() + " already exists");
 			throw new DuplicateObjectException(
 					CommonDAOValues.DUPLICATED_EMAIL_FLAG);
 		}

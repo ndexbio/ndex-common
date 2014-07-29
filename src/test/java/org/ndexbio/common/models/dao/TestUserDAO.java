@@ -52,27 +52,27 @@ public class TestUserDAO extends TestDAO{
 		
 		// Create some users for testing. 
 		NewUser newUser = new NewUser();
-        newUser.setEmailAddress("support@ndexbio.org");
-        newUser.setPassword("probably-insecure");
-        newUser.setAccountName("Support");
-        newUser.setFirstName("foo");
-        newUser.setLastName("bar");
+        newUser.setEmailAddress("test@ndexbio.org");
+        newUser.setPassword("test");
+        newUser.setAccountName("test");
+        newUser.setFirstName("test");
+        newUser.setLastName("test");
         user = dao.createNewUser(newUser);
         
         newUser = new NewUser();
-        newUser.setEmailAddress("support2@ndexbio.org");
-        newUser.setPassword("probably-insecure2");
-        newUser.setAccountName("Support2");
-        newUser.setFirstName("foo2");
-        newUser.setLastName("bar2");
+        newUser.setEmailAddress("test2@ndexbio.org");
+        newUser.setPassword("test2");
+        newUser.setAccountName("test2");
+        newUser.setFirstName("test2");
+        newUser.setLastName("test2");
         user2 = dao.createNewUser(newUser);
         
         newUser = new NewUser();
-        newUser.setEmailAddress("support3@ndexbio.org");
-        newUser.setPassword("probably-insecure3");
-        newUser.setAccountName("Support3");
-        newUser.setFirstName("foo3");
-        newUser.setLastName("bar3");
+        newUser.setEmailAddress("test3@ndexbio.org");
+        newUser.setPassword("test3");
+        newUser.setAccountName("test3");
+        newUser.setFirstName("test3");
+        newUser.setLastName("test3");
         user3 = dao.createNewUser(newUser);
      
         localConnection.commit();
@@ -84,7 +84,7 @@ public class TestUserDAO extends TestDAO{
 	public static void tearDownAfterClass() throws Exception {
 		
 		localConnection.begin();	
-	//	dao.deleteUserById(user.getExternalId());
+		dao.deleteUserById(user.getExternalId());
 		dao.deleteUserById(user2.getExternalId());
 		dao.deleteUserById(user3.getExternalId());
 		localConnection.commit();
@@ -110,8 +110,10 @@ public class TestUserDAO extends TestDAO{
     public void authenticateUser() {
 		
         try {
-        	
-            final User authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "Support");
+
+	        localConnection.rollback();
+	        localConnection.begin();
+            final User authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "testUser");
             assertNotNull(authenticatedUser);
             assertEquals(authenticatedUser.getAccountName(), testUser.getAccountName());
             
@@ -123,7 +125,7 @@ public class TestUserDAO extends TestDAO{
         }
         
     }
-	/*
+	
 	@Test(expected = SecurityException.class)
     public void authenticateUserInvalid() throws SecurityException, NdexException  {
 		// using user constructed in before class
@@ -149,17 +151,20 @@ public class TestUserDAO extends TestDAO{
 	public void createUser() {
 		
 		try {
-			
+
+	        localConnection.rollback();
 			localConnection.begin(); // also aborts any uncommitted transactions.
 			
 			final NewUser newUser = new NewUser();
-            newUser.setEmailAddress("test2");
-            newUser.setPassword("test2");
-            newUser.setAccountName("test2");
-            newUser.setFirstName("test2");
-            newUser.setLastName("test2");
+            newUser.setEmailAddress("create");
+            newUser.setPassword("create");
+            newUser.setAccountName("create");
+            newUser.setFirstName("create");
+            newUser.setLastName("create");
             
             assertNotNull(dao.createNewUser(newUser));
+            
+            localConnection.rollback();
            
 		} catch (Throwable e){
 			
@@ -173,7 +178,8 @@ public class TestUserDAO extends TestDAO{
     public void getUserByUUID() {
     	
     	try {
-    		
+
+	        localConnection.rollback();
     		localConnection.begin(); // also aborts any uncommitted transactions.
 	        final User retrievedUser = dao.getUserById(testUser.getExternalId());
 	        assertNotNull(retrievedUser);
@@ -192,7 +198,8 @@ public class TestUserDAO extends TestDAO{
     	
     	try {
     		
-    		localConnection.begin(); // also aborts any uncommitted transactions.
+	        localConnection.rollback();
+	        localConnection.begin(); // also aborts any uncommitted transactions.
 	        final User retrievedUser = dao.getUserByAccountName(testUser.getAccountName());
 	        assertEquals(retrievedUser.getAccountName(), testUser.getAccountName());
 	        assertNotNull(retrievedUser);
@@ -210,7 +217,8 @@ public class TestUserDAO extends TestDAO{
     public void findUsers() {
     	
     	try {
-	    		
+
+	        localConnection.rollback();
     		localConnection.begin();
 	    	final SimpleUserQuery simpleQuery = new SimpleUserQuery();
 	    	simpleQuery.setSearchString("support");
@@ -228,6 +236,9 @@ public class TestUserDAO extends TestDAO{
     
     @Test(expected = IllegalArgumentException.class)
     public void findUsersInvalid() throws IllegalArgumentException, NdexException {
+
+        localConnection.rollback();
+        localConnection.begin();
         dao.findUsers(null,0,0);
     }
     
@@ -235,6 +246,8 @@ public class TestUserDAO extends TestDAO{
 	public void deleteUserByUUID() throws NdexException {
 
 		final UUID id = testUser.getExternalId();
+
+        localConnection.rollback();
 		localConnection.begin();
 		dao.deleteUserById(id);
 		testUser = null;
@@ -252,7 +265,8 @@ public class TestUserDAO extends TestDAO{
 	
 	@Test(expected = IllegalArgumentException.class)
     public void createUserInvalid() throws IllegalArgumentException, NdexException {
-		
+
+        localConnection.rollback();	
 		localConnection.begin();
         dao.createNewUser(null);
         
@@ -260,7 +274,8 @@ public class TestUserDAO extends TestDAO{
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void createUserInvalidAccountName() throws NdexException, IllegalArgumentException {
-		
+
+        	localConnection.rollback();
 			localConnection.begin(); // also aborts any uncommitted transactions.
 			
 			final NewUser newUser = new NewUser();
@@ -276,7 +291,8 @@ public class TestUserDAO extends TestDAO{
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void createUserInvalidPassword() throws NdexException, IllegalArgumentException {
-		
+
+        	localConnection.rollback();
 			localConnection.begin(); // also aborts any uncommitted transactions.
 			
 			final NewUser newUser = new NewUser();
@@ -292,7 +308,8 @@ public class TestUserDAO extends TestDAO{
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void createUserInvalidEmail() throws NdexException, IllegalArgumentException {
-		
+
+        	localConnection.rollback();
 			localConnection.begin(); // also aborts any uncommitted transactions.
 			
 			final NewUser newUser = new NewUser();
@@ -308,7 +325,8 @@ public class TestUserDAO extends TestDAO{
 	
 	@Test(expected = DuplicateObjectException.class)
 	public void createUserExistingUser() throws IllegalArgumentException, NdexException, DuplicateObjectException {
-		
+
+        		localConnection.rollback();
 				localConnection.begin(); // also aborts any uncommitted transactions.	
 	  
 				final NewUser newUser = new NewUser();
@@ -324,7 +342,8 @@ public class TestUserDAO extends TestDAO{
 	
 	@Test(expected = ObjectNotFoundException.class)
 	public void deleteUser_nonExistant() throws NdexException, ObjectNotFoundException {
-	
+
+        localConnection.rollback();
 			localConnection.begin(); // also aborts any uncommitted transactions.
             dao.deleteUserById(NdexUUIDFactory.INSTANCE.getNDExUUID());
             
@@ -351,20 +370,19 @@ public class TestUserDAO extends TestDAO{
     public void emailNewPasswordInvalid() throws IllegalArgumentException, NdexException {
         dao.emailNewPassword("");
     }*/
-	/*
+	
 	@Test
     public void changePassword() {
 		
         try {
         	
+
+	        localConnection.rollback();
+	        localConnection.begin();
             dao.changePassword("not-secure", testUser.getExternalId());
+            localConnection.commit();
             
             User authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "not-secure");
-            assertNotNull(authenticatedUser);
-            
-            dao.changePassword("test", testUser.getExternalId());
-            authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "test");
-            
             assertNotNull(authenticatedUser);
             
         } catch (Exception e) {
@@ -379,10 +397,12 @@ public class TestUserDAO extends TestDAO{
     public void changePasswordInvalid() throws IllegalArgumentException, NdexException {
 		
 		try {
-			
+
+	        localConnection.rollback();
+	        localConnection.begin();
 			dao.changePassword("", testUser.getExternalId());
 			
-		} catch (Throwable e){
+		} catch (Exception e){
 			
 			throw e;
 			
@@ -396,7 +416,8 @@ public class TestUserDAO extends TestDAO{
             //User user = dao.getUserById(testUser.getExternalId());
             final User updated = new User();
             updated.setDescription("changed");
-            
+
+	        localConnection.rollback();
             localConnection.begin();
             dao.updateUser(updated, testUser.getExternalId());
             localConnection.commit();
@@ -415,22 +436,24 @@ public class TestUserDAO extends TestDAO{
 
     @Test(expected = IllegalArgumentException.class)
     public void updateUserInvalid() throws IllegalArgumentException, SecurityException, NdexException {
-    	
+
+        localConnection.rollback();
+        localConnection.begin();
         dao.updateUser(null, user.getExternalId());
         
     }
-*/
 	private boolean createTestUser() {
 		
 		try {
-			
+
+	        localConnection.rollback();
 			localConnection.begin();
 			final NewUser newUser = new NewUser();
-            newUser.setEmailAddress("test");
-            newUser.setPassword("test");
-            newUser.setAccountName("test");
-            newUser.setFirstName("test");
-            newUser.setLastName("test");
+            newUser.setEmailAddress("testUser");
+            newUser.setPassword("testUser");
+            newUser.setAccountName("testUser");
+            newUser.setFirstName("testUser");
+            newUser.setLastName("testUser");
 			
 	        testUser = dao.createNewUser(newUser);
 	        localConnection.commit();
@@ -447,7 +470,8 @@ public class TestUserDAO extends TestDAO{
 	private boolean deleteTestUser() {
 		
 		try {
-			
+
+	        localConnection.rollback();
 			localConnection.begin();
 			dao.deleteUserById(testUser.getExternalId());
 			localConnection.commit();
