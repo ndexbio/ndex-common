@@ -1,7 +1,5 @@
 package org.ndexbio.common.models.object.network;
 
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -58,7 +56,10 @@ public class RawNamespace implements Comparable<RawNamespace>
 		if ( arg0.getPrefix() == null )
 				return 1;
 		
-		return _prefix.compareTo ( arg0.getPrefix());
+		
+		String str2 = arg0.getPrefix();
+		c = _prefix.compareTo ( str2);
+		return c;
 	}
     
     @Override

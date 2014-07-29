@@ -21,6 +21,10 @@ public class NdexDatabase {
 	
 	private int batchCounter;
 	
+	private long internalCounterBase;
+
+	private static final int blockSize = 50;  
+	
 	private ODocument vdoc;
 	
 	public NdexDatabase() throws NdexException {
@@ -31,26 +35,31 @@ public class NdexDatabase {
 		NdexSchemaManager.INSTANCE.init(ndexDatabase);
 		vdoc = (ODocument) dictionary.get(sequenceKey);
 		if (vdoc == null ) {
-			ndexDatabase.begin();
-			vdoc = new ODocument(seqField, (long)1); // ids start with 1.
-			vdoc.save();
-			ndexDatabase.commit();	
+//			ndexDatabase.begin();
+			internalCounterBase = 1;
+			vdoc = new ODocument(seqField, internalCounterBase);  // + blockSize); // ids start with 1.
+			vdoc = vdoc.save();
 			dictionary.put(sequenceKey, vdoc);
-		}
-		batchCounter=0;
-		ndexDatabase.begin();
+			ndexDatabase.commit();	
+		} 
+		batchCounter=blockSize;
 
 	}
 	
     public synchronized long  getNextId() {
-    	vdoc = (ODocument)dictionary.get(sequenceKey);
-    	long nextval= vdoc.field(seqField);
-    	dictionary.put(sequenceKey, vdoc.field(seqField,nextval+1));
-    	vdoc.save();
-//    	batchCounter++;
-//    	if(batchCounter % 100 == 0) 
-   		commit();
-    	return nextval;
+    	
+    	if ( batchCounter == blockSize) {
+        	internalCounterBase = vdoc.field(seqField);
+    	    batchCounter = 0 ;
+            vdoc = vdoc.field(seqField, internalCounterBase + blockSize).save();
+            dictionary.put(sequenceKey, vdoc);
+        	commit();
+       // 	System.out.println("New batch in id sequence:" + internalCounterBase );
+    	}
+    	long rvalue = internalCounterBase + batchCounter;
+    	batchCounter++;
+        
+    	return rvalue;
     }
     
     public synchronized void resetIdCounter() {
@@ -65,7 +74,7 @@ public class NdexDatabase {
     
     public void commit() {
     	ndexDatabase.commit();
-    	ndexDatabase.begin();
+//    	ndexDatabase.begin();
     }
     
     public ODatabaseDocumentTx getAConnection() {

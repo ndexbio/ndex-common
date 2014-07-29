@@ -55,10 +55,10 @@ public class NdexPersistenceServiceTest {
 		BaseTerm t4 = service.getBaseTerm(s4); */
 		
 		String n1String = "term1";
-		Node n1 = service.getNodeByBaseTerm( n1String);
+		Long n1 = service.getNodeIdByBaseTerm( n1String);
 
 		String n2String = "Y00002";
-		Node n2 = service.getNodeByBaseTerm(n2String);
+		Long n2 = service.getNodeIdByBaseTerm(n2String);
 		
 	//	Edge e = service.createEdge(n1, n2, t4, null, null, null);
 		

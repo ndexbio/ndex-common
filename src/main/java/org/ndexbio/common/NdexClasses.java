@@ -52,7 +52,7 @@ public class NdexClasses {
     public static final String Network_E_Namespace = "networkNS";
     public static final String Network_E_BaseTerms = "BaseTerms";
     public static final String Network_E_Nodes     = "networkNodes";
-    public static final String Network_E_Edges     = "networkedges";
+    public static final String Network_E_Edges     = "networkEdges";
     public static final String Network_E_FunctionTerms = "FunctionTerms";
     public static final String Network_E_Citations  = "citations";
     public static final String Network_E_Supports   = "supports";

@@ -37,4 +37,43 @@ public class NdexDatabaseTest {
 		//System.out.println(db.getNextId());
 	}
 
+	@Test
+	public void test1() {
+
+		
+		for ( int i = 0 ; i < 202; i ++ ) {
+			long id = db.getNextId();
+			   System.out.println("Number " + i + " I got is: " + id);
+		}
+
+		
+		long id0 = db.getNextId();
+		System.out.println("First id got I got is:" + id0);
+		for ( int i = 0 ; i < 1000; i ++ ) {
+			 db.getNextId();
+			
+		}
+		long id1 = db.getNextId();
+		System.out.println("Last id got I got is:" + id1);
+		assertEquals ( id0 + 1001 , id1);
+	
+	}
+	
+	
+	@Test
+	public void testleaks1() {
+
+		System.out.println("First id got I got is:" + db.getNextId());
+		for ( int i = 0 ; i < 1000000; i ++ ) {
+			long id = db.getNextId();
+			if ( i % 100000 == 0) {
+			   Logger.getGlobal().info("Number " + i + " I got is: " + id);
+			}
+			
+		}
+		System.out.println("Last id got I got is:" + db.getNextId());
+	
+	}
+	
+	
 }

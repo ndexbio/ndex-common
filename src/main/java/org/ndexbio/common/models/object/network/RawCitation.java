@@ -12,12 +12,12 @@ public class RawCitation implements Comparable <RawCitation>{
 	private String identifier;
 	
 	public RawCitation (String title, String idType, String identifier, List<String> contributors) throws NdexException {
-		if ( title == null)
-			throw new NdexException ("Citation title can't be null.");
 		this.title = title;
 		this.setContributors(contributors);
 		this.setIdType(idType);
 		this.setIdentifier(identifier);
+		if ( title == null && identifier == null)
+			throw new NdexException ("Invalid Citation object: title and identifier are both null.");
 	}
 	
 	 
@@ -42,6 +42,8 @@ public class RawCitation implements Comparable <RawCitation>{
         
 	   	    int c =idType.compareTo(o.getIdType());
 		    if ( c != 0 ) return c;
+		    if ( identifier != null )
+		    	return 0;
         }
 
         if (title == null) {
@@ -58,7 +60,10 @@ public class RawCitation implements Comparable <RawCitation>{
 
 	@Override
 	public int hashCode() {
-		return title.hashCode();
+		if (identifier !=null)
+			return this.identifier.hashCode();
+		  return title.hashCode();
+		
 	}
 	
 	@Override
