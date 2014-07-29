@@ -19,6 +19,8 @@ public class NdexDatabase {
 
 	private static final String seqField= "f1";
 	
+	private int batchCounter;
+	
 	private ODocument vdoc;
 	
 	public NdexDatabase() throws NdexException {
@@ -35,6 +37,7 @@ public class NdexDatabase {
 			ndexDatabase.commit();	
 			dictionary.put(sequenceKey, vdoc);
 		}
+		batchCounter=0;
 		ndexDatabase.begin();
 
 	}
@@ -44,6 +47,9 @@ public class NdexDatabase {
     	long nextval= vdoc.field(seqField);
     	dictionary.put(sequenceKey, vdoc.field(seqField,nextval+1));
     	vdoc.save();
+//    	batchCounter++;
+//    	if(batchCounter % 100 == 0) 
+   		commit();
     	return nextval;
     }
     

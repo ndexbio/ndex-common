@@ -41,8 +41,8 @@ public class NdexPersistenceServiceTest {
 		Namespace ns3 = service.getNamespace(rns3);
 
 		
-		String s3 = "http://foo.newdomain.com/P001";
-		BaseTerm t3 = service.getBaseTerm(s3);
+	/*	String s3 = "http://foo.newdomain.com/P001";
+		BaseTerm t3 = service.getBaseTermId(s3);
 
 		String s1 = "Y0002";
 		BaseTerm t1 = service.getBaseTerm(s1);
@@ -52,7 +52,7 @@ public class NdexPersistenceServiceTest {
 		
 		
 		String s4 = "http://something.com/XYC002";
-		BaseTerm t4 = service.getBaseTerm(s4);
+		BaseTerm t4 = service.getBaseTerm(s4); */
 		
 		String n1String = "term1";
 		Node n1 = service.getNodeByBaseTerm( n1String);
@@ -60,7 +60,7 @@ public class NdexPersistenceServiceTest {
 		String n2String = "Y00002";
 		Node n2 = service.getNodeByBaseTerm(n2String);
 		
-		Edge e = service.createEdge(n1, n2, t4, null, null, null);
+	//	Edge e = service.createEdge(n1, n2, t4, null, null, null);
 		
 	    service.persistNetwork();
 	}
