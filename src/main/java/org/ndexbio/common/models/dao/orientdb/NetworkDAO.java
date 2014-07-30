@@ -90,9 +90,10 @@ public class NetworkDAO {
 	    int endPosition = skipBlocks * blockSize + blockSize;
 	    
 	    // get Edges
+        Map<Long, Node> nodeMap = network.getNodes();
 	    Map<Long, Edge> edgeMap = network.getEdges();
 	    
-	    network.getNodes();
+	    
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
@@ -108,10 +109,21 @@ public class NetworkDAO {
                 counter ++;
             	
             	if ( counter >= startPosition )  {
-              	   Edge e = new Edge();
+              	   Edge e = getEdgeFromDocument(doc);
+              	   edgeMap.put(e.getId(), e);
             	 
-            	   ODocument subDoc = doc.field(NdexClasses.Edge_E_subject);
-            	   
+            	   if ( ! nodeMap.containsKey(e.getSubjectId())) {
+            		   ODocument subDoc = doc.field("in_" +  NdexClasses.Edge_E_subject);
+            		   Node node = getNode(subDoc);
+            		   nodeMap.put(node.getId(),node);
+            	   }    
+        	    
+            	   if ( ! nodeMap.containsKey(e.getObjectId())) {
+            		   ODocument objDoc = doc.field("out_" + NdexClasses.Edge_E_object);
+            		   Node node = getNode(objDoc);
+            		   nodeMap.put(node.getId(),node);
+            	   }
+        	    
             	   //TODO: populate the content in Network
 /*            	   ODocument 
                    Edge nd = NetworkDAO.getEdge(doc);
@@ -120,7 +132,8 @@ public class NetworkDAO {
                    else
                	     throw new NdexException("Error occurred when getting edge information from db "+ doc); */
                 }
-            } 	
+            }
+            
         }
         
 		 return network; 
@@ -300,6 +313,25 @@ public class NetworkDAO {
 		
 		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
 		e.setPredicate((String)predicateDoc.field(NdexClasses.BTerm_P_name));
+		
+		e.setObjectId((long)
+			    ((ODocument)doc.field("out_"+NdexClasses.Edge_E_object))
+			        .field(NdexClasses.Element_ID));
+		
+		getPropertiesFromDocument(e,doc);
+		return e;
+	}
+
+	
+	private  Edge getEdgeFromDocument(ODocument doc) {
+		Edge e = new Edge();
+		e.setId((long)doc.field(NdexClasses.Element_ID));
+		
+		ODocument s =  doc.field("in_"+NdexClasses.Edge_E_subject);
+		e.setSubjectId((long) s.field(NdexClasses.Element_ID));
+		
+		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
+		e.setPredicateId((long)predicateDoc.field(NdexClasses.Element_ID));
 		
 		e.setObjectId((long)
 			    ((ODocument)doc.field("out_"+NdexClasses.Edge_E_object))
@@ -703,6 +735,31 @@ public class NetworkDAO {
 
     	n.setId((long)nodeDoc.field(NdexClasses.Element_ID));
     	n.setName((String)nodeDoc.field(NdexClasses.Node_P_name));
+    	
+    	ODocument o = nodeDoc.field("out_" + NdexClasses.Node_E_represents);
+    	if ( o != null) {
+    		Long termId = o.field(NdexClasses.Element_ID);
+            n.setRepresents(termId);    		
+    		n.setRepresentsTermType(o.getClassName());
+    		
+    		//TODO: populate namespace etc
+    	/*
+    		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
+    		NdexProperty p ; 
+    		if ( nsDoc == null ) {
+    			p = new NdexProperty( PropertyGraphNode.represents,termId );
+    		} else {
+    			String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
+    			p = new NdexProperty(PropertyGraphNode.represents, prefix + ":"+termId);
+    		}	
+    		n.getProperties().add(p); */
+    	}
+		
+    	//Populate properties
+   //	getPropertiesFromDocument(n, doc);
+    	
+		//TODO: populate citations etc.
+   		
     	return n;
     }
     
