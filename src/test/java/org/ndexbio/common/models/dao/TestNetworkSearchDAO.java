@@ -48,16 +48,16 @@ public class TestNetworkSearchDAO  extends TestDAO {
 	}
 
 	@Test
-    public void findNetworks() {
+    public void findNetworks_noUser_noAccountSpecifier() {
     	
     	try {
 
 	    	final SimpleNetworkQuery simpleQuery = new SimpleNetworkQuery();
 	    	simpleQuery.setSearchString("ca");
-	    	simpleQuery.setAccountName("support");
+	    	simpleQuery.setAccountName("");
 	    	
-	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1).isEmpty());
-	    	assertTrue(dao.findNetworks(simpleQuery, 0, 1).size() == 1);
+	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1, null).isEmpty());
+	    	//assertTrue(dao.findNetworks(simpleQuery, 0, 1).size() == 1);
     	
 		} catch (Exception e) {
 			
@@ -69,16 +69,37 @@ public class TestNetworkSearchDAO  extends TestDAO {
     }
 	
 	@Test
-    public void findAllNetworks() {
+    public void findNetworks_noUser() {
     	
     	try {
 
 	    	final SimpleNetworkQuery simpleQuery = new SimpleNetworkQuery();
-	    	simpleQuery.setSearchString("*");
-	    	simpleQuery.setAccountName("support");
+	    	simpleQuery.setSearchString("ca");
+	    	simpleQuery.setAccountName("Support");
 	    	
-	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1).isEmpty());
-	    	assertTrue(dao.findNetworks(simpleQuery, 0, 1).size() == 1);
+	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1, null).isEmpty());
+	    	//assertTrue(dao.findNetworks(simpleQuery, 0, 1).size() == 1);
+    	
+		} catch (Exception e) {
+			
+			fail(e.getMessage());
+			e.printStackTrace();
+			
+		} 
+    	
+    }
+	
+	@Test
+    public void findNetwork_noAccountSpecifier() {
+    	
+    	try {
+
+	    	final SimpleNetworkQuery simpleQuery = new SimpleNetworkQuery();
+	    	simpleQuery.setSearchString("ca");
+	    	simpleQuery.setAccountName("");
+	    	
+	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1, "Support").isEmpty());
+	    	//assertTrue(dao.findNetworks(simpleQuery, 0, 1).size() == 1);
     	
 		} catch (Exception e) {
 			
