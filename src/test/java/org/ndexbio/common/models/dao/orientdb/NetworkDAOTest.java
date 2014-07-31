@@ -14,6 +14,7 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.persistence.orientdb.PropertyGraphLoader;
 import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphEdge;
@@ -48,6 +49,22 @@ public class NetworkDAOTest {
 	@Test
     public void test() throws NdexException, JsonProcessingException {
 		NetworkDAO dao = new NetworkDAO(db);
+
+		Network network = dao.getNetwork(UUID.fromString("931cce19-180c-11e4-9525-00219b422d69"),
+				0, 15);
+		
+		System.out.println(network);
+		
+		network = dao.getNetwork(UUID.fromString("b4e09a69-180c-11e4-b734-00219b422d69"),
+				0, 15);
+		
+		System.out.println(network);
+		
+		network = dao.getNetworkById(UUID.fromString("cbe27f2d-180c-11e4-bd2c-00219b422d69"));
+		
+		System.out.println(network);
+
+		
 		PropertyGraphNetwork n = dao.getProperytGraphNetworkById( 
 				UUID.fromString("e4e82535-1422-11e4-a931-90b11c72aefa"),
 				

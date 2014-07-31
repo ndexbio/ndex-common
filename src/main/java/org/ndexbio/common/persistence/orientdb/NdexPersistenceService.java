@@ -752,7 +752,7 @@ public class NdexPersistenceService  {
 	
 	 
 	
-	private Node findOrCreateNodeFromFunctionTermId(Long fTermId) throws ExecutionException {
+	private Node findOrCreateNodeFromFunctionTermId(Long fTermId) throws ExecutionException, NdexException {
 		Node node = networkDAO.findNodeByFunctionTermId(fTermId.longValue());
 		
 		if (node != null) 
@@ -783,7 +783,7 @@ public class NdexPersistenceService  {
 	}
 
 
-	private Node findOrCreateNodeFromReifiedTermId(Long key) throws ExecutionException {
+	private Node findOrCreateNodeFromReifiedTermId(Long key) throws ExecutionException, NdexException {
 		Node node = networkDAO.findNodeByReifiedEdgeTermId(key.longValue());
 		
 		if (node != null) 

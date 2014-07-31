@@ -56,9 +56,11 @@ public class NdexSchemaManager
         if (clsNdxExternalObj == null)
         {
         	clsNdxExternalObj = orientDbGraph.createVertexType(NdexClasses.NdexExternalObject);
-            clsNdxExternalObj.createProperty("UUID", OType.STRING);
+            clsNdxExternalObj.createProperty(NdexClasses.Network_P_UUID, OType.STRING);
             clsNdxExternalObj.createProperty("createdDate", OType.DATE);
             clsNdxExternalObj.createProperty("modificationDate", OType.DATE);
+            
+            clsNdxExternalObj.createIndex("index-external-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
         }
         
         OClass clsAccount = orientDb.getMetadata().getSchema().getClass(NdexClasses.Account);
@@ -74,7 +76,7 @@ public class NdexSchemaManager
         	clsAccount.createProperty("password", OType.STRING);
         	clsAccount.createProperty("website", OType.STRING);
 
-        	clsAccount.createIndex("index-user-username", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "accountName");
+        	clsAccount.createIndex("index-user-username", OClass.INDEX_TYPE.UNIQUE, "accountName");
 
         }
 
@@ -174,7 +176,7 @@ public class NdexSchemaManager
             bTermClass.createProperty(NdexClasses.BTerm_E_Namespace, OType.LINK, nsClass);
             
             bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-            
+            bTermClass.createIndex("index-baseterm-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
             
         }
 
@@ -189,6 +191,9 @@ public class NdexSchemaManager
             citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             citationClass.createProperty("title", OType.STRING);
             citationClass.createProperty("type", OType.STRING);
+            
+            citationClass.createIndex("index-citation-element-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            citationClass.createIndex("index-citation-identifier", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
         }
 
         OClass supportClass = orientDbGraph.getVertexType(NdexClasses.Support);
@@ -211,7 +216,7 @@ public class NdexSchemaManager
 
             edgeClass.createProperty(NdexClasses.Edge_E_citations, OType.LINKSET, citationClass);
 
-        
+            edgeClass.createIndex("index-edge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.FunctionTerm);  
@@ -267,6 +272,9 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_E_relateTo, OType.LINKSET, bTermClass);
             nodeClass.createProperty(NdexClasses.Node_E_ciations, OType.LINKSET, citationClass);
             nodeClass.createProperty(NdexClasses.Node_E_supports, OType.LINKSET, supportClass);
+            
+            nodeClass.createIndex("index-node-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            nodeClass.createIndex("index-node-name", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
         }
 
         

@@ -77,23 +77,20 @@ public class NetworkDAO {
 	 * @param skipBlocks
 	 * @param blockSize
 	 * @return the subnetwork as a Network Object.   
+	 * @throws NdexException 
 	 */
-	public Network getNetwork (UUID networkID, int skipBlocks, int blockSize) {
+	public Network getNetwork (UUID networkID, int skipBlocks, int blockSize) throws NdexException {
 		ODocument nDoc = getNetworkDocByUUID(networkID);
 		
 	    if (nDoc == null) return null;
 	    
-	    Network network = new Network();  //result holder
 	    
 	    int startPosition = skipBlocks * blockSize;
 	    int counter = 0;
 	    int endPosition = skipBlocks * blockSize + blockSize;
-	    
-	    // get Edges
-        Map<Long, Node> nodeMap = network.getNodes();
-	    Map<Long, Edge> edgeMap = network.getEdges();
-	    
-	    
+
+	    Network network = new Network(blockSize);  //result holder
+
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
@@ -109,28 +106,9 @@ public class NetworkDAO {
                 counter ++;
             	
             	if ( counter >= startPosition )  {
-              	   Edge e = getEdgeFromDocument(doc);
-              	   edgeMap.put(e.getId(), e);
-            	 
-            	   if ( ! nodeMap.containsKey(e.getSubjectId())) {
-            		   ODocument subDoc = doc.field("in_" +  NdexClasses.Edge_E_subject);
-            		   Node node = getNode(subDoc);
-            		   nodeMap.put(node.getId(),node);
-            	   }    
-        	    
-            	   if ( ! nodeMap.containsKey(e.getObjectId())) {
-            		   ODocument objDoc = doc.field("out_" + NdexClasses.Edge_E_object);
-            		   Node node = getNode(objDoc);
-            		   nodeMap.put(node.getId(),node);
-            	   }
-        	    
-            	   //TODO: populate the content in Network
-/*            	   ODocument 
-                   Edge nd = NetworkDAO.getEdge(doc);
-                   if ( nd != null)
-               	      edgeList.add(nd);
-                   else
-               	     throw new NdexException("Error occurred when getting edge information from db "+ doc); */
+              	   Edge e = getEdgeFromDocument(doc,network);
+              	   network.getEdges().put(e.getId(), e);
+            	               
                 }
             }
             
@@ -140,10 +118,32 @@ public class NetworkDAO {
 	}
 	
 	
-	public Network getNetworkById(UUID id) {
+	public Network getNetworkById(UUID id) throws NdexException {
 		ODocument nDoc = getNetworkDocByUUID(id);
-		
-        return (nDoc!=null) ? getNetwork(nDoc): null;
+
+        if (nDoc==null) return null;
+   
+        Network network = getNetwork(nDoc);
+
+	    // get Edges
+	    
+        for (OIdentifiable nodeDoc : new OTraverse()
+      	              	.field("out_"+ NdexClasses.Network_E_Edges )
+      	              	.target(nDoc)
+                      	.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+            ODocument doc = (ODocument) nodeDoc;
+         
+            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
+
+              	   Edge e = getEdgeFromDocument(doc,network);
+              	   network.getEdges().put(e.getId(), e);
+            	 
+            }
+            
+        }
+        
+        return network;
 	}
 	
     private ODocument getNetworkDocByUUID(UUID id) {
@@ -323,21 +323,75 @@ public class NetworkDAO {
 	}
 
 	
-	private  Edge getEdgeFromDocument(ODocument doc) {
+	private  Edge getEdgeFromDocument(ODocument doc, Network network) throws NdexException {
 		Edge e = new Edge();
 		e.setId((long)doc.field(NdexClasses.Element_ID));
 		
 		ODocument s =  doc.field("in_"+NdexClasses.Edge_E_subject);
-		e.setSubjectId((long) s.field(NdexClasses.Element_ID));
+		Long subjectId = s.field(NdexClasses.Element_ID);
+		e.setSubjectId( subjectId );
+		
+		if ( network !=null && 
+				!network.getNodes().containsKey(subjectId)) {
+			Node node = getNode (s,network);
+			network.getNodes().put(subjectId, node);
+		}
 		
 		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
-		e.setPredicateId((long)predicateDoc.field(NdexClasses.Element_ID));
+		Long predicateId = predicateDoc.field(NdexClasses.Element_ID);
+		e.setPredicateId(predicateId);
 		
-		e.setObjectId((long)
-			    ((ODocument)doc.field("out_"+NdexClasses.Edge_E_object))
-			        .field(NdexClasses.Element_ID));
+		if ( network != null && !network.getBaseTerms().containsKey(predicateId)) {
+    		   BaseTerm t = getBaseTerm(predicateDoc,network);
+    		   network.getBaseTerms().put(t.getId(), t);
+    	   }
 		
+		ODocument o = doc.field("out_"+NdexClasses.Edge_E_object);
+		Long objectId = o.field(NdexClasses.Element_ID);
+		e.setObjectId(objectId);
+		
+		if ( network !=null && 
+				!network.getNodes().containsKey(objectId)) {
+			Node node = getNode (o,network);
+			network.getNodes().put(objectId, node);
+		}
+
 		getPropertiesFromDocument(e,doc);
+		
+		//populate citations
+    	for (OIdentifiable citationRec : new OTraverse()
+ 				.field("out_"+ NdexClasses.Node_E_ciations )
+ 				.target(doc)
+ 				.predicate( new OSQLPredicate("$depth <= 1"))) {
+    		ODocument citationDoc = (ODocument) citationRec;
+    		if ( citationDoc.getClassName().equals(NdexClasses.Citation)) {
+        		Long citationId = citationDoc.field(NdexClasses.Element_ID);
+				if ( network != null &&
+						!network.getCitations().containsKey(citationId)) {
+					Citation citation = getCitationFromDoc(citationDoc);
+					network.getCitations().put(citationId, citation);
+				}
+				e.getCitations().add(citationId);
+    		}
+    	}
+   		
+		//populate support
+    	for (OIdentifiable supportRec : new OTraverse()
+ 				.field("out_"+ NdexClasses.Node_E_supports )
+ 				.target(doc)
+ 				.predicate( new OSQLPredicate("$depth <= 1"))) {
+    		ODocument supportDoc = (ODocument) supportRec;
+    		if ( supportDoc.getClassName().equals(NdexClasses.Support)) {
+        		Long supportId = supportDoc.field(NdexClasses.Element_ID);
+				if ( network != null &&
+						!network.getSupports().containsKey(supportId)) {
+					Support support = getSupportFromDoc(supportDoc, network);
+					network.getSupports().put(supportId, support);
+				}
+				e.getSupports().add(supportId);
+    		}
+    	}
+
 		return e;
 	}
 	
@@ -406,12 +460,14 @@ public class NetworkDAO {
     	
     }
 	
-	private static Network getNetwork(ODocument n) {
+	private Network getNetwork(ODocument n) {
 		
 		Network result = new Network();
 		
 		SetNetworkSummary(n, result);
 
+		getPropertiesFromDocument(result,n);
+		
 		//TODO: populate all fields.
 		
 		return result;
@@ -456,20 +512,27 @@ public class NetworkDAO {
 		     
 		if (terms.isEmpty())
 		    	 return null;
-             return getBaseTerm(terms.get(0));
+             return getBaseTerm(terms.get(0), null);
              
        //TODO: need to check the current transaction.      
 	}
 	
-	private static BaseTerm getBaseTerm(ODocument o) {
+	private static BaseTerm getBaseTerm(ODocument o, Network network) {
 		BaseTerm t = new BaseTerm();
 		t.setId((long)o.field(NdexClasses.Element_ID));
 		t.setName((String)o.field(NdexClasses.BTerm_P_name));
 		
 		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
-		if ( nsDoc != null) 
-			t.setNamespace((long)nsDoc.field(NdexClasses.Element_ID));
-		else
+		if ( nsDoc != null) {
+			Long nsId = nsDoc.field(NdexClasses.Element_ID);
+			t.setNamespace(nsId);
+			
+			if ( network != null &&
+				 ! network.getNamespaces().containsKey(nsId)) {
+				Namespace ns = getNamespace(nsDoc);
+				network.getNamespaces().put(nsId, ns);
+			}
+		} else
 			t.setNamespace(-1);
 		
 		return t;
@@ -639,14 +702,14 @@ public class NetworkDAO {
          NdexClasses.Node_E_represents + " from (select from "+ NdexClasses.BaseTerm + " where " +
          NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
     
-    public Node findNodeByBaseTermId(long baseTermID) {
+    public Node findNodeByBaseTermId(long baseTermID) throws NdexException {
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(nodeQuery);
 		List<ODocument> nodes = db.command(query).execute( baseTermID);
     	
 		if (nodes.isEmpty())
 			return null;
 		
-    	return getNode(nodes.get(0));
+    	return getNode(nodes.get(0), null);
     }
 
     private static final String functionTermNodeQuery = 
@@ -654,7 +717,7 @@ public class NetworkDAO {
     		" from (select from "+ NdexClasses.FunctionTerm + " where " +
             NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
        
-    public Node findNodeByFunctionTermId(long functionTermID) {
+    public Node findNodeByFunctionTermId(long functionTermID) throws NdexException {
    		OSQLSynchQuery<ODocument> query = 
    				new OSQLSynchQuery<ODocument>(functionTermNodeQuery);
    		List<ODocument> nodes = db.command(query).execute( functionTermID);
@@ -662,7 +725,7 @@ public class NetworkDAO {
    		if (nodes.isEmpty())
    			return null;
    		
-       	return getNode(nodes.get(0));
+       	return getNode(nodes.get(0),null);
     }
     
     private static final String reifedEdgeTermNodeQuery = 
@@ -670,7 +733,7 @@ public class NetworkDAO {
     		" from (select from "+ NdexClasses.ReifiedEdgeTerm + " where " +
             NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
 
-    public Node findNodeByReifiedEdgeTermId (long reifiedEdgeTermId) {
+    public Node findNodeByReifiedEdgeTermId (long reifiedEdgeTermId) throws NdexException {
    		OSQLSynchQuery<ODocument> query = 
    				new OSQLSynchQuery<ODocument>(reifedEdgeTermNodeQuery);
    		List<ODocument> nodes = db.command(query).execute( reifiedEdgeTermId);
@@ -678,7 +741,7 @@ public class NetworkDAO {
    		if (nodes.isEmpty())
    			return null;
    		
-       	return getNode(nodes.get(0));
+       	return getNode(nodes.get(0),null);
     }
     
     private static final String refiedEdgeTermQuery = 
@@ -730,36 +793,116 @@ public class NetworkDAO {
     	rt.setEdgeId(termEdge);
     } */
     
-    public static Node getNode(ODocument nodeDoc) {
+    /**
+     *  Create a node object from a document. If network is not null, also  
+     *  create dependent objects (term, namespace, citation etc) in the network object. 
+     * @param nodeDoc
+     * @param network
+     * @return
+     * @throws NdexException 
+     */
+    public Node getNode(ODocument nodeDoc, Network network) throws NdexException {
     	Node n = new Node();
 
     	n.setId((long)nodeDoc.field(NdexClasses.Element_ID));
     	n.setName((String)nodeDoc.field(NdexClasses.Node_P_name));
-    	
+
+    	// Populate properties
+     	getPropertiesFromDocument(n, nodeDoc);
+
     	ODocument o = nodeDoc.field("out_" + NdexClasses.Node_E_represents);
     	if ( o != null) {
     		Long termId = o.field(NdexClasses.Element_ID);
+    		String termType = o.getClassName();
             n.setRepresents(termId);    		
-    		n.setRepresentsTermType(o.getClassName());
+    		n.setRepresentsTermType(termType);
     		
-    		//TODO: populate namespace etc
-    	/*
-    		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
-    		NdexProperty p ; 
-    		if ( nsDoc == null ) {
-    			p = new NdexProperty( PropertyGraphNode.represents,termId );
-    		} else {
-    			String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
-    			p = new NdexProperty(PropertyGraphNode.represents, prefix + ":"+termId);
-    		}	
-    		n.getProperties().add(p); */
+    		if ( network != null) {
+    			// populate objects in network
+    			if ( termType.equals(NdexClasses.BaseTerm)) {
+    				if ( !network.getBaseTerms().containsKey(termId) ) {
+    					BaseTerm bTerm = getBaseTerm(o, network);
+    					network.getBaseTerms().put(termId, bTerm);
+    				}
+    			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm)) {
+    				//TODO: implement these 
+    			} else if (termType.equals(NdexClasses.FunctionTerm)) {
+    				//TODO: implement these 
+    			} else 
+    				throw new NdexException ("Unsupported term type '" + termType + 
+    						"' found for term Id:" + termId);
+    			
+    		}
     	}
 		
-    	//Populate properties
-   //	getPropertiesFromDocument(n, doc);
+    	//populate aliases
+    	for (OIdentifiable aliasRec : new OTraverse()
+ 				.field("out_"+ NdexClasses.Node_E_alias )
+ 				.target(nodeDoc)
+ 				.predicate( new OSQLPredicate("$depth <= 1"))) {
+    		ODocument doc = (ODocument) aliasRec;
+    		if ( doc.getClassName().equals(NdexClasses.BaseTerm)) {
+        		Long termId = doc.field(NdexClasses.Element_ID);
+        		if ( network != null &&
+        				! network.getBaseTerms().containsKey(termId)) {
+        			BaseTerm t = getBaseTerm(doc,network);
+        			network.getBaseTerms().put(termId, t);
+        		}
+				n.getAliases().add(termId);
+    		}
+    	}
     	
-		//TODO: populate citations etc.
+    	//populate related terms
+    	for (OIdentifiable relateToRec : new OTraverse()
+ 				.field("out_"+ NdexClasses.Node_E_relateTo )
+ 				.target(nodeDoc)
+ 				.predicate( new OSQLPredicate("$depth <= 1"))) {
+    		ODocument doc = (ODocument) relateToRec;
+    		if ( doc.getClassName().equals(NdexClasses.BaseTerm)) {
+        		Long termId = doc.field(NdexClasses.Element_ID);
+        		if ( network != null &&
+        				! network.getBaseTerms().containsKey(termId)) {
+        			BaseTerm t = getBaseTerm(doc,network);
+        			network.getBaseTerms().put(termId, t);
+        		}
+				n.getRelatedTerms().add(termId);
+    		}
+    	}
+    	
+		//populate citations
+    	for (OIdentifiable citationRec : new OTraverse()
+ 				.field("out_"+ NdexClasses.Node_E_ciations )
+ 				.target(nodeDoc)
+ 				.predicate( new OSQLPredicate("$depth <= 1"))) {
+    		ODocument doc = (ODocument) citationRec;
+    		if ( doc.getClassName().equals(NdexClasses.Citation)) {
+        		Long citationId = doc.field(NdexClasses.Element_ID);
+				if ( network != null &&
+						!network.getCitations().containsKey(citationId)) {
+					Citation citation = getCitationFromDoc(doc);
+					network.getCitations().put(citationId, citation);
+				}
+				n.getCitations().add(citationId);
+    		}
+    	}
    		
+		//populate support
+    	for (OIdentifiable supportRec : new OTraverse()
+ 				.field("out_"+ NdexClasses.Node_E_supports )
+ 				.target(nodeDoc)
+ 				.predicate( new OSQLPredicate("$depth <= 1"))) {
+    		ODocument doc = (ODocument) supportRec;
+    		if ( doc.getClassName().equals(NdexClasses.Support)) {
+        		Long supportId = doc.field(NdexClasses.Element_ID);
+				if ( network != null &&
+						!network.getSupports().containsKey(supportId)) {
+					Support support = getSupportFromDoc(doc, network);
+					network.getSupports().put(supportId, support);
+				}
+				n.getSupports().add(supportId);
+    		}
+    	}
+
     	return n;
     }
     
@@ -807,7 +950,7 @@ public class NetworkDAO {
         	          
         	      if ( doc.getClassName().equals(NdexClasses.Support)) {
         	         if ( doc.field(NdexClasses.Support_P_text).equals(text) ) {
-        	             return getSupportFromDoc(doc);
+        	             return getSupportFromDoc(doc,null);
         	         }
        	          }
         	}
@@ -827,7 +970,7 @@ public class NetworkDAO {
         	          
 	       				if ( doc.getClassName().equals(NdexClasses.Support)) {
 	       					if ( doc.field(NdexClasses.Support_P_text).equals(text) ) {
-	       						return getSupportFromDoc(doc);
+	       						return getSupportFromDoc(doc,null);
 	       					}
 	       				}
 	       			}
@@ -838,13 +981,18 @@ public class NetworkDAO {
     	return null;
     }
     
-    private static Support getSupportFromDoc(ODocument doc) {
+    private Support getSupportFromDoc(ODocument doc, Network network) {
     	Support s = new Support();
     	s.setText((String)doc.field(NdexClasses.Support_P_text));
     	s.setId((long)doc.field(NdexClasses.Element_ID));
     	ODocument citationDoc = doc.field("out_" + NdexClasses.Support_E_citation);
-    	s.setCitation((long)citationDoc.field(NdexClasses.Element_ID));
-    	
+    	Long citationId = citationDoc.field(NdexClasses.Element_ID);
+    	s.setCitation(citationId);
+        if ( network != null && 
+        		! network.getCitations().containsKey(citationId)) {
+        	Citation citation = getCitationFromDoc(citationDoc);
+        	network.getCitations().put(citationId, citation);
+        }
     	return s;
     	
     }
@@ -913,8 +1061,9 @@ public class NetworkDAO {
      * @param name
      * @param networkId
      * @return
+     * @throws NdexException 
      */
-    public List<Node> findNodesByName(String name, String networkId) {
+    public List<Node> findNodesByName(String name, String networkId) throws NdexException {
     	String query = "select from (traverse out_" + NdexClasses.Network_E_Nodes +
 				" from (select from " + NdexClasses.Network + " where " +
 		  		  NdexClasses.Network_P_UUID + "= '" + networkId + "')) where @class='"+  NdexClasses.Node + "' and " + 
@@ -925,7 +1074,7 @@ public class NetworkDAO {
     	List<Node> results = new ArrayList<Node>();
 	    if ( !nodes.isEmpty()) {
 	    	for ( ODocument doc : nodes) {
-	    		results.add(getNode(doc));
+	    		results.add(getNode(doc,null));
 	    	}
 	    	return results;
 	    }

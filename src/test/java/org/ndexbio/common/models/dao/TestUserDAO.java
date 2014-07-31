@@ -51,8 +51,8 @@ public class TestUserDAO extends TestDAO{
 		// Create some users for testing. 
 		NewUser newUser = new NewUser();
         newUser.setEmailAddress("test@ndexbio.org");
-        newUser.setPassword("test");
-        newUser.setAccountName("test");
+        newUser.setPassword("probably-insecure");
+        newUser.setAccountName("Support");
         newUser.setFirstName("test");
         newUser.setLastName("test");
         user = dao.createNewUser(newUser);
@@ -81,7 +81,7 @@ public class TestUserDAO extends TestDAO{
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		
-		dao.deleteUserById(user.getExternalId());
+	//	dao.deleteUserById(user.getExternalId());
 		dao.deleteUserById(user2.getExternalId());
 		dao.deleteUserById(user3.getExternalId());
 		localConnection.commit();
