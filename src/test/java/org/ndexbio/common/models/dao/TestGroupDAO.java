@@ -32,41 +32,48 @@ public class TestGroupDAO extends TestDAO
 	private static GroupDAO dao;
 	private static NdexDatabase database;
 	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
-	private static Group testGroup;
+	private static OrientGraph graph;
+	
+	private static User testUserGroupOwner;
 	private static User testUser;
+	private static Group testGroup;
 	private static Group group;
 	private static Group group2;
-	private static Group group3;
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		// For acquiring connections from the pool
 		database = new NdexDatabase();
 		localConnection = database.getAConnection();
+		graph = new OrientGraph(localConnection);
 		userDAO = new UserDAO(localConnection);
-		dao = new GroupDAO(localConnection);
+		dao = new GroupDAO(localConnection, graph);
 		
-		localConnection.begin();
+		final NewUser newUser = new NewUser();
+        newUser.setEmailAddress("testUserGroupOwner");
+        newUser.setPassword("testUserGroupOwner");
+        newUser.setAccountName("testUserGroupOwner");
+        newUser.setFirstName("testUserGroupOwner");
+        newUser.setLastName("testUserGroupOwner");
+		
+        testUserGroupOwner = userDAO.createNewUser(newUser);
+        localConnection.commit();
+		
 		Group newGroup = new Group();
-        newGroup.setOrganizationName("testGroup");
-        newGroup.setAccountName("testGroup");
-        newGroup.setDescription("testGroup");
-        newGroup.setWebsite("testGroup");
-        group = dao.createNewGroup(newGroup);
+        newGroup.setOrganizationName("group");
+        newGroup.setAccountName("group");
+        newGroup.setDescription("group");
+        newGroup.setWebsite("group");
+        group = dao.createNewGroup(newGroup, testUserGroupOwner.getExternalId());
+        
+        localConnection.commit();
         
         newGroup = new Group();
-        newGroup.setOrganizationName("testGroup2");
-        newGroup.setAccountName("testGroup2");
-        newGroup.setDescription("testGroup2");
-        newGroup.setWebsite("testGroup2");
-        group2 = dao.createNewGroup(newGroup);
-        
-        newGroup = new Group();
-        newGroup.setOrganizationName("testGroup2");
-        newGroup.setAccountName("testGroup2");
-        newGroup.setDescription("testGroup2");
-        newGroup.setWebsite("testGroup2");
-        group3 = dao.createNewGroup(newGroup);
+        newGroup.setOrganizationName("group2");
+        newGroup.setAccountName("group2");
+        newGroup.setDescription("group2");
+        newGroup.setWebsite("group2");
+        group2 = dao.createNewGroup(newGroup, testUserGroupOwner.getExternalId());
         
         localConnection.commit();
         
@@ -75,10 +82,9 @@ public class TestGroupDAO extends TestDAO
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		
-		localConnection.begin();	
+		userDAO.deleteUserById(testUserGroupOwner.getExternalId());
 		dao.deleteGroupById(group.getExternalId());
 		dao.deleteGroupById(group2.getExternalId());
-		dao.deleteGroupById(group3.getExternalId());
 		localConnection.commit();
 		localConnection.close();
 		database.close();
@@ -88,13 +94,13 @@ public class TestGroupDAO extends TestDAO
 	// initialize testGroup for test suite
 	@Before
 	public void setup() {
-		//assertTrue(createTestUser());
+		assertTrue(createTestUser());
 		assertTrue(createTestGroup());
 	}
 	//cleanup testGroup
 	@After
 	public void teardown() {
-		//assertTrue(deleteTestUser());
+		assertTrue(deleteTestUser());
 		assertTrue(deleteTestGroup());
 	}
 	
@@ -103,16 +109,15 @@ public class TestGroupDAO extends TestDAO
 	public void createGroup() {
 		
 		try {
-			
-			localConnection.begin(); // also aborts any uncommitted transactions.
-			
+			localConnection.begin();
 			final Group newGroup = new Group();
             newGroup.setOrganizationName("create");
             newGroup.setAccountName("create");
             newGroup.setDescription("create");
             newGroup.setWebsite("create");
             
-            assertNotNull(dao.createNewGroup(newGroup));
+            assertNotNull(dao.createNewGroup(newGroup, testUser.getExternalId()));
+            localConnection.rollback();
            
 		} catch (Throwable e){
 			
@@ -125,39 +130,33 @@ public class TestGroupDAO extends TestDAO
 	@Test(expected = IllegalArgumentException.class)
     public void createGroupInvalid() throws IllegalArgumentException, NdexException {
 		
-		localConnection.begin();
-		
-        dao.createNewGroup(null);
+        dao.createNewGroup(null, testUserGroupOwner.getExternalId());
         
     }
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void createGroupInvalidAccountName() throws NdexException, IllegalArgumentException {
 		
-			localConnection.begin(); // also aborts any uncommitted transactions.
-			
 			final Group newGroup = new Group();
             newGroup.setOrganizationName("test");
             newGroup.setAccountName("");
             newGroup.setDescription("test");
             newGroup.setWebsite("test");
             
-            dao.createNewGroup(newGroup);
+            dao.createNewGroup(newGroup, testUserGroupOwner.getExternalId());
             
 	}
 	
 	@Test(expected = DuplicateObjectException.class)
 	public void createGroupExistingGroup() throws IllegalArgumentException, NdexException, DuplicateObjectException {
 		
-				localConnection.begin(); // also aborts any uncommitted transactions.	
-	  
 				final Group newGroup = new Group();
-	            newGroup.setOrganizationName("test");
-	            newGroup.setAccountName("test");
-	            newGroup.setDescription("test");
-	            newGroup.setWebsite("test");
+	            newGroup.setOrganizationName("testGroup");
+	            newGroup.setAccountName("testGroup");
+	            newGroup.setDescription("testGroup");
+	            newGroup.setWebsite("testGroup");
 				
-	            dao.createNewGroup(newGroup);
+	            dao.createNewGroup(newGroup, testUserGroupOwner.getExternalId());
 			
 	}
 	
@@ -166,7 +165,6 @@ public class TestGroupDAO extends TestDAO
     	
     	try {
     		
-    		localConnection.begin(); // also aborts any uncommitted transactions.
 	        final Group retrievedGroup = dao.getGroupById(testGroup.getExternalId());
 	        assertNotNull(retrievedGroup);
 	        
@@ -187,7 +185,6 @@ public class TestGroupDAO extends TestDAO
             final Group updated = new Group();
             updated.setDescription("changed");
             
-            localConnection.begin();
             dao.updateGroup(updated, testGroup.getExternalId());
             localConnection.commit();
             
@@ -215,7 +212,6 @@ public class TestGroupDAO extends TestDAO
 	    	
 	    	try {
 		    		
-	    		localConnection.begin();
 		    	final SimpleUserQuery simpleQuery = new SimpleUserQuery();
 		    	simpleQuery.setSearchString("test");
 		    	
@@ -239,14 +235,13 @@ public class TestGroupDAO extends TestDAO
 		
 		try {
 			
-			localConnection.begin();
 			final Group newGroup = new Group();
-            newGroup.setOrganizationName("test");
-            newGroup.setAccountName("test");
-            newGroup.setDescription("test");
-            newGroup.setWebsite("test");
+            newGroup.setOrganizationName("testGroup");
+            newGroup.setAccountName("testGroup");
+            newGroup.setDescription("testGroup");
+            newGroup.setWebsite("testGroup");
 			
-	        testGroup = dao.createNewGroup(newGroup);
+	        testGroup = dao.createNewGroup(newGroup, testUserGroupOwner.getExternalId());
 	        localConnection.commit();
         
         	return true;
@@ -262,7 +257,6 @@ public class TestGroupDAO extends TestDAO
 		
 		try {
 			
-			localConnection.begin();
 			dao.deleteGroupById(testGroup.getExternalId());
 			localConnection.commit();
 			testGroup = null;
@@ -281,13 +275,12 @@ public class TestGroupDAO extends TestDAO
 		
 		try {
 			
-			localConnection.begin();
 			final NewUser newUser = new NewUser();
-            newUser.setEmailAddress("test");
-            newUser.setPassword("test");
-            newUser.setAccountName("test");
-            newUser.setFirstName("test");
-            newUser.setLastName("test");
+            newUser.setEmailAddress("testUser");
+            newUser.setPassword("testUser");
+            newUser.setAccountName("testUser");
+            newUser.setFirstName("testUser");
+            newUser.setLastName("testUser");
 			
 	        testUser = userDAO.createNewUser(newUser);
 	        localConnection.commit();
@@ -305,7 +298,6 @@ public class TestGroupDAO extends TestDAO
 		
 		try {
 			
-			localConnection.begin();
 			userDAO.deleteUserById(testUser.getExternalId());
 			localConnection.commit();
 			testUser = null;

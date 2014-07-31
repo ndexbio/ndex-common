@@ -33,6 +33,7 @@ public class NetworkSearchDAO {
 		this.db = db;
 	}
 	
+	//TODO does not take into consideration membership edges of logged in user
 	public List<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top) 
 			throws NdexException, IllegalArgumentException {
 		
@@ -50,19 +51,27 @@ public class NetworkSearchDAO {
 			simpleNetworkQuery.setSearchString("");
 		}
 		
-		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-			"SELECT FROM"
-			+ " (TRAVERSE "+ NdexClasses.User +".out_admin FROM"
-				+ " (SELECT FROM "+ NdexClasses.User
-					+ " WHERE accountName.toLowerCase() LIKE '%"+ simpleNetworkQuery.getAccountName().toLowerCase() +"%')"
-				+ "  WHILE $depth <=1)"
-			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
-			+ " AND visibility <> 'PRIVATE'"
-			+ " AND @class = '"+ NdexClasses.Network +"'"
-			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
-			+ " LIMIT " + top);
+		// probably not important for now but this may not be the best implementation. 
+		
+		String RID = "";
+		
+		OSQLSynchQuery<ODocument> userQuery = new OSQLSynchQuery<ODocument>("SELECT FROM "+ NdexClasses.User +" "
+				+ "WHERE accountName = '"+simpleNetworkQuery.getAccountName() +"'");
 		
 		try {
+			final List<ODocument> users = this.db.command(userQuery).execute();
+			if(!users.isEmpty())
+				RID = users.get(0).getIdentity().toString();
+			
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+					"SELECT FROM "+ NdexClasses.Network
+					+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
+					+ " AND visibility <> 'PRIVATE'"
+					+ " OR in_admin LIKE '%"+ RID +"%'"
+					+ " OR in_write LIKE '%"+ RID +"%'"
+					+ " OR in_read LIKE '%"+ RID +"%'"
+					+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+					+ " LIMIT " + top);
 			
 			final List<ODocument> networks = this.db.command(query).execute();
 			for (final ODocument network : networks) {
