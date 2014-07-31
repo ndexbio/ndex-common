@@ -53,8 +53,8 @@ public class NetworkSearchDAO {
 			
 			if(!Strings.isNullOrEmpty(userAccountName)) {
 				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
-				OIdentifiable nUser = (OIdentifiable) accountNameIdx.get(userAccountName); // account to traverse by
-				userRID = nUser.getIdentity().toString();
+				OIdentifiable user = (OIdentifiable) accountNameIdx.get(userAccountName); // account to traverse by
+				userRID = user.getIdentity().toString();
 			} else {
 				userRID = "";
 			}
@@ -62,8 +62,11 @@ public class NetworkSearchDAO {
 			if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
 				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
 				OIdentifiable nUser = (OIdentifiable) accountNameIdx.get(simpleNetworkQuery.getAccountName()); // account to traverse by
-				String traverseRID = nUser.getIdentity().toString();
 				
+				if(nUser == null) 
+					throw new NdexException("Invalid accountName to filter by");
+				
+				String traverseRID = nUser.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>(
 			  			"SELECT FROM"
 			  			+ " (TRAVERSE "+ NdexClasses.User +".out_admin FROM"
