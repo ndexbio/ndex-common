@@ -14,6 +14,7 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.persistence.orientdb.PropertyGraphLoader;
 import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Node;
@@ -49,6 +50,8 @@ public class NetworkDAOTest {
 	@Test
     public void test() throws NdexException, JsonProcessingException {
 		NetworkDAO dao = new NetworkDAO(db);
+		
+		System.out.println(dao.checkPrivilege("Support", "e026e93c-1997-11e4-8f64-90b11c72aefa", Permissions.READ));
 
 		Network network = dao.getNetwork(UUID.fromString("931cce19-180c-11e4-9525-00219b422d69"),
 				0, 15);

@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
@@ -117,6 +118,32 @@ public class NetworkDAO {
 		 return network; 
 	}
 	
+    /**
+     * Check if an account has a certain privilege on a network.
+     * @param accountName account name to be checked.
+     * @param UUID  id of the network
+     * @param permission  permission to be verified.
+     * @return true if the account has that privilege.
+     */
+	
+	public boolean checkPrivilege(String accountName, String UUID, Permissions permission) {
+	    String permissionList = "in_" + NdexClasses.E_admin;
+	    if ( permission == Permissions.WRITE) {
+	    	permissionList += ",in_" + NdexClasses.account_E_canEdit; 
+	    } else if ( permission == Permissions.READ) {
+	    	permissionList += ",in_" + NdexClasses.account_E_canEdit + ",in_" + NdexClasses.account_E_canRead;;
+	    }; 
+		String query = "select rid from (traverse " + permissionList + 
+				" from (select from network where UUID='" + UUID +"') while $path <=1) where $depth > 0 where accountName = '"
+				+ accountName +"'";
+        final List<ODocument> users = db.query(new OSQLSynchQuery<ODocument>(query));
+        
+        if (users.isEmpty())
+	        return false;
+
+        return true;
+	}
+	
 	
 	public Network getNetworkById(UUID id) throws NdexException {
 		ODocument nDoc = getNetworkDocByUUID(id);
@@ -146,15 +173,21 @@ public class NetworkDAO {
         return network;
 	}
 	
-    private ODocument getNetworkDocByUUID(UUID id) {
+    
+	public ODocument getNetworkDocByUUIDString(String id) {
 	     String query = "select from " + NdexClasses.Network + " where UUID='"
-                 +id.toString()+"'";
+                 +id+"'";
          final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
   
          if (networks.isEmpty())
  	        return null;
          
     	return networks.get(0);
+    }
+ 
+	
+    public ODocument getNetworkDocByUUID(UUID id) {
+    	return getNetworkDocByUUIDString(id.toString());
     }
 
     
@@ -191,22 +224,9 @@ public class NetworkDAO {
             	
             	if ( counter >= startPosition )  {
               	   
-            	    PropertyGraphEdge e = getPropertyGraphEdge(doc);
+            	    PropertyGraphEdge e = getPropertyGraphEdge(doc,network);
         
             	    edgeList.add(e);
-            	    
-            	    if ( ! nodeMap.containsKey(e.getSubjectId())) {
-            	        ODocument subDoc = doc.field("in_" +  NdexClasses.Edge_E_subject);
-            	        PropertyGraphNode node = getPropertyGraphNode(subDoc);
-            	        nodeMap.put(node.getId(),node);
-            	    }    
-            	    
-            	    if ( ! nodeMap.containsKey(e.getObjectId())) {
-                	    ODocument objDoc = doc.field("out_" + NdexClasses.Edge_E_object);
-            	        PropertyGraphNode node = getPropertyGraphNode(objDoc);
-            	        nodeMap.put(node.getId(),node);
-            	    }
-            	    
                 }
             } 	
         }
@@ -255,7 +275,7 @@ public class NetworkDAO {
           
               if ( doc.getClassName().equals(NdexClasses.Edge)) {
           
-                  PropertyGraphEdge nd = getPropertyGraphEdge(doc);
+                  PropertyGraphEdge nd = getPropertyGraphEdge(doc,null);
                   if ( nd != null)
                 	  edgeList.add(nd);
                   else
@@ -304,26 +324,37 @@ public class NetworkDAO {
 	}
 	
 
-	private  PropertyGraphEdge getPropertyGraphEdge(ODocument doc) {
+	public  PropertyGraphEdge getPropertyGraphEdge(ODocument doc, PropertyGraphNetwork network) {
 		PropertyGraphEdge e = new PropertyGraphEdge();
 		e.setId((long)doc.field(NdexClasses.Element_ID));
 		
 		ODocument s =  doc.field("in_"+NdexClasses.Edge_E_subject);
-		e.setSubjectId((long) s.field(NdexClasses.Element_ID));
+		Long subjectId = s.field(NdexClasses.Element_ID);
+		e.setSubjectId(subjectId );
+
+		if ( network!=null && !network.getNodes().containsKey(subjectId)) {
+			PropertyGraphNode n = getPropertyGraphNode(s);
+			network.getNodes().put(n.getId(), n);
+		}
 		
 		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
 		e.setPredicate((String)predicateDoc.field(NdexClasses.BTerm_P_name));
 		
-		e.setObjectId((long)
-			    ((ODocument)doc.field("out_"+NdexClasses.Edge_E_object))
-			        .field(NdexClasses.Element_ID));
+		ODocument o   = doc.field("out_"+NdexClasses.Edge_E_object);
+		Long objectId = o.field(NdexClasses.Element_ID);
+		e.setObjectId(objectId);
+
+		if ( network!=null && !network.getNodes().containsKey(objectId)) {
+			PropertyGraphNode n = getPropertyGraphNode(o);
+			network.getNodes().put(n.getId(), n);
+		}
 		
 		getPropertiesFromDocument(e,doc);
 		return e;
 	}
 
 	
-	private  Edge getEdgeFromDocument(ODocument doc, Network network) throws NdexException {
+	public  Edge getEdgeFromDocument(ODocument doc, Network network) throws NdexException {
 		Edge e = new Edge();
 		e.setId((long)doc.field(NdexClasses.Element_ID));
 		
