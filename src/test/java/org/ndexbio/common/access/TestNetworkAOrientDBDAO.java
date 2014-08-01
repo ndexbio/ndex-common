@@ -8,10 +8,14 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
+import org.ndexbio.model.object.SimplePathQuery;
 import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.network.Edge;
+import org.ndexbio.model.object.network.PropertyGraphNetwork;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class TestNetworkAOrientDBDAO {
@@ -47,39 +51,51 @@ public class TestNetworkAOrientDBDAO {
 	public void sourceTargetQuery(){
 		noi.testSTQuery();
 	}
+*/	
+	
+	@Test 
+	public void StringToRIDTest() {
+	}
 	
 	@Test 
 	public void queryForEdges(){
+
+		String s = "abc(#20:2)";
+		ORID id = noi.stringToRid(s);
 		
-		NetworkQueryParameters parameters = new NetworkQueryParameters();
+		System.out.println(id);
+		
+		SimplePathQuery parameters = new SimplePathQuery();
+		parameters.setSearchDepth(1);
+//		parameters.setSearchString("Q16566");
+		parameters.setSearchString("YGR218W");
 		int skipBlocks = 0;
-		int blockSize = 50;
-		parameters.setSearchType("INTERCONNECT");
-		parameters.setSearchDepth(2);
-		List<String> termNames = new ArrayList<String>();
+		int blockSize = 80;
+/*		List<String> termNames = new ArrayList<String>();
 		
-		//termNames.add("YOL058W");
-		//termNames.add("YKR099W");
 		
 		termNames.add("MAF");
-		termNames.add("JUN");
-		parameters.setStartingTermStrings(termNames);
+		termNames.add("JUN"); */
 		try {
 			
+			PropertyGraphNetwork n = noi.queryForSubPropertyGraphNetwork("d750c790-199e-11e4-86bd-90b11c72aefa",parameters);
+			System.out.println (n);
 			List<Edge> edges = noi.queryForEdges(
-					"C25R18",
+					//"Support",
+					"d750c790-199e-11e4-86bd-90b11c72aefa",
 					parameters, 
 					skipBlocks,
 					blockSize);
 			for (Edge edge : edges){
-				System.out.println("subject = " + edge.getS() + " predicate = " + edge.getP() + " object = " + edge.getO());
+				System.out.println("subject = " + edge.getSubjectId() + " predicate = " + edge.getPredicateId() 
+						+ " object = " + edge.getObjectId());
 			}
 		} catch (IllegalArgumentException | NdexException e) {
 			Assert.fail(e.getMessage());
 			e.printStackTrace();
 		} 
 	}
-	*/
+	
 	
 	@Test
 	public void mytest() throws NdexException {
