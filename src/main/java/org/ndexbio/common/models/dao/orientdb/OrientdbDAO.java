@@ -1,24 +1,36 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.util.UUID;
+import java.util.logging.Logger;
+
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+//import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.helpers.Configuration;
-import org.ndexbio.common.helpers.IdConverter;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
+//import org.ndexbio.common.models.dao.CommonDAOValues;
+//import org.ndexbio.model.object.NewUser;
+//import org.ndexbio.common.helpers.Configuration;
+//import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
-import com.google.common.base.Preconditions;
+
+
+
+//import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public abstract class OrientdbDAO {
 //	protected FramedGraphFactory _graphFactory = null;
 	protected ODatabaseDocumentTx _ndexDatabase = null;
 //	protected FramedGraph<OrientBaseGraph> _orientDbGraph = null;
 	
+	protected ODatabaseDocumentTx db;
+	private static final Logger logger = Logger.getLogger(OrientdbDAO.class.getName());
 
-	public OrientdbDAO() {
+	public OrientdbDAO( ){
 /*		_graphFactory = new FramedGraphFactory(new GremlinGroovyModule(),
 				new TypedGraphModuleBuilder().withClass(IGroup.class)
 						.withClass(IUser.class)
@@ -31,6 +43,10 @@ public abstract class OrientdbDAO {
 						.withClass(IReifiedEdgeTerm.class)
 						.withClass(IFunctionTerm.class).build());
 */
+	}
+	
+	public OrientdbDAO(ODatabaseDocumentTx db) {
+		this.db = db;
 	}
 
 	/**************************************************************************
@@ -84,6 +100,54 @@ public abstract class OrientdbDAO {
 	 * 
 	 */
 
+	protected ODocument getRecordById(UUID id, String orientClass) 
+			throws NdexException {
+		
+		try {
+			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
+			OIdentifiable user = (OIdentifiable) Idx.get(id.toString()); // account to traverse by
+			if(user == null) 
+				throw new ObjectNotFoundException("Object with UUID ", id.toString());
+			
+			if( !( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
+				throw new NdexException("UUID is not for class " + orientClass);
+			
+			return (ODocument) user.getRecord();
+			
+		} catch (ObjectNotFoundException e) {
+			logger.info("Object with UUID " + id + " does not exist");
+			throw e;
+		} catch (Exception e) {
+			logger.info("Unexpected error on user retrieval by UUID");
+			throw new NdexException(e.getMessage());
+		}
+		
+	}
+	
+	protected ODocument getRecordByAccountName(String accountName, String orientClass) 
+			throws NdexException {
+		
+		try {
+			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
+			OIdentifiable user = (OIdentifiable) Idx.get(accountName); // account to traverse by
+			if(user == null) 
+				throw new ObjectNotFoundException("Account ", accountName);
+			
+			if( !( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
+				throw new NdexException("UUID is not for class " + orientClass);
+			
+			return (ODocument) user.getRecord();
+			
+		} catch (ObjectNotFoundException e) {
+			logger.info("Account " + accountName + " does not exist");
+			throw e;
+		} catch (Exception e) {
+			logger.info("Unexpected error on user retrieval by accountName");
+			throw new NdexException(e.getMessage());
+		}
+		
+	} 
+	
 /*	protected IUser findIuserById(final String userId) {
 		Preconditions.checkState(null != this._ndexDatabase && null != this._orientDbGraph,
 				"findUserById invoked without database connection");	

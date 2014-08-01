@@ -51,8 +51,8 @@ public class TestUserDAO extends TestDAO{
 		// Create some users for testing. 
 		NewUser newUser = new NewUser();
         newUser.setEmailAddress("test@ndexbio.org");
-        newUser.setPassword("probably-insecure");
-        newUser.setAccountName("Support");
+        newUser.setPassword("test");
+        newUser.setAccountName("test");
         newUser.setFirstName("test");
         newUser.setLastName("test");
         user = dao.createNewUser(newUser);
@@ -72,16 +72,12 @@ public class TestUserDAO extends TestDAO{
         newUser.setFirstName("test3");
         newUser.setLastName("test3");
         user3 = dao.createNewUser(newUser);
-     
-        localConnection.commit();
-   //     graph.commit();
-        
 	}
 	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		
-	//	dao.deleteUserById(user.getExternalId());
+		dao.deleteUserById(user.getExternalId());
 		dao.deleteUserById(user2.getExternalId());
 		dao.deleteUserById(user3.getExternalId());
 		localConnection.commit();
@@ -207,7 +203,7 @@ public class TestUserDAO extends TestDAO{
     	try {
 
 	    	final SimpleUserQuery simpleQuery = new SimpleUserQuery();
-	    	simpleQuery.setSearchString("support");
+	    	simpleQuery.setSearchString("test");
 	    	
 	    	assertTrue(!dao.findUsers(simpleQuery, 0, 5).isEmpty());
     	
@@ -233,7 +229,7 @@ public class TestUserDAO extends TestDAO{
 
 		dao.deleteUserById(id);
 		testUser = null;
-		localConnection.commit();
+		//localConnection.commit();
 		try { 
 		dao.getUserById(id);
 		} catch(NdexException e) {
@@ -343,7 +339,7 @@ public class TestUserDAO extends TestDAO{
         	
 
             dao.changePassword("not-secure", testUser.getExternalId());
-            localConnection.commit();
+            //localConnection.commit();
             
             User authenticatedUser = dao.authenticateUser(testUser.getAccountName(), "not-secure");
             assertNotNull(authenticatedUser);
@@ -379,7 +375,7 @@ public class TestUserDAO extends TestDAO{
             updated.setDescription("changed");
 
             dao.updateUser(updated, testUser.getExternalId());
-            localConnection.commit();
+            //localConnection.commit();
             
             assertEquals(updated.getDescription(), dao.getUserById(testUser.getExternalId()).getDescription());
             assertEquals(testUser.getEmailAddress(), dao.getUserById(testUser.getExternalId()).getEmailAddress());
@@ -402,7 +398,8 @@ public class TestUserDAO extends TestDAO{
 	private boolean createTestUser() {
 		
 		try {
-
+			
+			//localConnection.begin();
 			final NewUser newUser = new NewUser();
             newUser.setEmailAddress("testUser");
             newUser.setPassword("testUser");
@@ -411,7 +408,7 @@ public class TestUserDAO extends TestDAO{
             newUser.setLastName("testUser");
 			
 	        testUser = dao.createNewUser(newUser);
-	        localConnection.commit();
+	        //localConnection.commit();
         
         	return true;
         	
@@ -425,9 +422,9 @@ public class TestUserDAO extends TestDAO{
 	private boolean deleteTestUser() {
 		
 		try {
-
+			//localConnection.begin();
 			dao.deleteUserById(testUser.getExternalId());
-			localConnection.commit();
+			//localConnection.commit();
 			testUser = null;
 			
 			return true;

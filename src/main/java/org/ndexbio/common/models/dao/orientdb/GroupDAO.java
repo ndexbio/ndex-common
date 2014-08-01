@@ -39,7 +39,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class GroupDAO {
+public class GroupDAO extends OrientdbDAO {
 	
 	private ODatabaseDocumentTx db;
 	private OrientGraph graph;
@@ -52,6 +52,7 @@ public class GroupDAO {
 	    *            Database instance from the Connection pool, should be opened
 	    **************************************************************************/
 	public GroupDAO(ODatabaseDocumentTx db, OrientGraph graph) {
+		super(db);
 		this.db = db;
 		this.graph = graph;
 	}
@@ -82,7 +83,7 @@ public class GroupDAO {
 					"An admin id is required" );
 			
 			_checkForExistingGroup(newGroup);
-			final ODocument admin = _getUserById(adminId);
+			final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
 				
 			try {
 				Group result = new Group();
@@ -141,7 +142,7 @@ public class GroupDAO {
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
-		final ODocument group = _getGroupById(id);
+		final ODocument group = this.getRecordById(id, NdexClasses.Group);
 	    return _getGroupFromDocument(group);
 	}
 	
@@ -162,7 +163,7 @@ public class GroupDAO {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(accountName), 
 				"UUID required");
 		
-		final ODocument group = _getGroupByAccountName(accountName);
+		final ODocument group = this.getRecordByAccountName(accountName, NdexClasses.Group);
 	    return _getGroupFromDocument(group);
 	}
 	
@@ -184,7 +185,7 @@ public class GroupDAO {
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
-			ODocument group = _getGroupById(id);
+			ODocument group = this.getRecordById(id, NdexClasses.Group);
 			try {
 				group.delete();
 			}
@@ -217,7 +218,7 @@ public class GroupDAO {
 			Preconditions.checkArgument(updatedGroup != null, 
 					"An updated user is required");
 		
-		ODocument group =  _getGroupById(id);
+		ODocument group =  this.getRecordById(id, NdexClasses.Group);
 		
 		try {
 			//updatedGroup.getDescription().isEmpty();
@@ -321,9 +322,9 @@ public class GroupDAO {
 				|| (membership.getPermissions() == Permissions.WRITE),
 				"Valid permission required");
 		
-		final ODocument group = _getGroupById(groupId);
-		final ODocument admin = _getUserById(adminId);
-		final ODocument member = _getUserById(membership.getMemberUUID());
+		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
+		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
+		final ODocument member = this.getRecordById(membership.getMemberUUID(), NdexClasses.User);
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
@@ -391,9 +392,9 @@ public class GroupDAO {
 				"group UUID required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(adminId.toString()));
 		
-		final ODocument group = _getGroupById(groupId);
-		final ODocument admin = _getUserById(adminId);
-		final ODocument member = _getUserById(memberId);
+		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
+		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
+		final ODocument member = this.getRecordById(memberId, NdexClasses.User);
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
@@ -470,7 +471,7 @@ public class GroupDAO {
 		}
 	}
 	
-	private ODocument _getGroupById(UUID id) 
+	/*private ODocument _getGroupById(UUID id) 
 			throws NdexException, ObjectNotFoundException {
 		
 		final List<ODocument> groups;
@@ -491,11 +492,11 @@ public class GroupDAO {
 			logger.info("Group with UUID " + id + " does not exist");
 			throw new ObjectNotFoundException("Group", id.toString());
 		}
-		
+		System.out.println(groups.get(0).getSchemaClass().getName());
 		return groups.get(0);
-	}
+	}*/
 	
-	private ODocument _getUserById(UUID id) 
+	/*private ODocument this.getUserRecordById(UUID id) 
 			throws NdexException, ObjectNotFoundException {
 		
 		final List<ODocument> users;
@@ -524,9 +525,9 @@ public class GroupDAO {
 		
 		return users.get(0);
 		
-	}
+	}*/
 	
-	private ODocument _getGroupByAccountName(String accountName) 
+	/*private ODocument _getGroupByAccountName(String accountName) 
 			throws NdexException, ObjectNotFoundException {
 
 		final List<ODocument> groups;
@@ -548,8 +549,9 @@ public class GroupDAO {
 			throw new ObjectNotFoundException("Group", accountName);
 		}
 
+		System.out.println(groups.get(0).getSchemaClass().getName());
 		return groups.get(0);
-	}
+	}*/
 	
 	
 }

@@ -29,10 +29,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-public class UserDAO {
+public class UserDAO extends OrientdbDAO{
 
 	private ODatabaseDocumentTx db;
 	private static final Logger logger = Logger.getLogger(UserDAO.class.getName());
@@ -49,6 +51,7 @@ public class UserDAO {
 	    *            Database instance from the Connection pool, should be opened
 	    **************************************************************************/
 	public UserDAO (ODatabaseDocumentTx db) {
+		super(db);
 		this.db = db;
 	}
 	
@@ -72,11 +75,11 @@ public class UserDAO {
 				throw new SecurityException("No accountName or password entered.");
 
 			try {
-				final ODocument OAuthUser = _getUserByAccountName(accountName);
+				final ODocument OAuthUser = this.getRecordByAccountName(accountName, NdexClasses.User);
 				if(!Security.authenticateUser(password, OAuthUser)) {
 					throw new SecurityException("Invalid accountName or password.");
 				}
-				return _getUserFromDocument(OAuthUser);
+				return UserDAO.getUserFromDocument(OAuthUser);
 			} catch (SecurityException se) {
 				logger.info("Authentication failed: " + se.getMessage());
 				throw se;
@@ -112,7 +115,7 @@ public class UserDAO {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty( newUser.getEmailAddress()),
 				"A user email address is required" );
 		
-		_checkForExistingUser(newUser);
+		this.checkForExistingUser(newUser);
 			
 		try {
 			User result = new User();
@@ -166,7 +169,7 @@ public class UserDAO {
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
-			ODocument user = _getUserById(id);
+			ODocument user = this.getRecordById(id, NdexClasses.User);
 			try {
 				user.delete();
 			}
@@ -186,14 +189,15 @@ public class UserDAO {
 	    *            Attempting to query the database
 	    * @returns User object, from the NDEx Object Model
 	    **************************************************************************/
+	
 	public User getUserById(UUID id) 
 		throws NdexException, IllegalArgumentException, ObjectNotFoundException {
 		
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
-		final ODocument user = _getUserById(id);
-	    return _getUserFromDocument(user);
+		final ODocument user = this.getRecordById(id, NdexClasses.User);
+	    return UserDAO.getUserFromDocument(user);
 	     
 	}
 	
@@ -212,8 +216,8 @@ public class UserDAO {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(accountName), 
 				"accountName required");
 
-		final ODocument user = _getUserByAccountName(accountName);
-	    return _getUserFromDocument(user);
+		final ODocument user = this.getRecordByAccountName(accountName, NdexClasses.User);
+	    return UserDAO.getUserFromDocument(user);
 
 	}
 	
@@ -259,7 +263,7 @@ public class UserDAO {
 			
 			final List<ODocument> users = this.db.query(new OSQLSynchQuery<ODocument>(query));
 			for (final ODocument user : users) {
-				foundUsers.add(_getUserFromDocument(user));
+				foundUsers.add(UserDAO.getUserFromDocument(user));
 				
 			}
 			return foundUsers;
@@ -293,9 +297,9 @@ public class UserDAO {
 		
 		try {
 
-			ODocument userToSave = _getUserByAccountName(accountName);
+			ODocument userToSave = this.getRecordByAccountName(accountName, NdexClasses.User);
 
-			final User authUser = _getUserFromDocument(userToSave);
+			final User authUser = UserDAO.getUserFromDocument(userToSave);
 			final String newPassword = Security.generatePassword();
 			final String password = Security.hashText(newPassword);
 			userToSave.field("password", password);
@@ -362,7 +366,7 @@ public class UserDAO {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(password), 
 				"A password is required");
 		
-		ODocument user =  _getUserById(id);
+		ODocument user =  this.getRecordById(id, NdexClasses.User);
 		
 		try {
 			// Remove quotes around the password
@@ -409,7 +413,7 @@ public class UserDAO {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(emailAddress), 
 				"A password is required");
 		
-		ODocument user =  _getUserById(id);
+		ODocument user =  this.getRecordById(id, NdexClasses.User);
 		
 		try {
 			
@@ -494,7 +498,7 @@ public class UserDAO {
 			Preconditions.checkArgument(updatedUser != null, 
 					"An updated user is required");
 		
-		ODocument user =  _getUserById(id);
+		ODocument user =  this.getRecordById(id, NdexClasses.User);
 		
 		try {
 			//updatedUser.getDescription().isEmpty();
@@ -508,7 +512,7 @@ public class UserDAO {
 			user.save();
 			logger.info("Updated user profile with UUID " + id);
 			
-			return _getUserFromDocument(user);
+			return UserDAO.getUserFromDocument(user);
 			
 		} catch (Exception e) {
 			
@@ -519,7 +523,7 @@ public class UserDAO {
 
 	}
 	
-	private ODocument _getUserById(UUID id) 
+	/*private ODocument _getUserById(UUID id) 
 			throws NdexException, ObjectNotFoundException {
 		
 		final List<ODocument> users;
@@ -548,9 +552,9 @@ public class UserDAO {
 		
 		return users.get(0);
 		
-	}
+	}*/
 	
-	private ODocument _getUserByAccountName(String accountName) 
+	/*private ODocument this.getUserRecordByAccountName(String accountName) 
 			throws NdexException, ObjectNotFoundException {
 
 		final List<ODocument> users;
@@ -578,13 +582,13 @@ public class UserDAO {
 		}
 
 		return users.get(0);
-	}
+	}*/
 	
 	/*
 	 * Convert the database results into our object model
 	 * TODO should this be moved to util? being used by other classes, not really a data object but a helper class
 	 */
-	public static User _getUserFromDocument(ODocument n) {
+	public static User getUserFromDocument(ODocument n) {
 		
 		User result = new User();
 		
@@ -606,30 +610,34 @@ public class UserDAO {
 	 * Both a User's AccountName and emailAddress must be unique in the database.
 	 * Throw a DuplicateObjectException if that is not the case
 	 */
-	private void _checkForExistingUser(final NewUser newUser) 
-			throws DuplicateObjectException {
+
+	
+	protected void checkForExistingUser(final NewUser newUser) 
+			throws DuplicateObjectException, NdexException {
+		try {
+		OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
+		OIdentifiable user = (OIdentifiable) Idx.get(newUser.getAccountName()); // account to traverse by
 		
-		List<ODocument> existingUsers = db.query(
-				new OSQLSynchQuery<Object>(
-						"SELECT FROM " + NdexClasses.User
-						+ " WHERE accountName = '" + newUser.getAccountName() + "'"));
-		
-		if (!existingUsers.isEmpty()) {
+		if(user != null) {
 			logger.info("User with accountName " + newUser.getAccountName() + " already exists");
 			throw new DuplicateObjectException(
 					CommonDAOValues.DUPLICATED_ACCOUNT_FLAG);
 		}
-
-		existingUsers =db.query(
-				new OSQLSynchQuery<Object>(
-						"SELECT FROM " + NdexClasses.User
-						+ " WHERE emailAddress = '" + newUser.getEmailAddress() + "'"));
-		
-		if (!existingUsers.isEmpty()){
+		OIndex<?> emailIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-emailAddress");
+		user = (OIdentifiable) emailIdx.get(newUser.getEmailAddress()); // account to traverse by
+			
+		if(user != null) {
 			logger.info("User with emailAddress " + newUser.getEmailAddress() + " already exists");
 			throw new DuplicateObjectException(
 					CommonDAOValues.DUPLICATED_EMAIL_FLAG);
 		}
+		} catch (DuplicateObjectException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.info("Unexpected error on existing user check");
+			throw new NdexException(e.getMessage());
+		}
+		
 	}
 	
 }

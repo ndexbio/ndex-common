@@ -8,7 +8,6 @@ import org.junit.BeforeClass;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.UUID;
 
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
@@ -17,7 +16,6 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.dao.orientdb.GroupDAO;
 import org.ndexbio.model.object.SimpleUserQuery;
-import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.Group;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
@@ -169,6 +167,23 @@ public class TestGroupDAO extends TestDAO
     	try {
     		
 	        final Group retrievedGroup = dao.getGroupById(testGroup.getExternalId());
+	        assertNotNull(retrievedGroup);
+	        
+    	} catch(Exception e) {
+    		
+    		fail(e.getMessage());
+    		e.printStackTrace();
+    		
+    	} 
+    	
+    }
+	
+	@Test
+    public void getGroupByAccountName() {
+    	
+    	try {
+    		
+	        final Group retrievedGroup = dao.getGroupByAccountName(testGroup.getAccountName());
 	        assertNotNull(retrievedGroup);
 	        
     	} catch(Exception e) {
