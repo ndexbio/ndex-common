@@ -30,15 +30,14 @@ import org.ndexbio.model.object.User;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class GroupDAO {
 	
@@ -112,7 +111,10 @@ public class GroupDAO {
 				
 				graph.addEdge(null, vAdmin, vGroup, Permissions.ADMIN.toString().toLowerCase());
 				
-				logger.info("A new group with accountName " + newGroup.getAccountName() + " has been created");
+				logger.info("A new group with accountName "
+							+ newGroup.getAccountName() 
+							+" and owner "+ (String)admin.field("accountName") 
+							+" has been created");
 				
 				return result;
 			} 
@@ -291,6 +293,20 @@ public class GroupDAO {
 		} 
 	}
 	
+	/**************************************************************************
+	    * updateMember
+	    * 
+	    * @param membership
+	    * 			Membership object, should specify memberUUID, membershipType and permissions
+	    * @param groupId
+	    *            UUID for associated group
+	    * @param adminId
+	    * 			UUID for valid admin of group
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid groupId, memberId, or adminId
+	    **************************************************************************/
 	public void updateMember(Membership membership, UUID groupId, UUID adminId) throws ObjectNotFoundException, NdexException {
 		Preconditions.checkArgument(membership.getMembershipType() == MembershipType.GROUP,
 				"Incorrect membership type");
@@ -310,33 +326,35 @@ public class GroupDAO {
 		final ODocument member = _getUserById(membership.getMemberUUID());
 		
 		try {
-			Vertex vGroup = graph.getVertex(group);
-			Vertex vAdmin = graph.getVertex(admin);
-			Vertex vMember = graph.getVertex(member);
+			OrientVertex vGroup = graph.getVertex(group);
+			OrientVertex vAdmin = graph.getVertex(admin);
+			OrientVertex vMember = graph.getVertex(member);
 			
 			boolean isAdmin = false;
 			boolean isOnlyAdmin = true;
 			for(Edge e : vGroup.getEdges(Direction.BOTH, Permissions.ADMIN.toString().toLowerCase())) {
-				if(e.getVertex(Direction.BOTH) == vAdmin) 
+				if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vAdmin.getIdentity() ) ) 
 					isAdmin = true;
 				else 
 					isOnlyAdmin = false;
 			}
 			
-			if(isOnlyAdmin && (vAdmin == vMember)) {
-				throw new NdexException("Cannot orphan group with to have no admin");
+			if(isOnlyAdmin && ( vAdmin.getIdentity().equals( vMember.getIdentity() ) ) ) {
+				logger.severe("Action will orphan group");
+				throw new NdexException("Cannot orphan group to have no admin");
 			}
 			
 			if(isAdmin) {
 				
 				for(Edge e : vGroup.getEdges(Direction.BOTH)) {
-					if(e.getVertex(Direction.BOTH) == vMember) 
+					if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vMember.getIdentity() ) ) 
 						graph.removeEdge(e);
 				}
 				
 				graph.addEdge(null, vMember, vGroup, membership.getPermissions().toString().toLowerCase());
 				
 			} else {
+				logger.severe("Invalid admin for group");
 				throw new NdexException("Specified user is not an admin for the group");
 			}
 			
@@ -348,6 +366,70 @@ public class GroupDAO {
 			throw new NdexException(e.getMessage());
 		}
 		
+	}
+	
+	/**************************************************************************
+	    * removeMember
+	    * 
+	    * @param memberId
+	    * 			UUID for valid member
+	    * @param groupId
+	    *            UUID for associated group
+	    * @param adminId
+	    * 			UUID for valid admin of group
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid groupId, memberId, or adminId
+	    **************************************************************************/
+	
+	public void removeMember(UUID memberId, UUID groupId, UUID adminId) 
+			throws ObjectNotFoundException, IllegalArgumentException, NdexException {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(memberId.toString()),
+				"member UUID required");
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId.toString()),
+				"group UUID required");
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(adminId.toString()));
+		
+		final ODocument group = _getGroupById(groupId);
+		final ODocument admin = _getUserById(adminId);
+		final ODocument member = _getUserById(memberId);
+		
+		try {
+			OrientVertex vGroup = graph.getVertex(group);
+			OrientVertex vAdmin = graph.getVertex(admin);
+			OrientVertex vMember = graph.getVertex(member);
+			
+			boolean isAdmin = false;
+			boolean isOnlyAdmin = true;
+			for(Edge e : vGroup.getEdges(Direction.BOTH, Permissions.ADMIN.toString().toLowerCase())) {
+				if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vAdmin.getIdentity() ) ) 
+					isAdmin = true;
+				else 
+					isOnlyAdmin = false;
+			}
+			
+			if(isOnlyAdmin && ( vAdmin.getIdentity().equals( vMember.getIdentity() ) ) ) {
+				throw new NdexException("Cannot orphan group to have no admin");
+			}
+			
+			if(isAdmin) {
+				for(Edge e : vGroup.getEdges(Direction.BOTH)) {
+					if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vMember.getIdentity() ) ) 
+						graph.removeEdge(e);
+				}
+			} else {
+				logger.severe("Invalid admin for group");
+				throw new NdexException("Specified user is not an admin for the group");
+			}
+			
+		} catch (Exception e) {
+			logger.severe("Unable to remove member for "
+					+ "group with UUID "+ groupId
+					+ " and admin with UUID " + adminId
+					+ " and member with UUID " + memberId);
+			throw new NdexException(e.getMessage());
+		}
 	}
 	
 	/*

@@ -19,6 +19,9 @@ import org.ndexbio.common.models.dao.orientdb.GroupDAO;
 import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.Group;
+import org.ndexbio.model.object.Membership;
+import org.ndexbio.model.object.MembershipType;
+import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.NewUser;
 
@@ -148,7 +151,7 @@ public class TestGroupDAO extends TestDAO
 	}
 	
 	@Test(expected = DuplicateObjectException.class)
-	public void createGroupExistingGroup() throws IllegalArgumentException, NdexException, DuplicateObjectException {
+	public void createExistingGroup() throws IllegalArgumentException, NdexException, DuplicateObjectException {
 		
 				final Group newGroup = new Group();
 	            newGroup.setOrganizationName("testGroup");
@@ -230,7 +233,99 @@ public class TestGroupDAO extends TestDAO
 	    public void findGroupsInvalid() throws IllegalArgumentException, NdexException {
 	        dao.findGroups(null,0,0);
 	    }
+
+	 @Test
+	  public void updateMembershipAddMember() throws ObjectNotFoundException, NdexException {
+		 User member = null;
+		 
+		 try {
+			 
+			 localConnection.begin();
+			  final NewUser newUser = new NewUser();
+	          newUser.setEmailAddress("member");
+	          newUser.setPassword("member");
+	          newUser.setAccountName("member");
+	          newUser.setFirstName("member");
+	          newUser.setLastName("member");
+				
+		      member = userDAO.createNewUser(newUser);
+		      localConnection.commit();
+			  
+			  Membership membership = new Membership();
+			  membership.setMemberAccountName(member.getAccountName());
+			  membership.setMemberUUID(member.getExternalId());
+			  membership.setPermissions(Permissions.WRITE);
+			  membership.setMembershipType(MembershipType.GROUP);
+			  
+			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
+			  
+			  localConnection.commit();
+		  
+		 } catch(Exception e) {
+			 fail(e.getMessage());
+		 } finally {
+			  userDAO.deleteUserById(member.getExternalId());
+			  localConnection.commit();
+		 }
+		 
+	  }
+	 @Test
+	  public void updateMembershipChangeAdmin() throws ObjectNotFoundException, NdexException {
+		  
+		 User member = null;
+		 try {
+			 localConnection.begin();
+			  final NewUser newUser = new NewUser();
+	         newUser.setEmailAddress("member");
+	         newUser.setPassword("member");
+	         newUser.setAccountName("member");
+	         newUser.setFirstName("member");
+	         newUser.setLastName("member");
+				
+		      member = userDAO.createNewUser(newUser);
+		      localConnection.commit();
+			  
+			  Membership membership = new Membership();
+			  membership.setMemberAccountName(member.getAccountName());
+			  membership.setMemberUUID(member.getExternalId());
+			  membership.setPermissions(Permissions.ADMIN);
+			  membership.setMembershipType(MembershipType.GROUP);
+			  
+			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
+			  
+			  localConnection.commit();
+			  
+			  membership = new Membership();
+			  membership.setMemberAccountName(testUser.getAccountName());
+			  membership.setMemberUUID(testUser.getExternalId());
+			  membership.setPermissions(Permissions.READ);
+			  membership.setMembershipType(MembershipType.GROUP);
+			  
+			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
+			  
+			  localConnection.commit();
+		 } catch (Exception e) {
+			 fail(e.getMessage());
+		 } finally {
+			 userDAO.deleteUserById(member.getExternalId());
+			 localConnection.commit();
+		 }
+		  
+	  }
 	
+	 @Test(expected = NdexException.class)
+	  public void updateMembershipInvalidAdminChange() throws ObjectNotFoundException, NdexException {
+		  
+			  Membership membership = new Membership();
+			  membership.setMemberAccountName(testUser.getAccountName());
+			  membership.setMemberUUID(testUser.getExternalId());
+			  membership.setPermissions(Permissions.READ);
+			  membership.setMembershipType(MembershipType.GROUP);
+			  
+			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
+			  
+	  }
+	 
 	private boolean createTestGroup() {
 		
 		try {
@@ -241,7 +336,7 @@ public class TestGroupDAO extends TestDAO
             newGroup.setDescription("testGroup");
             newGroup.setWebsite("testGroup");
 			
-	        testGroup = dao.createNewGroup(newGroup, testUserGroupOwner.getExternalId());
+	        testGroup = dao.createNewGroup(newGroup, testUser.getExternalId());
 	        localConnection.commit();
         
         	return true;
