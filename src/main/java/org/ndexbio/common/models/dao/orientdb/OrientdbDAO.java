@@ -101,7 +101,7 @@ public abstract class OrientdbDAO {
 	 */
 
 	protected ODocument getRecordById(UUID id, String orientClass) 
-			throws NdexException {
+			throws ObjectNotFoundException, NdexException {
 		
 		try {
 			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
@@ -125,7 +125,7 @@ public abstract class OrientdbDAO {
 	}
 	
 	protected ODocument getRecordByAccountName(String accountName, String orientClass) 
-			throws NdexException {
+			throws ObjectNotFoundException, NdexException {
 		
 		try {
 			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
