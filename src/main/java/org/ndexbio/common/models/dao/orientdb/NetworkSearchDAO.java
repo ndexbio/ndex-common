@@ -9,6 +9,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.SimpleNetworkQuery;
+import org.ndexbio.model.object.User;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -33,14 +34,18 @@ public class NetworkSearchDAO {
 		this.db = db;
 	}
 	
-	//TODO does not take into consideration membership edges of logged in user
-	public List<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, String userAccountName) 
+	//TODO make the search compatible to groups
+	public List<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, User loggedInUser) 
 			throws NdexException, IllegalArgumentException {
 		
 		Preconditions.checkArgument(null != simpleNetworkQuery, 
 				"A query is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(simpleNetworkQuery.getSearchString()), 
 				"A search string is required");
+		
+		String userAccountName = "";
+		if(loggedInUser != null)
+			userAccountName = loggedInUser.getAccountName();
 		
 		final List<NetworkSummary> foundNetworks = new ArrayList<NetworkSummary>();
 		
