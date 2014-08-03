@@ -1,37 +1,27 @@
 package org.ndexbio.common.models.dao.orientdb;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import javax.ws.rs.core.Response;
-
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.dao.CommonDAOValues;
 import org.ndexbio.model.object.SimpleUserQuery;
-import org.ndexbio.common.util.Email;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.Group;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.Permissions;
-import org.ndexbio.model.object.User;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -39,7 +29,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class GroupDAO {
+public class GroupDAO extends OrientdbDAO {
 	
 	private ODatabaseDocumentTx db;
 	private OrientGraph graph;
@@ -52,6 +42,7 @@ public class GroupDAO {
 	    *            Database instance from the Connection pool, should be opened
 	    **************************************************************************/
 	public GroupDAO(ODatabaseDocumentTx db, OrientGraph graph) {
+		super(db);
 		this.db = db;
 		this.graph = graph;
 	}
@@ -82,7 +73,7 @@ public class GroupDAO {
 					"An admin id is required" );
 			
 			_checkForExistingGroup(newGroup);
-			final ODocument admin = _getUserById(adminId);
+			final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
 				
 			try {
 				Group result = new Group();
@@ -141,8 +132,8 @@ public class GroupDAO {
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
-		final ODocument group = _getGroupById(id);
-	    return _getGroupFromDocument(group);
+		final ODocument group = this.getRecordById(id, NdexClasses.Group);
+	    return GroupDAO.getGroupFromDocument(group);
 	}
 	
 	/**************************************************************************
@@ -162,8 +153,8 @@ public class GroupDAO {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(accountName), 
 				"UUID required");
 		
-		final ODocument group = _getGroupByAccountName(accountName);
-	    return _getGroupFromDocument(group);
+		final ODocument group = this.getRecordByAccountName(accountName, NdexClasses.Group);
+	    return GroupDAO.getGroupFromDocument(group);
 	}
 	
 	/**************************************************************************
@@ -184,7 +175,7 @@ public class GroupDAO {
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
-			ODocument group = _getGroupById(id);
+			ODocument group = this.getRecordById(id, NdexClasses.Group);
 			try {
 				group.delete();
 			}
@@ -217,7 +208,7 @@ public class GroupDAO {
 			Preconditions.checkArgument(updatedGroup != null, 
 					"An updated user is required");
 		
-		ODocument group =  _getGroupById(id);
+		ODocument group =  this.getRecordById(id, NdexClasses.Group);
 		
 		try {
 			//updatedGroup.getDescription().isEmpty();
@@ -230,7 +221,7 @@ public class GroupDAO {
 			group.save();
 			logger.info("Updated group profile with UUID " + id);
 			
-			return _getGroupFromDocument(group);
+			return GroupDAO.getGroupFromDocument(group);
 			
 		} catch (Exception e) {
 			
@@ -281,7 +272,7 @@ public class GroupDAO {
 			
 			final List<ODocument> groups = this.db.query(new OSQLSynchQuery<ODocument>(query));
 			for (final ODocument group : groups) {
-				foundgroups.add(_getGroupFromDocument(group));
+				foundgroups.add(GroupDAO.getGroupFromDocument(group));
 				
 			}
 			return foundgroups;
@@ -321,9 +312,9 @@ public class GroupDAO {
 				|| (membership.getPermissions() == Permissions.WRITE),
 				"Valid permission required");
 		
-		final ODocument group = _getGroupById(groupId);
-		final ODocument admin = _getUserById(adminId);
-		final ODocument member = _getUserById(membership.getMemberUUID());
+		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
+		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
+		final ODocument member = this.getRecordById(membership.getMemberUUID(), NdexClasses.User);
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
@@ -352,6 +343,10 @@ public class GroupDAO {
 				}
 				
 				graph.addEdge(null, vMember, vGroup, membership.getPermissions().toString().toLowerCase());
+				logger.info("Added membership edge between group "
+				+ (String) group.field("accountName")
+				 + "and member " 
+				+ (String) group.field("accountName"));
 				
 			} else {
 				logger.severe("Invalid admin for group");
@@ -391,9 +386,9 @@ public class GroupDAO {
 				"group UUID required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(adminId.toString()));
 		
-		final ODocument group = _getGroupById(groupId);
-		final ODocument admin = _getUserById(adminId);
-		final ODocument member = _getUserById(memberId);
+		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
+		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
+		final ODocument member = this.getRecordById(memberId, NdexClasses.User);
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
@@ -418,6 +413,8 @@ public class GroupDAO {
 					if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vMember.getIdentity() ) ) 
 						graph.removeEdge(e);
 				}
+				logger.info("removed member if existed");
+				
 			} else {
 				logger.severe("Invalid admin for group");
 				throw new NdexException("Specified user is not an admin for the group");
@@ -432,11 +429,109 @@ public class GroupDAO {
 		}
 	}
 	
+	/**************************************************************************
+	    * getGroupNetworkMemberships
+	    *
+	    * @param groupId
+	    *            UUID for associated group
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid groupId, memberId, or adminId
+	    **************************************************************************/
+	
+	public List<Membership> getGroupNetworkMemberships(UUID groupId) throws ObjectNotFoundException, NdexException {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId.toString()),
+				"A group UUID is required");
+		
+		ODocument group = this.getRecordById(groupId, NdexClasses.Group);
+		
+		try {
+			List<Membership> memberships = new ArrayList<Membership>();
+			OrientVertex vGroup = graph.getVertex(group);
+			
+			for(Edge e : vGroup.getEdges(Direction.BOTH)) {
+				OrientVertex vMember = (OrientVertex) e.getVertex(Direction.IN);
+				ODocument member = vMember.getRecord();
+				
+				if(!member.getSchemaClass().getName().equals(NdexClasses.Network))
+					continue;
+				
+				Membership membership = new Membership();
+				membership.setMembershipType( MembershipType.NETWORK );
+				membership.setMemberAccountName( (String) group.field("accountName") ); 
+				membership.setMemberUUID( groupId );
+				membership.setPermissions( Permissions.valueOf( e.getLabel() ) );
+				membership.setResourceName( (String) member.field("name") );
+				membership.setResourceUUID( UUID.fromString( (String) member.field("UUID") ) );
+				
+				memberships.add(membership);
+				
+			}
+			
+			logger.info("Successfuly retrieved group-network memberships");
+			return memberships;
+			
+		} catch(Exception e) {
+			logger.severe("An unexpected error occured while retrieving group-network memberships");
+			throw new NdexException(e.getMessage());
+		}
+	}
+	
+	/**************************************************************************
+	    * getGroupUserMemberships
+	    *
+	    * @param groupId
+	    *            UUID for associated group
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid groupId, memberId, or adminId
+	    **************************************************************************/
+	
+	public List<Membership> getGroupUserMemberships(UUID groupId) throws ObjectNotFoundException, NdexException {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId.toString()),
+				"A group UUID is required");
+		
+		ODocument group = this.getRecordById(groupId, NdexClasses.Group);
+		
+		try {
+			List<Membership> memberships = new ArrayList<Membership>();
+			OrientVertex vGroup = graph.getVertex(group);
+			
+			for(Edge e : vGroup.getEdges(Direction.BOTH)) {
+				OrientVertex vMember = (OrientVertex) e.getVertex(Direction.OUT);
+				ODocument member = vMember.getRecord();
+				
+				if(!member.getSchemaClass().getName().equals(NdexClasses.Network))
+					continue;
+				
+				Membership membership = new Membership();
+				membership.setMembershipType( MembershipType.GROUP );
+				membership.setMemberAccountName( (String) member.field("accountName") ); 
+				membership.setMemberUUID( UUID.fromString( (String) member.field("UUID") ) );
+				membership.setPermissions( Permissions.valueOf( e.getLabel() ) );
+				membership.setResourceName( (String) group.field("organizationName"));
+				membership.setResourceUUID( groupId );
+				
+				memberships.add(membership);
+				
+			}
+			
+			logger.info("Successfuly retrieved group-user memberships");
+			return memberships;
+			
+		} catch(Exception e) {
+			logger.severe("An unexpected error occured while retrieving group-user memberships");
+			throw new NdexException(e.getMessage());
+		}
+	}
+	
 	/*
 	 * Convert the database results into our object model
 	 * TODO should this be moved to util? being used by other classes, not really a data access object
 	 */
-	public static Group _getGroupFromDocument(ODocument n) {
+	public static Group getGroupFromDocument(ODocument n) {
 		
 		Group result = new Group();
 		
@@ -468,87 +563,6 @@ public class GroupDAO {
 			throw new DuplicateObjectException(
 					CommonDAOValues.DUPLICATED_ACCOUNT_FLAG);
 		}
-	}
-	
-	private ODocument _getGroupById(UUID id) 
-			throws NdexException, ObjectNotFoundException {
-		
-		final List<ODocument> groups;
-		
-		String query = "select from " + NdexClasses.Group 
-		 		+ " where UUID = ?";
- 
-		try {
-		     groups = db.command( new OCommandSQL(query))
-					   .execute(id.toString()); 
-		} 
-		catch (Exception e) {
-			logger.severe("An error occured while attempting to query the database");
-			throw new NdexException(e.getMessage());
-		}
-		
-		if (groups.isEmpty()) {
-			logger.info("Group with UUID " + id + " does not exist");
-			throw new ObjectNotFoundException("Group", id.toString());
-		}
-		
-		return groups.get(0);
-	}
-	
-	private ODocument _getUserById(UUID id) 
-			throws NdexException, ObjectNotFoundException {
-		
-		final List<ODocument> users;
-		
-		String query = "select from " + NdexClasses.User 
-		 		+ " where UUID = ?";
- 
-		try {
-			
-		     users = db.command( new OCommandSQL(query))
-					   .execute(id.toString());
-		     
-		} catch (Exception e) {
-			
-			logger.severe("An error occured while attempting to query the database");
-			throw new NdexException(e.getMessage());
-			 
-		}
-		
-		if (users.isEmpty()) {
-			
-			logger.info("User with UUID " + id + " does not exist");
-			throw new ObjectNotFoundException("User", id.toString());
-			 
-		}
-		
-		return users.get(0);
-		
-	}
-	
-	private ODocument _getGroupByAccountName(String accountName) 
-			throws NdexException, ObjectNotFoundException {
-
-		final List<ODocument> groups;
-
-		String query = "select from " + NdexClasses.Group 
-		 		+ " where accountName = ?";
- 
-		try {
-		     groups = db.command( new OCommandSQL(query))
-					   .execute(accountName);
-		} 
-		catch (Exception e) {
-			logger.severe("An error occured while attempting to query the database");
-			throw new NdexException(e.getMessage());
-		}
-
-		if (groups.isEmpty()) {
-			logger.info("User with accountName " + accountName + " does not exist");
-			throw new ObjectNotFoundException("Group", accountName);
-		}
-
-		return groups.get(0);
 	}
 	
 	

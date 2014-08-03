@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
@@ -1004,7 +1003,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	private ORID checkAndConvertNetworkId(String networkId) {
 		if (networkId == null || networkId.isEmpty())
 			throw new IllegalArgumentException("No network ID was specified.");
-		return IdConverter.toRid(networkId);
+		return new ORecordId(networkId);
 	}
 
 	private void checkBlockSize(int blockSize) {

@@ -25,7 +25,6 @@ import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.helpers.Configuration;
-import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.common.models.dao.CommonDAOValues;
 import org.ndexbio.common.models.object.UploadedFile;
 import org.ndexbio.model.object.network.Network;
@@ -42,6 +41,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -62,7 +62,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	public static UserOrientdbDAO createInstance( ) { return new UserOrientdbDAO();}
 	
 	
-	public Iterable<Network> addNetworkToWorkSurface(String networkId, String userId)
+	/*public Iterable<Network> addNetworkToWorkSurface(String networkId, String userId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId),
@@ -73,8 +73,8 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 		networkId = networkId.replace("\"", "");
 		
 		//final ORID userRid = IdConverter.toRid(this.getLoggedInUser().getId());
-		final ORID userRid = IdConverter.toRid(userId);
-		final ORID networkRid = IdConverter.toRid(networkId);
+		final ORID userRid = new ORecordId(userId);
+		final ORID networkRid = new ORecordId(networkId);
 		String username = "";
 		try {
 			setupDatabase();
@@ -106,7 +106,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 			}
 
 			return updatedWorkSurface; 
-			*/
+			
 			return null;
 		} catch (DuplicateObjectException | ObjectNotFoundException onfe) {
 			throw onfe;
@@ -150,7 +150,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#changePassword(java.lang.String)
 	 */
-	
+	/*
 	public void changePassword(String password, String userId)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), 
@@ -160,7 +160,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 		
 
 		//final ORID userRid = IdConverter.toRid(this.getLoggedInUser().getId());
-		final ORID userRid = IdConverter.toRid(userId);
+		final ORID userRid = new ORecordId(userId);
 		String username = "";
 		try {
 			// Remove quotes around the password
@@ -176,7 +176,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	*/		
 	//		existingUser.setPassword(Security.hashText(password.trim()));
 
-			
+		/*	
 		} catch (Exception e) {
 			logger.error("Failed to change "
 					+ username + "'s password.", e);
@@ -191,7 +191,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#changeProfileImage(java.lang.String, org.ndexbio.common.models.object.UploadedFile)
 	 */
-	
+	/*
 	public void changeProfileImage(String imageType, UploadedFile uploadedImage, String userId)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(imageType), "An image type is required");
@@ -201,7 +201,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 		
 
 		//final ORID userId = IdConverter.toRid(this.getLoggedInUser().getId());
-		final ORID userRId = IdConverter.toRid(userId);
+		final ORID userRId = new ORecordId(userId);
 
 		try {
 			
@@ -236,7 +236,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 				ImageIO.write(resizedImage, "jpg", new File(Configuration
 						.getInstance().getProperty("Profile-Background-Path")
 						+ user.getUsername() + ".jpg"));
-			} */
+			} 
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
@@ -372,7 +372,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#deleteNetworkFromWorkSurface(java.lang.String)
 	 */
-	
+	/*
 	public Iterable<Network> deleteNetworkFromWorkSurface(String networkId, String userId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
@@ -382,8 +382,8 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 				"A user id is required");
 	
 		//final ORID userRid = IdConverter.toRid(this.getLoggedInUser().getId());
-		final ORID userRid = IdConverter.toRid(userId);
-		final ORID networkRid = IdConverter.toRid(networkId);
+		final ORID userRid = new ORecordId(userId);
+		final ORID networkRid = new ORecordId(networkId);
 		String username = "";
 		try {
 			setupDatabase();
@@ -398,14 +398,14 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 			user.removeNetworkFromWorkSurface(network);
 		*/	
 
-			final ArrayList<Network> updatedWorkSurface = Lists.newArrayList();
+			//final ArrayList<Network> updatedWorkSurface = Lists.newArrayList();
 		/*	final Iterable<INetwork> onWorkSurface = user.getWorkSurface();
 			if (onWorkSurface != null) {
 				for (INetwork workSurfaceNetwork : onWorkSurface)
 					updatedWorkSurface.add(new Network());
 			}
 
-			return updatedWorkSurface; */
+			return updatedWorkSurface; *//*
 			return null;
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
@@ -424,13 +424,13 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#deleteUser()
-	 */
+	 *//*
 	public void deleteUser(String userId) throws NdexException {
 		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required");
 		
 		//final ORID userRid = IdConverter.toRid(this.getLoggedInUser().getId());
-		final ORID userRid = IdConverter.toRid(userId);
+		final ORID userRid = new ORecordId(userId);
 		String username = "";
 		try {
 			
@@ -439,7 +439,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 
 			final IUser userToDelete = _orientDbGraph.getVertex(userRid,
 					IUser.class);
-*/
+*//*
 			final List<ODocument> adminGroups = _ndexDatabase
 					.query(new OSQLSynchQuery<Integer>(
 							"SELECT COUNT(@RID) FROM Membership WHERE in_groups = "
@@ -476,7 +476,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 			}
 
 	//		_orientDbGraph.removeVertex(userToDelete.asVertex());
-			
+			/*
 		} catch (NdexException ne) {
 			throw ne;
 		} catch (Exception e) {
@@ -493,7 +493,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#emailNewPassword(java.lang.String)
 	 */
-	
+	/*
 	public Response emailNewPassword(String username)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(username), 
@@ -511,7 +511,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 
 /*			final IUser authUser = _orientDbGraph.getVertex(
 					usersFound.toArray()[0], IUser.class);
-*/
+*//*
 			final String newPassword = Security.generatePassword();
 	//		authUser.setPassword(Security.hashText(newPassword));
 
@@ -535,7 +535,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 							"Forgot-Password-Email"),
 					authUser.getEmailAddress(), "Password Recovery",
 					forgotPasswordText.toString());
-*/ 
+*/ /*
 			
 			return Response.ok().build();
 		} catch (ObjectNotFoundException onfe) {
@@ -552,7 +552,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#findUsers(org.ndexbio.common.models.object.SearchParameters, java.lang.String)
 	 */
-	
+	/*
 	public List<User> findUsers(SearchParameters searchParameters,
 			String searchOperator) throws IllegalArgumentException,
 			NdexException {
@@ -625,7 +625,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#getUser(java.lang.String)
 	 */
-	
+	/*
 	@Deprecated
 	public User getUser(String userId) throws IllegalArgumentException,
 			NdexException {
@@ -658,7 +658,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 			teardownDatabase();
 		}
 
-		return null; */
+		return null; 
 	}
 	
 	
@@ -685,7 +685,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.models.dao.UserDAO#updateUser(org.ndexbio.common.models.object.User)
-	 */
+	 *//*
 	public void updateUser(User updatedUser, String userId) throws IllegalArgumentException,
 			SecurityException, NdexException {
 		throw new NdexException("Unimplemented function UserOrientdbDAO.updateUser(User, String)");
@@ -757,7 +757,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 			teardownDatabase();
 		}
 */
-	}
+	/*}
 
 	/**************************************************************************
 	 * Resizes the source image to the specified dimensions.
@@ -769,7 +769,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 	 * @param height
 	 *            The new image height.
 	 **************************************************************************/
-	private BufferedImage resizeImage(final BufferedImage sourceImage,
+	/*private BufferedImage resizeImage(final BufferedImage sourceImage,
 			final int width, final int height) {
 		final Image resizeImage = sourceImage.getScaledInstance(width, height,
 				Image.SCALE_SMOOTH);
@@ -808,7 +808,7 @@ public class UserOrientdbDAO extends OrientdbDAO  {
 
 	}*/
 	
-	public static User getUserFromDocument(ODocument OUserDoc) {
+	/*public static User getUserFromDocument(ODocument OUserDoc) {
     	User result = new User();
     	
     	result.setEmailAddress((String)OUserDoc.field("emailAddress"));
@@ -823,5 +823,5 @@ public class UserOrientdbDAO extends OrientdbDAO  {
     	return result;
 	}
 	
+*/
 
-}

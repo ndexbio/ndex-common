@@ -8,8 +8,6 @@ import java.util.Date;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.dao.TaskDAO;
 import org.ndexbio.common.models.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.common.models.object.TaskType;
@@ -20,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 /**
  * @author fcriscuo
@@ -86,7 +85,7 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
     			"A task id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required");
 		
-        final ORID taskRid = IdConverter.toRid(taskId);
+        final ORID taskRid = new ORecordId(taskId);
 
         try
         {
@@ -133,7 +132,7 @@ public class TaskOrientdbDAO extends OrientdbDAO  {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A user id is required");
 	        try
 	        {
-	            final ORID taskRid = IdConverter.toRid(taskId);
+	            final ORID taskRid = new ORecordId(taskId);
 	           
 	            setupDatabase();
 	     //       String userName = this.findIuserById(userId).getUsername();

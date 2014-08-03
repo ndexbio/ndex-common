@@ -11,7 +11,6 @@ import org.ndexbio.common.models.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.common.models.object.TaskType;
 import org.ndexbio.model.object.Priority;
-import org.ndexbio.common.helpers.IdConverter;
 
 import com.orientechnologies.orient.core.id.ORID;
 

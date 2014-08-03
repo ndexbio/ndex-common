@@ -6,21 +6,20 @@ import java.util.List;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.helpers.IdConverter;
-import org.ndexbio.common.models.dao.RequestDAO;
-import org.ndexbio.common.models.object.Request;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.Permissions;
+import org.ndexbio.model.object.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
+public class RequestOrientdbDAO extends OrientdbDAO  {
 	private static final Logger logger = LoggerFactory
 			.getLogger(RequestOrientdbDAO.class);
 
@@ -32,24 +31,23 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		return new RequestOrientdbDAO();
 	}
 
-	@Override
 	public Request createRequest(Request newRequest)
 			throws IllegalArgumentException, DuplicateObjectException,
 			NdexException {
 		Preconditions.checkArgument(null != newRequest,
 				"A Request parameter is required");
-
-		final ORID fromRid = IdConverter.toRid(newRequest.getFromId());
-		final ORID toRid = IdConverter.toRid(newRequest.getToId());
+/*
+		final ORID fromRid = new ORecordId(newRequest.getFromId());
+		final ORID toRid = new ORecordId(newRequest.getToId());
 
 		if (fromRid.equals(toRid))
 			throw new IllegalArgumentException(
 					"The 'from' and 'to' accounts of the request cannot be the same.");
-
+*/
 		try {
 			setupDatabase();
 
-			final List<ODocument> existingRequests = _ndexDatabase
+	/*		final List<ODocument> existingRequests = _ndexDatabase
 					.query(new OSQLSynchQuery<Integer>(
 							"SELECT COUNT(@RID) FROM Request WHERE out_fromUser = "
 									+ fromRid.toString()
@@ -72,8 +70,8 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 				throw new IllegalArgumentException(
 						"That request type isn't supported: "
 								+ newRequest.getRequestType() + ".");
-
-			return newRequest;
+*/
+			return null ;//newRequest;
 		} catch (IllegalArgumentException | NdexException ne) {
 			throw ne;
 		} catch (Exception e) {
@@ -85,14 +83,13 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		}
 	}
 
-	@Override
 	public void deleteRequest(String requestId)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(requestId),
 				"A request id is required");
 
-		final ORID requestRid = IdConverter.toRid(requestId);
+		final ORID requestRid = new ORecordId(requestId);
 
 		try {
 			setupDatabase();
@@ -119,13 +116,12 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 
 	}
 
-	@Override
 	public Request getRequest(String requestId)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(requestId),
 				"A request id is required");
 
-		final ORID requestRid = IdConverter.toRid(requestId);
+		final ORID requestRid = new ORecordId(requestId);
 
 		try {
 			setupDatabase();
@@ -144,13 +140,12 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		return null;
 	}
 
-	@Override
 	public void updateRequest(Request updatedRequest)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(null != updatedRequest,
 				"A Request object is required");
 
-		final ORID requestRid = IdConverter.toRid(updatedRequest.getId());
+		//final ORID requestRid = new ORecordId(updatedRequest.getId());
 
 		try {
 			setupDatabase();
@@ -178,12 +173,12 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 		} catch (ObjectNotFoundException onfe) {
 			throw onfe;
 		} catch (Exception e) {
-			if (e.getMessage().indexOf("cluster: null") > -1)
+			/*if (e.getMessage().indexOf("cluster: null") > -1)
 				throw new ObjectNotFoundException("Request",
 						updatedRequest.getId());
-
-			logger.error("Failed to update request: " + updatedRequest.getId()
-					+ ".", e);
+*/
+	//		logger.error("Failed to update request: " + updatedRequest.getId()
+		//			+ ".", e);
 		//	_orientDbGraph.getBaseGraph().rollback();
 			throw new NdexException("Failed to update the request.");
 		} finally {
@@ -326,10 +321,10 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 	 * @param requestToProcess
 	 *            The request.
 	 **************************************************************************/
-	private void processGroupInvitation(final Request requestToProcess)
+/*	private void processGroupInvitation(final Request requestToProcess)
 			throws Exception {
-		final ORID groupId = IdConverter.toRid(requestToProcess.getFromId());
-		final ORID userId = IdConverter.toRid(requestToProcess.getToId());
+		final ORID groupId = new ORecordId(requestToProcess.getFromId());
+		final ORID userId = new ORecordId(requestToProcess.getToId());
 
 //	IGroup group = _orientDbGraph.getVertex(groupId, IGroup.class);
 //		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
@@ -343,17 +338,17 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 
 		// group.addMember(newMember);
 	}
-
+*/
 	/**************************************************************************
 	 * Adds a user to their requested group with read-only permissions.
 	 * 
 	 * @param requestToProcess
 	 *            The request.
 	 **************************************************************************/
-	private void processJoinGroup(final Request requestToProcess)
+/*	private void processJoinGroup(final Request requestToProcess)
 			throws Exception {
-		final ORID groupId = IdConverter.toRid(requestToProcess.getToId());
-		final ORID userId = IdConverter.toRid(requestToProcess.getFromId());
+		final ORID groupId = new ORecordId(requestToProcess.getDestinationUUID());
+		final ORID userId = new ORecordId(requestToProcess.getFromId());
 
 //		IGroup group = _orientDbGraph.getVertex(groupId, IGroup.class);
 //		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
@@ -367,17 +362,17 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 
 		// group.addMember(newMember);
 	}
-
+*/
 	/**************************************************************************
 	 * Adds a user to a network's membership with read-only permissions.
 	 * 
 	 * @param requestToProcess
 	 *            The request.
 	 **************************************************************************/
-	private void processNetworkAccess(final Request requestToProcess)
+/*	private void processNetworkAccess(final Request requestToProcess)
 			throws Exception {
-		final ORID networkId = IdConverter.toRid(requestToProcess.getToId());
-		final ORID userId = IdConverter.toRid(requestToProcess.getFromId());
+		final ORID networkId = new ORecordId(requestToProcess.getToId());
+		final ORID userId = new ORecordId(requestToProcess.getFromId());
 
 //		INetwork network = _orientDbGraph.getVertex(networkId, INetwork.class);
 //		IUser user = _orientDbGraph.getVertex(userId, IUser.class);
@@ -391,5 +386,5 @@ public class RequestOrientdbDAO extends OrientdbDAO implements RequestDAO {
 
 	//	network.addMember(newMember);
 	}
-
+*/
 }

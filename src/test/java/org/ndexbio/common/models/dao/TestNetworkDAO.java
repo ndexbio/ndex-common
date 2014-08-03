@@ -16,7 +16,6 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.Permissions;
-import org.ndexbio.common.helpers.IdConverter;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestNetworkDAO extends TestDAO
