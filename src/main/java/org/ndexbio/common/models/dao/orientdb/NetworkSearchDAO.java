@@ -40,7 +40,8 @@ public class NetworkSearchDAO {
 		
 		Preconditions.checkArgument(null != simpleNetworkQuery, 
 				"A query is required");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(simpleNetworkQuery.getSearchString()), 
+		Preconditions.checkArgument( !Strings.isNullOrEmpty( simpleNetworkQuery.getSearchString() )
+				|| !Strings.isNullOrEmpty( simpleNetworkQuery.getAccountName() ), 
 				"A search string is required");
 		
 		String userAccountName = "";
@@ -80,9 +81,9 @@ public class NetworkSearchDAO {
 			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			  			+ " AND visibility <> 'PRIVATE'"
 			 			+ " AND @class = '"+ NdexClasses.Network +"'"
-						+ " OR in_admin LIKE '%"+ userRID +"%'"
-						+ " OR in_write LIKE '%"+ userRID +"%'"
-						+ " OR in_read LIKE '%"+ userRID +"%'"
+						+ " OR in_admin = '"+ userRID +"'"
+						+ " OR in_write = '"+ userRID +"'"
+						+ " OR in_read = '"+ userRID +"'"
 			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
 			    
@@ -91,9 +92,9 @@ public class NetworkSearchDAO {
 			  			"SELECT FROM " + NdexClasses.Network
 			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			  			+ " AND visibility <> 'PRIVATE'"
-						+ " OR in_admin LIKE '%"+ userRID +"%'"
-						+ " OR in_write LIKE '%"+ userRID +"%'"
-						+ " OR in_read LIKE '%"+ userRID +"%'"
+						+ " OR in_admin LIKE '"+ userRID +"'"
+						+ " OR in_write LIKE '"+ userRID +"'"
+						+ " OR in_read LIKE '"+ userRID +"'"
 			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
 			}

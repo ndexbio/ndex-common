@@ -89,17 +89,20 @@ public class TestNetworkSearchDAO  extends TestDAO {
     	
     }
 	
-	// needs logged in user
-	/*@Test
+	
+	@Test
     public void findNetwork_noAccountSpecifier() {
     	
     	try {
 
+    		User loggedInUser = new User();
+    		loggedInUser.setAccountName("Support");
+    		
 	    	final SimpleNetworkQuery simpleQuery = new SimpleNetworkQuery();
 	    	simpleQuery.setSearchString("ca");
 	    	simpleQuery.setAccountName("");
 	    	
-	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1, null).isEmpty());
+	    	assertTrue(!dao.findNetworks(simpleQuery, 0, 1, loggedInUser).isEmpty());
 	    	//assertTrue(dao.findNetworks(simpleQuery, 0, 1).size() == 1);
     	
 		} catch (Exception e) {
@@ -109,6 +112,6 @@ public class TestNetworkSearchDAO  extends TestDAO {
 			
 		} 
     	
-    }*/
+    }
 	
 }
