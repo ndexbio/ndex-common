@@ -2,13 +2,13 @@ package org.ndexbio.common.models.dao;
 
 import static org.junit.Assert.*;
 
+import java.util.UUID;
+
 import org.junit.AfterClass;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Before;
 import org.junit.Test;
-
-
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
@@ -50,6 +50,7 @@ public class TestGroupDAO extends TestDAO
 		userDAO = new UserDAO(localConnection);
 		dao = new GroupDAO(localConnection, graph);
 		
+		//localConnection.begin();
 		final NewUser newUser = new NewUser();
         newUser.setEmailAddress("testUserGroupOwner");
         newUser.setPassword("testUserGroupOwner");
@@ -58,7 +59,8 @@ public class TestGroupDAO extends TestDAO
         newUser.setLastName("testUserGroupOwner");
 		
         testUserGroupOwner = userDAO.createNewUser(newUser);
-        localConnection.commit();
+        graph.commit();
+        //localConnection.begin();
 		
 		Group newGroup = new Group();
         newGroup.setOrganizationName("group");
@@ -67,7 +69,7 @@ public class TestGroupDAO extends TestDAO
         newGroup.setWebsite("group");
         group = dao.createNewGroup(newGroup, testUserGroupOwner.getExternalId());
         
-        localConnection.commit();
+        //localConnection.commit();
         
         newGroup = new Group();
         newGroup.setOrganizationName("group2");
@@ -83,9 +85,10 @@ public class TestGroupDAO extends TestDAO
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		
+		//localConnection.begin();
+		dao.deleteGroupById(group.getExternalId(), testUserGroupOwner.getExternalId());
+		dao.deleteGroupById(group2.getExternalId(), testUserGroupOwner.getExternalId());
 		userDAO.deleteUserById(testUserGroupOwner.getExternalId());
-		dao.deleteGroupById(group.getExternalId());
-		dao.deleteGroupById(group2.getExternalId());
 		localConnection.commit();
 		localConnection.close();
 		database.close();
@@ -95,14 +98,14 @@ public class TestGroupDAO extends TestDAO
 	// initialize testGroup for test suite
 	@Before
 	public void setup() {
-		assertTrue(createTestUser());
-		assertTrue(createTestGroup());
+		createTestUser();
+		createTestGroup();
 	}
 	//cleanup testGroup
 	@After
 	public void teardown() {
-		assertTrue(deleteTestUser());
-		assertTrue(deleteTestGroup());
+		deleteTestGroup();
+		deleteTestUser();
 	}
 	
 	
@@ -161,6 +164,15 @@ public class TestGroupDAO extends TestDAO
 			
 	}
 	
+	@Test(expected = NdexException.class)
+	public void deleteGroupInvalidAdmin() throws ObjectNotFoundException, NdexException {
+		
+		//testUserGroupOwner does not admin testGroup
+		
+		dao.deleteGroupById(testGroup.getExternalId(), testUserGroupOwner.getExternalId());
+		
+	}
+	
 	@Test
     public void getGroupByUUID() {
     	
@@ -203,7 +215,7 @@ public class TestGroupDAO extends TestDAO
             final Group updated = new Group();
             updated.setDescription("changed");
             
-            dao.updateGroup(updated, testGroup.getExternalId());
+            dao.updateGroup(updated, testGroup.getExternalId(), testUser.getExternalId());
             localConnection.commit();
             
             assertEquals(updated.getDescription(), dao.getGroupById(testGroup.getExternalId()).getDescription());
@@ -221,7 +233,7 @@ public class TestGroupDAO extends TestDAO
 	 @Test(expected = IllegalArgumentException.class)
 	    public void updateGroupInvalid() throws IllegalArgumentException, SecurityException, NdexException {
 	    	
-	        dao.updateGroup(null, group.getExternalId());
+	        dao.updateGroup(null, group.getExternalId(), testUserGroupOwner.getExternalId());
 	        
 	    }
 	
@@ -255,7 +267,7 @@ public class TestGroupDAO extends TestDAO
 		 
 		 try {
 			 
-			 localConnection.begin();
+			 //localConnection.begin();
 			  final NewUser newUser = new NewUser();
 	          newUser.setEmailAddress("member");
 	          newUser.setPassword("member");
@@ -264,7 +276,7 @@ public class TestGroupDAO extends TestDAO
 	          newUser.setLastName("member");
 				
 		      member = userDAO.createNewUser(newUser);
-		      localConnection.commit();
+		      //localConnection.commit();
 			  
 			  Membership membership = new Membership();
 			  membership.setMemberAccountName(member.getAccountName());
@@ -289,7 +301,7 @@ public class TestGroupDAO extends TestDAO
 		  
 		 User member = null;
 		 try {
-			 localConnection.begin();
+			 //localConnection.begin();
 			  final NewUser newUser = new NewUser();
 	         newUser.setEmailAddress("member");
 	         newUser.setPassword("member");
@@ -298,8 +310,10 @@ public class TestGroupDAO extends TestDAO
 	         newUser.setLastName("member");
 				
 		      member = userDAO.createNewUser(newUser);
+		      
 		      localConnection.commit();
-			  
+		      //localConnection.begin();
+		      
 			  Membership membership = new Membership();
 			  membership.setMemberAccountName(member.getAccountName());
 			  membership.setMemberUUID(member.getExternalId());
@@ -309,6 +323,7 @@ public class TestGroupDAO extends TestDAO
 			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
 			  
 			  localConnection.commit();
+			  //localConnection.begin();
 			  
 			  membership = new Membership();
 			  membership.setMemberAccountName(testUser.getAccountName());
@@ -319,6 +334,17 @@ public class TestGroupDAO extends TestDAO
 			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
 			  
 			  localConnection.commit();
+			  
+			  membership = new Membership();
+			  membership.setMemberAccountName(testUser.getAccountName());
+			  membership.setMemberUUID(testUser.getExternalId());
+			  membership.setPermissions(Permissions.ADMIN);
+			  membership.setMembershipType(MembershipType.GROUP);
+			  
+			  dao.updateMember(membership, testGroup.getExternalId(), member.getExternalId());
+			  
+			  localConnection.commit();
+			  
 		 } catch (Exception e) {
 			 fail(e.getMessage());
 		 } finally {
@@ -341,7 +367,7 @@ public class TestGroupDAO extends TestDAO
 			  
 	  }
 	 
-	private boolean createTestGroup() {
+	private void createTestGroup() {
 		
 		try {
 			
@@ -354,34 +380,34 @@ public class TestGroupDAO extends TestDAO
 	        testGroup = dao.createNewGroup(newGroup, testUser.getExternalId());
 	        localConnection.commit();
         
-        	return true;
+        	//return true;
         	
 		} catch (Exception e) {
 			//System.out.println(e.getMessage());
-			return false;
+			fail(e.getMessage());
 			
 		}
 	}
 	
-	private boolean deleteTestGroup() {
+	private void deleteTestGroup() {
 		
 		try {
 			
-			dao.deleteGroupById(testGroup.getExternalId());
+			dao.deleteGroupById(testGroup.getExternalId(), testUser.getExternalId());
 			localConnection.commit();
 			testGroup = null;
 			
-			return true;
+			//return true;
 			
 		} catch (Exception e) {
 			
-			return false;
+			fail(e.getMessage());
 			
 		}
 		
 	}
 	
-	private boolean createTestUser() {
+	private void createTestUser() {
 		
 		try {
 			
@@ -395,16 +421,16 @@ public class TestGroupDAO extends TestDAO
 	        testUser = userDAO.createNewUser(newUser);
 	        localConnection.commit();
         
-        	return true;
+        	//return true;
         	
 		} catch (Throwable e) {
 			
-			return false;
+			fail(e.getMessage());
 			
 		}
 	}
 	
-	private boolean deleteTestUser() {
+	private void deleteTestUser() {
 		
 		try {
 			
@@ -412,11 +438,11 @@ public class TestGroupDAO extends TestDAO
 			localConnection.commit();
 			testUser = null;
 			
-			return true;
+			//return true;
 			
 		} catch (Throwable e) {
 			
-			return false;
+			fail(e.getMessage());
 			
 		}
 		
