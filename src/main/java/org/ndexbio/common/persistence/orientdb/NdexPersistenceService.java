@@ -152,7 +152,7 @@ public class NdexPersistenceService  {
 		this.edgeIdReifiedEdgeTermIdMap = new HashMap<Long,Long>(100);
 		this.rawFunctionTermFunctionTermIdMap = new TreeMap<FunctionTerm, Long> ();
 		this.rawSupportMap  = new TreeMap<RawSupport, Long> ();
-		
+		this.functionTermIdNodeIdMap = new HashMap<Long,Long>(100);
 		// intialize caches.
 		
 /*		rawCitationCache = CacheBuilder
@@ -896,8 +896,9 @@ public class NdexPersistenceService  {
 		
 		network.setNodeCount(network.getNodeCount()+1);
 		
-		nodeDoc.reload();
+//		nodeDoc.reload();
 		elementIdCache.put(nodeId, nodeDoc);
+		this.functionTermIdNodeIdMap.put(funcTermId, nodeId);
 		return nodeId;
 	}
 	
