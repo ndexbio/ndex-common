@@ -101,22 +101,22 @@ public class PropertyGraphLoader {
 				  otherProperties.add(p);
 			}
 			
-			Node node = persistenceService.findOrCreateNodeByExternalId(n.getId());;
+			Long nodeId = persistenceService.findOrCreateNodeIdByExternalId(n.getId());;
 			if (baseTerm != null) {
 				Long termId =  persistenceService.getBaseTermId(baseTerm);
-				persistenceService.setNodeRepresentTerm(node.getId(), termId);
+				persistenceService.setNodeRepresentTerm(nodeId, termId);
 			}
 			if ( nodeName != null ) 
-				persistenceService.setNodeName(node.getId(), nodeName);
+				persistenceService.setNodeName(nodeId, nodeName);
 
-			persistenceService.setNodeProperties(node.getId(), otherProperties, n.getPresentationProperties());
+			persistenceService.setNodeProperties(nodeId, otherProperties, n.getPresentationProperties());
 		}
 		
 		// persist edges
 		for ( PropertyGraphEdge e : network.getEdges()) {
 			Long termId = persistenceService.getBaseTermId(e.getPredicate());
-			Node subjectNode = persistenceService.findOrCreateNodeByExternalId(e.getSubjectId());
-			Node objectNode = persistenceService.findOrCreateNodeByExternalId(e.getObjectId());
+			Long subjectNodeId = persistenceService.findOrCreateNodeIdByExternalId(e.getSubjectId());
+			Long objectNodeId = persistenceService.findOrCreateNodeIdByExternalId(e.getObjectId());
 			
 			// process the citation , property list ...
 			Support support = null;
@@ -132,7 +132,7 @@ public class PropertyGraphLoader {
 				}
 			}
 			
-			persistenceService.createEdge(subjectNode.getId(), objectNode.getId(), termId, 
+			persistenceService.createEdge(subjectNodeId, objectNodeId, termId, 
 					support, citation, otherProperties, e.getPresentationProperties());
 			
 		}
