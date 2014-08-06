@@ -140,7 +140,7 @@ public class PropertyGraphLoader {
 	}
 	
 	private void updateNetwork (UUID uuid, PropertyGraphNetwork network, String accountName) throws Exception {
-		// remove the network from system first.
+		//TODO: remove the network from system first.
 		
 		insertNewNetwork(uuid,network, accountName);
 		

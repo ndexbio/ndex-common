@@ -577,17 +577,17 @@ public class NetworkDAO {
 	        if (!nss.isEmpty())
 	  	       return nss.get(0);
 	         
-	         List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClassName);
+	   /*      List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClassName);
 	         for (ORecordOperation op : txOperations) {
 	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
 	         if (id == elementID)
 	            return (ODocument) op.getRecord();
-	         }
+	         } */
 	         return null;
 	}
 	
 	//TODO: make a better implementation for this function.
-	public ODocument getDocumentByElementId(long elementID) {
+	public ODocument getDocumentByElementId(long elementID) throws NdexException {
 		ODocument result = getDocumentByElementId(NdexClasses.Node, elementID);
 		if ( result != null) return result;
 		
@@ -607,7 +607,8 @@ public class NetworkDAO {
 		if ( result != null) return result;
 		result = getDocumentByElementId(NdexClasses.Support, elementID);
 		if ( result != null) return result;
-		return null;
+		
+		throw new NdexException ("ElementId " + elementID + " was not found in database.");
 	}
 	
 	public Namespace getNamespace(String prefix, String URI, UUID networkID ) {
