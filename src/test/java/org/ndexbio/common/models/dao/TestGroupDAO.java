@@ -2,8 +2,6 @@ package org.ndexbio.common.models.dao;
 
 import static org.junit.Assert.*;
 
-import java.util.UUID;
-
 import org.junit.AfterClass;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -24,7 +22,7 @@ import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.NewUser;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
 public class TestGroupDAO extends TestDAO
@@ -33,7 +31,7 @@ public class TestGroupDAO extends TestDAO
 	private static GroupDAO dao;
 	private static NdexDatabase database;
 	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
-	private static OrientGraph graph;
+	private static OrientGraphNoTx graph;
 	
 	private static User testUserGroupOwner;
 	private static User testUser;
@@ -46,8 +44,8 @@ public class TestGroupDAO extends TestDAO
 		// For acquiring connections from the pool
 		database = new NdexDatabase();
 		localConnection = database.getAConnection();
-		graph = new OrientGraph(localConnection);
-		userDAO = new UserDAO(localConnection);
+		graph = new OrientGraphNoTx(localConnection);
+		userDAO = new UserDAO(localConnection, graph);
 		dao = new GroupDAO(localConnection, graph);
 		
 		//localConnection.begin();

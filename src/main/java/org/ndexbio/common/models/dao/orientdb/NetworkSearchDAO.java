@@ -42,7 +42,7 @@ public class NetworkSearchDAO {
 				"A query is required");
 		Preconditions.checkArgument( !Strings.isNullOrEmpty( simpleNetworkQuery.getSearchString() )
 				|| !Strings.isNullOrEmpty( simpleNetworkQuery.getAccountName() ), 
-				"A search string is required");
+				"A search string or accountName is required");
 		
 		String userAccountName = "";
 		if(loggedInUser != null)

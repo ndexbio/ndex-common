@@ -21,6 +21,9 @@ import org.ndexbio.common.models.dao.CommonDAOValues;
 import org.ndexbio.common.util.Email;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
+import org.ndexbio.model.object.Membership;
+import org.ndexbio.model.object.MembershipType;
+import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.NewUser;
 import org.ndexbio.model.object.SimpleUserQuery;
@@ -33,10 +36,15 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class UserDAO extends OrientdbDAO{
 
 	private ODatabaseDocumentTx db;
+	private OrientGraphNoTx graph;
 	private static final Logger logger = Logger.getLogger(UserDAO.class.getName());
 	
 	/*
@@ -49,21 +57,24 @@ public class UserDAO extends OrientdbDAO{
 	    * 
 	    * @param db
 	    *            Database instance from the Connection pool, should be opened
+	    * @param graph
+	    * 			OrientGraph instance for Graph API operations
 	    **************************************************************************/
-	public UserDAO (ODatabaseDocumentTx db) {
+	public UserDAO (ODatabaseDocumentTx db, OrientGraphNoTx graph) {
 		super(db);
 		this.db = db;
+		this.graph = graph;
 	}
 	
 	/**************************************************************************
 	 * Authenticates a user trying to login.
 	 * 
-	 * @param username
-	 *            The username.	
+	 * @param accountName
+	 *            The accountName.	
 	 * @param password
 	 *            The password.
 	 * @throws SecurityException
-	 *             Invalid username or password.
+	 *             Invalid accountName or password.
 	 * @throws NdexException
 	 *             Can't authenticate users against the database.
 	 * @return The user, from NDEx Object Model.
@@ -169,14 +180,38 @@ public class UserDAO extends OrientdbDAO{
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
-			ODocument user = this.getRecordById(id, NdexClasses.User);
-			try {
-				user.delete();
+		ODocument user = this.getRecordById(id, NdexClasses.User);
+			
+		/*if( !this.getUserGroupMemberships(id, Permissions.ADMIN, 0, 5).isEmpty()
+				|| !this.getUserNetworkMemberships(id, Permissions.ADMIN, 0, 5).isEmpty() ) {
+			throw new NdexException("Cannot orphan networks or groups");
+		}*/
+		
+		try {
+			OrientVertex vUser = graph.getVertex(user);
+			boolean safe = true;
+			
+			for(Edge e : vUser.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+				OrientVertex vResource = (OrientVertex) e.getVertex(Direction.IN);
+				safe = false;	
+				
+				for(Edge ee : vResource.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+					if( !( (OrientVertex) ee.getVertex(Direction.OUT) ).equals(vUser) ) {
+						safe = true;
+					}
+				}
+					
 			}
-			catch (Exception e) {
-				logger.severe("Could not delete user from the database");
-				throw new NdexException(e.getMessage());
-			}
+				
+			if(!safe)
+				throw new NdexException("Cannot orphan groups or networks");
+			
+			user.delete();
+		}
+		catch (Exception e) {
+			logger.severe("Could not delete user from the database");
+			throw new NdexException(e.getMessage());
+		}
 		
 	}
 	
@@ -521,6 +556,139 @@ public class UserDAO extends OrientdbDAO{
 			
 		} 
 
+	}
+	
+	/**************************************************************************
+	    * getUserNetworkMemberships
+	    *
+	    * @param userId
+	    *            UUID for associated group
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid userId
+	    **************************************************************************/
+	
+	public List<Membership> getUserNetworkMemberships(UUID userId, Permissions permission, int skipBlocks, int blockSize) 
+			throws ObjectNotFoundException, NdexException {
+		
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId.toString()),
+				"A user UUID is required");
+		Preconditions.checkArgument( (permission == Permissions.ADMIN)
+				|| (permission == Permissions.READ)
+				|| (permission == Permissions.WRITE),
+				"Valid permissions required");
+		
+		ODocument user = this.getRecordById(userId, NdexClasses.User);
+		
+		final int startIndex = skipBlocks
+				* blockSize;
+		
+		try {
+			List<Membership> memberships = new ArrayList<Membership>();
+			
+			String userRID = user.getIdentity().toString();
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+		  			"SELECT FROM"
+		  			+ " (TRAVERSE "+ NdexClasses.User +".out_"+ permission.name().toString().toLowerCase() +" FROM"
+		  				+ " " + userRID
+		  				+ "  WHILE $depth <=1)"
+		  			+ " WHERE @class = '" + NdexClasses.Network + "'"
+		 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+		 			+ " LIMIT " + blockSize);
+			
+			List<ODocument> records = this.db.command(query).execute(); 
+			for(ODocument network: records) {
+				
+				//if( !network.getSchemaClass().getName().equals( NdexClasses.Network ) )
+				//	continue;
+				
+				Membership membership = new Membership();
+				membership.setMembershipType( MembershipType.NETWORK );
+				membership.setMemberAccountName( (String) user.field("accountName") ); 
+				membership.setMemberUUID( userId );
+				membership.setPermissions( permission );
+				membership.setResourceName( (String) network.field("name") );
+				membership.setResourceUUID( UUID.fromString( (String) network.field("UUID") ) );
+				
+				memberships.add(membership);
+			}
+			
+			
+			logger.info("Successfuly retrieved user-network memberships");
+			return memberships;
+			
+		} catch(Exception e) {
+			logger.severe("An unexpected error occured while retrieving user-network memberships");
+			throw new NdexException(e.getMessage());
+		}
+	}
+	
+	
+	/**************************************************************************
+	    * getUsergroupMemberships
+	    *
+	    * @param userId
+	    *            UUID for associated group
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid userId
+	    **************************************************************************/
+	
+	public List<Membership> getUserGroupMemberships(UUID userId, Permissions permission, int skipBlocks, int blockSize) 
+			throws ObjectNotFoundException, NdexException {
+		
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId.toString()),
+				"A user UUID is required");
+		Preconditions.checkArgument( (permission == Permissions.ADMIN)
+				|| (permission == Permissions.READ)
+				|| (permission == Permissions.WRITE),
+				"Valid permissions required");
+		
+		ODocument user = this.getRecordById(userId, NdexClasses.User);
+		
+		final int startIndex = skipBlocks
+				* blockSize;
+		
+		try {
+			List<Membership> memberships = new ArrayList<Membership>();
+			
+			String userRID = user.getIdentity().toString();
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+		  			"SELECT FROM"
+		  			+ " (TRAVERSE "+ NdexClasses.User +".out_"+ permission.name().toString().toLowerCase() +" FROM"
+		  				+ " " + userRID
+		  				+ "  WHILE $depth <=1)"
+		  			+ " WHERE @class = '" + NdexClasses.Group + "'"
+		 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+		 			+ " LIMIT " + blockSize);
+			
+			List<ODocument> records = this.db.command(query).execute(); 
+			for(ODocument group: records) {
+				
+				//if( !group.getSchemaClass().getName().equals( NdexClasses.Group ) )
+					//continue;
+				
+				Membership membership = new Membership();
+				membership.setMembershipType( MembershipType.GROUP );
+				membership.setMemberAccountName( (String) user.field("accountName") ); 
+				membership.setMemberUUID( userId );
+				membership.setPermissions( permission );
+				membership.setResourceName( (String) group.field("organizationName") );
+				membership.setResourceUUID( UUID.fromString( (String) group.field("UUID") ) );
+				
+				memberships.add(membership);
+			}
+			
+			
+			logger.info("Successfuly retrieved user-group memberships");
+			return memberships;
+			
+		} catch(Exception e) {
+			logger.severe("An unexpected error occured while retrieving user-group memberships");
+			throw new NdexException(e.getMessage());
+		}
 	}
 	
 	/*private ODocument _getUserById(UUID id) 

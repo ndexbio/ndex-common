@@ -133,7 +133,7 @@ public class NetworkDAO {
 	    } else if ( permission == Permissions.READ) {
 	    	permissionList += ",in_" + NdexClasses.account_E_canEdit + ",in_" + NdexClasses.account_E_canRead;;
 	    }; 
-		String query = "select rid from (traverse " + permissionList + 
+		String query = "select @RID from (traverse " + permissionList + 
 				" from (select from network where UUID='" + UUID +"') while $path <=1) where $depth > 0 where accountName = '"
 				+ accountName +"'";
         final List<ODocument> users = db.query(new OSQLSynchQuery<ODocument>(query));

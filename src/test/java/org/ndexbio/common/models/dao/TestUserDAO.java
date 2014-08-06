@@ -22,13 +22,14 @@ import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.NewUser;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 public class TestUserDAO extends TestDAO{
 
 	private static UserDAO dao;
 	private static NdexDatabase database;
 	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
-//	private static OrientGraph graph;
+	private static OrientGraphNoTx graph;
 	private static User testUser;
 	private static User user;
 	private static User user2;
@@ -42,15 +43,13 @@ public class TestUserDAO extends TestDAO{
 		// For use with the Orient Document API
 		localConnection = database.getAConnection();
 		
-		// For use with the Orient Graph API. We do not need to issue a localConnection.begin()
-		// to start a Transaction as new OrientGraph() does it already
-	//	graph = new OrientGraph(localConnection);
+		graph = new OrientGraphNoTx(localConnection);
 		
-		dao = new UserDAO(localConnection);
+		dao = new UserDAO(localConnection, graph);
 		
 		// Create some users for testing. 
 		NewUser newUser = new NewUser();
-        newUser.setEmailAddress("test@ndexbio.org");
+        newUser.setEmailAddress("test@test.org");
         newUser.setPassword("test");
         newUser.setAccountName("test");
         newUser.setFirstName("test");
@@ -58,7 +57,7 @@ public class TestUserDAO extends TestDAO{
         user = dao.createNewUser(newUser);
         
         newUser = new NewUser();
-        newUser.setEmailAddress("test2@ndexbio.org");
+        newUser.setEmailAddress("test2@test.org");
         newUser.setPassword("test2");
         newUser.setAccountName("test2");
         newUser.setFirstName("test2");
@@ -66,7 +65,7 @@ public class TestUserDAO extends TestDAO{
         user2 = dao.createNewUser(newUser);
         
         newUser = new NewUser();
-        newUser.setEmailAddress("test3@ndexbio.org");
+        newUser.setEmailAddress("test3@test.org");
         newUser.setPassword("test3");
         newUser.setAccountName("test3");
         newUser.setFirstName("test3");
