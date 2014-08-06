@@ -188,11 +188,15 @@ public class UserDAO extends OrientdbDAO{
 		}*/
 		
 		try {
-			OrientVertex vUser = graph.getVertex(user);
+			/*OrientVertex vUser = graph.getVertex(user);
 			boolean safe = true;
 			
 			for(Edge e : vUser.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+				if(e == null)
+					continue;
+				
 				OrientVertex vResource = (OrientVertex) e.getVertex(Direction.IN);
+				if(vResource !=null)
 				safe = false;	
 				
 				for(Edge ee : vResource.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
@@ -204,7 +208,7 @@ public class UserDAO extends OrientdbDAO{
 			}
 				
 			if(!safe)
-				throw new NdexException("Cannot orphan groups or networks");
+				throw new NdexException("Cannot orphan groups or networks");*/
 			
 			user.delete();
 		}

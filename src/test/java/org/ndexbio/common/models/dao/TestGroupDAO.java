@@ -76,7 +76,7 @@ public class TestGroupDAO extends TestDAO
         newGroup.setWebsite("group2");
         group2 = dao.createNewGroup(newGroup, testUserGroupOwner.getExternalId());
         
-        localConnection.commit();
+        //localConnection.commit();
         
 	}
 	
@@ -87,7 +87,7 @@ public class TestGroupDAO extends TestDAO
 		dao.deleteGroupById(group.getExternalId(), testUserGroupOwner.getExternalId());
 		dao.deleteGroupById(group2.getExternalId(), testUserGroupOwner.getExternalId());
 		userDAO.deleteUserById(testUserGroupOwner.getExternalId());
-		localConnection.commit();
+		//localConnection.commit();
 		localConnection.close();
 		database.close();
 		
@@ -214,7 +214,7 @@ public class TestGroupDAO extends TestDAO
             updated.setDescription("changed");
             
             dao.updateGroup(updated, testGroup.getExternalId(), testUser.getExternalId());
-            localConnection.commit();
+            //localConnection.commit();
             
             assertEquals(updated.getDescription(), dao.getGroupById(testGroup.getExternalId()).getDescription());
             assertEquals(testGroup.getOrganizationName(), dao.getGroupById(testGroup.getExternalId()).getOrganizationName());
@@ -284,13 +284,13 @@ public class TestGroupDAO extends TestDAO
 			  
 			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
 			  
-			  localConnection.commit();
+			  //localConnection.commit();
 		  
 		 } catch(Exception e) {
 			 fail(e.getMessage());
 		 } finally {
 			  userDAO.deleteUserById(member.getExternalId());
-			  localConnection.commit();
+			  //localConnection.commit();
 		 }
 		 
 	  }
@@ -309,7 +309,7 @@ public class TestGroupDAO extends TestDAO
 				
 		      member = userDAO.createNewUser(newUser);
 		      
-		      localConnection.commit();
+		      //localConnection.commit();
 		      //localConnection.begin();
 		      
 			  Membership membership = new Membership();
@@ -320,7 +320,7 @@ public class TestGroupDAO extends TestDAO
 			  
 			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
 			  
-			  localConnection.commit();
+			 // localConnection.commit();
 			  //localConnection.begin();
 			  
 			  membership = new Membership();
@@ -331,7 +331,7 @@ public class TestGroupDAO extends TestDAO
 			  
 			  dao.updateMember(membership, testGroup.getExternalId(), testUser.getExternalId());
 			  
-			  localConnection.commit();
+			  //localConnection.commit();
 			  
 			  membership = new Membership();
 			  membership.setMemberAccountName(testUser.getAccountName());
@@ -341,13 +341,13 @@ public class TestGroupDAO extends TestDAO
 			  
 			  dao.updateMember(membership, testGroup.getExternalId(), member.getExternalId());
 			  
-			  localConnection.commit();
+			  //localConnection.commit();
 			  
 		 } catch (Exception e) {
 			 fail(e.getMessage());
 		 } finally {
 			 userDAO.deleteUserById(member.getExternalId());
-			 localConnection.commit();
+			 //localConnection.commit();
 		 }
 		  
 	  }
@@ -392,7 +392,7 @@ public class TestGroupDAO extends TestDAO
 		try {
 			
 			dao.deleteGroupById(testGroup.getExternalId(), testUser.getExternalId());
-			localConnection.commit();
+			//localConnection.commit();
 			testGroup = null;
 			
 			//return true;
@@ -417,7 +417,7 @@ public class TestGroupDAO extends TestDAO
             newUser.setLastName("testUser");
 			
 	        testUser = userDAO.createNewUser(newUser);
-	        localConnection.commit();
+	        //localConnection.commit();
         
         	//return true;
         	
@@ -433,7 +433,7 @@ public class TestGroupDAO extends TestDAO
 		try {
 			
 			userDAO.deleteUserById(testUser.getExternalId());
-			localConnection.commit();
+			//localConnection.commit();
 			testUser = null;
 			
 			//return true;
