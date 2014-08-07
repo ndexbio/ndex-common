@@ -84,8 +84,6 @@ public class NdexPersistenceService  {
 	private Map<RawNamespace, Namespace> namespaceMap;
 	private Network network;
 
-	//	private static Joiner idJoiner = Joiner.on(":").skipNulls();
-	
 	// key is the full URI or other fully qualified baseTerm as a string.
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
 
@@ -155,39 +153,6 @@ public class NdexPersistenceService  {
 		this.rawSupportMap  = new TreeMap<RawSupport, Long> ();
 		this.functionTermIdNodeIdMap = new HashMap<Long,Long>(100);
 		// intialize caches.
-		
-/*		rawCitationCache = CacheBuilder
-				.newBuilder().maximumSize(CACHE_SIZE)
-				.expireAfterAccess(240L, TimeUnit.MINUTES)
-				.build(new CacheLoader<RawCitation, Citation>() {
-				   @Override
-				   public Citation load(RawCitation key) throws NdexException {
-					return findOrCreateCitation(key);
-				   }
-			    }); */
-
-		
-	/*	baseTermStrCache = CacheBuilder
-				.newBuilder().maximumSize(CACHE_SIZE)
-				.expireAfterAccess(240L, TimeUnit.MINUTES)
-				.build(new CacheLoader<String, BaseTerm>() {
-				   @Override
-				   public BaseTerm load(String key) throws NdexException, ExecutionException {
-					return findOrCreateBaseTerm(key);
-				   }
-			    }); */
-
-/*		baseTermNodeCache = CacheBuilder
-				.newBuilder().maximumSize(CACHE_SIZE)
-				.expireAfterAccess(240L, TimeUnit.MINUTES)
-				.build(new CacheLoader<Long, Node>() {
-				   @Override
-				   public Node load(Long key) throws NdexException, ExecutionException {
-					return findOrCreateNodeFromBaseTermId(key);
-				   }
-			    });
-*/
-		
 		
 		elementIdCache = CacheBuilder
 				.newBuilder().maximumSize(CACHE_SIZE*5)

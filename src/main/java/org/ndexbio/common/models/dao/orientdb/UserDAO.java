@@ -38,13 +38,14 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class UserDAO extends OrientdbDAO{
 
 	private ODatabaseDocumentTx db;
-	private OrientGraphNoTx graph;
+	private OrientBaseGraph graph;
 	private static final Logger logger = Logger.getLogger(UserDAO.class.getName());
 	
 	/*
@@ -60,7 +61,7 @@ public class UserDAO extends OrientdbDAO{
 	    * @param graph
 	    * 			OrientGraph instance for Graph API operations
 	    **************************************************************************/
-	public UserDAO (ODatabaseDocumentTx db, OrientGraphNoTx graph) {
+	public UserDAO (ODatabaseDocumentTx db, OrientBaseGraph graph) {
 		super(db);
 		this.db = db;
 		this.graph = graph;
