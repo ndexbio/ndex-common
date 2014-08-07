@@ -84,13 +84,15 @@ public class NetworkDAO {
 		ODocument nDoc = getNetworkDocByUUID(networkID);
 		
 	    if (nDoc == null) return null;
-	    
+
 	    
 	    int startPosition = skipBlocks * blockSize;
 	    int counter = 0;
 	    int endPosition = skipBlocks * blockSize + blockSize;
 
 	    Network network = new Network(blockSize);  //result holder
+
+        NetworkDAO.setNetworkSummary(nDoc, network);
 
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
@@ -114,6 +116,9 @@ public class NetworkDAO {
             }
             
         }
+        
+        network.setEdgeCount(network.getEdges().size());
+        network.setNodeCount(network.getNodes().size());
         
 		 return network; 
 	}
@@ -205,7 +210,6 @@ public class NetworkDAO {
 	    int endPosition = skipBlocks * blockSize + blockSize;
 	    
 	    // get Edges
-        Map<Long,PropertyGraphNode> nodeMap = network.getNodes();
         Collection<PropertyGraphEdge> edgeList = network.getEdges();
 
         for (OIdentifiable nodeDoc : new OTraverse()
@@ -495,7 +499,7 @@ public class NetworkDAO {
 		
 		Network result = new Network();
 		
-		SetNetworkSummary(n, result);
+		setNetworkSummary(n, result);
 
 		getPropertiesFromDocument(result,n);
 		
@@ -630,39 +634,27 @@ public class NetworkDAO {
              return result;
 	}
 	
+	static final private String citationQuery1 = 
+			"select from " + NdexClasses.Citation + " where " +
+		    		  NdexClasses.Citation_P_title + "= ? and "
+		    		 + NdexClasses.Citation_p_idType + "=? and "
+		    		 + NdexClasses.Citation_P_identifier + "= ?" ;
 	
 	public Citation getCitation(String title, String idType, String identifier, UUID networkID) {
-		String query = "select from " + NdexClasses.Citation + " where " +
-	    		  NdexClasses.Citation_P_title + "='" + title +"'";
-	    final List<ODocument> citations = db.query(new OSQLSynchQuery<ODocument>(query));
+/*		String query = "select from " + NdexClasses.Citation + " where " +
+	    		  NdexClasses.Citation_P_title + "='" + title +"' " ;
+	    final List<ODocument> citations = db.query(new OSQLSynchQuery<ODocument>(query)); */
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(citationQuery1);
+		final List<ODocument> citations = db.command(query)
+				.execute(title,idType,identifier); 
 	    
 	    ODocument c = null;
         for (ODocument x : citations ) {
         	ODocument networkDoc = x.field("in_" + NdexClasses.Network_E_Citations);
         	String uuidStr = networkDoc.field(NdexClasses.Network_P_UUID);
         	if (networkID.toString().equals(uuidStr)) {
-
-        		if ( identifier != null) {  // check identifier
-        			for (OIdentifiable ndexPropertyDoc : new OTraverse()
-        	       	    .field("out_"+ NdexClasses.E_ndexProperties )
-        	            .target(x)
-        	            .predicate( new OSQLPredicate("$depth <= 1"))) {
-
-        	              ODocument doc = (ODocument) ndexPropertyDoc;
-        	          
-        	              if ( doc.getClassName().equals(NdexClasses.NdexProperty)) {
-        	                  if ( doc.field(NdexClasses.ndexProp_P_predicateStr).equals(idType)
-        	                		&& 
-        	                	   doc.field(NdexClasses.ndexProp_P_value).equals(identifier)) {
-        	                	  c = x;
-        	                	  break;
-        	                  }
-        	              }
-        	         }
-        		} else {	
-        		  c = x;
+               	  c = x;
         		  break;
-        		}
         	}
         }
         
@@ -677,22 +669,14 @@ public class NetworkDAO {
 		Citation result = new Citation();
 		result.setId((long)doc.field(NdexClasses.Element_ID));
 		result.setTitle((String)doc.field(NdexClasses.Citation_P_title));
+		result.setIdType((String)doc.field(NdexClasses.Citation_p_idType));
+		result.setIdentifier((String)doc.field(NdexClasses.Citation_P_identifier));
 		
-		
-        for (OIdentifiable propRec : new OTraverse()
-   	                  .field("out_"+ NdexClasses.E_ndexProperties )
-   	                  .target(doc)
-   	                  .predicate( new OSQLPredicate("$depth <= 1"))) {
-
-             ODocument propDoc = (ODocument) propRec;
-                 
-             if ( doc.getClassName().equals(NdexClasses.NdexProperty)) {
-            	 result.getProperties().add(getNdexPropertyFromDoc(propDoc));
-             }
-        }
+		getPropertiesFromDocument(result,doc);
 
 		return result;
 	}
+	
 	
 	
 	private static NdexProperty getNdexPropertyFromDoc(ODocument doc) {
@@ -940,7 +924,7 @@ public class NetworkDAO {
     
  
 
-    private static NetworkSummary SetNetworkSummary(ODocument doc, NetworkSummary nSummary) {
+    private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
     	nSummary.setCreationDate((Date)doc.field(NdexClasses.Network_P_cDate));
     	nSummary.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
     	nSummary.setName((String)doc.field(NdexClasses.Network_P_name));
@@ -957,7 +941,7 @@ public class NetworkDAO {
     
     public static NetworkSummary getNetworkSummary(ODocument doc) {
     	NetworkSummary networkSummary = new NetworkSummary();
-    	return SetNetworkSummary(doc,networkSummary);
+    	return setNetworkSummary(doc,networkSummary);
     }
     
     public Citation getCitationById(long elementId) {

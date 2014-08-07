@@ -71,8 +71,9 @@ public class NdexClasses {
     
     // citation
     public static final String Citation_P_title       = "title";
-    public static final String Citaion_P_contributors = "authors";
-    
+    public static final String Citation_P_contributors = "authors";
+    public static final String Citation_p_idType	="idType";
+    public static final String Citation_P_identifier ="identifier";
     //support
     public static final String Support_P_text     = "text";
     public static final String Support_E_citation = "citeFrom";
