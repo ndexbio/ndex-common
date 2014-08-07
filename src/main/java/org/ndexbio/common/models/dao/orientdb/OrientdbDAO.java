@@ -122,7 +122,7 @@ public abstract class OrientdbDAO {
 		
 	}
 	
-	protected ODocument getRecordByAccountName(String accountName, String orientClass) 
+	public ODocument getRecordByAccountName(String accountName, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
 		
 		try {
@@ -131,7 +131,8 @@ public abstract class OrientdbDAO {
 			if(user == null) 
 				throw new ObjectNotFoundException("Account ", accountName);
 			
-			if( !( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
+			if( orientClass != null && 
+					!( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
 				throw new NdexException("UUID is not for class " + orientClass);
 			
 			return (ODocument) user.getRecord();
