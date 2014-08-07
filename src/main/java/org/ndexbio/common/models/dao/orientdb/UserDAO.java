@@ -175,8 +175,6 @@ public class UserDAO extends OrientdbDAO{
 	    **************************************************************************/
 	public void deleteUserById(UUID id) 
 		throws NdexException, ObjectNotFoundException{
-		//TODO cannot orphan networks
-		//TODO cannot orphan groups
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
@@ -194,8 +192,8 @@ public class UserDAO extends OrientdbDAO{
 			for(Edge e : vUser.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
 				OrientVertex vResource = (OrientVertex) e.getVertex(Direction.IN);
 				
-				if( !vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Group ) 
-						|| !vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Network ))
+				if( !( vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Group ) 
+						|| vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Network ) ) )
 					continue;
 				safe = false;	
 				
