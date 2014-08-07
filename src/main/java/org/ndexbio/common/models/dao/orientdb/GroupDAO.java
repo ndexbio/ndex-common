@@ -185,11 +185,34 @@ public class GroupDAO extends OrientdbDAO {
 			
 		this.validatePermission(groupId, adminId, Permissions.ADMIN);
 			
-		if( !this.getGroupNetworkMemberships(groupId,Permissions.ADMIN, 0, 1).isEmpty() ) {
-			throw new NdexException("Cannot orphan networks");
-		}
+		//if( !this.getGroupNetworkMemberships(groupId,Permissions.ADMIN, 0, 1).isEmpty() ) {
+		//	throw new NdexException("Cannot orphan networks");
+		//}
 		
 		try {
+			OrientVertex vGroup = graph.getVertex(group);
+			boolean safe = true;
+			
+			for(Edge e : vGroup.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+				OrientVertex vResource = (OrientVertex) e.getVertex(Direction.IN);
+				
+				if(!vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Network ))
+					continue;
+				
+				safe = false;	
+				
+				for(Edge ee : vResource.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+					if( !( (OrientVertex) ee.getVertex(Direction.OUT) ).equals(vGroup) ) {
+						safe = true;
+					}
+				}
+					
+			}
+				
+			if(!safe)
+				throw new NdexException("Cannot orphan networks");
+			
+			
 			group.delete();
 		}
 		catch (Exception e) {

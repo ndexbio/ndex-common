@@ -105,7 +105,7 @@ public abstract class OrientdbDAO {
 			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
 			OIdentifiable user = (OIdentifiable) Idx.get(id.toString()); // account to traverse by
 			if(user == null) 
-				throw new ObjectNotFoundException("Object with UUID ", id.toString());
+				throw new ObjectNotFoundException("Object", id.toString());
 			
 			if( !( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
 				throw new NdexException("UUID is not for class " + orientClass);
