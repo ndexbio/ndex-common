@@ -1,6 +1,7 @@
 package org.ndexbio.common.access;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -238,10 +239,10 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			final long getEdgesTime = System.currentTimeMillis();
 			PropertyGraphNetwork network =  getSubPropertyGraphNetworkByEdgeRids( edgeRids);
 			final long getSubnetworkTime = System.currentTimeMillis();
-			System.out.println("  Network Nodes : " + network.getNodes().size());
-			System.out.println("  Network Edges : " + network.getEdges().size());
-			System.out.println("  Getting Edges : " + (getEdgesTime - startTime));
-			System.out.println("Getting Network : " + (getSubnetworkTime - getEdgesTime));
+			System.out.println("     Network Nodes : " + network.getNodes().size());
+			System.out.println("     Network Edges : " + network.getEdges().size());
+			System.out.println("  Getting Edges MS : " + (getEdgesTime - startTime));
+			System.out.println("Getting Network MS : " + (getSubnetworkTime - getEdgesTime));
 			return network;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -299,8 +300,14 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 					targetNodeRids, includedPredicateRids, maxDepth);
 
 		} else if ("NEIGHBORHOOD".equals(parameters.getSearchType())) { */
-		    List<String> searchTerms = new ArrayList<String>();
-		    searchTerms.add(parameters.getSearchString());
+			String searchString = parameters.getSearchString();
+			List<String> searchTerms = Arrays.asList(searchString.split("[ ,]+"));
+			
+			for (String term : searchTerms){
+				System.out.println("termString:" + term);
+				
+			}
+
 			Set<ORID> sourceNodeRids = getNodeRidsFromTermNames(networkRid,
 					searchTerms,
 					//parameters.getStartingTermStrings(),
@@ -312,6 +319,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			
 			System.out.println("-----------------------------------------\n");
 			System.out.println(" Neighborhood Query ");
+			System.out.println("search string: " + searchString);
 			System.out.println("-----------------------------------------\n");
 
 			return edgeIDsByTraversalFromSourceNode(networkRid, sourceNodeRids,
@@ -320,12 +328,13 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 //		return new HashSet<ORID>();
 	}
 
+	/*
 	private List<ORID> getBaseTermRidsFromIds(ORID networkRid,
 			List<String> baseTermIds) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+	*/
 	
 	public List<ODocument> getUserFromName (String user) throws NdexException {
 		
@@ -358,7 +367,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 				+ "FROM (traverse out_" + NdexClasses.Network_E_BaseTerms + " from " + networkRid + " \n"
 				+ "WHILE $depth < 2) \n"
 				+ "WHERE @CLASS='" + NdexClasses.BaseTerm + "' AND name IN [" + termNameCsv + "] ";
-
+		System.out.println("term query: " + query + "\n");
 		final List<ODocument> baseTerms = _ndexDatabase
 				.query(new OSQLSynchQuery<ODocument>(query));
 		for (final ODocument doc : baseTerms) {
@@ -372,7 +381,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	private Set<ORID> getNodeRidsFromTermNames(ORID networkRid,
 			List<String> termNames, boolean includeAliases) {
 		return getNodeRidsFromTermRids(networkRid,
-				getBaseTermRidsFromNames(networkRid, termNames), includeAliases,termNames);
+				getBaseTermRidsFromNames(networkRid, termNames), includeAliases, termNames);
 	}
 
 	private Set<ORID> getNodeRidsFromTermRids(ORID networkRid,
@@ -395,8 +404,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 		final String query = "SELECT @rid as rid FROM (traverse "
 				+ traverseEdgeTypes + " from \n[" + termIdCsv + "] \n"
-				+ "WHILE $depth < 10) \n" + "WHERE @CLASS='node' ";
-		// System.out.println("node query: " + query);
+				+ "WHILE $depth < 10) \n" + "WHERE @CLASS='" + NdexClasses.Node + "' ";
+		System.out.println("node query: " + query);
 		final List<ODocument> nodes = _ndexDatabase
 				.query(new OSQLSynchQuery<ODocument>(query));
 		for (final ODocument node : nodes) {
@@ -405,7 +414,10 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		}
 		
 		Set<ORID> finalResult = new HashSet<ORID>(result);
-		final String query2 = "select @rid as rid from " +NdexClasses.Node + " where name in [" + termNameCsv + "] ";
+		
+		final String query2 = "select @rid as rid from (traverse out_" + NdexClasses.Network_E_Nodes + " from " + networkRid + " \n"
+				+ "WHILE $depth < 2) \n"
+				+ "WHERE @CLASS='" + NdexClasses.Node + "' AND name IN [" + termNameCsv + "] ";
 		final List<ODocument> nodes2 = _ndexDatabase
 				.query(new OSQLSynchQuery<ODocument>(query2));
 		for (final ODocument node : nodes2) {

@@ -9,14 +9,12 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ValidationException;
-import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.RawSupport;
@@ -32,15 +30,9 @@ import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.network.Namespace;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 
@@ -53,31 +45,27 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * as values
  */
 
-public class NdexPersistenceService  {
+public class NdexPersistenceService extends PersistenceService {
 	
 	public static final String defaultCitationType="URI";
 	public static final String pmidPrefix = "pmid:";
 
 
-	private static final long CACHE_SIZE =  200000L;
     private static final Logger logger = Logger.getLogger(NdexPersistenceService.class.getName());
 	// key is the element_id of a BaseTerm, value is the id of the node which this BaseTerm represents
     private Map<Long, Long> baseTermNodeIdMap;
 	// Store the mapping in memory to have better performance.
 	private Map<String, Long> baseTermStrMap;
-	private NdexDatabase database;
+//	private NdexDatabase database;
 	// key is the edge id which this term reifed.
     //private LoadingCache<Long, ReifiedEdgeTerm> reifiedEdgeTermCache;
  // key is the edge id which this term reifed.
     private Map<Long,Long>  edgeIdReifiedEdgeTermIdMap;
-	private LoadingCache<Long, ODocument>  elementIdCache;
 	// maps an external node id to new node id created in Ndex.
     private Map<Long, Long> externalIdNodeMap; 
 	//key is a function term Id, value is the node id which uses 
     // that function as represents term
     private Map<Long,Long> functionTermIdNodeIdMap;
-	private OrientGraph graph;
-	private ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 
 	// maps a node name to Node Id.
     private Map<String, Long> namedNodeMap;
@@ -87,11 +75,8 @@ public class NdexPersistenceService  {
 	// key is the full URI or other fully qualified baseTerm as a string.
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
 
-	private NetworkDAO  networkDAO;
-	
     private ODocument networkDoc;
-    
-	private OrientVertex networkVertex;
+//	protected OrientVertex networkVertex;
     
     private ODocument ownerDoc;
     
@@ -102,9 +87,6 @@ public class NdexPersistenceService  {
     
     private Map<FunctionTerm, Long> rawFunctionTermFunctionTermIdMap; 
     
-    
-    
-    //private LoadingCache<RawSupport, Support>     rawSupportCache;
     private Map<RawSupport, Long>  rawSupportMap;
     
     // key is a "rawFunctionTerm", which has element id as -1. This table
@@ -117,8 +99,6 @@ public class NdexPersistenceService  {
     // for now
 //    private LoadingCache<String, Node> namedNodeCache;
     
-    private final Stopwatch stopwatch;
-    
     private Map<String, Namespace> URINamespaceMap;
     
     /*
@@ -129,18 +109,12 @@ public class NdexPersistenceService  {
      */
     
 	public NdexPersistenceService(NdexDatabase db) {
-		this.database = db;
-		this.localConnection = this.database.getAConnection();
-//		this.localConnection.begin();
-		this.graph = new OrientGraph(this.localConnection,false);
-		
-//		graph.setAutoStartTx(false);
-		this.networkDAO = new NetworkDAO(localConnection,true);
+		super(db);
+
 		prefixMap = new HashMap<String,Namespace>();
 		URINamespaceMap = new HashMap<String,Namespace>();
 		this.network = null;
 		this.ownerDoc = null;
-		this.stopwatch = Stopwatch.createUnstarted();
 		
 		this.baseTermStrMap = new TreeMap <String, Long>();
 		this.namespaceMap   = new TreeMap <RawNamespace, Namespace>();
@@ -153,19 +127,6 @@ public class NdexPersistenceService  {
 		this.rawSupportMap  = new TreeMap<RawSupport, Long> ();
 		this.functionTermIdNodeIdMap = new HashMap<Long,Long>(100);
 		// intialize caches.
-		
-		elementIdCache = CacheBuilder
-				.newBuilder().maximumSize(CACHE_SIZE*5)
-				.expireAfterAccess(240L, TimeUnit.MINUTES)
-				.build(new CacheLoader<Long, ODocument>() {
-				   @Override
-				   public ODocument load(Long key) throws NdexException, ExecutionException {
-					ODocument o = networkDAO.getDocumentByElementId(key);
-                    if ( o == null )
-                    	throw new NdexException ("Document is not found for element id: " + key);
-					return o;
-				   }
-			    });
 		
 		externalIdNodeMap = new TreeMap<Long,Long>(); 
 
@@ -265,32 +226,6 @@ public class NdexPersistenceService  {
 	}
 
 	
-	private void addPropertiesToVertex (OrientVertex vertex, Collection<NdexProperty> properties, 
-			Collection<NdexProperty> presentationProperties) {
-
-		if ( properties != null) {
-			for (NdexProperty e : properties) {
-				ODocument pDoc = this.createNdexPropertyDoc(e.getPredicateString(),e.getValue());
-				pDoc.field(NdexClasses.ndexProp_P_datatype, e.getDataType())
-				.save();
-               OrientVertex pV = graph.getVertex(pDoc);
-               vertex.addEdge(NdexClasses.E_ndexProperties, pV);
-			}
-		
-		}
-
-		if ( presentationProperties !=null ) {
-			for (NdexProperty e : presentationProperties) {
-				ODocument pDoc = this.createNdexPropertyDoc(e.getPredicateString(),e.getValue());
-				pDoc.field(NdexClasses.ndexProp_P_datatype, e.getDataType())
-				.save();
-               OrientVertex pV = graph.getVertex(pDoc);
-               vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
-			}
-		}
-	}
-
-
 	public void addPropertyToNode(long nodeId, NdexProperty p, boolean isPresentationProperty) throws ExecutionException {
 		ODocument nodeDoc = elementIdCache.get(nodeId);
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
@@ -319,17 +254,6 @@ public class NdexPersistenceService  {
 		
 //		nodeV.getRecord().reload();
 		elementIdCache.put(nodeId, nodeV.getRecord());
-	}
-	
-
-	public void commit () {
-		//graph.commit();
-		this.localConnection.commit();
-		this.networkDoc.reload();
-		this.networkVertex = graph.getVertex(networkDoc);
-	//	logger.info("elementIdCachSize:" + elementIdCache.size());
-	//	this.localConnection.begin();
-	//	database.commit();
 	}
 	
 	private Long createBaseTerm(String termString) throws NdexException, ExecutionException {
@@ -406,32 +330,6 @@ public class NdexPersistenceService  {
 		
 	}
 
-	private Long createBaseTerm(String localTerm, long nsId) throws ExecutionException {
-
-//		BaseTerm bterm = new BaseTerm();
-		Long termId = database.getNextId();
-		
-		ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
-		  .fields(NdexClasses.BTerm_P_name, localTerm,
-				  NdexClasses.Element_ID, termId)
-		  .save();
-
-		OrientVertex basetermV = graph.getVertex(btDoc);
-		
-		if ( nsId >= 0) {
-
-  		  ODocument nsDoc = elementIdCache.get(nsId); 
-  		  
-  		  OrientVertex nsV = graph.getVertex(nsDoc);
-  		
-  		  basetermV.addEdge(NdexClasses.BTerm_E_Namespace, nsV);
-		}
-		  
-        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
-//        btDoc.reload();
-        elementIdCache.put(termId, btDoc);
-		return termId;
-	}
 	
 	
 	/**
@@ -563,7 +461,7 @@ public class NdexPersistenceService  {
 	}
 	
 
-	public void createNamespace(String prefix, String URI) throws NdexException {
+	public void createNamespace2(String prefix, String URI) throws NdexException {
 		RawNamespace r = new RawNamespace(prefix, URI);
 		getNamespace(r);
 	}
@@ -794,7 +692,33 @@ public class NdexPersistenceService  {
 		}
 		return null;
 	}
-	
+
+	 protected Long createBaseTerm(String localTerm, long nsId) throws ExecutionException {
+
+			Long termId = database.getNextId();
+			
+			ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
+			  .fields(NdexClasses.BTerm_P_name, localTerm,
+					  NdexClasses.Element_ID, termId)
+			  .save();
+
+			OrientVertex basetermV = graph.getVertex(btDoc);
+			
+			if ( nsId >= 0) {
+
+	  		  ODocument nsDoc = elementIdCache.get(nsId); 
+	  		  
+	  		  OrientVertex nsV = graph.getVertex(nsDoc);
+	  		
+	  		  basetermV.addEdge(NdexClasses.BTerm_E_Namespace, nsV);
+			}
+			  
+	        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
+	        elementIdCache.put(termId, btDoc);
+			return termId;
+	 }
+
+
 	
 	/**
 	 * Find or create a base term from a string, and return its identifier.
@@ -851,25 +775,10 @@ public class NdexPersistenceService  {
 		}
 		
 		// persist the citation object in db.
-		citationId = database.getNextId();
-
-		ODocument citationDoc = new ODocument(NdexClasses.Citation)
-		  .fields(
-				NdexClasses.Element_ID, citationId,
-		        NdexClasses.Citation_P_title, title,
-		        NdexClasses.Citation_p_idType, idType,
-		        NdexClasses.Citation_P_identifier, identifier)
-		  .field(NdexClasses.Citation_P_contributors, contributors, OType.EMBEDDEDLIST)
-		  .save();
-        
-		OrientVertex citationV = graph.getVertex(citationDoc);
-		OrientVertex networkV = graph.getVertex(getNetworkDoc());
-		networkV.addEdge(NdexClasses.Network_E_Citations, citationV);
-
-		elementIdCache.put(citationId, citationDoc);
+		citationId = createCitation(title, idType, identifier, contributors, null,null);
+				
 		rawCitationMap.put(rCitation, citationId);
 		return citationId; 
-		
 	}
 	
 	public Network getCurrentNetwork() {
@@ -890,23 +799,7 @@ public class NdexPersistenceService  {
 		Long functionTermId = this.rawFunctionTermFunctionTermIdMap.get(func);
 		if ( functionTermId != null) return functionTermId;
 		
-		functionTermId = database.getNextId(); 
-		
-	    ODocument fTerm = new ODocument(NdexClasses.FunctionTerm);
-	    fTerm = fTerm.field(NdexClasses.Element_ID, functionTermId)
-	       .save();
-	    
-        OrientVertex fTermV = graph.getVertex(fTerm);
-        
-        ODocument bTermDoc = elementIdCache.get(func.getFunctionTermId()); 
-        fTermV.addEdge(NdexClasses.FunctionTerm_E_baseTerm, graph.getVertex(bTermDoc));
-        
-        for (Long id : func.getParameters()) {
-        	ODocument o = elementIdCache.get(id);
-        	fTermV.addEdge(NdexClasses.FunctionTerm_E_paramter, graph.getVertex(o));
-        }
-	    
-        elementIdCache.put(functionTermId, fTerm);
+		functionTermId = createFunctionTerm(baseTermId, termList);
         this.rawFunctionTermFunctionTermIdMap.put(func, functionTermId);
         return functionTermId;
 	}
@@ -1090,22 +983,7 @@ public class NdexPersistenceService  {
 		if ( supportId != null ) return supportId;
 		
 		// persist the support object in db.
-		supportId =database.getNextId() ;
-
-		ODocument supportDoc = new ODocument(NdexClasses.Support)
-		   .fields(NdexClasses.Element_ID, supportId,
-		           NdexClasses.Support_P_text, literal)	
-		   .save();
-
-		ODocument citationDoc = elementIdCache.get(citationId);
-        
-		OrientVertex supportV = graph.getVertex(supportDoc);
-		OrientVertex citationV = graph.getVertex(citationDoc);
-		OrientVertex networkV = graph.getVertex(getNetworkDoc());
-		supportV.addEdge(NdexClasses.Support_E_citation, citationV);
-		networkV.addEdge(NdexClasses.Network_E_Supports, supportV);
-
-		elementIdCache.put(supportId, supportDoc);
+		supportId = createSupport(literal, citationId);
 		this.rawSupportMap.put(r, supportId);
 		return supportId; 
 		
