@@ -9,10 +9,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
-import org.ndexbio.common.models.object.network.RawCitation;
-import org.ndexbio.common.models.object.network.RawSupport;
 import org.ndexbio.model.object.NdexProperty;
-import org.ndexbio.model.object.network.FunctionTerm;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -218,4 +215,7 @@ public abstract class PersistenceService {
 	        return functionTermId;
 		}
 
+	  public void close () {
+		  this.localConnection.close();
+	  }
 }

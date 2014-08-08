@@ -158,7 +158,7 @@ public class NetworkDAO {
         Network network = getNetwork(nDoc);
 
 	    // get Edges
-	    
+	    int i = 0 ;
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
@@ -167,12 +167,12 @@ public class NetworkDAO {
             ODocument doc = (ODocument) nodeDoc;
          
             if ( doc.getClassName().equals(NdexClasses.Edge) ) {
-
+            	   i++;	
               	   Edge e = getEdgeFromDocument(doc,network);
               	   network.getEdges().put(e.getId(), e);
             	 
             }
-            
+            System.out.println ("got " + i + " edges from iterator.");
         }
         
         return network;
@@ -688,7 +688,7 @@ public class NetworkDAO {
 
 	}
 	
-	//TODO: change this to direct index access in the future.
+/*	//This function is no longer needed.
 	public ODocument getNamespaceDocByEId (long elementID) {
 		String query = "select from " + NdexClasses.Namespace + " where " + 
 	        NdexClasses.Element_ID + "=" +elementID;
@@ -705,7 +705,7 @@ public class NetworkDAO {
         }
         return null;
 	}
-	
+*/	
     private static Namespace getNamespace(ODocument ns) {
        Namespace rns = new Namespace();
        rns.setId((long)ns.field("id"));

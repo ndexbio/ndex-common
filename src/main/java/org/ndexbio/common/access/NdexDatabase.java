@@ -30,12 +30,10 @@ public class NdexDatabase {
 	public NdexDatabase() throws NdexException {
 		pool = NdexAOrientDBConnectionPool.getInstance();
 		ndexDatabase = pool.acquire();
-//		ndexDatabase.begin();
 		dictionary = ndexDatabase.getDictionary();
 		NdexSchemaManager.INSTANCE.init(ndexDatabase);
 		vdoc = (ODocument) dictionary.get(sequenceKey);
 		if (vdoc == null ) {
-//			ndexDatabase.begin();
 			internalCounterBase = 1;
 			vdoc = new ODocument(seqField, internalCounterBase);  // + blockSize); // ids start with 1.
 			vdoc = vdoc.save();
@@ -49,6 +47,7 @@ public class NdexDatabase {
     public synchronized long  getNextId() {
     	
     	if ( batchCounter == blockSize) {
+    		vdoc.reload();
         	internalCounterBase = vdoc.field(seqField);
     	    batchCounter = 0 ;
             vdoc = vdoc.field(seqField, internalCounterBase + blockSize).save();

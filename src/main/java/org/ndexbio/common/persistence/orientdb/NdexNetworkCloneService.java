@@ -32,9 +32,6 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 	private static final Logger logger = Logger.getLogger(NdexNetworkCloneService.class.getName());
 
-
-	private LoadingCache<Long, ODocument>  elementIdCache;
-
 	private Network   srcNetwork;
 
 	private NetworkSummary networkSummary;
@@ -117,8 +114,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 			return this.networkSummary;
 		} finally {
 			this.localConnection.commit();
-			localConnection.close();
-			database.close();
+	//		localConnection.close();
+	//		database.close();
 		}
 	}
 	
@@ -168,7 +165,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 		if ( srcNetwork.getNamespaces() != null) {
 			for ( Namespace ns : srcNetwork.getNamespaces().values() ) {
-				if ( prefixSet.contains(ns.getPrefix()))
+				if ( ns.getPrefix() !=null && prefixSet.contains(ns.getPrefix()))
 					throw new NdexException("Duplicated Prefix " + ns.getPrefix() + " found." );
 				Long nsId = createNamespace(ns.getPrefix(), ns.getUri());
 				this.namespaceIdMap.put(ns.getId(), nsId);
@@ -179,9 +176,12 @@ public class NdexNetworkCloneService extends PersistenceService {
 	private void cloneBaseTerms() throws ExecutionException, NdexException {
 		if ( srcNetwork.getBaseTerms()!= null) {
 			for ( BaseTerm term : srcNetwork.getBaseTerms().values() ) {
-				Long nsId = namespaceIdMap.get(term.getNamespace());
-				if ( nsId == null)  
-					throw new NdexException ("Namespece Id " + term.getNamespace() + " is not found in name space list.");
+				Long nsId = (long)-1 ;
+				if ( term.getNamespace() >0 ) {
+					nsId = namespaceIdMap.get(term.getNamespace());
+					if ( nsId == null)  
+						throw new NdexException ("Namespece Id " + term.getNamespace() + " is not found in name space list.");
+				}
 				Long baseTermId = createBaseTerm(term.getName(), nsId);
 				this.baseTermIdMap.put(term.getId(), baseTermId);
 			}
