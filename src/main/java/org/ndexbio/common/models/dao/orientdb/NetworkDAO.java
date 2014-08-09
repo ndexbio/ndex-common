@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 public class NetworkDAO {
 	
@@ -47,11 +48,13 @@ public class NetworkDAO {
 	private boolean searchCurrentTx;
 	
 	private ObjectMapper mapper;
+	private OrientGraph graph;
 	
 	public NetworkDAO (ODatabaseDocumentTx db) {
 		this.db = db;
 		this.searchCurrentTx = false;
 		mapper = new ObjectMapper();
+		graph = new OrientGraph(this.db,false);
 	}
 
 	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {
@@ -149,6 +152,27 @@ public class NetworkDAO {
         return true;
 	}
 	
+	
+	public int deleteNetwork (String UUID) {
+		int counter = 0;
+		
+		String query = "traverse * from ( traverse out_networkNodes from (select from network where UUID='"
+				+ UUID + "')) while @class <> 'network'";
+        final List<ODocument> elements = db.query(new OSQLSynchQuery<ODocument>(query));
+        
+        for ( ODocument element : elements ) {
+        	graph.removeVertex(graph.getVertex(element));
+        	counter ++;
+        }
+		query = "select from network where UUID='"+ UUID + "'";
+        final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
+        
+        for ( ODocument n: networks ) {
+        	graph.removeVertex(graph.getVertex(n));
+        	counter ++;
+        }
+		return counter;
+	}
 	
 	public Network getNetworkById(UUID id) throws NdexException {
 		ODocument nDoc = getNetworkDocByUUID(id);

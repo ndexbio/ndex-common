@@ -47,9 +47,19 @@ public class NetworkDAOTest {
 		db.close();
 	}
 
+	
+	@Test
+	public void testdelete() {
+		NetworkDAO dao = new NetworkDAO(db);
+		
+		int r = dao.deleteNetwork("4842a831-1e5c-11e4-9f34-90b11c72aefa");
+		
+		System.out.println( r + "Vertex deleted from graph.");
+	}
+	
 	@Test
     public void test() throws NdexException, JsonProcessingException {
-		NetworkDAO dao = new NetworkDAO(db);
+/*		NetworkDAO dao = new NetworkDAO(db);
 		
 		System.out.println(dao.checkPrivilege("Support", "e026e93c-1997-11e4-8f64-90b11c72aefa", Permissions.READ));
 
@@ -133,7 +143,7 @@ public class NetworkDAOTest {
 		
 		ObjectMapper mapper = new ObjectMapper(); // create once, reuse
 		String s = mapper.writeValueAsString( n);
-		System.out.println ( s);
+		System.out.println ( s); */
 	}
 	
 }
