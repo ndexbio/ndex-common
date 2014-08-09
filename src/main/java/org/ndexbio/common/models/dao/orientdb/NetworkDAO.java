@@ -171,6 +171,8 @@ public class NetworkDAO {
         	graph.removeVertex(graph.getVertex(n));
         	counter ++;
         }
+        
+        db.commit();
 		return counter;
 	}
 	
