@@ -8,6 +8,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.NetworkSummary;
+import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.SimpleNetworkQuery;
 import org.ndexbio.model.object.User;
 
@@ -35,14 +36,21 @@ public class NetworkSearchDAO {
 	}
 	
 	//TODO make the search compatible to groups
+	
 	public List<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, User loggedInUser) 
 			throws NdexException, IllegalArgumentException {
 		
 		Preconditions.checkArgument(null != simpleNetworkQuery, 
 				"A query is required");
-		Preconditions.checkArgument( !Strings.isNullOrEmpty( simpleNetworkQuery.getSearchString() )
-				|| !Strings.isNullOrEmpty( simpleNetworkQuery.getAccountName() ), 
-				"A search string or accountName is required");
+		
+		String userRID;
+		OSQLSynchQuery<ODocument> query;
+		Iterable<ODocument> networks;
+		
+		//permission labels
+		String admin = Permissions.ADMIN.toString().toLowerCase();
+		String write = Permissions.WRITE.toString().toLowerCase();
+		String read = Permissions.READ.toString().toLowerCase();
 		
 		String userAccountName = "";
 		if(loggedInUser != null)
@@ -54,9 +62,6 @@ public class NetworkSearchDAO {
 				* top;
 		try {
 			
-			String userRID;
-			OSQLSynchQuery<ODocument> query;
-			
 			if(!Strings.isNullOrEmpty(userAccountName)) {
 				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
 				OIdentifiable user = (OIdentifiable) accountNameIdx.get(userAccountName); // account to traverse by
@@ -67,45 +72,77 @@ public class NetworkSearchDAO {
 			
 			if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
 				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
-				OIdentifiable nUser = (OIdentifiable) accountNameIdx.get(simpleNetworkQuery.getAccountName()); // account to traverse by
+				OIdentifiable nAccount = (OIdentifiable) accountNameIdx.get(simpleNetworkQuery.getAccountName()); // account to traverse by
 				
-				if(nUser == null) 
+				if(nAccount == null) 
 					throw new NdexException("Invalid accountName to filter by");
 				
-				String traverseRID = nUser.getIdentity().toString();
+				String traverseRID = nAccount.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>(
 			  			"SELECT FROM"
-			  			+ " (TRAVERSE "+ NdexClasses.User +".out_admin FROM"
+			  			+ " (TRAVERSE "+ NdexClasses.User +".out_"+ admin +" FROM"
 			  				+ " " + traverseRID
 			  				+ "  WHILE $depth <=1)"
-			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
+			  			+ " WHERE name.toLowerCase() LIKE '%" + simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			  			+ " AND visibility <> 'PRIVATE'"
 			 			+ " AND @class = '"+ NdexClasses.Network +"'"
-						+ " OR in_admin = '"+ userRID +"'"
-						+ " OR in_write = '"+ userRID +"'"
-						+ " OR in_read = '"+ userRID +"'"
+						+ " OR in_"+admin+" = '"+ userRID +"'"
+						+ " OR in_"+write+" = '"+ userRID +"'"
+						+ " OR in_"+read+" = '"+ userRID +"'"
 			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
+				
+				networks = this.db.command(query).execute();
+				
+				if( !networks.iterator().hasNext() ) {
+					
+					query = new OSQLSynchQuery<ODocument>(
+				  			"SELECT FROM"
+				  			+ " (TRAVERSE "+ NdexClasses.User +".out_"+ admin +" FROM"
+				  				+ " " + traverseRID
+				  				+ "  WHILE $depth <=1)"
+				  			+ " WHERE visibility <> 'PRIVATE'"
+				 			+ " AND @class = '"+ NdexClasses.Network +"'"
+							+ " OR in_"+admin+" = '"+ userRID +"'"
+							+ " OR in_"+write+" = '"+ userRID +"'"
+							+ " OR in_"+read+" = '"+ userRID +"'"
+				 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+				 			+ " LIMIT " + top);
+					
+					networks = this.db.command(query).execute();
+					
+				}
+				
+				for (final ODocument network : networks) {
+					foundNetworks.add(NetworkDAO.getNetworkSummary(network));
+				}
+					
+				return foundNetworks;
 			    
 			} else {
 				query = new OSQLSynchQuery<ODocument>(
 			  			"SELECT FROM " + NdexClasses.Network
 			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			  			+ " AND visibility <> 'PRIVATE'"
-						+ " OR in_admin LIKE '"+ userRID +"'"
-						+ " OR in_write LIKE '"+ userRID +"'"
-						+ " OR in_read LIKE '"+ userRID +"'"
+						+ " OR in_"+admin+" = '"+ userRID +"'"
+						+ " OR in_"+write+" = '"+ userRID +"'"
+						+ " OR in_"+read+" = '"+ userRID +"'"
 			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
-			}
-			
-			final List<ODocument> networks = this.db.command(query).execute();
-			    
-			for (final ODocument network : networks) {
-				foundNetworks.add(NetworkDAO.getNetworkSummary(network));
-			}
 				
-			return foundNetworks;
+				networks = this.db.command(query).execute();
+			    
+				if( !networks.iterator().hasNext() ) {
+					networks = db.browseClass(NdexClasses.Network).setLimit(top);
+				}
+				
+				for (final ODocument network : networks) {
+					foundNetworks.add(NetworkDAO.getNetworkSummary(network));
+				}
+					
+				return foundNetworks;
+				
+			}
 			
 		} catch (Exception e) {
 			
