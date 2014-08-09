@@ -867,9 +867,16 @@ public class NetworkDAO {
     					network.getBaseTerms().put(termId, bTerm);
     				}
     			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm)) {
-    				//TODO: implement these 
+    				if ( !network.getReifiedEdgeTerms().containsKey(termId)) {
+    					ReifiedEdgeTerm reTerm = getReifiedEdgeTermFromDoc(o);
+    					network.getReifiedEdgeTerms().put(termId, reTerm);
+    				}
     			} else if (termType.equals(NdexClasses.FunctionTerm)) {
-    				//TODO: implement these 
+    				if ( !network.getFunctionTerms().containsKey(termId)) {
+    					//TODO: implement these	
+    					FunctionTerm funcTerm = getFunctionTermfromDoc(o, network);
+    					network.getFunctionTerms().put(termId, funcTerm);
+    				}
     			} else 
     				throw new NdexException ("Unsupported term type '" + termType + 
     						"' found for term Id:" + termId);
@@ -948,8 +955,25 @@ public class NetworkDAO {
     	return n;
     }
     
+    private FunctionTerm getFunctionTermfromDoc(ODocument doc,Network network) {
+    	FunctionTerm term = new FunctionTerm();
+    	
+    	term.setId((long)doc.field(NdexClasses.Element_ID));
+    	
+    	// traverse for the argument
+    	
+    	
+    	return term;
+    }
  
-
+    private ReifiedEdgeTerm getReifiedEdgeTermFromDoc(ODocument doc) {
+    	ReifiedEdgeTerm term = new ReifiedEdgeTerm();
+    	term.setId((long)doc.field(NdexClasses.Element_ID));
+    	ODocument e = doc.field("out_" +NdexClasses.ReifedEdge_E_edge );
+    	term.setEdgeId((long)e.field(NdexClasses.Element_ID));
+    	return term;
+    }
+    
     private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
     	nSummary.setCreationDate((Date)doc.field(NdexClasses.Network_P_cDate));
     	nSummary.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
