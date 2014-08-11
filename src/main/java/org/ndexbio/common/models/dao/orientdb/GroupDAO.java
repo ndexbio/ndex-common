@@ -293,25 +293,14 @@ public class GroupDAO extends OrientdbDAO {
 			throws NdexException, IllegalArgumentException {
 		
 		Preconditions.checkArgument(null != simpleQuery, "Search parameters are required");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(simpleQuery.getSearchString())
-				|| !Strings.isNullOrEmpty( simpleQuery.getAccountName()), 
-				"A search string or accountName is required");
+
+		OSQLSynchQuery<ODocument> query;
+		Iterable<ODocument> groups;
+		final List<Group> foundgroups = new ArrayList<Group>();
 		
 		simpleQuery.setSearchString(simpleQuery.getSearchString()
 					.toLowerCase().trim());
-
-		final List<Group> foundgroups = new ArrayList<Group>();
-		final int startIndex = skipBlocks
-				* blockSize;
-		OSQLSynchQuery<ODocument> query;
-
-		/*String query = "SELECT FROM " + NdexClasses.Group + " "
-					+ "WHERE accountName.toLowerCase() LIKE '%"
-					+ simpleQuery.getSearchString() + "%'"
-					+ "  OR organizationName.toLowerCase() LIKE '%"
-					+ simpleQuery.getSearchString() + "%'"
-					+ "  ORDER BY creation_date DESC " + " SKIP " + startIndex
-					+ " LIMIT " + blockSize;*/
+		final int startIndex = skipBlocks * blockSize;
 		
 		try {
 			if(!Strings.isNullOrEmpty(simpleQuery.getAccountName())) {
@@ -332,6 +321,26 @@ public class GroupDAO extends OrientdbDAO {
 						+ " ORDER BY creation_date DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
+				
+				groups = this.db.command(query).execute();
+				
+				if( !groups.iterator().hasNext() ) {
+					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
+						+ " (TRAVERSE "+ NdexClasses.User +".out_admin FROM"
+			  				+ " " + traverseRID
+			  				+ " WHILE $depth <=1)"
+			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
+						+ " ORDER BY creation_date DESC " 
+						+ " SKIP " + startIndex
+						+ " LIMIT " + blockSize );
+					
+					groups = this.db.command(query).execute();
+				}
+				
+				for (final ODocument group : groups) {
+					foundgroups.add(GroupDAO.getGroupFromDocument(group));
+				}
+				return foundgroups;
 			
 			} else {
 				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
@@ -341,15 +350,17 @@ public class GroupDAO extends OrientdbDAO {
 						+ " ORDER BY creation_date DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
-			}
-			
-			final List<ODocument> groups = this.db.command(query).execute();
-			
-			for (final ODocument group : groups) {
-				foundgroups.add(GroupDAO.getGroupFromDocument(group));
 				
+				groups = this.db.command(query).execute();
+				
+				if( !groups.iterator().hasNext() ) 
+					groups = this.db.browseClass(NdexClasses.Group).setLimit(blockSize);
+				
+				for (final ODocument group : groups) {
+					foundgroups.add(GroupDAO.getGroupFromDocument(group));
+				}
+				return foundgroups;
 			}
-			return foundgroups;
 			
 		} catch (Exception e) {
 			logger.severe("Unable to query the database");

@@ -35,8 +35,6 @@ public class NetworkSearchDAO {
 		this.db = db;
 	}
 	
-	//TODO make the search compatible to groups
-	
 	public List<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, User loggedInUser) 
 			throws NdexException, IllegalArgumentException {
 		
@@ -47,7 +45,7 @@ public class NetworkSearchDAO {
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> networks;
 		
-		//permission labels
+		//permission labels, is this the best implementation?
 		String admin = Permissions.ADMIN.toString().toLowerCase();
 		String write = Permissions.WRITE.toString().toLowerCase();
 		String read = Permissions.READ.toString().toLowerCase();
@@ -132,9 +130,8 @@ public class NetworkSearchDAO {
 				
 				networks = this.db.command(query).execute();
 			    
-				if( !networks.iterator().hasNext() ) {
+				if( !networks.iterator().hasNext() ) 
 					networks = db.browseClass(NdexClasses.Network).setLimit(top);
-				}
 				
 				for (final ODocument network : networks) {
 					foundNetworks.add(NetworkDAO.getNetworkSummary(network));

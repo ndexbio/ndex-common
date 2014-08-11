@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class UserDAO extends OrientdbDAO{
@@ -275,36 +274,88 @@ public class UserDAO extends OrientdbDAO{
 	public List<User> findUsers(SimpleUserQuery simpleQuery, int skip, int top) 
 			throws IllegalArgumentException,
 			NdexException {
-		Preconditions.checkArgument(null != simpleQuery, "Search parameters are required");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(simpleQuery.getSearchString()), 
-				"A search string is required");
+		//Preconditions.checkArgument(skip != null , "Search parameters are required");
+		
+		OSQLSynchQuery<ODocument> query;
+		Iterable<ODocument> users;
+		final List<User> foundUsers = new ArrayList<User>();
 		
 		simpleQuery.setSearchString(simpleQuery.getSearchString()
 					.toLowerCase().trim());
-
-		final List<User> foundUsers = new ArrayList<User>();
-
-		final int startIndex = skip
-				* top;
-
-		String query = "SELECT FROM " + NdexClasses.User + " "
-					+ "WHERE accountName.toLowerCase() LIKE '%"
-					+ simpleQuery.getSearchString() + "%'"
-					+ "  OR lastName.toLowerCase() LIKE '%"
-					+ simpleQuery.getSearchString() + "%'"
-					+ "  OR firstName.toLowerCase() LIKE '%"
-					+ simpleQuery.getSearchString() + "%'"
-					+ "  ORDER BY creation_date DESC " + " SKIP " + startIndex
-					+ " LIMIT " + top;
+		final int startIndex = skip * top;
 		
 		try {
 			
-			final List<ODocument> users = this.db.query(new OSQLSynchQuery<ODocument>(query));
-			for (final ODocument user : users) {
-				foundUsers.add(UserDAO.getUserFromDocument(user));
+			if(!Strings.isNullOrEmpty(simpleQuery.getAccountName())) {
+				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
+				OIdentifiable nGroup = (OIdentifiable) accountNameIdx.get(simpleQuery.getAccountName()); // account to traverse by
+				
+				if(nGroup == null) 
+					throw new NdexException("Invalid accountName to filter by");
+				
+				String traverseRID = nGroup.getIdentity().toString();
+				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
+						+ " (TRAVERSE "+ NdexClasses.Group +".in_admin FROM"
+			  				+ " " + traverseRID
+			  				+ " WHILE $depth <=1)"
+			  			+ " WHERE @class = '"+ NdexClasses.User +"'"
+			  			+ " AND accountName.toLowerCase() LIKE '%"
+			  			+ simpleQuery.getSearchString() + "%'"
+						+ "  OR lastName.toLowerCase() LIKE '%"
+						+ simpleQuery.getSearchString() + "%'"
+						+ "  OR firstName.toLowerCase() LIKE '%"
+						+ simpleQuery.getSearchString() + "%'"
+						+ " ORDER BY creation_date DESC " 
+						+ " SKIP " + startIndex
+						+ " LIMIT " + top );
+				
+				users = this.db.command(query).execute();
+				
+				if( !users.iterator().hasNext() ) {
+					
+					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
+							+ " (TRAVERSE "+ NdexClasses.Group +".in_admin FROM"
+				  				+ " " + traverseRID
+				  				+ " WHILE $depth <=1)"
+				  			+ " WHERE @class = '"+ NdexClasses.User +"'"
+							+ " ORDER BY creation_date DESC " 
+							+ " SKIP " + startIndex
+							+ " LIMIT " + top );
+					
+					users = this.db.command(query).execute();
+					
+				}
+				
+				for (final ODocument user : users) {
+					foundUsers.add(UserDAO.getUserFromDocument(user));
+				}
+				return foundUsers;
+				
+			
+			} else {
+				
+				query = new OSQLSynchQuery<ODocument>("SELECT FROM "
+						+ NdexClasses.User + " "
+						+ "WHERE accountName.toLowerCase() LIKE '%"
+						+ simpleQuery.getSearchString() + "%'"
+						+ "  OR lastName.toLowerCase() LIKE '%"
+						+ simpleQuery.getSearchString() + "%'"
+						+ "  OR firstName.toLowerCase() LIKE '%"
+						+ simpleQuery.getSearchString() + "%'"
+						+ "  ORDER BY creation_date DESC " + " SKIP " + startIndex
+						+ " LIMIT " + top);
+				
+				users = this.db.command(query).execute();
+				
+				if( !users.iterator().hasNext() ) 
+					users = db.browseClass(NdexClasses.User).setLimit(top);
+				
+				for (final ODocument user : users) {
+					foundUsers.add(UserDAO.getUserFromDocument(user));
+				}
+				return foundUsers;
 				
 			}
-			return foundUsers;
 			
 		} catch (Exception e) {
 			logger.severe("Unable to query the database");
