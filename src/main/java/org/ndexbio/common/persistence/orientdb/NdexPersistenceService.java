@@ -51,7 +51,6 @@ public class NdexPersistenceService extends PersistenceService {
 	public static final String pmidPrefix = "pmid:";
 
 
-    private static final Logger logger = Logger.getLogger(NdexPersistenceService.class.getName());
 	// key is the element_id of a BaseTerm, value is the id of the node which this BaseTerm represents
     private Map<Long, Long> baseTermNodeIdMap;
 	// Store the mapping in memory to have better performance.
@@ -129,6 +128,8 @@ public class NdexPersistenceService extends PersistenceService {
 		// intialize caches.
 		
 		externalIdNodeMap = new TreeMap<Long,Long>(); 
+
+	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
 
 	}
 

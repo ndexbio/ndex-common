@@ -30,8 +30,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class NdexNetworkCloneService extends PersistenceService {
 
-	private static final Logger logger = Logger.getLogger(NdexNetworkCloneService.class.getName());
-
 	private Network   srcNetwork;
 
 	private NetworkSummary networkSummary;
@@ -83,6 +81,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.supportIdMap   = new HashMap<Long, Long> (1000);
 		this.functionTermIdMap = new HashMap<Long,Long>(1000);
 		// intialize caches.
+	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
 
 	}
 
@@ -412,12 +411,16 @@ public class NdexNetworkCloneService extends PersistenceService {
 	private void createLinksforRefiedEdgeTerm() throws NdexException, ExecutionException {
 		if ( srcNetwork.getReifiedEdgeTerms()!= null) {
 			for ( ReifiedEdgeTerm reifiedTerm : srcNetwork.getReifiedEdgeTerms().values() ) {
+				Long newReifiedEdgeId = this.reifiedEdgeTermIdMap.get(reifiedTerm.getId());
+				if ( newReifiedEdgeId == null) 
+					throw new NdexException("ReifiedEdgeTerm Id " + reifiedTerm.getId() + " not found.");
+				
 				Long newEdgeId = edgeIdMap.get(reifiedTerm.getEdgeId());
 				if ( newEdgeId == null) 
 					throw new NdexException ("Edge Id " + reifiedTerm.getEdgeId() + " not found in the system.");
 				
 				ODocument edgeDoc = elementIdCache.get(newEdgeId); 
-				ODocument reifiedEdgeTermDoc = elementIdCache.get(reifiedTerm.getId());
+				ODocument reifiedEdgeTermDoc = elementIdCache.get(newReifiedEdgeId);
 				graph.getVertex(reifiedEdgeTermDoc).addEdge(
 						NdexClasses.ReifedEdge_E_edge, graph.getVertex(edgeDoc));
 			}
@@ -427,13 +430,14 @@ public class NdexNetworkCloneService extends PersistenceService {
 	private void createLinksFunctionTerm() throws NdexException, ExecutionException {
 		if ( srcNetwork.getFunctionTerms()!= null) {
 			for ( FunctionTerm functionTerm : srcNetwork.getFunctionTerms().values() ) {
-				Long newFunctionId =findTermId(functionTerm.getFunctionTermId());
+				Long newFunctionId = this.functionTermIdMap.get(functionTerm.getId());
 				if ( newFunctionId == null )
-					throw new NdexException ("Term Id " + functionTerm.getFunctionTermId() + " is not found in Term list.");
-				ODocument functionTermDoc = elementIdCache.get(functionTerm.getId());
+					throw new NdexException ("Function term Id " + functionTerm.getId() + " is not found in Term list.");
+				ODocument functionTermDoc = elementIdCache.get(newFunctionId);
 				OrientVertex functionTermV = graph.getVertex(functionTermDoc);
 				
-				ODocument newFunctionNameDoc = elementIdCache.get(newFunctionId);
+				Long newFunctionNameId = this.baseTermIdMap.get(functionTerm.getFunctionTermId());
+				ODocument newFunctionNameDoc = elementIdCache.get(newFunctionNameId);
 				functionTermV.addEdge(NdexClasses.FunctionTerm_E_baseTerm, graph.getVertex(newFunctionNameDoc));
 				
 				for ( Long argId : functionTerm.getParameters()) {

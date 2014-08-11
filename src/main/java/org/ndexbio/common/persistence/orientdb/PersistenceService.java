@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
@@ -31,6 +32,8 @@ public abstract class PersistenceService {
 	protected OrientVertex networkVertex;
 
 	private NetworkDAO  networkDAO;
+	
+    protected Logger logger ;
 
     protected OrientGraph graph;
 	protected ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
@@ -48,7 +51,8 @@ public abstract class PersistenceService {
 				.build(new CacheLoader<Long, ODocument>() {
 				   @Override
 				   public ODocument load(Long key) throws NdexException, ExecutionException {
-					ODocument o = networkDAO.getDocumentByElementId(key);
+					   logger.info("Element Id loading cache loading element " + key + " from db .");
+					   ODocument o = networkDAO.getDocumentByElementId(key);
                     if ( o == null )
                     	throw new NdexException ("Document is not found for element id: " + key);
 					return o;

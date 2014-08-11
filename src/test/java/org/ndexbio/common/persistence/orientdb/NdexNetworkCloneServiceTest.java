@@ -22,7 +22,7 @@ public class NdexNetworkCloneServiceTest {
 		NetworkDAO dao = new NetworkDAO ( connection);
 	//	Network network =  dao.getNetworkById(UUID.fromString("4842a831-1e5c-11e4-9f34-90b11c72aefa"));
 		Network network =  dao.getNetworkById(UUID.fromString(
-				"4918bce2-1e5c-11e4-9f34-90b11c72aefa"));
+				"503cfcd7-20ae-11e4-b3cf-001f3bca188f"));
 		//		"3b42c607-1f3f-11e4-907f-90b11c72aefa"));
 		//		"1db5f2c1-1e5e-11e4-9f34-90b11c72aefa"));
 		network.setName("---" + network.getName() + "---");

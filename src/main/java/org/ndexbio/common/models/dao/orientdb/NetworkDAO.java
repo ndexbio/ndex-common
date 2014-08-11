@@ -184,7 +184,7 @@ public class NetworkDAO {
         Network network = getNetwork(nDoc);
 
 	    // get Edges
-	    int i = 0 ;
+//	    int i = 0 ;
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
@@ -193,12 +193,12 @@ public class NetworkDAO {
             ODocument doc = (ODocument) nodeDoc;
          
             if ( doc.getClassName().equals(NdexClasses.Edge) ) {
-            	   i++;	
+//            	   i++;	
               	   Edge e = getEdgeFromDocument(doc,network);
               	   network.getEdges().put(e.getId(), e);
             	 
             }
-            System.out.println ("got " + i + " edges from iterator.");
+//            System.out.println ("got " + i + " edges from iterator.");
         }
         
         return network;
@@ -873,7 +873,6 @@ public class NetworkDAO {
     				}
     			} else if (termType.equals(NdexClasses.FunctionTerm)) {
     				if ( !network.getFunctionTerms().containsKey(termId)) {
-    					//TODO: implement these	
     					FunctionTerm funcTerm = getFunctionTermfromDoc(o, network);
     					network.getFunctionTerms().put(termId, funcTerm);
     				}
@@ -955,14 +954,54 @@ public class NetworkDAO {
     	return n;
     }
     
+    //TODO: need to make sure the recursion doesn't form a loop.
     private FunctionTerm getFunctionTermfromDoc(ODocument doc,Network network) {
     	FunctionTerm term = new FunctionTerm();
     	
     	term.setId((long)doc.field(NdexClasses.Element_ID));
+
+    	// get the functionTerm 
     	
+    	ODocument baseTermDoc =doc.field("out_"+ NdexClasses.FunctionTerm_E_baseTerm);
+    	BaseTerm functionNameTerm = this.getBaseTerm(baseTermDoc, network);
+    	Long key = Long.valueOf(functionNameTerm.getId());
+    	if ( network != null ) {
+    		if ( !network.getBaseTerms().containsKey(key))
+    			network.getBaseTerms().put(key, functionNameTerm);
+    	}
+    	
+    	term.setFunctionTermId(functionNameTerm.getId());
     	// traverse for the argument
-    	
-    	
+    	boolean isFirst= true; 
+    	for (OIdentifiable parameterRec : new OTraverse()
+ 				.field("out_"+ NdexClasses.FunctionTerm_E_paramter )
+ 				.target(doc)
+ 				.predicate( new OSQLPredicate("$depth <= 1"))) {
+    		ODocument parameterDoc = (ODocument) parameterRec;
+    		if (isFirst ) {
+    			isFirst = false;
+    		} else {
+    		   if ( network != null) { 
+    		     if ( parameterDoc.getClassName().equals(NdexClasses.BaseTerm)) {
+    			    BaseTerm t = getBaseTerm(parameterDoc, network);
+    			    if ( !network.getBaseTerms().containsKey(t.getId()))
+    			    	network.getBaseTerms().put(t.getId(), t);
+    		     } else if(parameterDoc.getClassName().equals(NdexClasses.ReifiedEdgeTerm)) {
+    		    	 ReifiedEdgeTerm t = this.getReifiedEdgeTermFromDoc(parameterDoc);
+    		    	 if ( !network.getReifiedEdgeTerms().containsKey(t.getId())) {
+    		    		 network.getReifiedEdgeTerms().put(t.getId(), t);
+    		    	 }
+    		     } else if ( parameterDoc.getClassName().equals(NdexClasses.FunctionTerm)) {
+    		    	 FunctionTerm t = this.getFunctionTermfromDoc(parameterDoc, network);
+    		    	 if ( !network.getFunctionTerms().containsKey(t.getId())) {
+    		    		 network.getFunctionTerms().put(t.getId(), t);
+    		    	 }
+    		     }
+    		   }
+     		   Long argElementId = parameterDoc.field(NdexClasses.Element_ID);
+     		   term.getParameters().add(argElementId);	
+    		}
+    	}
     	return term;
     }
  
