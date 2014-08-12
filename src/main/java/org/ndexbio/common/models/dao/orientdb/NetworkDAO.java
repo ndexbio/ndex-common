@@ -520,7 +520,7 @@ public class NetworkDAO {
     	String name = termStringMap.get(doc.getIdentity());
 		if ( name != null) return name;
 
-        ODocument o = doc.field(NdexClasses.ReifedEdge_E_edge);
+        ODocument o = doc.field("out_"+NdexClasses.ReifedEdge_E_edge);
         Long edgeId = o.field(NdexClasses.Element_ID);
         
         name = PropertyGraphNetwork.reifiedEdgeTerm + "("+edgeId+")";
@@ -538,9 +538,8 @@ public class NetworkDAO {
     	String name = termStringMap.get(doc.getIdentity());
 		if ( name != null) return name;
 
-		//TODO: implement this.
 		String baseTermStr = this.getBaseTermStringFromDoc(
-				(ODocument)doc.field(NdexClasses.FunctionTerm_E_baseTerm), termStringMap);
+				(ODocument)doc.field("out_"+NdexClasses.FunctionTerm_E_baseTerm), termStringMap);
 		
 		name = baseTermStr + "(";
 		boolean isFirst = true;

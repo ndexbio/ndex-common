@@ -47,6 +47,17 @@ public class NetworkDAOTest {
 		db.close();
 	}
 
+	@Test
+	public void testPropertyGraph() throws JsonProcessingException, NdexException {
+		NetworkDAO dao = new NetworkDAO(db);
+		
+		PropertyGraphNetwork n = dao.getProperytGraphNetworkById(
+				UUID.fromString("503cfcd7-20ae-11e4-b3cf-001f3bca188f"),
+				0, 1000);
+		
+		System.out.println( n.toString() + "...");
+	}
+
 	
 	@Test
 	public void testdelete() {
