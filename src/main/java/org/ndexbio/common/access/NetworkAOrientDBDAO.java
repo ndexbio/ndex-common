@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -166,7 +167,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			checkBlockSize(blockSize);
 			
 			Set<ORID> edgeRids = queryForEdgeRids(networkRid, parameters
-				//	,skipBlocks, blockSize
+			//		,skipBlocks, blockSize
 					);
 			
 			return getEdgesByEdgeRids(edgeRids);
@@ -185,7 +186,9 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	 */
 	
 	public Network queryForSubnetwork(final String networkId,
-			final SimplePathQuery parameters) throws IllegalArgumentException, NdexException {
+			final SimplePathQuery parameters
+		//	,final int skipBlocks, final int blockSize
+			) throws IllegalArgumentException, NdexException {
 
 		try {
 			setup();
@@ -198,9 +201,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			System.out.println("Starting subnetworkQuery ");
 			Set<ORID> edgeRids = queryForEdgeRids(
 					networkRid, 
-					parameters //,
-				//	skipBlocks, 
-				//	blockSize
+					parameters 
+					//,skipBlocks,blockSize
 					);
 			final long getEdgesTime = System.currentTimeMillis();
 			Network network =  getSubnetworkByEdgeRids( edgeRids);
@@ -219,7 +221,9 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	}
 
 	public PropertyGraphNetwork queryForSubPropertyGraphNetwork(final String networkId,
-			final SimplePathQuery parameters) throws IllegalArgumentException, NdexException {
+			final SimplePathQuery parameters
+			//,final int skipBlocks,	final int blockSize
+			) throws IllegalArgumentException, NdexException {
 
 		try {
 			setup();
@@ -232,9 +236,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			System.out.println("Starting subnetworkQuery ");
 			Set<ORID> edgeRids = queryForEdgeRids(
 					networkRid, 
-					parameters //,
-				//	skipBlocks, 
-				//	blockSize
+					parameters 
+					//,skipBlocks,blockSize
 					);
 			final long getEdgesTime = System.currentTimeMillis();
 			PropertyGraphNetwork network =  getSubPropertyGraphNetworkByEdgeRids( edgeRids);
@@ -274,9 +277,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 	private Set<ORID> queryForEdgeRids(
 			ORID networkRid,
-			SimplePathQuery parameters 
-		//	int skipBlocks, 
-		//	int blockSize
+			SimplePathQuery parameters
+		//	,int skipBlocks,int blockSize
 			) {
 		
 		// Select query handler depending on parameters
@@ -466,19 +468,23 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
             network.getEdges().put(e.getId(), e);
         }
         
+        network.setNodeCount(network.getNodes().size());
+        network.setEdgeCount(network.getEdges().size());
 		 return network; 
 	}
 
 	private PropertyGraphNetwork getSubPropertyGraphNetworkByEdgeRids(Set<ORID> edgeRids) throws Exception {
 		
 	    PropertyGraphNetwork network = new PropertyGraphNetwork();  //result holder
-
+    
+	    TreeMap<ORID, String> termStringMap = new TreeMap<ORID,String> ();
+	    
 	    NetworkDAO dao = new NetworkDAO (this._ndexDatabase);
         for (ORID edgeId : edgeRids) {
             ODocument doc = new ODocument(edgeId);
-            PropertyGraphEdge e = dao.getPropertyGraphEdge(doc, network);
-            network.getEdges().add(e);
+            dao.fetchPropertyGraphEdgeToNetwork(doc, network, termStringMap);
         }
+        
 		 return network; 
 	}
 

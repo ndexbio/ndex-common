@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
@@ -37,6 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.orientechnologies.orient.core.id.ORID;
 
 public class NetworkDAO {
 	
@@ -222,7 +224,7 @@ public class NetworkDAO {
     }
 
     
-	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) throws JsonProcessingException {
+	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) throws JsonProcessingException, NdexException {
 		ODocument nDoc = getNetworkDocByUUID(networkID);
 		
 	    if (nDoc == null) return null;
@@ -235,8 +237,8 @@ public class NetworkDAO {
 	    int counter = 0;
 	    int endPosition = skipBlocks * blockSize + blockSize;
 	    
-	    // get Edges
-        Collection<PropertyGraphEdge> edgeList = network.getEdges();
+        
+        TreeMap <ORID, String> termStringMap = new TreeMap<ORID,String> ();
 
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
@@ -253,10 +255,7 @@ public class NetworkDAO {
                 counter ++;
             	
             	if ( counter >= startPosition )  {
-              	   
-            	    PropertyGraphEdge e = getPropertyGraphEdge(doc,network);
-        
-            	    edgeList.add(e);
+            	  fetchPropertyGraphEdgeToNetwork(doc,network, termStringMap);
                 }
             } 	
         }
@@ -277,6 +276,8 @@ public class NetworkDAO {
 
 		this.populatePropetyGraphNetworkFromDoc(network, networkDoc);
 		
+		TreeMap<ORID, String> termStringMap = new TreeMap<ORID, String>();
+		
         Map<Long,PropertyGraphNode> nodeList = network.getNodes();
          for (OIdentifiable nodeDoc : new OTraverse()
        	    .field("out_"+ NdexClasses.Network_E_Nodes )
@@ -287,7 +288,7 @@ public class NetworkDAO {
           
               if ( doc.getClassName().equals(NdexClasses.Node)) {
           
-                  PropertyGraphNode nd = getPropertyGraphNode(doc);
+                  PropertyGraphNode nd = getPropertyGraphNode(doc,network, termStringMap);
                   if ( nd != null)
                 	  nodeList.put(nd.getId(),nd);
                   else
@@ -295,7 +296,6 @@ public class NetworkDAO {
               }
          }
          
-         Collection<PropertyGraphEdge> edgeList = network.getEdges();
          for (OIdentifiable nodeDoc : new OTraverse()
        	    .field("out_"+ NdexClasses.Network_E_Edges )
             .target(networkDoc)
@@ -305,11 +305,7 @@ public class NetworkDAO {
           
               if ( doc.getClassName().equals(NdexClasses.Edge)) {
           
-                  PropertyGraphEdge nd = getPropertyGraphEdge(doc,null);
-                  if ( nd != null)
-                	  edgeList.add(nd);
-                  else
-                	  throw new NdexException("Error occurred when getting edge information from db "+ doc);
+                  this.fetchPropertyGraphEdgeToNetwork(doc, network, termStringMap);
               }
          }
          
@@ -354,35 +350,55 @@ public class NetworkDAO {
 	}
 	
 
-	public  PropertyGraphEdge getPropertyGraphEdge(ODocument doc, PropertyGraphNetwork network) {
+	public void fetchPropertyGraphEdgeToNetwork(ODocument doc, PropertyGraphNetwork network,
+					Map <ORID, String> termStringMap) throws NdexException {
 		PropertyGraphEdge e = new PropertyGraphEdge();
-		e.setId((long)doc.field(NdexClasses.Element_ID));
+		Long edgeId = doc.field(NdexClasses.Element_ID);
+		e.setId(edgeId.longValue());
+
+		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
+		e.setPredicate(getBaseTermStringFromDoc(predicateDoc, termStringMap));
+
+		// need to put the edge in the list first before recursion so that we don't run into dead loops.
+		network.getEdges().put(edgeId, e);
 		
 		ODocument s =  doc.field("in_"+NdexClasses.Edge_E_subject);
 		Long subjectId = s.field(NdexClasses.Element_ID);
 		e.setSubjectId(subjectId );
 
 		if ( network!=null && !network.getNodes().containsKey(subjectId)) {
-			PropertyGraphNode n = getPropertyGraphNode(s);
+			PropertyGraphNode n = getPropertyGraphNode(s,network, termStringMap);
 			network.getNodes().put(n.getId(), n);
 		}
 		
-		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
-		e.setPredicate((String)predicateDoc.field(NdexClasses.BTerm_P_name));
 		
 		ODocument o   = doc.field("out_"+NdexClasses.Edge_E_object);
 		Long objectId = o.field(NdexClasses.Element_ID);
 		e.setObjectId(objectId);
 
 		if ( network!=null && !network.getNodes().containsKey(objectId)) {
-			PropertyGraphNode n = getPropertyGraphNode(o);
+			PropertyGraphNode n = getPropertyGraphNode(o,network, termStringMap);
 			network.getNodes().put(n.getId(), n);
 		}
 		
 		getPropertiesFromDocument(e,doc);
-		return e;
 	}
 
+	private String getBaseTermStringFromDoc(ODocument doc, Map <ORID, String> termStringMap ) {
+		String name = termStringMap.get(doc.getIdentity());
+		if ( name != null) return name;
+		
+		name = doc.field(NdexClasses.BTerm_P_name);
+		ODocument ns = doc.field(NdexClasses.BTerm_E_Namespace); 
+		if (  ns != null ) {
+			String prefix = ns.field(NdexClasses.ns_P_prefix);
+			if ( prefix !=null)
+				return prefix + ":" + name;
+			return ns.field(NdexClasses.ns_P_uri) + name;
+		}
+		termStringMap.put(doc.getIdentity(), name);
+		return name;
+	}
 	
 	public  Edge getEdgeFromDocument(ODocument doc, Network network) throws NdexException {
 		Edge e = new Edge();
@@ -456,7 +472,8 @@ public class NetworkDAO {
 		return e;
 	}
 	
-    private PropertyGraphNode getPropertyGraphNode(ODocument doc) {
+    private PropertyGraphNode getPropertyGraphNode(ODocument doc,PropertyGraphNetwork network,
+    		Map <ORID, String> termStringMap ) throws NdexException {
     	PropertyGraphNode n = new PropertyGraphNode ();
         n.setId((long)doc.field(NdexClasses.Element_ID));    	
        
@@ -468,16 +485,24 @@ public class NetworkDAO {
         
     	ODocument o = doc.field("out_" + NdexClasses.Node_E_represents);
     	if ( o != null) {
-    		String termId = o.field(NdexClasses.BTerm_P_name);
-    	
-    		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
-    		NdexProperty p ; 
-    		if ( nsDoc == null ) {
-    			p = new NdexProperty( PropertyGraphNode.represents,termId );
-    		} else {
-    			String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
-    			p = new NdexProperty(PropertyGraphNode.represents, prefix + ":"+termId);
-    		}	
+    		String repString = termStringMap.get(o.getIdentity());
+    		if ( repString == null ) {
+      		    String termType = o.getClassName();
+    		
+    			// populate objects in network
+    			if ( termType.equals(NdexClasses.BaseTerm)) {
+    				repString = this.getBaseTermStringFromDoc(o, termStringMap);
+    			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm)) {
+    				repString = getReifiedTermStringFromDoc(o, network, termStringMap);
+    			} else if (termType.equals(NdexClasses.FunctionTerm)) {
+    				repString = getFunctionTermStringFromDoc(o,network,termStringMap);
+    			} else 
+    				throw new NdexException ("Unsupported term type '" + termType + 
+    						"' found for term Id record:" + o.getIdentity().toString());
+    		}
+    		// original 
+    		NdexProperty p = new NdexProperty( PropertyGraphNode.represents, repString);
+
     		n.getProperties().add(p);
     	}
 		
@@ -488,7 +513,74 @@ public class NetworkDAO {
    		
     	return n;
     }
+    
+    private String getReifiedTermStringFromDoc(ODocument doc, PropertyGraphNetwork network,
+    		Map <ORID, String> termStringMap ) throws NdexException {
 	
+    	String name = termStringMap.get(doc.getIdentity());
+		if ( name != null) return name;
+
+        ODocument o = doc.field(NdexClasses.ReifedEdge_E_edge);
+        Long edgeId = o.field(NdexClasses.Element_ID);
+        
+        name = PropertyGraphNetwork.reifiedEdgeTerm + "("+edgeId+")";
+        termStringMap.put(doc.getIdentity(), name);
+        
+        if ( !network.getEdges().containsKey(edgeId)) {
+        	this.fetchPropertyGraphEdgeToNetwork(o, network, termStringMap);
+        }
+        return name;
+    }
+
+    private String getFunctionTermStringFromDoc(ODocument doc, PropertyGraphNetwork network,
+    		Map <ORID, String> termStringMap ) throws NdexException {
+	
+    	String name = termStringMap.get(doc.getIdentity());
+		if ( name != null) return name;
+
+		//TODO: implement this.
+		String baseTermStr = this.getBaseTermStringFromDoc(
+				(ODocument)doc.field(NdexClasses.FunctionTerm_E_baseTerm), termStringMap);
+		
+		name = baseTermStr + "(";
+		boolean isFirst = true;
+		boolean isFirstArg = true;
+    	for (OIdentifiable parameterRec : new OTraverse()
+    		.field("out_"+ NdexClasses.FunctionTerm_E_paramter )
+    		.target(doc)
+    		.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		if ( isFirst) 
+    			isFirst = false;
+    		else {
+    			ODocument parameterDoc = (ODocument) parameterRec;
+    			String termType = parameterDoc.getClassName();
+    			
+    			String argStr;
+    			if ( termType.equals(NdexClasses.BaseTerm)) {
+    				argStr = this.getBaseTermStringFromDoc(parameterDoc, termStringMap);
+    			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm)) {
+    				argStr = getReifiedTermStringFromDoc(parameterDoc, network, termStringMap);
+    			} else if (termType.equals(NdexClasses.FunctionTerm)) {
+    				argStr = getFunctionTermStringFromDoc(parameterDoc,network,termStringMap);
+    			} else 
+    				throw new NdexException ("Unsupported term type '" + termType + 
+    						"' found for term Id record:" + parameterDoc.getIdentity().toString());
+
+    			if ( isFirstArg) {
+    				isFirstArg = false;
+    			} else {
+    				name += ",";
+    			}
+    			name += argStr;
+    		}
+    	}
+		
+		name += ")";
+        return name;
+    }
+    
+    
     // set properties in the passed in object by the information stored in a db document. 
     private void getPropertiesFromDocument(PropertiedObject obj, ODocument doc) {
     	for (OIdentifiable ndexPropertyDoc : new OTraverse()

@@ -113,7 +113,7 @@ public class PropertyGraphLoader {
 		}
 		
 		// persist edges
-		for ( PropertyGraphEdge e : network.getEdges()) {
+		for ( PropertyGraphEdge e : network.getEdges().values()) {
 			Long termId = persistenceService.getBaseTermId(e.getPredicate());
 			Long subjectNodeId = persistenceService.findOrCreateNodeIdByExternalId(e.getSubjectId());
 			Long objectNodeId = persistenceService.findOrCreateNodeIdByExternalId(e.getObjectId());
