@@ -274,7 +274,7 @@ public class UserDAO extends OrientdbDAO{
 	public List<User> findUsers(SimpleUserQuery simpleQuery, int skip, int top) 
 			throws IllegalArgumentException,
 			NdexException {
-		//Preconditions.checkArgument(skip != null , "Search parameters are required");
+		Preconditions.checkArgument(simpleQuery != null , "Search parameters are required");
 		
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> users;

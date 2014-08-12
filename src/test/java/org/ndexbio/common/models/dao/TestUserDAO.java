@@ -221,18 +221,20 @@ public class TestUserDAO extends TestDAO{
         dao.findUsers(null,0,0);
     }
     
-	@Test(expected = NdexException.class)
-	public void deleteUserByUUID() throws NdexException {
+	@Test(expected = ObjectNotFoundException.class)
+	public void deleteUserByUUID() throws ObjectNotFoundException {
 
 		final UUID id = testUser.getExternalId();
 
-		dao.deleteUserById(id);
-		testUser = null;
-		//localConnection.commit();
-		try { 
-		dao.getUserById(id);
-		} catch(NdexException e) {
+		try {
+			dao.deleteUserById(id);
+			testUser = null;
+			
+			dao.getUserById(id);
+		} catch(ObjectNotFoundException e) {
 			throw e;
+		} catch (Exception e) {
+			fail(e.getMessage());
 		} finally {
 			assertTrue(createTestUser());
 		}
