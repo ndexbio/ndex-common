@@ -28,13 +28,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class GroupDAO extends OrientdbDAO {
 	
 	private ODatabaseDocumentTx db;
-	private OrientGraphNoTx graph;
+	private OrientBaseGraph graph;
 	private static final Logger logger = Logger.getLogger(GroupDAO.class.getName());
 
 	/**************************************************************************
@@ -43,7 +43,7 @@ public class GroupDAO extends OrientdbDAO {
 	    * @param db
 	    *            Database instance from the Connection pool, should be opened
 	    **************************************************************************/
-	public GroupDAO(ODatabaseDocumentTx db, OrientGraphNoTx graph) {
+	public GroupDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
 		super(db);
 		this.db = db;
 		this.graph = graph;
@@ -312,7 +312,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				String traverseRID = nUser.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE "+ NdexClasses.User +".out_admin FROM"
+						+ " (TRAVERSE * FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
@@ -326,7 +326,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				if( !groups.iterator().hasNext() ) {
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE "+ NdexClasses.User +".out_admin FROM"
+						+ " (TRAVERSE * FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"

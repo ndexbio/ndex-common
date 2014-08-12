@@ -295,7 +295,7 @@ public class UserDAO extends OrientdbDAO{
 				
 				String traverseRID = nGroup.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE "+ NdexClasses.Group +".in_admin FROM"
+						+ " (TRAVERSE * FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.User +"'"
@@ -314,7 +314,7 @@ public class UserDAO extends OrientdbDAO{
 				if( !users.iterator().hasNext() ) {
 					
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-							+ " (TRAVERSE "+ NdexClasses.Group +".in_admin FROM"
+							+ " (TRAVERSE * FROM"
 				  				+ " " + traverseRID
 				  				+ " WHILE $depth <=1)"
 				  			+ " WHERE @class = '"+ NdexClasses.User +"'"
