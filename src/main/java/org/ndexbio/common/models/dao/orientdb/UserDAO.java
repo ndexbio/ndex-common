@@ -616,7 +616,13 @@ public class UserDAO extends OrientdbDAO{
 	    * getUserNetworkMemberships
 	    *
 	    * @param userId
-	    *            UUID for associated group
+	    *            UUID for associated user
+	    * @param permission
+	    * 			Type of memberships to retrieve, ADMIN, WRITE, or READ
+	    * @param skipBlocks
+	    * 			amount of blocks to skip
+	    * @param blockSize
+	    * 			The size of blocks to be skipped and retrieved
 	    * @throws NdexException
 	    *            Invalid parameters or an error occurred while accessing the database
 	    * @throws ObjectNotFoundException
@@ -683,7 +689,13 @@ public class UserDAO extends OrientdbDAO{
 	    * getUsergroupMemberships
 	    *
 	    * @param userId
-	    *            UUID for associated group
+	    *            UUID for associated user
+	    * @param permission
+	    * 			Type of memberships to retrieve, ADMIN, WRITE, or READ
+	    * @param skipBlocks
+	    * 			amount of blocks to skip
+	    * @param blockSize
+	    * 			The size of blocks to be skipped and retrieved
 	    * @throws NdexException
 	    *            Invalid parameters or an error occurred while accessing the database
 	    * @throws ObjectNotFoundException

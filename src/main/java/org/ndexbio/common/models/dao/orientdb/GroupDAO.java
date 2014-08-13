@@ -174,7 +174,7 @@ public class GroupDAO extends OrientdbDAO {
 	public void deleteGroupById(UUID groupId, UUID adminId) 
 		throws NdexException, ObjectNotFoundException{
 			
-			//TODO cannot orphan networks
+			//TODO cannot orphan networks, has not been tested
 		
 		Preconditions.checkArgument(null != groupId, 
 				"group UUID required");
@@ -184,10 +184,6 @@ public class GroupDAO extends OrientdbDAO {
 		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
 			
 		this.validatePermission(groupId, adminId, Permissions.ADMIN);
-			
-		//if( !this.getGroupNetworkMemberships(groupId,Permissions.ADMIN, 0, 1).isEmpty() ) {
-		//	throw new NdexException("Cannot orphan networks");
-		//}
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
@@ -279,10 +275,12 @@ public class GroupDAO extends OrientdbDAO {
 	    * Find groups
 	    * 
 	    * @param query
-	    * 			group object with update fields
-	    * @param skip
+	    * 			SimpleUserQuery object. The search string filters by 
+	    * 			group account name and organization name. The accountName
+	    * 			filters to groups owned by the account specified.
+	    * @param skipBlocks
 	    *            amount of blocks to skip
-	    * @param top
+	    * @param blockSize
 	    * 			the size of a block
 	    * @throws NdexException
 	    *            Attempting to access and delete an ODocument from the database
@@ -462,6 +460,8 @@ public class GroupDAO extends OrientdbDAO {
 	    *            Invalid parameters or an error occurred while accessing the database
 	    * @throws ObjectNotFoundException
 	    * 			Invalid groupId, memberId, or adminId
+	    * @throws IllegalArgumentException
+	    * 			UUID identifiers required
 	    **************************************************************************/
 	
 	public void removeMember(UUID memberId, UUID groupId, UUID adminId) 
@@ -520,6 +520,12 @@ public class GroupDAO extends OrientdbDAO {
 	    *
 	    * @param groupId
 	    *            UUID for associated group
+	    * @param permission
+	    * 			Type of memberships to retrieve, ADMIN, WRITE, or READ
+	    * @param skipBlocks
+	    * 			amount of blocks to skip
+	    * @param blockSize
+	    * 			The size of blocks to be skipped and retrieved
 	    * @throws NdexException
 	    *            Invalid parameters or an error occurred while accessing the database
 	    * @throws ObjectNotFoundException
@@ -605,6 +611,12 @@ public class GroupDAO extends OrientdbDAO {
 	    *
 	    * @param groupId
 	    *            UUID for associated group
+	    * @param permission
+	    * 			Type of memberships to retrieve, ADMIN, WRITE, or READ
+	    * @param skipBlocks
+	    * 			amount of blocks to skip
+	    * @param blockSize
+	    * 			The size of blocks to be skipped and retrieved
 	    * @throws NdexException
 	    *            Invalid parameters or an error occurred while accessing the database
 	    * @throws ObjectNotFoundException
