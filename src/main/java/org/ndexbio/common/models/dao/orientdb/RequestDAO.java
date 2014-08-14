@@ -2,40 +2,80 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.Request;
+import org.ndexbio.model.object.RequestType;
+import org.ndexbio.model.object.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class RequestOrientdbDAO extends OrientdbDAO  {
-	private static final Logger logger = LoggerFactory
-			.getLogger(RequestOrientdbDAO.class);
-
-	private RequestOrientdbDAO() {
-		super();
+public class RequestDAO extends OrientdbDAO  {
+	private static final Logger logger = LoggerFactory.getLogger(RequestDAO.class);
+	private ODatabaseDocumentTx db;
+	private OrientBaseGraph graph;
+	
+	/**************************************************************************
+	    * RequestDAO
+	    * 
+	    * @param db
+	    *           Database instance from the Connection pool, should be opened
+	    * @param graph
+	    * 			OrientBaseGraph layer on top of db instance. 
+	    **************************************************************************/
+	public RequestDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
+		super(db);
+		this.db = db;
+		this.graph = graph;
 	}
 
-	static RequestOrientdbDAO createInstance() {
-		return new RequestOrientdbDAO();
-	}
-
-	public Request createRequest(Request newRequest)
+	public Request createRequest(Request newRequest, User account)
 			throws IllegalArgumentException, DuplicateObjectException,
 			NdexException {
 		Preconditions.checkArgument(null != newRequest,
 				"A Request parameter is required");
+		Preconditions.checkArgument( newRequest.getDestinationUUID() != null
+				&& !Strings.isNullOrEmpty( newRequest.getDestinationUUID().toString() ),
+				"A destination UUID is required");
+		Preconditions.checkArgument( !Strings.isNullOrEmpty( newRequest.getDestinationName() ),
+				"A destination name is required");
+		Preconditions.checkArgument( !newRequest.getRequestType().equals(null),
+				"A request type is required");
+		Preconditions.checkArgument(account != null,
+				"Must be logged in to make a request");
+		
+		ODocument sourceAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
+		ODocument destinationResource;
+		if( newRequest.getRequestType().equals(RequestType.NetworkAccess) )
+			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Network);
+		else
+			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Group);
+		
+		// check if request exists
+		
+		//find admins of destination resource
+		
+		// create links
+		
 /*
 		final ORID fromRid = new ORecordId(newRequest.getFromId());
 		final ORID toRid = new ORecordId(newRequest.getToId());
@@ -187,6 +227,26 @@ public class RequestOrientdbDAO extends OrientdbDAO  {
 
 	}
 
+	private void checkForExistingRequest(ODocument source, ODocument destination) 
+			throws DuplicateObjectException {
+		// check if the request action has been completed?
+		// check if the request is linked to destination or source?
+		// query database for request?
+		
+		// check if action has been completed
+		
+		//if(		)
+		
+		List<OIdentifiable> records = new OTraverse()
+			.field("in")
+			.target(source)
+			.predicate( new OSQLPredicate("$depth <=1") )
+			.execute();
+		
+		if( records.contains(destination.getRecord().getRecord()) )
+			throw new DuplicateObjectException("Request has been made and accepted");
+	}
+	
 	/**************************************************************************
 	 * Creates a group invitation request.
 	 * 

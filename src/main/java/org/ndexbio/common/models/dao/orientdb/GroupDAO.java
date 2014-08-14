@@ -42,6 +42,8 @@ public class GroupDAO extends OrientdbDAO {
 	    * 
 	    * @param db
 	    *            Database instance from the Connection pool, should be opened
+	    * @param graph
+	    * 			OrientBaseGraph layer on top of db instance. 
 	    **************************************************************************/
 	public GroupDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
 		super(db);
@@ -295,10 +297,9 @@ public class GroupDAO extends OrientdbDAO {
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> groups;
 		final List<Group> foundgroups = new ArrayList<Group>();
-		
-		simpleQuery.setSearchString(simpleQuery.getSearchString()
-					.toLowerCase().trim());
 		final int startIndex = skipBlocks * blockSize;
+		
+		simpleQuery.setSearchString(simpleQuery.getSearchString().toLowerCase().trim());
 		
 		try {
 			if(!Strings.isNullOrEmpty(simpleQuery.getAccountName())) {
@@ -310,7 +311,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				String traverseRID = nUser.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE * FROM"
+						+ " (TRAVERSE out() FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
@@ -324,7 +325,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				if( !groups.iterator().hasNext() ) {
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE * FROM"
+						+ " (TRAVERSE out() FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
