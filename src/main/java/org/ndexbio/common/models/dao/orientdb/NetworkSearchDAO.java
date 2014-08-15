@@ -83,7 +83,7 @@ public class NetworkSearchDAO {
 				
 				String traverseRID = nAccount.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>(
-			  			"SELECT FROM"
+			  			"SELECT UUID, createdDate, modificationDate, name, isComplete, isLocked, visibility, isPublished, version, nodeCount, edgeCount FROM"
 			  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
 			  				+ " " + traverseRID
 			  				+ "  WHILE $depth <= 2 )"
@@ -100,7 +100,7 @@ public class NetworkSearchDAO {
 				//no results returned, eliminate search filter and return
 				if( !networks.iterator().hasNext() ) {
 					query = new OSQLSynchQuery<ODocument>(
-				  			"SELECT FROM"
+				  			"SELECT UUID, createdDate, modificationDate, name, isComplete, isLocked, visibility, isPublished, version, nodeCount, edgeCount FROM"
 				  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
 				  				+ " " + traverseRID
 				  				+ "  WHILE $depth <= 2 )"
@@ -122,7 +122,7 @@ public class NetworkSearchDAO {
 			    
 			} else {
 				query = new OSQLSynchQuery<ODocument>(
-			  			"SELECT FROM " + NdexClasses.Network
+			  			"SELECT UUID, createdDate, modificationDate, name, isComplete, isLocked, visibility, isPublished, version, nodeCount, edgeCount FROM " + NdexClasses.Network
 			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			 			+ " AND ( visibility <> 'PRIVATE'"
 						+ " OR in() contains "+userRID
@@ -132,7 +132,7 @@ public class NetworkSearchDAO {
 				
 				networks = this.db.command(query).execute();
 			    
-				// no results returned, return arbitrary selection.
+				// no results returned, return arbitrary selection. may need to be converted to select for performance
 				if( !networks.iterator().hasNext() ) 
 					networks = db.browseClass(NdexClasses.Network).setLimit(top);
 				
