@@ -8,7 +8,6 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.SimpleNetworkQuery;
 import org.ndexbio.model.object.User;
 
@@ -47,12 +46,14 @@ public class NetworkSearchDAO {
 		final List<NetworkSummary> foundNetworks = new ArrayList<NetworkSummary>();
 		final int startIndex = skip * top;
 		
-		//permission labels, is this the best implementation?
-		String admin = Permissions.ADMIN.toString().toLowerCase();
-		String write = Permissions.WRITE.toString().toLowerCase();
-		String read = Permissions.READ.toString().toLowerCase();
 		String userAccountName = "";
-		String traversePermission = "out()";
+		String traversePermission = ""; //used to handle cases where permission was not specified. 
+		
+		if( simpleNetworkQuery.getPermission() == null ) {
+			traversePermission = "out_admin, out_write, out_read";
+		} else {
+			traversePermission = "out_"+simpleNetworkQuery.getPermission().name().toLowerCase();
+		}
 		
 		if(loggedInUser != null)
 			userAccountName = loggedInUser.getAccountName();
@@ -83,15 +84,14 @@ public class NetworkSearchDAO {
 				String traverseRID = nAccount.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>(
 			  			"SELECT FROM"
-			  			+ " (TRAVERSE out() FROM"
+			  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
 			  				+ " " + traverseRID
-			  				+ "  WHILE $depth <=2)"
+			  				+ "  WHILE $depth <= 2 )"
 			  			+ " WHERE name.toLowerCase() LIKE '%" + simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			  			+ " AND @class = '"+ NdexClasses.Network +"'"
 			 			+ " AND ( visibility <> 'PRIVATE'"
-						+ " OR in_"+admin+" traverse(0, 2, in_"+admin+") (@RID = "+userRID+")"
-						+ " OR in_"+write+" traverse(0, 2, in_"+write+") (@RID = "+userRID+")"
-						+ " OR in_"+read+" traverse(0, 2, in_"+read+") (@RID = "+userRID+") )"
+						+ " OR in() contains "+userRID
+						+ " OR in().in() contains "+userRID+" )"
 			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
 				
@@ -101,14 +101,13 @@ public class NetworkSearchDAO {
 				if( !networks.iterator().hasNext() ) {
 					query = new OSQLSynchQuery<ODocument>(
 				  			"SELECT FROM"
-				  			+ " (TRAVERSE out() FROM"
+				  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
 				  				+ " " + traverseRID
-				  				+ "  WHILE $depth <=2)"
+				  				+ "  WHILE $depth <= 2 )"
 				  			+ " WHERE @class = '"+ NdexClasses.Network +"'"
 				 			+ " AND ( visibility <> 'PRIVATE'"
-							+ " OR in_"+admin+" traverse(0, 2, in_"+admin+") (@RID = "+userRID+")"
-							+ " OR in_"+write+" traverse(0, 2, in_"+write+") (@RID = "+userRID+")"
-							+ " OR in_"+read+" traverse(0, 2, in_"+read+") (@RID = "+userRID+") )"
+							+ " OR in() contains "+userRID
+							+ " OR in().in() contains "+userRID+" )"
 				 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 				 			+ " LIMIT " + top);
 					
@@ -126,9 +125,8 @@ public class NetworkSearchDAO {
 			  			"SELECT FROM " + NdexClasses.Network
 			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			 			+ " AND ( visibility <> 'PRIVATE'"
-						+ " OR in_"+admin+" traverse(0, 2, in_"+admin+") (@RID = "+userRID+")"
-						+ " OR in_"+write+" traverse(0, 2, in_"+write+") (@RID = "+userRID+")"
-						+ " OR in_"+read+" traverse(0, 2, in_"+read+") (@RID = "+userRID+") )"
+						+ " OR in() contains "+userRID
+						+ " OR in().in() contains "+userRID+" )"
 			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
 				
