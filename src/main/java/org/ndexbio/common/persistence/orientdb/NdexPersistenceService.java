@@ -61,7 +61,7 @@ public class NdexPersistenceService extends PersistenceService {
  // key is the edge id which this term reifed.
     private Map<Long,Long>  edgeIdReifiedEdgeTermIdMap;
 	// maps an external node id to new node id created in Ndex.
-    private Map<Long, Long> externalIdNodeMap; 
+    private Map<String, Long> externalIdNodeMap; 
 	//key is a function term Id, value is the node id which uses 
     // that function as represents term
     private Map<Long,Long> functionTermIdNodeIdMap;
@@ -127,7 +127,7 @@ public class NdexPersistenceService extends PersistenceService {
 		this.functionTermIdNodeIdMap = new HashMap<Long,Long>(100);
 		// intialize caches.
 		
-		externalIdNodeMap = new TreeMap<Long,Long>(); 
+		externalIdNodeMap = new TreeMap<String,Long>(); 
 
 	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
 
@@ -331,8 +331,12 @@ public class NdexPersistenceService extends PersistenceService {
 		
 	}
 
-	
-	
+	private Long createBaseTerm (String prefix, String localName) throws ExecutionException {
+		Namespace namespace = this.prefixMap.get(prefix);
+		Long id= createBaseTerm(localName, namespace.getId());
+        this.baseTermStrMap.put(prefix+":"+localName, id);
+        return id;
+	}
 	/**
 	 *  Create an edge in the database.
 	 * @param subjectNodeId
@@ -564,7 +568,7 @@ public class NdexPersistenceService extends PersistenceService {
 		
 	}
 
-	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
+	public Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
 		Namespace ns = namespaceMap.get(key);
 
 		if ( ns != null ) {
@@ -611,7 +615,14 @@ public class NdexPersistenceService extends PersistenceService {
 		
 	}
 	
-	public Long findOrCreateNodeIdByExternalId(Long id) {
+	/**
+	 * 
+	 * @param id the node id that was assigned by external source. 
+	 * @param name the name of the node. If the value is null, no node name will be 
+	 *        created in Ndex.
+	 * @return
+	 */
+	public Long findOrCreateNodeIdByExternalId(String id, String name) {
 		Long nodeId = this.externalIdNodeMap.get(id);
 		if ( nodeId != null) return nodeId;
 		
@@ -621,8 +632,11 @@ public class NdexPersistenceService extends PersistenceService {
 
 		ODocument nodeDoc = new ODocument(NdexClasses.Node);
 
-		nodeDoc =nodeDoc.field(NdexClasses.Element_ID, nodeId)
-				.save();
+		nodeDoc.field(NdexClasses.Element_ID, nodeId);
+		if ( name != null) 
+			nodeDoc.field(NdexClasses.Node_P_name, name);
+		
+		nodeDoc = nodeDoc.save();
 		
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
 		
@@ -764,6 +778,24 @@ public class NdexPersistenceService extends PersistenceService {
 		}
 	    return this.createBaseTerm(termString);	
 	}
+	
+	public Long getBaseTermId (  String prefix, String localTerm) throws ExecutionException {
+		Long termId = this.baseTermStrMap.get(prefix+":"+localTerm);
+		if ( termId != null) {
+			return termId;
+		}
+	    return this.createBaseTerm(prefix,localTerm);	
+	}
+		
+	public Long getBaseTermId (Namespace namespace, String localTerm) throws NdexException, ExecutionException {
+		if ( namespace.getPrefix() != null ) {
+			return getBaseTermId(namespace.getPrefix()+":"+localTerm);
+		}
+		
+		return getBaseTermId(namespace.getUri()+localTerm);
+	}
+	
+	
 	
 	public Long getCitationId(String title, String idType, String identifier, 
 			List<String> contributors) throws NdexException {
@@ -1038,6 +1070,26 @@ public class NdexPersistenceService extends PersistenceService {
 		nodeDoc = nodeDoc.field(NdexClasses.Node_P_name, name).save();
 		
 		elementIdCache.put(nodeId, nodeDoc);
+	}
+
+	public void setElementProperty(Long elementId, String key, String value) throws ExecutionException {
+		ODocument elementDoc = this.elementIdCache.get(elementId);
+		OrientVertex v = graph.getVertex(elementDoc);
+		
+		ODocument pDoc = this.createNdexPropertyDoc(key,value);
+		pDoc = pDoc.save();
+        OrientVertex pV = graph.getVertex(pDoc);
+        v.addEdge(NdexClasses.E_ndexProperties, pV);
+	}
+	
+	public void setElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
+		ODocument elementDoc = this.elementIdCache.get(elementId);
+		OrientVertex v = graph.getVertex(elementDoc);
+		
+		ODocument pDoc = this.createNdexPropertyDoc(key,value);
+		pDoc = pDoc.save();
+        OrientVertex pV = graph.getVertex(pDoc);
+        v.addEdge(NdexClasses.E_ndexPresentationProps, pV);
 	}
 	
 	public void setNodeProperties(Long nodeId, Collection<NdexProperty> properties, 

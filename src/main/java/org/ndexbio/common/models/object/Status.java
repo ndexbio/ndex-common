@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.object;
 
+@Deprecated
 public enum Status
 {
     QUEUED,

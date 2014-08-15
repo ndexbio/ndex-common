@@ -101,7 +101,8 @@ public class PropertyGraphLoader {
 				  otherProperties.add(p);
 			}
 			
-			Long nodeId = persistenceService.findOrCreateNodeIdByExternalId(n.getId());;
+			Long nodeId = persistenceService.findOrCreateNodeIdByExternalId(
+					Long.toString(n.getId()),null);
 			if (baseTerm != null) {
 				Long termId =  persistenceService.getBaseTermId(baseTerm);
 				persistenceService.setNodeRepresentTerm(nodeId, termId);
@@ -115,8 +116,10 @@ public class PropertyGraphLoader {
 		// persist edges
 		for ( PropertyGraphEdge e : network.getEdges().values()) {
 			Long termId = persistenceService.getBaseTermId(e.getPredicate());
-			Long subjectNodeId = persistenceService.findOrCreateNodeIdByExternalId(e.getSubjectId());
-			Long objectNodeId = persistenceService.findOrCreateNodeIdByExternalId(e.getObjectId());
+			Long subjectNodeId = persistenceService.findOrCreateNodeIdByExternalId(
+					Long.toString(e.getSubjectId()), null);
+			Long objectNodeId = persistenceService.findOrCreateNodeIdByExternalId(
+					Long.toString(e.getObjectId()),null);
 			
 			// process the citation , property list ...
 			Support support = null;
