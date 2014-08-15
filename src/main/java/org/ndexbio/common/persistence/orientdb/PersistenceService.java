@@ -107,7 +107,7 @@ public abstract class PersistenceService {
 		//	database.commit();
 		}
 		
-	protected Long createNamespace ( String prefix, String URI) throws NdexException {
+	public Long createNamespace ( String prefix, String URI) throws NdexException {
 			if ( prefix !=null && URI == null )
 			 throw new NdexException ("Prefix " + prefix + " is not defined." );
 		
