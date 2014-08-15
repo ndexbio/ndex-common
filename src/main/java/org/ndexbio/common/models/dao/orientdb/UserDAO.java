@@ -189,7 +189,12 @@ public class UserDAO extends OrientdbDAO{
 			OrientVertex vUser = graph.getVertex(user);
 			boolean safe = true;
 			
-			for(Edge e : vUser.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+			// TODO, simplfy by using actual edge directions and labels
+			for(Edge e : vUser.getEdges( Direction.BOTH) ) {/*, 
+					Permissions.ADMIN.toString().toLowerCase() 
+					+ " " 
+					+ Permissions.GROUPADMIN.toString().toLowerCase() ) ) {*/
+				
 				OrientVertex vResource = (OrientVertex) e.getVertex(Direction.IN);
 				
 				if( !( vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Group ) 
@@ -197,7 +202,7 @@ public class UserDAO extends OrientdbDAO{
 					continue;
 				safe = false;	
 				
-				for(Edge ee : vResource.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+				for(Edge ee : vResource.getEdges( Direction.BOTH/*, Permissions.ADMIN.toString().toLowerCase()*/ ) ) {
 					if( !( (OrientVertex) ee.getVertex(Direction.OUT) ).equals(vUser) ) {
 						safe = true;
 					}
@@ -295,7 +300,7 @@ public class UserDAO extends OrientdbDAO{
 				
 				String traverseRID = nGroup.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE in() FROM"
+						+ " (TRAVERSE in_groupadmin, in_member FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.User +"'"
@@ -314,7 +319,7 @@ public class UserDAO extends OrientdbDAO{
 				if( !users.iterator().hasNext() ) {
 					
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-							+ " (TRAVERSE in() FROM"
+							+ " (TRAVERSE in_groupadmin, in_member FROM"
 				  				+ " " + traverseRID
 				  				+ " WHILE $depth <=1)"
 				  			+ " WHERE @class = '"+ NdexClasses.User +"'"
@@ -648,6 +653,8 @@ public class UserDAO extends OrientdbDAO{
 			List<Membership> memberships = new ArrayList<Membership>();
 			
 			String userRID = user.getIdentity().toString();
+			
+			//TODO change to include get networks within a group
 			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 		  			"SELECT FROM"
 		  			+ " (TRAVERSE "+ NdexClasses.User +".out_"+ permission.name().toString().toLowerCase() +" FROM"
@@ -659,9 +666,6 @@ public class UserDAO extends OrientdbDAO{
 			
 			List<ODocument> records = this.db.command(query).execute(); 
 			for(ODocument network: records) {
-				
-				//if( !network.getSchemaClass().getName().equals( NdexClasses.Network ) )
-				//	continue;
 				
 				Membership membership = new Membership();
 				membership.setMembershipType( MembershipType.NETWORK );
@@ -707,9 +711,8 @@ public class UserDAO extends OrientdbDAO{
 		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId.toString()),
 				"A user UUID is required");
-		Preconditions.checkArgument( (permission == Permissions.ADMIN)
-				|| (permission == Permissions.READ)
-				|| (permission == Permissions.WRITE),
+		Preconditions.checkArgument( (permission.equals( Permissions.GROUPADMIN) )
+				|| (permission.equals( Permissions.MEMBER ) ),
 				"Valid permissions required");
 		
 		ODocument user = this.getRecordById(userId, NdexClasses.User);
@@ -732,9 +735,6 @@ public class UserDAO extends OrientdbDAO{
 			
 			List<ODocument> records = this.db.command(query).execute(); 
 			for(ODocument group: records) {
-				
-				//if( !group.getSchemaClass().getName().equals( NdexClasses.Group ) )
-					//continue;
 				
 				Membership membership = new Membership();
 				membership.setMembershipType( MembershipType.GROUP );

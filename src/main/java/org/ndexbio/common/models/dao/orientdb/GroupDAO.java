@@ -106,7 +106,7 @@ public class GroupDAO extends OrientdbDAO {
 				Vertex vGroup = graph.getVertex(group);
 				Vertex vAdmin = graph.getVertex(admin);
 				
-				graph.addEdge(null, vAdmin, vGroup, Permissions.ADMIN.toString().toLowerCase());
+				graph.addEdge(null, vAdmin, vGroup, Permissions.GROUPADMIN.toString().toLowerCase());
 				
 				logger.info("A new group with accountName "
 							+ newGroup.getAccountName() 
@@ -166,8 +166,10 @@ public class GroupDAO extends OrientdbDAO {
 	/**************************************************************************
 	    * Delete a group
 	    * 
-	    * @param id
+	    * @param groupId
 	    *            UUID for Group
+	    * @param adminId
+	    * 			UUID for admin of group
 	    * @throws NdexException
 	    *            Attempting to access and delete an ODocument from the database
 	    * @throws ObjectNotFoundException
@@ -183,23 +185,30 @@ public class GroupDAO extends OrientdbDAO {
 		Preconditions.checkArgument(null != adminId, 
 				"admin UUID required");
 		
+		// get records and validate admin permissions
 		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
-			
-		this.validatePermission(groupId, adminId, Permissions.ADMIN);
+		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);	
+		this.validatePermission(group, admin, Permissions.GROUPADMIN);
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
 			boolean safe = true;
 			
+			//TODO using a direction instead of BOTH could be faster, easy, and more understandable
+			//iterate across all edges of type ADMIN connected to the group record, to find networks
 			for(Edge e : vGroup.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+				// get the resource the group edge points to
 				OrientVertex vResource = (OrientVertex) e.getVertex(Direction.IN);
 				
+				//not a network, continue 
 				if(!vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Network ))
 					continue;
-				
+				// is a network, unsafe to delete if only admin
 				safe = false;	
 				
+				//iterate across all edges of type ADMIN, to find groups or users
 				for(Edge ee : vResource.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+					
 					if( !( (OrientVertex) ee.getVertex(Direction.OUT) ).equals(vGroup) ) {
 						safe = true;
 					}
@@ -209,7 +218,6 @@ public class GroupDAO extends OrientdbDAO {
 				
 			if(!safe)
 				throw new NdexException("Cannot orphan networks");
-			
 			
 			group.delete();
 		}
@@ -225,8 +233,10 @@ public class GroupDAO extends OrientdbDAO {
 	    * 
 	    * @param updatedGroup
 	    * 			group object with update fields
-	    * @param id
+	    * @param groupId
 	    *            UUID for Group
+	    * @param memberId
+	    * 			UUID for valid member to edit group
 	    * @throws NdexException
 	    *            Attempting to access and delete an ODocument from the database
 	    * @throws ObjectNotFoundException
@@ -245,12 +255,8 @@ public class GroupDAO extends OrientdbDAO {
 					"An updated group is required");
 		
 		ODocument group =  this.getRecordById(groupId, NdexClasses.Group);
-		
-		try {
-			this.validatePermission(groupId, memberId, Permissions.ADMIN);
-		} catch (Exception e) {
-			this.validatePermission(groupId, memberId, Permissions.WRITE);
-		}
+		ODocument member = this.getRecordById(memberId, NdexClasses.User);
+		this.validatePermission(group, member, Permissions.GROUPADMIN);
 		
 		try {
 			//updatedGroup.getDescription().isEmpty();
@@ -311,7 +317,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				String traverseRID = nUser.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE out() FROM"
+						+ " (TRAVERSE out_groupadmin, out_member FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
@@ -325,7 +331,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				if( !groups.iterator().hasNext() ) {
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE out() FROM"
+						+ " (TRAVERSE out_groupadmin, out_member FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
@@ -384,7 +390,7 @@ public class GroupDAO extends OrientdbDAO {
 	    **************************************************************************/
 	public void updateMember(Membership membership, UUID groupId, UUID adminId)
 			throws ObjectNotFoundException, NdexException {
-		Preconditions.checkArgument(membership.getMembershipType() == MembershipType.GROUP,
+		Preconditions.checkArgument(membership.getMembershipType().equals( MembershipType.GROUP ),
 				"Incorrect membership type");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(membership.getMemberUUID().toString()),
 				"member UUID required");
@@ -392,9 +398,8 @@ public class GroupDAO extends OrientdbDAO {
 				"group UUID required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(adminId.toString()),
 				"admin UUID required");
-		Preconditions.checkArgument( (membership.getPermissions() == Permissions.ADMIN)
-				|| (membership.getPermissions() == Permissions.READ)
-				|| (membership.getPermissions() == Permissions.WRITE),
+		Preconditions.checkArgument( (membership.getPermissions().equals( Permissions.GROUPADMIN) )
+				|| (membership.getPermissions().equals( Permissions.MEMBER) ) ,
 				"Valid permissions required");
 		
 		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
@@ -408,7 +413,8 @@ public class GroupDAO extends OrientdbDAO {
 			
 			boolean isAdmin = false;
 			boolean isOnlyAdmin = true;
-			for(Edge e : vGroup.getEdges(Direction.BOTH, Permissions.ADMIN.toString().toLowerCase())) {
+			
+			for(Edge e : vGroup.getEdges(Direction.IN, Permissions.GROUPADMIN.toString().toLowerCase())) {
 				if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vAdmin.getIdentity() ) ) 
 					isAdmin = true;
 				else 
@@ -422,7 +428,7 @@ public class GroupDAO extends OrientdbDAO {
 			
 			if(isAdmin) {
 				
-				for(Edge e : vGroup.getEdges(Direction.BOTH)) {
+				for(Edge e : vGroup.getEdges(Direction.IN)) {
 					if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vMember.getIdentity() ) ) 
 						graph.removeEdge(e);
 				}
@@ -456,7 +462,7 @@ public class GroupDAO extends OrientdbDAO {
 	    * @param groupId
 	    *            UUID for associated group
 	    * @param adminId
-	    * 			UUID for valid admin of group
+	    * 			UUID for valid admin of group or member to be removed, e.g. logged in user
 	    * @throws NdexException
 	    *            Invalid parameters or an error occurred while accessing the database
 	    * @throws ObjectNotFoundException
@@ -467,11 +473,13 @@ public class GroupDAO extends OrientdbDAO {
 	
 	public void removeMember(UUID memberId, UUID groupId, UUID adminId) 
 			throws ObjectNotFoundException, IllegalArgumentException, NdexException {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(memberId.toString()),
+		Preconditions.checkArgument( memberId != null ,
 				"member UUID required");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId.toString()),
+		Preconditions.checkArgument( groupId != null ,
 				"group UUID required");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(adminId.toString()));
+		Preconditions.checkArgument(adminId !=null ,
+				"admin UUID required");
+		
 		
 		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
 		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
@@ -484,23 +492,23 @@ public class GroupDAO extends OrientdbDAO {
 			
 			boolean isAdmin = false;
 			boolean isOnlyAdmin = true;
-			for(Edge e : vGroup.getEdges(Direction.BOTH, Permissions.ADMIN.toString().toLowerCase())) {
+			for(Edge e : vGroup.getEdges(Direction.BOTH, Permissions.GROUPADMIN.toString().toLowerCase())) {
 				if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vAdmin.getIdentity() ) ) 
 					isAdmin = true;
 				else 
 					isOnlyAdmin = false;
 			}
 			
-			if(isOnlyAdmin && ( vAdmin.getIdentity().equals( vMember.getIdentity() ) ) ) {
+			if(isOnlyAdmin && ( vAdmin.getIdentity().equals( vMember.getIdentity() ) ) && isAdmin ) {
 				throw new NdexException("Cannot orphan group to have no admin");
 			}
 			
-			if(isAdmin) {
+			if( isAdmin || ( vAdmin.getIdentity().equals( vMember.getIdentity() ) ) ) {
 				for(Edge e : vGroup.getEdges(Direction.BOTH)) {
 					if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vMember.getIdentity() ) ) 
 						graph.removeEdge(e);
 				}
-				logger.info("removed member if existed");
+				logger.info("removed member if it was a member");
 				
 			} else {
 				logger.severe("Invalid admin for group");
@@ -522,7 +530,7 @@ public class GroupDAO extends OrientdbDAO {
 	    * @param groupId
 	    *            UUID for associated group
 	    * @param permission
-	    * 			Type of memberships to retrieve, ADMIN, WRITE, or READ
+	    * 			Type of memberships to retrieve, GROUPADMIN or MEMBER
 	    * @param skipBlocks
 	    * 			amount of blocks to skip
 	    * @param blockSize
@@ -538,9 +546,9 @@ public class GroupDAO extends OrientdbDAO {
 		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId.toString()),
 				"A group UUID is required");
-		Preconditions.checkArgument( (permission == Permissions.ADMIN)
-				|| (permission == Permissions.READ)
-				|| (permission == Permissions.WRITE),
+		Preconditions.checkArgument( (permission.equals( Permissions.ADMIN ))
+				|| (permission.equals( Permissions.READ ))
+				|| (permission.equals( Permissions.WRITE )),
 				"Valid permissions required");
 		
 		ODocument group = this.getRecordById(groupId, NdexClasses.Group);
@@ -563,9 +571,6 @@ public class GroupDAO extends OrientdbDAO {
 			List<ODocument> records = this.db.command(query).execute(); 
 			for(ODocument member: records) {
 				
-				//if( !member.getSchemaClass().getName().equals( NdexClasses.Network ) )
-					//continue;
-				
 				Membership membership = new Membership();
 				membership.setMembershipType( MembershipType.NETWORK );
 				membership.setMemberAccountName( (String) group.field("accountName") ); 
@@ -576,27 +581,6 @@ public class GroupDAO extends OrientdbDAO {
 				
 				memberships.add(membership);
 			}
-			
-			/*OrientVertex vGroup = graph.getVertex(group);
-			
-			for(Edge e : vGroup.getEdges(Direction.BOTH)) {
-				OrientVertex vMember = (OrientVertex) e.getVertex(Direction.IN);
-				ODocument member = vMember.getRecord();
-				
-				if( !member.getSchemaClass().getName().equals( NdexClasses.Network ) )
-					continue;
-				
-				Membership membership = new Membership();
-				membership.setMembershipType( MembershipType.NETWORK );
-				membership.setMemberAccountName( (String) group.field("accountName") ); 
-				membership.setMemberUUID( groupId );
-				membership.setPermissions( Permissions.valueOf( e.getLabel() ) );
-				membership.setResourceName( (String) member.field("name") );
-				membership.setResourceUUID( UUID.fromString( (String) member.field("UUID") ) );
-				
-				memberships.add(membership);
-				
-			}*/
 			
 			logger.info("Successfuly retrieved group-network memberships");
 			return memberships;
@@ -629,9 +613,8 @@ public class GroupDAO extends OrientdbDAO {
 		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId.toString()),
 				"A group UUID is required");
-		Preconditions.checkArgument( (permission == Permissions.ADMIN)
-				|| (permission == Permissions.READ)
-				|| (permission == Permissions.WRITE),
+		Preconditions.checkArgument( (permission.equals( Permissions.GROUPADMIN) )
+				|| (permission.equals( Permissions.MEMBER )),
 				"Valid permissions required");
 		
 		ODocument group = this.getRecordById(groupId, NdexClasses.Group);
@@ -655,9 +638,6 @@ public class GroupDAO extends OrientdbDAO {
 			List<ODocument> records = this.db.command(query).execute(); 
 			for(ODocument member: records) {
 				
-				//if( !member.getSchemaClass().getName().equals( NdexClasses.User ) )
-					//continue;
-				
 				Membership membership = new Membership();
 				membership.setMembershipType( MembershipType.GROUP );
 				membership.setMemberAccountName( (String) member.field("accountName") ); 
@@ -668,28 +648,6 @@ public class GroupDAO extends OrientdbDAO {
 				
 				memberships.add(membership);
 			}
-			
-			
-			/*OrientVertex vGroup = graph.getVertex(group);
-			
-			for(Edge e : vGroup.getEdges(Direction.BOTH)) {
-				OrientVertex vMember = (OrientVertex) e.getVertex(Direction.OUT);
-				ODocument member = vMember.getRecord();
-				
-				if(!member.getSchemaClass().getName().equals(NdexClasses.Network))
-					continue;
-				
-				Membership membership = new Membership();
-				membership.setMembershipType( MembershipType.GROUP );
-				membership.setMemberAccountName( (String) member.field("accountName") ); 
-				membership.setMemberUUID( UUID.fromString( (String) member.field("UUID") ) );
-				membership.setPermissions( Permissions.valueOf( e.getLabel() ) );
-				membership.setResourceName( (String) group.field("organizationName"));
-				membership.setResourceUUID( groupId );
-				
-				memberships.add(membership);
-				
-			}*/
 			
 			logger.info("Successfuly retrieved group-user memberships");
 			return memberships;
@@ -738,11 +696,8 @@ public class GroupDAO extends OrientdbDAO {
 		}
 	}
 	
-	private void validatePermission(UUID groupId, UUID memberId, Permissions permission) 
+	private void validatePermission(ODocument group, ODocument member, Permissions permission) 
 			throws ObjectNotFoundException, NdexException {
-		
-		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
-		final ODocument member = this.getRecordById(memberId, NdexClasses.User);
 
 		boolean isMember = false;
 		try {
@@ -755,14 +710,12 @@ public class GroupDAO extends OrientdbDAO {
 			}
 			
 		} catch(Exception e) {
-			logger.severe("Unexpected error while validating group member for group: "
-					+ "\n   "+groupId.toString()+" and user: "
-					+ "\n   "+memberId.toString());
+			logger.severe("Unexpected error while validating group member for group");
 			throw new NdexException("Unexpected error while validating group member");
 		}
 		
 		if(!isMember) 
-			throw new NdexException("Invalid permission to group for member UUID: " + memberId.toString());
+			throw new NdexException("Invalid permission to group for member UUID");
 		
 	}
 	

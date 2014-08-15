@@ -83,7 +83,7 @@ public class NetworkSearchDAO {
 				String traverseRID = nAccount.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>(
 			  			"SELECT FROM"
-			  			+ " (TRAVERSE "+ traversePermission +" FROM"
+			  			+ " (TRAVERSE out() FROM"
 			  				+ " " + traverseRID
 			  				+ "  WHILE $depth <=2)"
 			  			+ " WHERE name.toLowerCase() LIKE '%" + simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
@@ -101,7 +101,7 @@ public class NetworkSearchDAO {
 				if( !networks.iterator().hasNext() ) {
 					query = new OSQLSynchQuery<ODocument>(
 				  			"SELECT FROM"
-				  			+ " (TRAVERSE "+ traversePermission +" FROM"
+				  			+ " (TRAVERSE out() FROM"
 				  				+ " " + traverseRID
 				  				+ "  WHILE $depth <=2)"
 				  			+ " WHERE @class = '"+ NdexClasses.Network +"'"
