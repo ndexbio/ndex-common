@@ -36,10 +36,15 @@ public class NdexClasses {
     public static final String account_E_canRead       ="canRead";
     public static final String account_E_canEdit       ="edit";
 	
+    //extertnal object
+    public static final String ExternalObj_ID = "UUID";
+    public static final String ExternalObj_cDate = "createdDate";
+    public static final String ExternalObj_mDate = "modificationDate";
+    
 	// network properties and edges.
-    public static final String Network_P_UUID    = "UUID";
-    public static final String Network_P_cDate   = "createdDate";
-    public static final String Network_P_mDate   = "modificationDate";
+    public static final String Network_P_UUID    = ExternalObj_ID;
+//    public static final String Network_P_cDate   = "createdDate";
+//    public static final String Network_P_mDate   = "modificationDate";
     public static final String Network_P_name    = "name";
     public static final String Network_P_visibility = "visibility";
     public static final String Network_P_isLocked   = "isLocked";
@@ -116,5 +121,14 @@ public class NdexClasses {
     public static final String user_E_memberOf        ="member";
     public static final String user_E_grp_admin	      = "grpAdmin";
     
-      
+    
+    // task
+    public static final String Task_P_description = "description";
+    public static final String Task_P_status = "status";
+    public static final String Task_P_priority = "priority";
+    public static final String Task_P_progress = "progress";
+    public static final String Task_P_taskType = "taskType";
+    public static final String Task_P_resource = "resource";
+    
+    public static final String Task_E_owner   = "ownedBy"; 
 }

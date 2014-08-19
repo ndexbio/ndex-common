@@ -38,9 +38,8 @@ public class NdexSchemaManager
     	if( versionDoc != null ) {
     	   if ( versionDoc.field(NdexVField).equals(NdexDbVersion))	
     		return;
-    	   else 
-    		throw new NdexException("Another version ("+versionDoc.field(NdexVField)+ 
-    				") of Ndex database found in the database. Please drop it before creating a new one.");
+		throw new NdexException("Another version ("+versionDoc.field(NdexVField)+ 
+				") of Ndex database found in the database. Please drop it before creating a new one.");
     	}
 //        orientDb.commit();
         
@@ -109,7 +108,7 @@ public class NdexSchemaManager
         	cls = orientDbGraph.createVertexType(NdexClasses.NdexProperty);
             cls.createProperty("value", OType.STRING);
             cls.createProperty("dataType", OType.STRING);
-            cls.createProperty("type", OType.STRING);
+ //           cls.createProperty("type", OType.STRING);
         }
 
         
@@ -121,7 +120,7 @@ public class NdexSchemaManager
             cls.createProperty("requestTime", OType.DATETIME);
             cls.createProperty("response", OType.STRING);
             cls.createProperty("responseMessage", OType.STRING);
-            cls.createProperty("type", OType.STRING);
+//            cls.createProperty("type", OType.STRING);
         }
 
         
@@ -129,13 +128,13 @@ public class NdexSchemaManager
         if (cls == null)
         {
             OClass taskClass = orientDbGraph.createVertexType(NdexClasses.Task, clsNdxExternalObj);
-            taskClass.createProperty("status", OType.STRING);
-            taskClass.createProperty("description", OType.STRING);
-            taskClass.createProperty("priority", OType.STRING);
-            taskClass.createProperty("progress", OType.STRING);
-            taskClass.createProperty("taskType", OType.STRING);
-            taskClass.createProperty("resource", OType.STRING);
-            taskClass.createProperty("type", OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_status, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_description, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_priority, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_progress, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_taskType, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_resource, OType.STRING);
+   //         taskClass.createProperty("type", OType.STRING);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.User);  
@@ -148,7 +147,7 @@ public class NdexSchemaManager
             userClass.createProperty("emailAddress", OType.STRING);
 
             userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
-            userClass.createProperty("type", OType.STRING);
+//            userClass.createProperty("type", OType.STRING);
 
         }
         
@@ -171,7 +170,7 @@ public class NdexSchemaManager
             bTermClass.createProperty(NdexClasses.BTerm_P_name, OType.STRING);
 
             bTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
-            bTermClass.createProperty("type", OType.STRING);
+           // bTermClass.createProperty("type", OType.STRING);
 
             bTermClass.createProperty(NdexClasses.BTerm_E_Namespace, OType.LINK, nsClass);
             
@@ -190,7 +189,7 @@ public class NdexSchemaManager
             citationClass.createProperty("properties", OType.EMBEDDEDLIST);
             citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             citationClass.createProperty("title", OType.STRING);
-            citationClass.createProperty("type", OType.STRING);
+          //  citationClass.createProperty("type", OType.STRING);
             
             citationClass.createIndex("index-citation-element-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
             citationClass.createIndex("index-citation-identifier", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
@@ -212,7 +211,7 @@ public class NdexSchemaManager
             edgeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             edgeClass.createProperty("properties", OType.EMBEDDEDLIST);
             edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
-            edgeClass.createProperty("type", OType.STRING);
+        //    edgeClass.createProperty("type", OType.STRING);
 
             edgeClass.createProperty(NdexClasses.Edge_E_citations, OType.LINKSET, citationClass);
 

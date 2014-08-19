@@ -495,8 +495,8 @@ public class NdexPersistenceService extends PersistenceService {
         
 		networkDoc = new ODocument (NdexClasses.Network)
 		  .field(NdexClasses.Network_P_UUID,network.getExternalId().toString())
-		  .field(NdexClasses.Network_P_cDate, network.getCreationDate())
-		  .field(NdexClasses.Network_P_mDate, network.getModificationDate())
+		  .field(NdexClasses.ExternalObj_cDate, network.getCreationDate())
+		  .field(NdexClasses.ExternalObj_mDate, network.getModificationDate())
 		  .field(NdexClasses.Network_P_name, network.getName())
 		  .field(NdexClasses.Network_P_isLocked, network.getIsLocked())
 		  .field(NdexClasses.Network_P_isComplete, network.getIsComplete())

@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 /*
@@ -23,6 +24,7 @@ public class OrientDBNoTxConnectionService {
 			.getLogger(OrientDBNoTxConnectionService.class);
 	protected ODatabaseDocumentTx _ndexDatabase = null;
 	private boolean setup;
+	private OrientGraph graph;
 
 	public OrientDBNoTxConnectionService() throws NdexException {
 		this.setSetup(false);
@@ -57,8 +59,7 @@ public class OrientDBNoTxConnectionService {
 */
 		_ndexDatabase = NdexAOrientDBConnectionPool.getInstance().acquire(); 
 
-//		_orientDbGraph = _graphFactory
-//				.create((OrientBaseGraph) new OrientGraphNoTx(_ndexDatabase));
+		graph = new OrientGraph(_ndexDatabase,false);
 		NdexSchemaManager.INSTANCE.init(_ndexDatabase);
 		this.setSetup(true);
 		logger.info("Connection to OrientDB established");
@@ -93,4 +94,6 @@ public class OrientDBNoTxConnectionService {
 	private void setSetup(boolean setup) {
 		this.setup = setup;
 	}
+	
+	public OrientGraph getGraph() { return this.graph;}
 }

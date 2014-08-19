@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.models.object.Status;
+import org.ndexbio.common.models.dao.orientdb.TaskDAO;
+import org.ndexbio.common.models.dao.orientdb.UserDAO;
+import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +51,12 @@ public class NdexTaskService
     		
 			this.ndexService.setupDatabase();
 			
-/*			final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
-					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
+			final List<ODocument> taskDocumentList = this.ndexService._ndexDatabase.
+					query(new OSQLSynchQuery<ODocument>(query));
 			for (final ODocument document : taskDocumentList) {
-				this.ndexService._orientDbGraph.getVertex(document, ITask.class).asVertex().remove();
+				this.ndexService.getGraph().getVertex(document).remove();
 			}
-	*/		
+			
 		} catch (Exception e) {
 			logger.error("Failed to search tasks", e);
             throw new NdexException("Failed to search tasks.");
@@ -64,25 +66,23 @@ public class NdexTaskService
 		}
     	
     }
+    
+    public Task getTask(String taskUUID) {
+    	TaskDAO dao = new TaskDAO(ndexService._ndexDatabase);
+    	return dao.getTaskByUUID(taskUUID);
+    }
 
     
-    /*
-     * get a Collection of ITasks based on status value
-     */
     
-/*    private List<ITask> getITasksByStatus(Status aStatus) throws NdexException {
-    	String query = "select from task "
-	            + " where status = '" +aStatus +"'";
-    	final List<ITask> foundITasks = Lists.newArrayList();
+    public List<Task> stageQueuedTasks() throws NdexException
+    {
     	try {
-    		if (!this.ndexService.isSetup()) {
-				this.ndexService.setupDatabase();
-			}
-			final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
-					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
-			for (final ODocument document : taskDocumentList) {
-				foundITasks.add(this.ndexService._orientDbGraph.getVertex(document, ITask.class));
-			}
+    		
+			this.ndexService.setupDatabase();
+			TaskDAO dao = new TaskDAO(this.ndexService._ndexDatabase);
+			List<Task> taskList = dao.stageQueuedTasks();
+			this.ndexService._ndexDatabase.commit();
+			return taskList;
 			
 		} catch (Exception e) {
 			logger.error("Failed to search tasks", e);
@@ -91,40 +91,59 @@ public class NdexTaskService
 		}finally {
 			this.ndexService.teardownDatabase();
 		}
-    	return foundITasks;
+   	 
     }
-  */  
-    /*
-     * get a Collection of Tasks based on Status value
-     */
-  /*  private List<Task> getTasksByStatus(Status aStatus) throws NdexException {
-    	 String query = "select from task "
-    	            + " where status = '" +aStatus +"'";
-    	 final List<Task> foundTasks = Lists.newArrayList();
-    	 try {
-    		 if (!this.ndexService.isSetup()) {
- 				this.ndexService.setupDatabase();
- 			}
 
-			 final List<ODocument> taskDocumentList = this.ndexService._orientDbGraph.getBaseGraph().
-					 getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
-			 for (final ODocument document : taskDocumentList)
-	                foundTasks.add(new Task());//this.ndexService._orientDbGraph.getVertex(document, ITask.class)));
-
-	            return foundTasks;
+    public List<Task> getActiveTasks() throws NdexException
+    {
+    	try {
+    		
+			this.ndexService.setupDatabase();
+			TaskDAO dao = new TaskDAO(this.ndexService._ndexDatabase);
+			List<Task> taskList = dao.getActiveTasks();
+			return taskList;
 		} catch (Exception e) {
 			logger.error("Failed to search tasks", e);
-	            throw new NdexException("Failed to search tasks.");
+            throw new NdexException("Failed to search tasks.");
+			
 		}finally {
 			this.ndexService.teardownDatabase();
 		}
-
+   	 
     }
-   */
-    
-   /* public List<ITask> getInProgressITasks() throws NdexException{
-   	 return getITasksByStatus(Status.PROCESSING);
-    }
-    */
 
+    public Task updateTaskStatus(Status status, Task task) throws NdexException {
+    	
+    	try {
+    		
+			this.ndexService.setupDatabase();
+			TaskDAO dao = new TaskDAO(this.ndexService._ndexDatabase);
+			dao.updateTaskStatus(status, task);
+			this.ndexService._ndexDatabase.commit();
+			return task;
+		} catch (Exception e) {
+			logger.error("Failed to search tasks", e);
+			throw new NdexException("Failed to search tasks.");
+			
+		}finally {
+			this.ndexService.teardownDatabase();
+		}
+    	
+    }
+
+    public String getTaskOwnerAccount(Task task) throws NdexException {
+    	try {
+    		
+			this.ndexService.setupDatabase();
+			UserDAO dao = new UserDAO(this.ndexService._ndexDatabase);
+			return dao.getUserById(task.getTaskOwnerId()).getAccountName();
+		} catch (Exception e) {
+			logger.error("Failed to search tasks", e);
+			throw new NdexException("Failed to search tasks.");
+			
+		}finally {
+			this.ndexService.teardownDatabase();
+		}
+    	
+    }
 }

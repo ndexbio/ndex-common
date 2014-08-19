@@ -54,6 +54,7 @@ import org.ndexbio.model.object.NewUser;
  * @author fcriscuo
  *
  */
+@Deprecated
 public class UserOrientdbDAO extends OrientdbDAO  {
 
 	private static final Logger logger = LoggerFactory.getLogger(UserOrientdbDAO.class);

@@ -24,6 +24,8 @@ import org.ndexbio.common.util.Security;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.Permissions;
+import org.ndexbio.model.object.Request;
+import org.ndexbio.model.object.ResponseType;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.NewUser;
 import org.ndexbio.model.object.SimpleUserQuery;
@@ -39,6 +41,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class UserDAO extends OrientdbDAO{
@@ -65,6 +68,13 @@ public class UserDAO extends OrientdbDAO{
 		this.db = db;
 		this.graph = graph;
 	}
+
+	public UserDAO (ODatabaseDocumentTx db) {
+		super(db);
+		this.db = db;
+		this.graph = new OrientGraph(db, false);
+	}
+
 	
 	/**************************************************************************
 	 * Authenticates a user trying to login.
@@ -646,8 +656,7 @@ public class UserDAO extends OrientdbDAO{
 		
 		ODocument user = this.getRecordById(userId, NdexClasses.User);
 		
-		final int startIndex = skipBlocks
-				* blockSize;
+		final int startIndex = skipBlocks * blockSize;
 		
 		try {
 			List<Membership> memberships = new ArrayList<Membership>();
@@ -757,66 +766,104 @@ public class UserDAO extends OrientdbDAO{
 		}
 	}
 	
-	/*private ODocument _getUserById(UUID id) 
-			throws NdexException, ObjectNotFoundException {
-		
-		final List<ODocument> users;
-		
-		String query = "select from " + NdexClasses.User 
-		 		+ " where UUID = ?";
- 
-		try {
-			
-		     users = db.command( new OCommandSQL(query))
-					   .execute(id.toString());
-		     
-		} catch (Exception e) {
-			
-			logger.severe("An error occured while attempting to query the database");
-			throw new NdexException(e.getMessage());
-			 
-		}
-		
-		if (users.isEmpty()) {
-			
-			logger.info("User with UUID " + id + " does not exist");
-			throw new ObjectNotFoundException("User", id.toString());
-			 
-		}
-		
-		return users.get(0);
-		
-	}*/
+	/**************************************************************************
+	    * getSentRequest
+	    *
+	    * @param account
+	    *           User object
+	    * @param skipBlocks
+	    * 			amount of blocks to skip
+	    * @param blockSize
+	    * 			The size of blocks to be skipped and retrieved
+	    * @throws NdexException
+	    *            An error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid userId
+	    **************************************************************************/
 	
-	/*private ODocument this.getUserRecordByAccountName(String accountName) 
-			throws NdexException, ObjectNotFoundException {
-
-		final List<ODocument> users;
-
-		String query = "select from " + NdexClasses.User 
-		 		+ " where accountName = ?";
- 
+	public List<Request> getSentRequest(User account, int skipBlocks, int blockSize) 
+			throws ObjectNotFoundException, NdexException {
+		Preconditions.checkArgument(account != null,
+				"Must be logged in");
+		//TODO May possibly add extra parameter to specify type of request to return
+		
+		final List<Request> requests = new ArrayList<Request>();
+		
+		ODocument user = this.getRecordById(account.getExternalId(), NdexClasses.User);
+		final int startIndex = skipBlocks * blockSize;
+		
 		try {
-
-		     users = db.command( new OCommandSQL(query))
-					   .execute(accountName);
-
-		} catch (Exception e) {
 			
-			logger.severe("An error occured while attempting to query the database");
-			throw new NdexException(e.getMessage());
-
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+		  			"SELECT FROM"
+		  			+ " (TRAVERSE out_requests FROM"
+		  				+ " " + user.getIdentity().toString()
+		  				+ "  WHILE $depth <=1)"
+		  			+ " WHERE @class = '" + NdexClasses.Request + "'"
+		 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+		 			+ " LIMIT " + blockSize);
+		
+			List<ODocument> records = this.db.command(query).execute(); 
+			
+			for(ODocument request: records) {
+				requests.add( RequestDAO.getRequestFromDocument( request ) );
+			}
+			
+			return requests;
+		} catch(Exception e){
+			logger.severe("Unable to retrieve requests : " + e.getMessage());
+			throw new NdexException("Unable to retrieve sent requests");
 		}
-
-		if (users.isEmpty()) {
-
-			logger.info("User with accountName " + accountName + " does not exist");
-			throw new ObjectNotFoundException("User", accountName);
-
+	}
+	
+	/**************************************************************************
+	    * getPendingRequest
+	    *
+	    * @param account
+	    *           User object
+	    * @param skipBlocks
+	    * 			amount of blocks to skip
+	    * @param blockSize
+	    * 			The size of blocks to be skipped and retrieved
+	    * @throws NdexException
+	    *            An error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid userId
+	    **************************************************************************/
+	public List<Request> getPendingRequest(User account, int skipBlocks, int blockSize) 
+			throws ObjectNotFoundException, NdexException {
+		Preconditions.checkArgument(account != null,
+				"Must be logged in");
+		//TODO May possibly add extra parameter to specify type of request to return
+		
+		final List<Request> requests = new ArrayList<Request>();
+		
+		ODocument user = this.getRecordById(account.getExternalId(), NdexClasses.User);
+		final int startIndex = skipBlocks * blockSize;
+		
+		try {
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+		  			"SELECT FROM"
+		  			+ " (TRAVERSE in_requests FROM"
+		  				+ " " + user.getIdentity().toString()
+		  				+ "  WHILE $depth <=1)"
+		  			+ " WHERE @class = '" + NdexClasses.Request + "'"
+		  			+ " AND response = '" + ResponseType.PENDING +"'"
+		 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+		 			+ " LIMIT " + blockSize);
+		
+			List<ODocument> records = this.db.command(query).execute(); 
+			
+			for(ODocument request: records) {
+				requests.add( RequestDAO.getRequestFromDocument( request ) );
+			}
+		
+		return requests;
+		} catch(Exception e){
+			throw new NdexException("Unable to retrieve sent requests");
 		}
-
-		return users.get(0);
-	}*/
+	}
+	
 	
 	/*
 	 * Convert the database results into our object model

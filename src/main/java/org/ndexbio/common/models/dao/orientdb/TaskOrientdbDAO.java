@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
  * @author fcriscuo
  *
  */
+@Deprecated
 public class TaskOrientdbDAO extends OrientdbDAO  {
 	 private static final Logger _logger = LoggerFactory.getLogger(TaskOrientdbDAO.class);
 	

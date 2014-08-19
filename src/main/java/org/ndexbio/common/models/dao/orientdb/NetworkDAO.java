@@ -1105,12 +1105,12 @@ public class NetworkDAO {
     }
     
     private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
-    	nSummary.setCreationDate((Date)doc.field(NdexClasses.Network_P_cDate));
+    	nSummary.setCreationDate((Date)doc.field(NdexClasses.ExternalObj_cDate));
     	nSummary.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
     	nSummary.setName((String)doc.field(NdexClasses.Network_P_name));
     	nSummary.setDescription((String)doc.field(NdexClasses.Network_P_desc));
     	
-    	nSummary.setModificationDate((Date)doc.field(NdexClasses.Network_P_mDate));
+    	nSummary.setModificationDate((Date)doc.field(NdexClasses.ExternalObj_mDate));
     	nSummary.setEdgeCount((int)doc.field(NdexClasses.Network_P_edgeCount));
     	nSummary.setNodeCount((int)doc.field(NdexClasses.Network_P_nodeCount));
     	nSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
