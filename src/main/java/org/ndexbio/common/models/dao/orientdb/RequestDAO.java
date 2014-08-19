@@ -1,42 +1,31 @@
 package org.ndexbio.common.models.dao.orientdb;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.Request;
 import org.ndexbio.model.object.RequestType;
 import org.ndexbio.model.object.ResponseType;
 import org.ndexbio.model.object.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.logging.Logger;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class RequestDAO extends OrientdbDAO  {
-	private static final Logger logger = LoggerFactory.getLogger(RequestDAO.class);
+	private static final Logger logger = Logger.getLogger(RequestDAO.class.getName());
 	private ODatabaseDocumentTx db;
 	private OrientBaseGraph graph;
 	
@@ -54,6 +43,22 @@ public class RequestDAO extends OrientdbDAO  {
 		this.graph = graph;
 	}
 
+	/**************************************************************************
+	    * Creates a request. 
+	    * 
+	    * @param newRequest
+	    *            The request to create.
+	    * @param account
+	    * 			Logged in user
+	    * @throws IllegalArgumentException
+	    *            Bad input.
+	    * @throws DuplicateObjectException
+	    *            The request is a duplicate.
+	    * @throws NdexException
+	    *            Duplicate requests or failed to create the request in the
+	    *            database.
+	    * @return The newly created request.
+	    **************************************************************************/
 	public Request createRequest(Request newRequest, User account)
 			throws IllegalArgumentException, DuplicateObjectException,
 			NdexException {
@@ -87,14 +92,15 @@ public class RequestDAO extends OrientdbDAO  {
 		try {
 			// create request object
 			ODocument request = new ODocument(NdexClasses.Request);
-			request.field("sourceUUID", account.getExternalId().toString());
-			request.field("sourceName", account.getAccountName());
-			request.field("destinationUUID", newRequest.getDestinationUUID().toString());
-			request.field("destinationName", newRequest.getDestinationName());
-			request.field("message", newRequest.getMessage());
-			request.field("requestType", newRequest.getRequestType().toString());
-			request.field("createdDate", newRequest.getCreationDate());
-			request.field("UUID", newRequest.getExternalId().toString());
+			request.field("sourceUUID", account.getExternalId().toString() );
+			request.field("sourceName", account.getAccountName() );
+			request.field("destinationUUID", newRequest.getDestinationUUID().toString() );
+			request.field("destinationName", newRequest.getDestinationName() );
+			request.field("message", newRequest.getMessage() );
+			request.field("requestType", newRequest.getRequestType().toString() );
+			request.field("response", ResponseType.PENDING );
+			request.field("creationDate", newRequest.getCreationDate() );
+			request.field("UUID", newRequest.getExternalId().toString() );
 			request.save();
 			
 			// create links
@@ -102,19 +108,40 @@ public class RequestDAO extends OrientdbDAO  {
 			OrientVertex vSource = this.graph.getVertex(sourceAccount);
 			OrientVertex vResource = this.graph.getVertex(destinationResource);
 			
-			this.graph.addEdge(null, vSource, vRequest, NdexClasses.Request);
+			this.graph.addEdge(null, vSource, vRequest, "requests");
 			
 			for(Vertex v : vResource.getVertices(Direction.IN, "groupadmin", "admin") ) {
-				graph.addEdge(null, vRequest, v, NdexClasses.Request);
+				graph.addEdge(null, vRequest, v, "requests");
 			}
-		
+			
+			logger.info("Created request:"
+					+ "\n   source - " + newRequest.getSourceUUID()
+					+ "\n   destination - " + newRequest.getDestinationUUID());
+
+			return newRequest;
 		} catch(Exception e) {
+			logger.severe("Failed to create request:"
+					+ "\n   source - " + newRequest.getSourceUUID()
+					+ "\n   destination - " + newRequest.getDestinationUUID());
 			throw new NdexException("Failed to create request");
 		}
 
-		return newRequest;
 	}
 
+	/**************************************************************************
+	    * Deletes a request.
+	    * 
+	    * @param requestId
+	    *            The request ID.
+	    * @param account
+	    * 			User object
+	    * @throws IllegalArgumentException
+	    *            Bad input.
+	    * @throws ObjectNotFoundException
+	    *            The request doesn't exist.
+	    * @throws NdexException
+	    *            Failed to delete the request from the database.
+	    **************************************************************************/
 	public void deleteRequest(UUID requestId, User account)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
@@ -124,15 +151,42 @@ public class RequestDAO extends OrientdbDAO  {
 				"A user must be logged in");
 		
 		ODocument request = this.getRecordById(requestId, NdexClasses.Request);
-		
+		ODocument user = this.getRecordById(account.getExternalId(), NdexClasses.User);
 		try {
+			OrientVertex vRequest = graph.getVertex(request);
+			
+			boolean sender = false;
+			for(Vertex v : vRequest.getVertices(Direction.IN) ) {
+				if( ((OrientVertex) v).getIdentity().equals( user.getIdentity() ) )
+					sender = true;
+			}
+			if(!sender)
+				throw new NdexException("Not authorized to delete request");
+			
 			request.delete();
+			logger.info("Request deleted");
+		} catch (NdexException e){
+			throw e;
 		} catch(Exception e) {
+			logger.severe("Unable to delete request: " + e.getMessage());
 			throw new NdexException("Failed to delete request");
 		}
 
 	}
 
+	/**************************************************************************
+	    * Gets a request by ID.
+	    * 
+	    * @param requestId
+	    *           The request ID.
+	    * @param account
+	    * 			User object     
+	    * @throws IllegalArgumentException
+	    *           Bad input.
+	    * @throws NdexException
+	    *           Failed to query the database.
+	    * @return The request.
+	    **************************************************************************/
 	public Request getRequest(UUID requestId, User account)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(requestId != null,
@@ -142,14 +196,31 @@ public class RequestDAO extends OrientdbDAO  {
 		// TODO check if source UUID and account UUID match up
 		
 		ODocument request = this.getRecordById(requestId, NdexClasses.Request);
-		return this.getRequestFromDocument(request);
+		return RequestDAO.getRequestFromDocument(request);
 		
 	}
 
+	/**************************************************************************
+	    * Updates a request.
+	    * 
+	    * @param requestId
+	    * 			UUID for request
+	    * @param updatedRequest
+	    *            The updated request information.
+	    * @param account
+	    * 		user associated request
+	    * @throws IllegalArgumentException
+	    *            Bad input.
+	    * @throws NdexException
+	    *            Failed to update the request in the database.
+	    **************************************************************************/
 	public void updateRequest(UUID requestId, Request updatedRequest, User account)
 			throws IllegalArgumentException, NdexException {
 		Preconditions.checkArgument(null != updatedRequest,
 				"A Request object is required");
+		Preconditions.checkArgument(updatedRequest.getResponse().equals(ResponseType.ACCEPTED)
+				|| updatedRequest.getResponse().equals(ResponseType.DECLINED),
+				"A proper reponse type is required");
 		Preconditions.checkArgument(account != null,
 				"Must be logged in to update a request");
 
@@ -161,71 +232,34 @@ public class RequestDAO extends OrientdbDAO  {
 			OrientVertex vRequest = this.graph.getVertex(request);
 			
 			boolean canModify = false;
-			for(Vertex v : vRequest.getVertices(Direction.BOTH, NdexClasses.Request)) {
+			for(Vertex v : vRequest.getVertices(Direction.BOTH, "requests")) {
 				if( ((OrientVertex) v).getIdentity().equals(responder.getIdentity()) )
 					canModify = true;
 			}
 			
 			if(canModify) {
+				logger.info("User credentials match with request");
 				
 				if(!Strings.isNullOrEmpty( updatedRequest.getMessage() )) request.field("message", updatedRequest.getMessage());
 				request.field("responder", account.getExternalId());
 				request.field("modificationDate", new Date());
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponseMessage() )) request.field("responseMessage", updatedRequest.getResponseMessage() );
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponse().name() )) request.field("response", updatedRequest.getResponse().name());
+				request.save();
+				logger.info("Request has been updated. UUID : " + requestId.toString());
 				
 			} else {
+				logger.severe("User is not a recipient or sender of request");
 				throw new NdexException(""); // message will not be saved
 			}
 			
 		} catch (Exception e) {
+			logger.severe("Unable to update request. UUID : " +  requestId.toString());
 			throw new NdexException("Failed to update the request.");
 		} 
 	}
-
-	public List<Request> getSentRequest(User account, int skipBlocks, int BlockSize) 
-			throws ObjectNotFoundException, NdexException {
-		Preconditions.checkArgument(account != null,
-				"Must be logged in");
-		final List<Request> requests = new ArrayList<Request>();
-		
-		ODocument user = this.getRecordById(account.getExternalId(), NdexClasses.User);
-		
-		try {
-			OrientVertex vUser = this.graph.getVertex(user);
-		
-			for(Vertex v : vUser.getVertices(Direction.OUT, NdexClasses.Request)) {
-				requests.add( this.getRequestFromDocument( ((OrientVertex) v).getRecord() ) );
-			}
-			
-			return requests;
-		} catch(Exception e){
-			throw new NdexException("Unable to retrieve sent requests");
-		}
-	}
 	
-	public List<Request> getPendingRequest(User account, int skipBlocks, int BlockSize) 
-			throws ObjectNotFoundException, NdexException {
-		Preconditions.checkArgument(account != null,
-				"Must be logged in");
-		final List<Request> requests = new ArrayList<Request>();
-		
-		ODocument user = this.getRecordById(account.getExternalId(), NdexClasses.User);
-		
-		try {
-		OrientVertex vUser = this.graph.getVertex(user);
-	
-		for(Vertex v : vUser.getVertices(Direction.OUT, NdexClasses.Request)) {
-			requests.add( this.getRequestFromDocument( ((OrientVertex) v).getRecord() ) );
-		}
-		
-		return requests;
-		} catch(Exception e){
-			throw new NdexException("Unable to retrieve sent requests");
-		}
-	}
-	
-	private Request getRequestFromDocument(ODocument request) throws NdexException {
+	public static Request getRequestFromDocument(ODocument request) throws NdexException {
 		try {
 			Request result = new Request();
 			result.setSourceName((String) request.field("sourceName"));
@@ -238,10 +272,11 @@ public class RequestDAO extends OrientdbDAO  {
 			result.setResponse( ResponseType.valueOf( (String) request.field("response") ) );
 			result.setResponseMessage((String) request.field("responseMessage"));
 			result.setExternalId( UUID.fromString( (String) request.field("UUID") ) );
-			result.setCreationDate( (Date) request.field("createdDate") );
+			result.setCreationDate( (Date) request.field("creationDate") );
 			result.setModificationDate( (Date) request.field("modificationDate") );
 			return result;
 		} catch (Exception e) {
+			logger.severe(e.getMessage());
 			throw new NdexException("Failed to retrieve request.");
 		} 
 	}
@@ -252,7 +287,7 @@ public class RequestDAO extends OrientdbDAO  {
 		
 		OrientVertex vSource = this.graph.getVertex(source);
 	
-		for(Vertex v : vSource.getVertices(Direction.OUT, NdexClasses.Request) ) {
+		for(Vertex v : vSource.getVertices(Direction.OUT, "requests") ) {
 			if( ((OrientVertex) v).getRecord().field("UUID").equals( destination.field("UUID") ) ) 
 				throw new DuplicateObjectException("Request has been made");
 		}

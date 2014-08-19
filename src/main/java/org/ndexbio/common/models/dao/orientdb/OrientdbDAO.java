@@ -3,6 +3,7 @@ package org.ndexbio.common.models.dao.orientdb;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 //import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
@@ -12,6 +13,7 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 //import org.ndexbio.common.helpers.Configuration;
 //import org.ndexbio.common.helpers.IdConverter;
 import org.ndexbio.orientdb.NdexSchemaManager;
+
 
 //import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -102,6 +104,9 @@ public abstract class OrientdbDAO {
 		
 		try {
 			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
+			if(orientClass.equals(NdexClasses.Network))
+				Idx = this.db.getMetadata().getIndexManager().getIndex("network.UUID");
+			
 			OIdentifiable user = (OIdentifiable) Idx.get(id.toString()); // account to traverse by
 			if(user == null) 
 				throw new ObjectNotFoundException("Object", id.toString());
@@ -112,7 +117,7 @@ public abstract class OrientdbDAO {
 			return (ODocument) user.getRecord();
 			
 		} catch (ObjectNotFoundException e) {
-			logger.info("Object with UUID " + id + " does not exist");
+			logger.info("Object with UUID " + id + " does not exist for class: " + orientClass);
 			throw e;
 		} catch (Exception e) {
 			logger.info("Unexpected error on user retrieval by UUID");
@@ -137,7 +142,7 @@ public abstract class OrientdbDAO {
 			return (ODocument) user.getRecord();
 			
 		} catch (ObjectNotFoundException e) {
-			logger.info("Account " + accountName + " does not exist");
+			logger.info("Account " + accountName + " does not exist for class: " + orientClass);
 			throw e;
 		} catch (Exception e) {
 			logger.info("Unexpected error on user retrieval by accountName");
