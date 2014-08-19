@@ -85,6 +85,7 @@ public class RequestDAO extends OrientdbDAO  {
 		// setup
 		ODocument sourceAccount = this.getRecordById(newRequest.getSourceUUID(), NdexClasses.Group, NdexClasses.User);
 		ODocument userAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
+		
 		ODocument destinationResource;
 		if( newRequest.getRequestType().equals(RequestType.NetworkAccess) )
 			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Network);
@@ -94,14 +95,12 @@ public class RequestDAO extends OrientdbDAO  {
 		// check for redundant requests
 		this.checkForExistingRequest(userAccount, sourceAccount, destinationResource);
 		
-		//newRequest.setSourceName(account.getAccountName());
-		//newRequest.setSourceUUID(account.getExternalId());
 		newRequest.setExternalId(UUID.randomUUID());
 		
 		try {
 			// create request object
 			ODocument request = new ODocument(NdexClasses.Request);
-			request.field("sourceUUID", newRequest.getSourceUUID() );
+			request.field("sourceUUID", newRequest.getSourceUUID().toString() );
 			request.field("sourceName", newRequest.getSourceName() );
 			request.field("destinationUUID", newRequest.getDestinationUUID().toString() );
 			request.field("destinationName", newRequest.getDestinationName() );
@@ -110,7 +109,7 @@ public class RequestDAO extends OrientdbDAO  {
 			request.field("response", ResponseType.PENDING );
 			request.field("creationDate", newRequest.getCreationDate() );
 			request.field("UUID", newRequest.getExternalId().toString() );
-			request.save();
+			request = request.save();
 			
 			// create links
 			OrientVertex vRequest = this.graph.getVertex(request);
@@ -119,8 +118,14 @@ public class RequestDAO extends OrientdbDAO  {
 			
 			this.graph.addEdge(null, vUser, vRequest, "requests");
 			
-			for(Vertex v : vResource.getVertices(Direction.IN, "groupadmin", "admin") ) {
-				graph.addEdge(null, vRequest, v, "requests");
+			for(Vertex v : vResource.getVertices(Direction.IN, Permissions.GROUPADMIN.name().toLowerCase(), Permissions.ADMIN.name().toLowerCase()) ) {
+				if( ((OrientVertex) v).getRecord().getClassName().equals(NdexClasses.User) )
+					graph.addEdge(null, vRequest, v, "requests");
+				
+				for(Vertex vv : v.getVertices(Direction.IN, Permissions.GROUPADMIN.name().toLowerCase())) {
+					graph.addEdge(null, vRequest, vv, "requests");
+				}
+				
 			}
 			
 			logger.info("Created request:"
@@ -241,7 +246,7 @@ public class RequestDAO extends OrientdbDAO  {
 			OrientVertex vRequest = this.graph.getVertex(request);
 			
 			boolean canModify = false;
-			for(Vertex v : vRequest.getVertices(Direction.BOTH, "requests")) {
+			for(Vertex v : vRequest.getVertices(Direction.OUT, "requests")) {
 				if( ((OrientVertex) v).getIdentity().equals(responder.getIdentity()) )
 					canModify = true;
 			}
@@ -249,7 +254,6 @@ public class RequestDAO extends OrientdbDAO  {
 			if(canModify) {
 				logger.info("User credentials match with request");
 				
-				if(!Strings.isNullOrEmpty( updatedRequest.getMessage() )) request.field("message", updatedRequest.getMessage());
 				request.field("responder", account.getAccountName());
 				request.field("modificationDate", new Date());
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponseMessage() )) request.field("responseMessage", updatedRequest.getResponseMessage() );
@@ -292,16 +296,17 @@ public class RequestDAO extends OrientdbDAO  {
 	
 	private void checkForExistingRequest(ODocument user, ODocument source, ODocument destination) 
 			throws DuplicateObjectException, NdexException {
-		// could have been implemented with sql commands
+		// TODO verify against source
 		
 		OrientVertex vSource = this.graph.getVertex(source);
 		OrientVertex vUser = this.graph.getVertex(user);
 		for(Vertex v : vUser.getVertices(Direction.OUT, "requests") ) {
-			if( ((OrientVertex) v).getRecord().field("destinationUUID").equals( destination.field("UUID") ) ) 
+			if( ((OrientVertex) v).getRecord().field("destinationUUID").equals( destination.field("UUID") )
+					&& ((OrientVertex) v).getRecord().field("sourceUUID").equals( source.field("UUID") )) 
 				throw new DuplicateObjectException("Request has been made");
 		}
 		
-		//TODO should delete if there is no way to specify what permission one should get. 
+		//TODO check against permission type?
 		String permissions[]  = {
 								Permissions.ADMIN.name().toLowerCase(),
 								Permissions.WRITE.name().toLowerCase(),
