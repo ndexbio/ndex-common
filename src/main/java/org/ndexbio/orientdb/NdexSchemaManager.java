@@ -116,9 +116,14 @@ public class NdexSchemaManager
         if (cls == null)
         {
         	cls = orientDbGraph.createVertexType(NdexClasses.Request,clsNdxExternalObj);
+        	cls.createProperty("sourceUUID", OType.STRING);
+        	cls.createProperty("sourceName", OType.STRING);
+        	cls.createProperty("destinationUUID", OType.STRING);
+        	cls.createProperty("destiniationName", OType.STRING);
         	cls.createProperty("message", OType.STRING);
             cls.createProperty("requestTime", OType.DATETIME);
             cls.createProperty("response", OType.STRING);
+            cls.createProperty("responder", OType.STRING);
             cls.createProperty("responseMessage", OType.STRING);
 //            cls.createProperty("type", OType.STRING);
         }

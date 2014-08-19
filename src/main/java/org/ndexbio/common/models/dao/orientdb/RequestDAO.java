@@ -64,6 +64,11 @@ public class RequestDAO extends OrientdbDAO  {
 			NdexException {
 		Preconditions.checkArgument(null != newRequest,
 				"A Request parameter is required");
+		Preconditions.checkArgument( newRequest.getSourceUUID() != null
+				&& !Strings.isNullOrEmpty( newRequest.getSourceUUID().toString() ),
+				"A source UUID is required");
+		Preconditions.checkArgument( !Strings.isNullOrEmpty( newRequest.getSourceName() ),
+				"A source name is required");
 		Preconditions.checkArgument( newRequest.getDestinationUUID() != null
 				&& !Strings.isNullOrEmpty( newRequest.getDestinationUUID().toString() ),
 				"A destination UUID is required");
@@ -74,8 +79,12 @@ public class RequestDAO extends OrientdbDAO  {
 		Preconditions.checkArgument(account != null,
 				"Must be logged in to make a request");
 		
+		//TODO check for proper request types between resources (e.g. group cannot request access to group)
+		//TODO verify requestor is source or admin of source
+		
 		// setup
-		ODocument sourceAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
+		ODocument sourceAccount = this.getRecordById(newRequest.getSourceUUID(), NdexClasses.Group, NdexClasses.User);
+		ODocument userAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
 		ODocument destinationResource;
 		if( newRequest.getRequestType().equals(RequestType.NetworkAccess) )
 			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Network);
@@ -83,17 +92,17 @@ public class RequestDAO extends OrientdbDAO  {
 			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Group);
 		
 		// check for redundant requests
-		this.checkForExistingRequest(sourceAccount, destinationResource);
+		this.checkForExistingRequest(userAccount, sourceAccount, destinationResource);
 		
-		newRequest.setDestinationName(account.getAccountName());
-		newRequest.setDestinationUUID(account.getExternalId());
+		//newRequest.setSourceName(account.getAccountName());
+		//newRequest.setSourceUUID(account.getExternalId());
 		newRequest.setExternalId(UUID.randomUUID());
 		
 		try {
 			// create request object
 			ODocument request = new ODocument(NdexClasses.Request);
-			request.field("sourceUUID", account.getExternalId().toString() );
-			request.field("sourceName", account.getAccountName() );
+			request.field("sourceUUID", newRequest.getSourceUUID() );
+			request.field("sourceName", newRequest.getSourceName() );
 			request.field("destinationUUID", newRequest.getDestinationUUID().toString() );
 			request.field("destinationName", newRequest.getDestinationName() );
 			request.field("message", newRequest.getMessage() );
@@ -105,10 +114,10 @@ public class RequestDAO extends OrientdbDAO  {
 			
 			// create links
 			OrientVertex vRequest = this.graph.getVertex(request);
-			OrientVertex vSource = this.graph.getVertex(sourceAccount);
+			OrientVertex vUser = this.graph.getVertex(userAccount);
 			OrientVertex vResource = this.graph.getVertex(destinationResource);
 			
-			this.graph.addEdge(null, vSource, vRequest, "requests");
+			this.graph.addEdge(null, vUser, vRequest, "requests");
 			
 			for(Vertex v : vResource.getVertices(Direction.IN, "groupadmin", "admin") ) {
 				graph.addEdge(null, vRequest, v, "requests");
@@ -241,7 +250,7 @@ public class RequestDAO extends OrientdbDAO  {
 				logger.info("User credentials match with request");
 				
 				if(!Strings.isNullOrEmpty( updatedRequest.getMessage() )) request.field("message", updatedRequest.getMessage());
-				request.field("responder", account.getExternalId());
+				request.field("responder", account.getAccountName());
 				request.field("modificationDate", new Date());
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponseMessage() )) request.field("responseMessage", updatedRequest.getResponseMessage() );
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponse().name() )) request.field("response", updatedRequest.getResponse().name());
@@ -249,7 +258,7 @@ public class RequestDAO extends OrientdbDAO  {
 				logger.info("Request has been updated. UUID : " + requestId.toString());
 				
 			} else {
-				logger.severe("User is not a recipient or sender of request");
+				logger.severe("Account is not a recipient or sender of request");
 				throw new NdexException(""); // message will not be saved
 			}
 			
@@ -281,14 +290,14 @@ public class RequestDAO extends OrientdbDAO  {
 		} 
 	}
 	
-	private void checkForExistingRequest(ODocument source, ODocument destination) 
+	private void checkForExistingRequest(ODocument user, ODocument source, ODocument destination) 
 			throws DuplicateObjectException, NdexException {
 		// could have been implemented with sql commands
 		
 		OrientVertex vSource = this.graph.getVertex(source);
-	
-		for(Vertex v : vSource.getVertices(Direction.OUT, "requests") ) {
-			if( ((OrientVertex) v).getRecord().field("UUID").equals( destination.field("UUID") ) ) 
+		OrientVertex vUser = this.graph.getVertex(user);
+		for(Vertex v : vUser.getVertices(Direction.OUT, "requests") ) {
+			if( ((OrientVertex) v).getRecord().field("destinationUUID").equals( destination.field("UUID") ) ) 
 				throw new DuplicateObjectException("Request has been made");
 		}
 		
