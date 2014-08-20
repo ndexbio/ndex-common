@@ -34,6 +34,7 @@ public class NdexDatabase {
 		NdexSchemaManager.INSTANCE.init(ndexDatabase);
 		vdoc = (ODocument) dictionary.get(sequenceKey);
 		if (vdoc == null ) {
+			ndexDatabase.commit();
 			internalCounterBase = 1;
 			vdoc = new ODocument(seqField, internalCounterBase);  // + blockSize); // ids start with 1.
 			vdoc = vdoc.save();

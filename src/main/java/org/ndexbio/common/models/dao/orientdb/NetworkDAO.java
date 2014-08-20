@@ -781,6 +781,44 @@ public class NetworkDAO {
         return getCitationFromDoc(c);
 	}
 	
+	public Collection<Citation> getNetworkCitations(String networkUUID) {
+		ArrayList<Citation> citations = new ArrayList<Citation>();
+		
+		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
+		
+    	for (OIdentifiable reifiedTRec : new OTraverse()
+ 			.field("out_"+ NdexClasses.Network_E_Citations )
+ 			.target(networkDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument doc = (ODocument) reifiedTRec;
+
+    		if ( doc.getClassName().equals(NdexClasses.Citation)) {
+    			citations.add(this.getCitationFromDoc(doc));
+    		}
+    	}
+    	return citations;
+	}
+	
+	public Collection<Namespace> getNetworkNamespaces(String networkUUID) {
+		ArrayList<Namespace> namespaces = new ArrayList<Namespace>();
+		
+		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
+		
+    	for (OIdentifiable reifiedTRec : new OTraverse()
+ 			.field("out_"+ NdexClasses.Network_E_Namespace)
+ 			.target(networkDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument doc = (ODocument) reifiedTRec;
+
+    		if ( doc.getClassName().equals(NdexClasses.Citation)) {
+    			namespaces.add(NetworkDAO.getNamespace(doc));
+    		}
+    	}
+    	return namespaces;
+	}
+	
 	
 	private Citation getCitationFromDoc(ODocument doc) {
 		Citation result = new Citation();
@@ -1277,7 +1315,49 @@ public class NetworkDAO {
 	    
 	    //TODO: check the current Transaction.
 	    return results;
-    	
+    }
     
+    public Collection<BaseTerm> getBaseTermsByPrefix(String networkUUID, String nsPrefix) {
+		ArrayList<BaseTerm> baseTerms = new ArrayList<BaseTerm>();
+		
+		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
+		
+		ODocument nsdoc = null;
+    	for (OIdentifiable reifiedTRec : new OTraverse()
+ 			.field("out_"+ NdexClasses.Network_E_Namespace)
+ 			.target(networkDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument doc = (ODocument) reifiedTRec;
+
+    		if ( doc.getClassName().equals(NdexClasses.Namespace)) {
+    			Namespace ns1 = NetworkDAO.getNamespace(doc);
+    			if ( ns1.getPrefix()!=null && ns1.getPrefix().equals(nsPrefix)) {
+    				nsdoc = doc;
+    				break;
+    			}
+    		}
+    	}
+    	if (nsdoc != null) {
+        	for (OIdentifiable reifiedTRec : new OTraverse()
+     			.field("in_"+ NdexClasses.BTerm_E_Namespace)
+     			.target(networkDoc)
+     			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+        		ODocument doc = (ODocument) reifiedTRec;
+
+        		if ( doc.getClassName().equals(NdexClasses.BaseTerm)) {
+        			BaseTerm t = NetworkDAO.getBaseTerm(doc,null);
+        			baseTerms.add(t);
+        		}
+        	}
+    	  	
+    	}
+    	return baseTerms;
+    	
+    }
+    
+    public Network getSubnetworkByCitation(String networkUUID, Long citationId) throws NdexException {
+    	throw new NdexException("getSubnetworkFromCitation is not implmented yet.");
     }
 }

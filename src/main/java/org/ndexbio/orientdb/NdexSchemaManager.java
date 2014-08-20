@@ -10,8 +10,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
-
-
 /*
  * mod 03Apr2014 
  * the init method should only be invoked once per JVM invocation
@@ -93,6 +91,7 @@ public class NdexSchemaManager
 //            groupClass.createIndex("index-group-name", OClass.INDEX_TYPE.UNIQUE, "name");
         }
         
+ /*  removed in 1.0
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Membership);  
         if ( cls == null)
         {
@@ -101,7 +100,7 @@ public class NdexSchemaManager
             cls.createProperty("membershipType", OType.STRING);
         //    cls.createProperty("type", OType.STRING);
         }
-
+*/
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexProperty);  
         if ( cls == null)
         {
@@ -116,9 +115,14 @@ public class NdexSchemaManager
         if (cls == null)
         {
         	cls = orientDbGraph.createVertexType(NdexClasses.Request,clsNdxExternalObj);
+        	cls.createProperty("sourceUUID", OType.STRING);
+        	cls.createProperty("sourceName", OType.STRING);
+        	cls.createProperty("destinationUUID", OType.STRING);
+        	cls.createProperty("destiniationName", OType.STRING);
         	cls.createProperty("message", OType.STRING);
             cls.createProperty("requestTime", OType.DATETIME);
             cls.createProperty("response", OType.STRING);
+            cls.createProperty("responder", OType.STRING);
             cls.createProperty("responseMessage", OType.STRING);
 //            cls.createProperty("type", OType.STRING);
         }
@@ -161,6 +165,8 @@ public class NdexSchemaManager
             nsClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             nsClass.createProperty(NdexClasses.ns_P_prefix, OType.STRING);
             nsClass.createProperty(NdexClasses.ns_P_uri, OType.STRING);
+            
+            nsClass.createIndex("index-namespace-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         }
 
         OClass bTermClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.BaseTerm);  
@@ -191,8 +197,7 @@ public class NdexSchemaManager
             citationClass.createProperty("title", OType.STRING);
           //  citationClass.createProperty("type", OType.STRING);
             
-            citationClass.createIndex("index-citation-element-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            citationClass.createIndex("index-citation-identifier", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
+            citationClass.createIndex("index-citation-id", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
         }
 
         OClass supportClass = orientDbGraph.getVertexType(NdexClasses.Support);
@@ -201,6 +206,9 @@ public class NdexSchemaManager
             supportClass = orientDbGraph.createVertexType(NdexClasses.Support);
             supportClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             supportClass.createProperty("text", OType.STRING);
+            
+            supportClass.createIndex("index-support-id", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
+            
         }
 
         
@@ -222,9 +230,13 @@ public class NdexSchemaManager
         if (cls == null)
         {
             OClass functionTermClass = orientDbGraph.createVertexType(NdexClasses.FunctionTerm);
+            functionTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             functionTermClass.createProperty("functionTermOrderedParameters", OType.EMBEDDEDLIST);
             //functionTermClass.createProperty("textParameters", OType.EMBEDDEDSET);
             //functionTermClass.createIndex("functionTermLinkParametersIndex", OClass.INDEX_TYPE.NOTUNIQUE, "termParameters by value");
+            
+            functionTermClass.createIndex("index-function-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.ReifiedEdgeTerm);  
@@ -233,6 +245,9 @@ public class NdexSchemaManager
             OClass reifiedEdgeTermClass = orientDbGraph.createVertexType(NdexClasses.ReifiedEdgeTerm);
             reifiedEdgeTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
 //            reifiedEdgeTermClass.createProperty("type", OType.STRING);
+
+            reifiedEdgeTermClass.createIndex("index-reifiedEdge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+
         }
         
         if (orientDbGraph.getVertexType(NdexClasses.Network) == null)
@@ -273,7 +288,7 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_E_supports, OType.LINKSET, supportClass);
             
             nodeClass.createIndex("index-node-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            nodeClass.createIndex("index-node-name", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
+            nodeClass.createIndex("index-node-name", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Node_P_name);
         }
 
         
@@ -300,6 +315,8 @@ public class NdexSchemaManager
         versionDoc = new ODocument(NdexVField, NdexDbVersion);
         orientDb.getDictionary().put(NdexDbVersionKey, versionDoc);
         
+		// add a system user
+        orientDbGraph.commit();
         // turn on initialized flag
         this.setInitialized(Boolean.TRUE);
     }
@@ -311,4 +328,6 @@ public class NdexSchemaManager
 	private void setInitialized(Boolean initialized) {
 		this.initialized = initialized;
 	}
+	
+	
 }

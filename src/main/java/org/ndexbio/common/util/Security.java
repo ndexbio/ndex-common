@@ -1,18 +1,8 @@
 package org.ndexbio.common.util;
 
 import java.security.MessageDigest;
-import java.util.List;
 
-//import javax.ws.rs.container.ContainerRequestContext;
-import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
-import org.ndexbio.common.models.dao.orientdb.UserDAO;
-import org.ndexbio.common.models.dao.orientdb.UserOrientdbDAO;
-import org.ndexbio.model.object.User;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class Security
 {

@@ -76,7 +76,7 @@ public class TestUserDAO extends TestDAO{
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		
-		dao.deleteUserById(user.getExternalId());
+//		dao.deleteUserById(user.getExternalId());
 		dao.deleteUserById(user2.getExternalId());
 		dao.deleteUserById(user3.getExternalId());
 		localConnection.commit();
