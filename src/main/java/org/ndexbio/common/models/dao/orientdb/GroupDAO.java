@@ -300,10 +300,16 @@ public class GroupDAO extends OrientdbDAO {
 		
 		Preconditions.checkArgument(null != simpleQuery, "Search parameters are required");
 
+		String traversePermission;
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> groups;
 		final List<Group> foundgroups = new ArrayList<Group>();
 		final int startIndex = skipBlocks * blockSize;
+		
+		if( simpleQuery.getPermission() == null ) 
+			traversePermission = "out_groupadmin, out_member";
+		else 
+			traversePermission = "out_"+simpleQuery.getPermission().name().toLowerCase();
 		
 		simpleQuery.setSearchString(simpleQuery.getSearchString().toLowerCase().trim());
 		
@@ -317,7 +323,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				String traverseRID = nUser.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE out_groupadmin, out_member FROM"
+						+ " (TRAVERSE "+traversePermission+" FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
@@ -331,7 +337,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				if( !groups.iterator().hasNext() ) {
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE out_groupadmin, out_member FROM"
+						+ " (TRAVERSE "+traversePermission+" FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
