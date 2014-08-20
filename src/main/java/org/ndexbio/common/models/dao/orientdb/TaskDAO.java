@@ -126,7 +126,7 @@ public class TaskDAO {
     	ODocument doc = this.getTaskDocByUUID(task.getExternalId().toString());
     	
     	doc.field(NdexClasses.Task_P_status, status).save();
-    	task.setStatus(null);
+    	task.setStatus(status);
     	return task;
     }
 }
