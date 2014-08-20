@@ -139,7 +139,7 @@ public class NdexTaskService
 			return dao.getUserById(task.getTaskOwnerId()).getAccountName();
 		} catch (Exception e) {
 			logger.error("Failed to search tasks", e);
-			throw new NdexException("Failed to search tasks.");
+			throw new NdexException("Failed to search tasks." + e.getMessage());
 			
 		}finally {
 			this.ndexService.teardownDatabase();

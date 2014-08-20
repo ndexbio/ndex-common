@@ -135,7 +135,7 @@ public class NdexSchemaManager
             taskClass.createProperty(NdexClasses.Task_P_status, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_description, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_priority, OType.STRING);
-            taskClass.createProperty(NdexClasses.Task_P_progress, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_progress, OType.INTEGER);
             taskClass.createProperty(NdexClasses.Task_P_taskType, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_resource, OType.STRING);
    //         taskClass.createProperty("type", OType.STRING);
