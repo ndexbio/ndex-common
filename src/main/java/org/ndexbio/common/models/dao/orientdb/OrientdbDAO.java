@@ -108,14 +108,14 @@ public abstract class OrientdbDAO {
 			
 			for(String oclass : orientClass) {
 				if(oclass.equals(NdexClasses.Network)) {
-					Idx = this.db.getMetadata().getIndexManager().getIndex("network.UUID");
+					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
 					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
 					if(temp != null)
 						record = temp;
 				} else {
-					Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
+					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
 					record = (OIdentifiable) Idx.get(id.toString());
-					Idx = this.db.getMetadata().getIndexManager().getIndex("network.UUID");
+					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
 					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
 					if(temp != null)
 						record = temp;
@@ -130,7 +130,7 @@ public abstract class OrientdbDAO {
 				return (ODocument) record.getRecord();
 			
 			if(orientClass.length == 0) {
-				Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
+				Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
 				record = (OIdentifiable) Idx.get(id.toString());
 			}
 			
