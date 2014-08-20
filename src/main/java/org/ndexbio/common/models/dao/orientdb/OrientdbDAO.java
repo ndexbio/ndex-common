@@ -99,28 +99,35 @@ public abstract class OrientdbDAO {
 	 * 
 	 */
 
-	protected ODocument getRecordById(UUID id, String orientClass) 
+	protected ODocument getRecordById(UUID id, String... orientClass) 
 			throws ObjectNotFoundException, NdexException {
 		
 		try {
 			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
-			if(orientClass.equals(NdexClasses.Network))
+			if(orientClass[0].equals(NdexClasses.Network))
 				Idx = this.db.getMetadata().getIndexManager().getIndex("network.UUID");
 			
 			OIdentifiable user = (OIdentifiable) Idx.get(id.toString()); // account to traverse by
 			if(user == null) 
 				throw new ObjectNotFoundException("Object", id.toString());
 			
-			if( !( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
-				throw new NdexException("UUID is not for class " + orientClass);
+			if(orientClass.length > 0) {
+				boolean invalidClass = true;
+				for(int ii=0; ii<orientClass.length; ii++) {
+					if( ( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass[ii] ) )
+						invalidClass = false;
+				}
+				if(invalidClass)
+					throw new NdexException("UUID is not for specified classes");
+			}
 			
 			return (ODocument) user.getRecord();
 			
 		} catch (ObjectNotFoundException e) {
-			logger.info("Object with UUID " + id + " does not exist for class: " + orientClass);
+			logger.severe("Object with UUID " + id + " does not exist for class: " + orientClass);
 			throw e;
 		} catch (Exception e) {
-			logger.info("Unexpected error on user retrieval by UUID");
+			logger.severe("Unexpected error on user retrieval by UUID : " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		}
 		

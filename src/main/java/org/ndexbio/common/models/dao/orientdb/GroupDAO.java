@@ -101,7 +101,7 @@ public class GroupDAO extends OrientdbDAO {
 			    group.field("creationDate", result.getCreationDate());
 			    group.field("modificationDate", result.getModificationDate());
 			
-				group.save();
+				group = group.save();
 				
 				Vertex vGroup = graph.getVertex(group);
 				Vertex vAdmin = graph.getVertex(admin);
@@ -266,7 +266,7 @@ public class GroupDAO extends OrientdbDAO {
 			if(!Strings.isNullOrEmpty(updatedGroup.getOrganizationName())) group.field("organizationName", updatedGroup.getOrganizationName()); 
 			group.field("modificationDate", updatedGroup.getModificationDate());
 
-			group.save();
+			group = group.save();
 			logger.info("Updated group profile with UUID " + groupId);
 			
 			return GroupDAO.getGroupFromDocument(group);

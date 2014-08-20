@@ -139,16 +139,6 @@ public class UserDAO extends OrientdbDAO{
 		this.checkForExistingUser(newUser);
 			
 		try {
-			User result = new User();
-			    
-			result.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
-			result.setAccountName(newUser.getAccountName());
-			result.setEmailAddress(newUser.getEmailAddress());
-		    result.setFirstName(newUser.getFirstName());
-			result.setLastName(newUser.getLastName());
-			result.setWebsite(newUser.getWebsite());
-			result.setDescription(newUser.getDescription());
-			result.setImage(newUser.getImage());
 			
 			ODocument user = new ODocument(NdexClasses.User);
 			user.field("description", newUser.getDescription());
@@ -159,15 +149,15 @@ public class UserDAO extends OrientdbDAO{
 		    user.field("lastName", newUser.getLastName());
 		    user.field("accountName", newUser.getAccountName());
 		    user.field("password", Security.hashText(newUser.getPassword()));
-		    user.field("UUID", result.getExternalId());
-		    user.field("creationDate", result.getCreationDate());
-		    user.field("modificationDate", result.getModificationDate());
+		    user.field("UUID", NdexUUIDFactory.INSTANCE.getNDExUUID());
+		    user.field("creationDate", new Date());
+		    user.field("modificationDate", new Date());
 		   
-			user.save();
+			user = user.save();
 			
 			logger.info("A new user with accountName " + newUser.getAccountName() + " has been created");
 			
-			return result;
+			return UserDAO.getUserFromDocument(user);
 		} 
 		catch(Exception e) {
 			logger.severe("Could not save new user to the database");
@@ -613,7 +603,7 @@ public class UserDAO extends OrientdbDAO{
 			if(!Strings.isNullOrEmpty(updatedUser.getLastName())) user.field("lastName", updatedUser.getLastName());
 			user.field("modificationDate", updatedUser.getModificationDate());
 
-			user.save();
+			user = user.save();
 			logger.info("Updated user profile with UUID " + id);
 			
 			return UserDAO.getUserFromDocument(user);
@@ -663,12 +653,11 @@ public class UserDAO extends OrientdbDAO{
 			
 			String userRID = user.getIdentity().toString();
 			
-			//TODO change to include get networks within a group
 			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 		  			"SELECT FROM"
-		  			+ " (TRAVERSE "+ NdexClasses.User +".out_"+ permission.name().toString().toLowerCase() +" FROM"
+		  			+ " (TRAVERSE out_"+ Permissions.GROUPADMIN.name().toLowerCase() +", out_"+ permission.name().toString().toLowerCase() +" FROM"
 		  				+ " " + userRID
-		  				+ "  WHILE $depth <=1)"
+		  				+ "  WHILE $depth <=2)"
 		  			+ " WHERE @class = '" + NdexClasses.Network + "'"
 		 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 		 			+ " LIMIT " + blockSize);
