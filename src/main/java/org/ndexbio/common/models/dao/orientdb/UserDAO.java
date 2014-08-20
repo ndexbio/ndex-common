@@ -281,9 +281,15 @@ public class UserDAO extends OrientdbDAO{
 			NdexException {
 		Preconditions.checkArgument(simpleQuery != null , "Search parameters are required");
 		
+		String traversePermission;
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> users;
 		final List<User> foundUsers = new ArrayList<User>();
+		
+		if( simpleQuery.getPermission() == null ) 
+			traversePermission = "in_groupadmin, in_member";
+		else 
+			traversePermission = "in_"+simpleQuery.getPermission().name().toLowerCase();
 		
 		simpleQuery.setSearchString(simpleQuery.getSearchString()
 					.toLowerCase().trim());
@@ -300,7 +306,7 @@ public class UserDAO extends OrientdbDAO{
 				
 				String traverseRID = nGroup.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-						+ " (TRAVERSE in_groupadmin, in_member FROM"
+						+ " (TRAVERSE "+traversePermission+" FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.User +"'"
@@ -319,7 +325,7 @@ public class UserDAO extends OrientdbDAO{
 				if( !users.iterator().hasNext() ) {
 					
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
-							+ " (TRAVERSE in_groupadmin, in_member FROM"
+							+ " (TRAVERSE "+traversePermission+" FROM"
 				  				+ " " + traverseRID
 				  				+ " WHILE $depth <=1)"
 				  			+ " WHERE @class = '"+ NdexClasses.User +"'"
@@ -753,6 +759,68 @@ public class UserDAO extends OrientdbDAO{
 			logger.severe("An unexpected error occured while retrieving user-group memberships");
 			throw new NdexException(e.getMessage());
 		}
+	}
+	
+	/**************************************************************************
+	    * getMembership
+	    *
+	    * @param account
+	    *            UUID for user or group
+	    * @param resource
+	    * 			UUID for resource
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid userId
+	    **************************************************************************/
+	
+	public Membership getMembership(UUID account, UUID resource) 
+			throws IllegalArgumentException, ObjectNotFoundException, NdexException {
+		
+		Preconditions.checkArgument(account != null, "Account UUID required");
+		Preconditions.checkArgument(resource != null, "Resource UUID required");
+		
+		ODocument OAccount = this.getRecordById(account, NdexClasses.User, NdexClasses.Group);
+		ODocument OResource = this.getRecordById(resource, NdexClasses.Network, NdexClasses.Group);
+		
+		Permissions permission = null;
+		Membership membership = new Membership();
+		
+		if(OResource.getClassName().equals(NdexClasses.Group)) {
+			if(this.checkPermission(OAccount.getIdentity(), OResource.getIdentity(), Direction.OUT, 1, Permissions.GROUPADMIN))
+				permission = Permissions.GROUPADMIN;
+			if(this.checkPermission(OAccount.getIdentity(), OResource.getIdentity(), Direction.OUT, 1, Permissions.MEMBER))
+				permission = Permissions.MEMBER;
+			
+			membership.setMemberAccountName( (String) OAccount.field("accountName") );
+			membership.setMemberUUID(account);
+			membership.setResourceName( (String) OResource.field("organizationName") );
+			membership.setResourceUUID(resource);
+			membership.setPermissions(permission);
+			membership.setMembershipType( MembershipType.GROUP );
+			
+		} else {
+			if(this.checkPermission(OAccount.getIdentity(), OResource.getIdentity(), Direction.OUT, 2, Permissions.ADMIN))
+				permission = Permissions.ADMIN;
+			if(this.checkPermission(OAccount.getIdentity(), OResource.getIdentity(), Direction.OUT, 2, Permissions.WRITE))
+				permission = Permissions.WRITE;
+			if(this.checkPermission(OAccount.getIdentity(), OResource.getIdentity(), Direction.OUT, 2, Permissions.READ))
+				permission = Permissions.READ;
+			
+			
+			membership.setMemberAccountName( (String) OAccount.field("accountName") );
+			membership.setMemberUUID(account);
+			membership.setResourceName( (String) OResource.field("name") );
+			membership.setResourceUUID(resource);
+			membership.setPermissions(permission);
+			membership.setMembershipType( MembershipType.NETWORK );
+			
+		}
+		
+		if(permission != null)
+			return membership;
+		
+		return null;
 	}
 	
 	/**************************************************************************

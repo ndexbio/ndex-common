@@ -1,25 +1,25 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
-//import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-//import org.ndexbio.common.models.dao.CommonDAOValues;
-//import org.ndexbio.model.object.NewUser;
-//import org.ndexbio.common.helpers.Configuration;
-//import org.ndexbio.common.helpers.IdConverter;
+import org.ndexbio.model.object.Permissions;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
-
-//import com.google.common.base.Preconditions;
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.tinkerpop.blueprints.Direction;
 
 public abstract class OrientdbDAO {
 //	protected FramedGraphFactory _graphFactory = null;
@@ -103,25 +103,41 @@ public abstract class OrientdbDAO {
 			throws ObjectNotFoundException, NdexException {
 		
 		try {
-			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
-			if(orientClass[0].equals(NdexClasses.Network))
-				Idx = this.db.getMetadata().getIndexManager().getIndex("network.UUID");
+			OIndex<?> Idx;
+			OIdentifiable record = null;
 			
-			OIdentifiable user = (OIdentifiable) Idx.get(id.toString()); // account to traverse by
-			if(user == null) 
-				throw new ObjectNotFoundException("Object", id.toString());
-			
-			if(orientClass.length > 0) {
-				boolean invalidClass = true;
-				for(int ii=0; ii<orientClass.length; ii++) {
-					if( ( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass[ii] ) )
-						invalidClass = false;
+			for(String oclass : orientClass) {
+				if(oclass.equals(NdexClasses.Network)) {
+					Idx = this.db.getMetadata().getIndexManager().getIndex("network.UUID");
+					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
+					if(temp != null)
+						record = temp;
+				} else {
+					Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
+					record = (OIdentifiable) Idx.get(id.toString());
+					Idx = this.db.getMetadata().getIndexManager().getIndex("network.UUID");
+					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
+					if(temp != null)
+						record = temp;
 				}
-				if(invalidClass)
-					throw new NdexException("UUID is not for specified classes");
+				
 			}
 			
-			return (ODocument) user.getRecord();
+			if(orientClass.length > 0 && record == null) 
+				throw new ObjectNotFoundException("Object", id.toString());
+			
+			if(orientClass.length > 0)
+				return (ODocument) record.getRecord();
+			
+			if(orientClass.length == 0) {
+				Idx = this.db.getMetadata().getIndexManager().getIndex("NdexExternalObject.UUID");
+				record = (OIdentifiable) Idx.get(id.toString());
+			}
+			
+			if(record == null) 
+				throw new ObjectNotFoundException("Object", id.toString());
+			
+			return (ODocument) record.getRecord();
 			
 		} catch (ObjectNotFoundException e) {
 			logger.severe("Object with UUID " + id + " does not exist for class: " + orientClass);
@@ -157,6 +173,24 @@ public abstract class OrientdbDAO {
 		}
 		
 	} 
+	
+	public boolean checkPermission(ORID source, ORID destination, Direction dir, Integer depth, Permissions... permissions) {
+		
+		Collection<Object> fields = new ArrayList<Object>();
+		
+		for(Permissions permission : permissions) {
+			fields.add( dir.name().toLowerCase() + "_" + permission.name().toLowerCase() );
+		}
+		
+		for(OIdentifiable id : new OTraverse().target(source)
+											.fields(fields)
+											.predicate( new OSQLPredicate("$depth <= "+depth.toString()) )
+											.execute()) {
+			if(id.getIdentity().equals(destination))
+				return true;
+		}
+		return false;
+	}
 	
 /*	protected IUser findIuserById(final String userId) {
 		Preconditions.checkState(null != this._ndexDatabase && null != this._orientDbGraph,

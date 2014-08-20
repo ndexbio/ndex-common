@@ -9,7 +9,6 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.Request;
-import org.ndexbio.model.object.RequestType;
 import org.ndexbio.model.object.ResponseType;
 import org.ndexbio.model.object.User;
 
@@ -26,6 +25,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class RequestDAO extends OrientdbDAO  {
 	private static final Logger logger = Logger.getLogger(RequestDAO.class.getName());
+	@SuppressWarnings("unused")
 	private ODatabaseDocumentTx db;
 	private OrientBaseGraph graph;
 	
@@ -74,26 +74,29 @@ public class RequestDAO extends OrientdbDAO  {
 				"A destination UUID is required");
 		Preconditions.checkArgument( !Strings.isNullOrEmpty( newRequest.getDestinationName() ),
 				"A destination name is required");
-		Preconditions.checkArgument( !newRequest.getRequestType().equals(null),
-				"A request type is required");
+		Preconditions.checkArgument( newRequest.getPermission() != null,
+				"A permission is required");
 		Preconditions.checkArgument(account != null,
 				"Must be logged in to make a request");
-		
-		//TODO check for proper request types between resources (e.g. group cannot request access to group)
-		//TODO verify requestor is source or admin of source
 		
 		// setup
 		ODocument sourceAccount = this.getRecordById(newRequest.getSourceUUID(), NdexClasses.Group, NdexClasses.User);
 		ODocument userAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
 		
 		ODocument destinationResource;
-		if( newRequest.getRequestType().equals(RequestType.NetworkAccess) )
-			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Network);
-		else
+		if( newRequest.getPermission().equals(Permissions.GROUPADMIN) || newRequest.getPermission().equals(Permissions.MEMBER)) {
 			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Group);
+			if(sourceAccount.getClassName().equals(NdexClasses.Group))
+				throw new IllegalArgumentException("Group cannot request access to group");
+		} else
+			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Network);
+	
+		if(sourceAccount.getClassName().equals(NdexClasses.Group))
+			if(!this.checkPermission(userAccount.getIdentity(), sourceAccount.getIdentity(), Direction.OUT, 1, Permissions.GROUPADMIN))
+				throw new IllegalArgumentException("Not admin of specified group");
 		
 		// check for redundant requests
-		this.checkForExistingRequest(userAccount, sourceAccount, destinationResource);
+		this.checkForExistingRequest(userAccount, sourceAccount, destinationResource, newRequest.getPermission());
 		
 		newRequest.setExternalId(UUID.randomUUID());
 		
@@ -105,7 +108,7 @@ public class RequestDAO extends OrientdbDAO  {
 			request.field("destinationUUID", newRequest.getDestinationUUID().toString() );
 			request.field("destinationName", newRequest.getDestinationName() );
 			request.field("message", newRequest.getMessage() );
-			request.field("requestType", newRequest.getRequestType().toString() );
+			request.field("requestPermission", newRequest.getPermission().name() );
 			request.field("response", ResponseType.PENDING );
 			request.field("creationDate", newRequest.getCreationDate() );
 			request.field("UUID", newRequest.getExternalId().toString() );
@@ -256,6 +259,7 @@ public class RequestDAO extends OrientdbDAO  {
 				
 				request.field("responder", account.getAccountName());
 				request.field("modificationDate", new Date());
+				if(updatedRequest.getPermission() != null) request.field("requestPermission", updatedRequest.getPermission().name());
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponseMessage() )) request.field("responseMessage", updatedRequest.getResponseMessage() );
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponse().name() )) request.field("response", updatedRequest.getResponse().name());
 				request.save();
@@ -280,7 +284,7 @@ public class RequestDAO extends OrientdbDAO  {
 			result.setDestinationName((String) request.field("destinationName"));
 			result.setDestinationUUID( UUID.fromString( (String) request.field("destinationUUID") ) );
 			result.setMessage((String) request.field("message"));
-			result.setRequestType( RequestType.valueOf( (String) request.field("requestType") ) );
+			result.setPermission( Permissions.valueOf( (String) request.field("requestPermission") ) );
 			result.setResponder((String) request.field("responder"));
 			result.setResponse( ResponseType.valueOf( (String) request.field("response") ) );
 			result.setResponseMessage((String) request.field("responseMessage"));
@@ -294,11 +298,9 @@ public class RequestDAO extends OrientdbDAO  {
 		} 
 	}
 	
-	private void checkForExistingRequest(ODocument user, ODocument source, ODocument destination) 
+	private void checkForExistingRequest(ODocument user, ODocument source, ODocument destination, Permissions permission) 
 			throws DuplicateObjectException, NdexException {
-		// TODO verify against source
 		
-		OrientVertex vSource = this.graph.getVertex(source);
 		OrientVertex vUser = this.graph.getVertex(user);
 		for(Vertex v : vUser.getVertices(Direction.OUT, "requests") ) {
 			if( ((OrientVertex) v).getRecord().field("destinationUUID").equals( destination.field("UUID") )
@@ -306,18 +308,8 @@ public class RequestDAO extends OrientdbDAO  {
 				throw new DuplicateObjectException("Request has been made");
 		}
 		
-		//TODO check against permission type?
-		String permissions[]  = {
-								Permissions.ADMIN.name().toLowerCase(),
-								Permissions.WRITE.name().toLowerCase(),
-								Permissions.READ.name().toLowerCase(),
-								Permissions.GROUPADMIN.name().toLowerCase(),
-								Permissions.MEMBER.name().toLowerCase()
-								};
+		if(this.checkPermission(source.getIdentity(), destination.getIdentity(), Direction.OUT, 1, permission))
+			throw new NdexException("Access has already been granted");
 		
-		for(Vertex v : vSource.getVertices(Direction.OUT, permissions)) {
-			if( ((OrientVertex) v).getIdentity().equals(destination.getIdentity()) )
-				throw new NdexException("Access has already been granted");
-		}
 	}
 }
