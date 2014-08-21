@@ -184,9 +184,21 @@ public class NetworkDAO {
         if (nDoc==null) return null;
    
         Network network = getNetwork(nDoc);
+        
+        for (OIdentifiable nodeDoc : new OTraverse()
+        	.field("out_"+ NdexClasses.Network_E_Nodes )
+        	.target(nDoc)
+        	.predicate( new OSQLPredicate("$depth <= 1"))) {
 
-	    // get Edges
-//	    int i = 0 ;
+        	ODocument doc = (ODocument) nodeDoc;
+
+        	if ( doc.getClassName().equals(NdexClasses.Node) ) {
+        		Node node = getNode(doc,network);
+        		network.getNodes().put(node.getId(), node);
+ 
+        	}
+        }
+
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
@@ -195,12 +207,10 @@ public class NetworkDAO {
             ODocument doc = (ODocument) nodeDoc;
          
             if ( doc.getClassName().equals(NdexClasses.Edge) ) {
-//            	   i++;	
               	   Edge e = getEdgeFromDocument(doc,network);
               	   network.getEdges().put(e.getId(), e);
             	 
             }
-//            System.out.println ("got " + i + " edges from iterator.");
         }
         
         return network;
@@ -437,7 +447,7 @@ public class NetworkDAO {
 		
 		//populate citations
     	for (OIdentifiable citationRec : new OTraverse()
- 				.field("out_"+ NdexClasses.Node_E_ciations )
+ 				.field("out_"+ NdexClasses.Edge_E_citations )
  				.target(doc)
  				.predicate( new OSQLPredicate("$depth <= 1"))) {
     		ODocument citationDoc = (ODocument) citationRec;
@@ -454,7 +464,7 @@ public class NetworkDAO {
    		
 		//populate support
     	for (OIdentifiable supportRec : new OTraverse()
- 				.field("out_"+ NdexClasses.Node_E_supports )
+ 				.field("out_"+ NdexClasses.Edge_E_supports )
  				.target(doc)
  				.predicate( new OSQLPredicate("$depth <= 1"))) {
     		ODocument supportDoc = (ODocument) supportRec;
