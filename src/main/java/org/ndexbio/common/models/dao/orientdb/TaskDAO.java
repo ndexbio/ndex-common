@@ -40,7 +40,7 @@ public class TaskDAO {
 	}
 	
 	private ODocument getTaskDocByUUID(String uuid) {
-		String query = "select * from " + NdexClasses.Task + " where " + NdexClasses.ExternalObj_ID
+		String query = "select * from " + NdexClasses.Task + " where " + NdexClasses.NdexExternalObject
 				 + " ='" + uuid + "'";
        final List<ODocument> tasks = db.query(new OSQLSynchQuery<ODocument>(query));
        
@@ -67,12 +67,12 @@ public class TaskDAO {
 					NdexClasses.Task_P_resource, newTask.getResource())
 				.save();	
 	
-		this.graph.getVertex(taskDoc).addEdge(NdexClasses.Task_E_owner, this.graph.getVertex(userDoc));
+		graph.getVertex(taskDoc).addEdge(NdexClasses.Task_E_owner, graph.getVertex(userDoc));
 		return taskUUID;
 		
 	}
 
-	private static Task getTaskFromDocument(ODocument doc) {
+	private Task getTaskFromDocument(ODocument doc) {
 		Task result = new Task();
 
 		Helper.populateExternalObjectFromDoc(result, doc);
@@ -86,7 +86,7 @@ public class TaskDAO {
 		
 		ODocument ownerDoc = doc.field("out_"+ NdexClasses.Task_E_owner);
 		
-		result.setTaskOwnerId(UUID.fromString((String)ownerDoc.field(NdexClasses.ExternalObj_ID)));
+		result.setExternalId(UUID.fromString((String)ownerDoc.field(NdexClasses.ExternalObj_ID)));
 
         return result;
 	}
@@ -126,7 +126,7 @@ public class TaskDAO {
     	ODocument doc = this.getTaskDocByUUID(task.getExternalId().toString());
     	
     	doc.field(NdexClasses.Task_P_status, status).save();
-    	task.setStatus(status);
+    	task.setStatus(null);
     	return task;
     }
 }
