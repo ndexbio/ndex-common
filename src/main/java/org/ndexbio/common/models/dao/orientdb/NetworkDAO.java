@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.model.object.Permissions;
@@ -39,6 +41,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 public class NetworkDAO {
 	
@@ -51,6 +54,8 @@ public class NetworkDAO {
 	
 	private ObjectMapper mapper;
 	private OrientGraph graph;
+	
+	static Logger logger = Logger.getLogger(NetworkDAO.class.getName());
 	
 	public NetworkDAO (ODatabaseDocumentTx db) {
 		this.db = db;
@@ -1367,7 +1372,53 @@ public class NetworkDAO {
     	
     }
     
+    //TODO: implement this function.
     public Network getSubnetworkByCitation(String networkUUID, Long citationId) throws NdexException {
     	throw new NdexException("getSubnetworkFromCitation is not implmented yet.");
+    }
+    
+    public int grantPrivilege(String networkUUID, String accountUUID, Permissions permission) throws NdexException {
+    	// check if the edge already exists?
+    	
+    	String edgeStr = "out_";
+    	switch (permission) {
+        	case ADMIN:
+        	  edgeStr += NdexClasses.E_admin;
+                 break;
+        	case READ:  edgeStr += NdexClasses.account_E_canRead;
+                 break;
+        	case WRITE:  edgeStr += NdexClasses.account_E_canEdit;
+                 break;
+        	default: 
+        		throw new NdexException ("Invalid permission type " + permission + " for network");
+    	}
+
+      //  String query = "select RID from (traverse " +edgeStr+ " from (select * from " + NdexClasses.Account + 
+      //  		" where UUID='"+ accountUUID + "')) where UUID = '"+ networkUUID + "'";
+     
+        String queryStr = "select RID from (traverse " +edgeStr+ " from (select * from " + NdexClasses.Account + 
+          		" where UUID = ? )) where UUID = ? ";
+        OSQLSynchQuery<ORecordId> query = new OSQLSynchQuery<ORecordId>(queryStr);
+        List<ORecordId> result = this.db.command(query).execute(accountUUID, networkUUID);
+
+        if ( !result.isEmpty()) {
+        	logger.info("Permission " + permission + " already exists between account " + accountUUID + 
+        			 " and network " + networkUUID + ". Igore grant request."); 
+        	return 0;
+        }
+        
+        
+    	return 1;
+    }
+    
+    
+    private Permissions getNetworkPermissionByAccout(String networkUUID, String accountUUID) {
+        String queryStr = "select RID from (traverse out_admin from (select * from " + NdexClasses.Account + 
+          		" where UUID = ? )) where UUID = ? ";
+        OSQLSynchQuery<ORecordId> query = new OSQLSynchQuery<ORecordId>(queryStr);
+        List<ORecordId> result = this.db.command(query).execute(accountUUID, networkUUID);
+
+    	
+    	return null;
     }
 }

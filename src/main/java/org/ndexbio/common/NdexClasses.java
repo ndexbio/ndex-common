@@ -1,4 +1,7 @@
 package org.ndexbio.common;
+
+import org.ndexbio.model.object.Permissions;
+
 /**
  *  This Class contains the vertex types (OrientDB classes) used in Ndex database.
  *   
@@ -32,9 +35,9 @@ public class NdexClasses {
 	
 	
 	//account edges
-	public static final String E_admin               = "admin";
-    public static final String account_E_canRead     = "canRead";
-    public static final String account_E_canEdit     = "edit";
+	public static final String E_admin               = Permissions.ADMIN.toString().toLowerCase();
+    public static final String account_E_canRead     = Permissions.READ.toString().toLowerCase();
+    public static final String account_E_canEdit     = Permissions.WRITE.toString().toLowerCase();
 	public static final String account_P_accountName = "accountName";
 	
     public static final String Index_accountName = "index-user-username";
@@ -137,5 +140,10 @@ public class NdexClasses {
     public static final String Task_P_taskType = "taskType";
     public static final String Task_P_resource = "resource";
     
-    public static final String Task_E_owner   = "ownedBy"; 
+    public static final String Task_E_owner   = "ownedBy";
+    
+    //Group
+    
+    public static final String GRP_E_admin = Permissions.GROUPADMIN.toString().toLowerCase();
+    public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
 }

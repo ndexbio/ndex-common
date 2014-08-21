@@ -3,9 +3,9 @@ package org.ndexbio.common.models.dao;
 import java.util.Date;
 
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.models.object.Status;
+import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
-import org.ndexbio.common.models.object.TaskType;
+import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.Priority;
 
 import com.google.common.base.Preconditions;
