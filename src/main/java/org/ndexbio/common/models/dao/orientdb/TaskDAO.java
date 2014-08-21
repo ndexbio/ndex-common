@@ -72,7 +72,7 @@ public class TaskDAO {
 		
 	}
 
-	private static Task getTaskFromDocument(ODocument doc) {
+	static Task getTaskFromDocument(ODocument doc) {
 		Task result = new Task();
 
 		Helper.populateExternalObjectFromDoc(result, doc);
