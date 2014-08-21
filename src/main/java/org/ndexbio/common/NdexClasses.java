@@ -32,14 +32,19 @@ public class NdexClasses {
 	
 	
 	//account edges
-	public static final String E_admin              = "admin";
-    public static final String account_E_canRead       ="canRead";
-    public static final String account_E_canEdit       ="edit";
+	public static final String E_admin               = "admin";
+    public static final String account_E_canRead     = "canRead";
+    public static final String account_E_canEdit     = "edit";
+	public static final String account_P_accountName = "accountName";
 	
+    public static final String Index_accountName = "index-user-username";
+    
     //extertnal object
     public static final String ExternalObj_ID = "UUID";
     public static final String ExternalObj_cDate = "createdDate";
     public static final String ExternalObj_mDate = "modificationDate";
+
+    public static final String Index_externalID = "index-external-id";
     
 	// network properties and edges.
     public static final String Network_P_UUID    = ExternalObj_ID;
@@ -103,6 +108,8 @@ public class NdexClasses {
     public static final String Node_E_alias		   = "alias";
     public static final String Node_E_relateTo	   = "relateTo";
     
+    public static final String Index_node_id = "index-node-id";
+    public static final String Index_node_name = "index-node-name";
     //edge
     
     public static final String Edge_E_predicate  = "edgePredicate";

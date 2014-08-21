@@ -57,7 +57,7 @@ public class NdexSchemaManager
             clsNdxExternalObj.createProperty("createdDate", OType.DATE);
             clsNdxExternalObj.createProperty("modificationDate", OType.DATE);
             
-            clsNdxExternalObj.createIndex("index-external-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
+            clsNdxExternalObj.createIndex(NdexClasses.Index_externalID, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
         }
         
         OClass clsAccount = orientDb.getMetadata().getSchema().getClass(NdexClasses.Account);
@@ -73,7 +73,9 @@ public class NdexSchemaManager
         	clsAccount.createProperty("password", OType.STRING);
         	clsAccount.createProperty("website", OType.STRING);
 
-        	clsAccount.createIndex("index-user-username", OClass.INDEX_TYPE.UNIQUE, "accountName");
+        	clsAccount.createIndex(NdexClasses.Index_accountName, 
+        			OClass.INDEX_TYPE.UNIQUE, 
+        			NdexClasses.account_P_accountName);
 
         }
 
@@ -124,7 +126,6 @@ public class NdexSchemaManager
             cls.createProperty("response", OType.STRING);
             cls.createProperty("responder", OType.STRING);
             cls.createProperty("responseMessage", OType.STRING);
-//            cls.createProperty("type", OType.STRING);
         }
 
         
@@ -135,10 +136,9 @@ public class NdexSchemaManager
             taskClass.createProperty(NdexClasses.Task_P_status, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_description, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_priority, OType.STRING);
-            taskClass.createProperty(NdexClasses.Task_P_progress, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_progress, OType.INTEGER);
             taskClass.createProperty(NdexClasses.Task_P_taskType, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_resource, OType.STRING);
-   //         taskClass.createProperty("type", OType.STRING);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.User);  
@@ -151,7 +151,6 @@ public class NdexSchemaManager
             userClass.createProperty("emailAddress", OType.STRING);
 
             userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
-//            userClass.createProperty("type", OType.STRING);
 
         }
         
@@ -176,7 +175,6 @@ public class NdexSchemaManager
             bTermClass.createProperty(NdexClasses.BTerm_P_name, OType.STRING);
 
             bTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
-           // bTermClass.createProperty("type", OType.STRING);
 
             bTermClass.createProperty(NdexClasses.BTerm_E_Namespace, OType.LINK, nsClass);
             
@@ -195,7 +193,6 @@ public class NdexSchemaManager
             citationClass.createProperty("properties", OType.EMBEDDEDLIST);
             citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             citationClass.createProperty("title", OType.STRING);
-          //  citationClass.createProperty("type", OType.STRING);
             
             citationClass.createIndex("index-citation-id", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
         }
@@ -219,7 +216,6 @@ public class NdexSchemaManager
             edgeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             edgeClass.createProperty("properties", OType.EMBEDDEDLIST);
             edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
-        //    edgeClass.createProperty("type", OType.STRING);
 
             edgeClass.createProperty(NdexClasses.Edge_E_citations, OType.LINKSET, citationClass);
 
@@ -244,7 +240,6 @@ public class NdexSchemaManager
         {
             OClass reifiedEdgeTermClass = orientDbGraph.createVertexType(NdexClasses.ReifiedEdgeTerm);
             reifiedEdgeTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
-//            reifiedEdgeTermClass.createProperty("type", OType.STRING);
 
             reifiedEdgeTermClass.createIndex("index-reifiedEdge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
 
@@ -252,7 +247,7 @@ public class NdexSchemaManager
         
         if (orientDbGraph.getVertexType(NdexClasses.Network) == null)
         {
-            OClass networkClass = orientDbGraph.createVertexType(NdexClasses.Network,clsNdxExternalObj);
+            OClass networkClass = orientDbGraph.createVertexType(NdexClasses.Network);
        //     networkClass.createProperty("copyright", OType.STRING);
             networkClass.createProperty("description", OType.STRING);
             networkClass.createProperty("edgeCount", OType.INTEGER);
@@ -287,15 +282,15 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_E_ciations, OType.LINKSET, citationClass);
             nodeClass.createProperty(NdexClasses.Node_E_supports, OType.LINKSET, supportClass);
             
-            nodeClass.createIndex("index-node-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            nodeClass.createIndex("index-node-name", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Node_P_name);
+            nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            nodeClass.createIndex(NdexClasses.Index_node_name, OClass.INDEX_TYPE.NOTUNIQUE, 
+            		NdexClasses.Node_P_name);
         }
-
         
         if (orientDbGraph.getVertexType(NdexClasses.Provenance) == null)
         {
            // OClass clss = 
-            		orientDbGraph.createVertexType(NdexClasses.Provenance,clsNdxExternalObj);
+            		orientDbGraph.createVertexType(NdexClasses.Provenance);
         }
         
         

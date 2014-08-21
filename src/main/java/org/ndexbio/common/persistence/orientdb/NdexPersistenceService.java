@@ -423,28 +423,28 @@ public class NdexPersistenceService extends PersistenceService {
 			ODocument edgeDoc = new ODocument(NdexClasses.Edge);
 			edgeDoc = edgeDoc.field(NdexClasses.Element_ID, edge.getId())
 					.save();
-			OrientVertex edgeVertex = graph.getVertex(edgeDoc);
+			OrientVertex edgeVertex = this.graph.getVertex(edgeDoc);
 			
 			this.addPropertiesToVertex(edgeVertex, properties, presentationProps);
 			
-			networkVertex.addEdge(NdexClasses.Network_E_Edges, edgeVertex);
-			edgeVertex.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(predicateDoc));
-			edgeVertex.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectNodeDoc));
-			graph.getVertex(subjectNodeDoc).addEdge(NdexClasses.Edge_E_subject, edgeVertex);
+			this.networkVertex.addEdge(NdexClasses.Network_E_Edges, edgeVertex);
+			edgeVertex.addEdge(NdexClasses.Edge_E_predicate, this.graph.getVertex(predicateDoc));
+			edgeVertex.addEdge(NdexClasses.Edge_E_object, this.graph.getVertex(objectNodeDoc));
+			this.graph.getVertex(subjectNodeDoc).addEdge(NdexClasses.Edge_E_subject, edgeVertex);
 
-		    network.setEdgeCount(network.getEdgeCount()+1);
+		    this.network.setEdgeCount(this.network.getEdgeCount()+1);
 		    
 		    if (citation != null) {
-				ODocument citationDoc = elementIdCache.get(citation.getId());
-		    	OrientVertex citationV = graph.getVertex(citationDoc);
+				ODocument citationDoc = this.elementIdCache.get(citation.getId());
+		    	OrientVertex citationV = this.graph.getVertex(citationDoc);
 		    	edgeVertex.addEdge(NdexClasses.Edge_E_citations, citationV);
 		    	
 		    	edge.getCitations().add(citation.getId());
 		    }
 		    
 		    if ( support != null) {
-				ODocument supportDoc = elementIdCache.get(support.getId());
-		    	OrientVertex supportV = graph.getVertex(supportDoc);
+				ODocument supportDoc = this.elementIdCache.get(support.getId());
+		    	OrientVertex supportV = this.graph.getVertex(supportDoc);
 		    	edgeVertex.addEdge(NdexClasses.Edge_E_supports, supportV);
 		    	
 		    	edge.getSupports().add(support.getId());
@@ -486,27 +486,27 @@ public class NdexPersistenceService extends PersistenceService {
 		this.network = new Network();
 		this.network.setExternalId(uuid);
 		this.network.setName(title);
-		network.setVisibility(VisibilityType.PUBLIC);
-		network.setIsLocked(false);
-		network.setIsComplete(false);
+		this.network.setVisibility(VisibilityType.PRIVATE);
+		this.network.setIsLocked(false);
+		this.network.setIsComplete(false);
 
 		if ( version != null)
 			this.network.setVersion(version);
         
-		networkDoc = new ODocument (NdexClasses.Network)
-		  .field(NdexClasses.Network_P_UUID,network.getExternalId().toString())
-		  .field(NdexClasses.ExternalObj_cDate, network.getCreationDate())
-		  .field(NdexClasses.ExternalObj_mDate, network.getModificationDate())
-		  .field(NdexClasses.Network_P_name, network.getName())
-		  .field(NdexClasses.Network_P_isLocked, network.getIsLocked())
-		  .field(NdexClasses.Network_P_isComplete, network.getIsComplete())
-		  .field(NdexClasses.Network_P_visibility, network.getVisibility().toString())
+		this.networkDoc = new ODocument (NdexClasses.Network)
+		  .field(NdexClasses.Network_P_UUID,this.network.getExternalId().toString())
+		  .field(NdexClasses.ExternalObj_cDate, this.network.getCreationDate())
+		  .field(NdexClasses.ExternalObj_mDate, this.network.getModificationDate())
+		  .field(NdexClasses.Network_P_name, this.network.getName())
+		  .field(NdexClasses.Network_P_isLocked, this.network.getIsLocked())
+		  .field(NdexClasses.Network_P_isComplete, this.network.getIsComplete())
+		  .field(NdexClasses.Network_P_visibility, this.network.getVisibility().toString())
           .save();
 		    
-		networkVertex = graph.getVertex(getNetworkDoc());
+		this.networkVertex = this.graph.getVertex(getNetworkDoc());
 		
-		OrientVertex ownerV = graph.getVertex(ownerDoc);
-		ownerV.addEdge(NdexClasses.E_admin, networkVertex);
+		OrientVertex ownerV = this.graph.getVertex(this.ownerDoc);
+		ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
 		
 		return this.network;
 	}
