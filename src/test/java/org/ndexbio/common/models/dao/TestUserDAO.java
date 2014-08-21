@@ -49,12 +49,12 @@ public class TestUserDAO extends TestDAO{
 		
 		// Create some users for testing. 
 		NewUser newUser = new NewUser();
-        newUser.setEmailAddress("admin@ndexbio.org");
-        newUser.setPassword("CCB20140829*!ndexSupport");
-        newUser.setAccountName("NdexAdministrator");
-        newUser.setFirstName("");
-        newUser.setLastName("");
-        dao.createNewUser(newUser);
+        newUser.setEmailAddress("test@test.org");
+        newUser.setPassword("test");
+        newUser.setAccountName("test");
+        newUser.setFirstName("test");
+        newUser.setLastName("test");
+        user = dao.createNewUser(newUser);
         
         newUser = new NewUser();
         newUser.setEmailAddress("test2@test.org");
