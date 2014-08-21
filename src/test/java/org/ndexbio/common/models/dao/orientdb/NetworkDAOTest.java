@@ -46,7 +46,7 @@ public class NetworkDAOTest {
 	public static void tearDownAfterClass() throws Exception {
 		db.close();
 	}
-
+/*
 	@Test
 	public void testPropertyGraph() throws JsonProcessingException, NdexException {
 		NetworkDAO dao = new NetworkDAO(db);
@@ -67,18 +67,19 @@ public class NetworkDAOTest {
 		
 		System.out.println( r + "Vertex deleted from graph.");
 	}
-	
+*/	
 	@Test
     public void test() throws NdexException, JsonProcessingException {
-/*		NetworkDAO dao = new NetworkDAO(db);
+		NetworkDAO dao = new NetworkDAO(db);
 		
-		System.out.println(dao.checkPrivilege("Support", "e026e93c-1997-11e4-8f64-90b11c72aefa", Permissions.READ));
+//		System.out.println(dao.checkPrivilege("Support", "e026e93c-1997-11e4-8f64-90b11c72aefa", Permissions.READ));
 
-		Network network = dao.getNetwork(UUID.fromString("931cce19-180c-11e4-9525-00219b422d69"),
-				0, 15);
+		Network network = dao.getNetwork(UUID.fromString("fdea795b-28ae-11e4-9366-90b11c72aefa"),
+				0, 2500);
 		
 		System.out.println(network);
-		
+
+/*		
 		network = dao.getNetwork(UUID.fromString("b4e09a69-180c-11e4-b734-00219b422d69"),
 				0, 15);
 		
