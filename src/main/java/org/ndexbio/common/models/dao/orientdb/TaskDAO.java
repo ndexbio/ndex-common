@@ -10,18 +10,24 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.Priority;
+import org.ndexbio.model.object.ResponseType;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
+import org.ndexbio.model.object.User;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class TaskDAO {
+public class TaskDAO extends OrientdbDAO {
 
 
 	private ODatabaseDocumentTx db;
@@ -120,11 +126,45 @@ public class TaskDAO {
 	            + " where status = '" +aStatus +"'";
         return  db.query(new OSQLSynchQuery<ODocument>(query));
     }
-
-
-    public Task updateTaskStatus(Status status, Task task) {
-    	ODocument doc = this.getTaskDocByUUID(task.getExternalId().toString());
+    
+    // This is the method called by the Task REST Service
+    // The User account is passed in so that we can check to be
+    // sure that the user requesting the update owns the task
+    public Task updateTaskStatus(Status status, String UUIDString, User account) throws NdexException{
+    	Preconditions.checkArgument(account != null, "Must be logged in to update a task");
+    	Preconditions.checkArgument(null != UUIDString, "A Task UUID is required");
+    
+    	try {
+    		ODocument taskDocument = this.getTaskDocByUUID(UUIDString);
+    		OrientVertex vTask = this.graph.getVertex(taskDocument);
+    		ODocument userAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
     	
+    		for(Vertex v : vTask.getVertices(Direction.OUT, "ownedBy")) {
+				if(((OrientVertex) v).getIdentity().equals(userAccount.getIdentity())) {
+					taskDocument.field(NdexClasses.Task_P_status, status).save();
+					return this.getTaskByUUID(UUIDString);
+				} else {
+					logger.severe("Account " + account.getAccountName() + " is not owner of task " + UUIDString);
+					throw new SecurityException("access denied - " + account.getAccountName() + " is not owner of task " + UUIDString); // message will not be saved
+				}
+    		}
+		} catch (SecurityException e){
+			throw e;
+		} catch (Exception e) {
+			logger.severe("Unable to update task. UUID : " +  UUIDString + " error: " + e.toString());
+			throw new NdexException("Failed to update the task");
+		}
+		return null; 
+	
+    }
+
+
+    // This is the method called by trusted applications
+    // such as the task runner, where we also update
+    // status in the Task object passed in.
+    public Task updateTaskStatus(Status status, Task task) {
+    	String UUIDString = task.getExternalId().toString();
+    	ODocument doc = this.getTaskDocByUUID(UUIDString);
     	doc.field(NdexClasses.Task_P_status, status).save();
     	task.setStatus(status);
     	return task;
