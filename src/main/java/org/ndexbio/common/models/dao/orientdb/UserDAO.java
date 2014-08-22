@@ -48,7 +48,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class UserDAO extends OrientdbDAO {
 
-	private ODatabaseDocumentTx db;
 	private OrientBaseGraph graph;
 	private static final Logger logger = Logger.getLogger(UserDAO.class
 			.getName());
@@ -68,7 +67,6 @@ public class UserDAO extends OrientdbDAO {
 	 **************************************************************************/
 	public UserDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
 		super(db);
-		this.db = db;
 		this.graph = graph;
 	}
 

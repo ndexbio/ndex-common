@@ -30,12 +30,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 public class TaskDAO extends OrientdbDAO {
 
 
-	private ODatabaseDocumentTx db;
 	private OrientBaseGraph graph;
 	private static final Logger logger = Logger.getLogger(TaskDAO.class.getName());
 	
 	public TaskDAO (ODatabaseDocumentTx db) {
-		this.db = db;
+		super(db);
 		this.graph = new OrientGraph(this.db,false);
 	}
 
