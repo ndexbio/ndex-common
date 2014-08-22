@@ -18,7 +18,7 @@ import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.Permissions;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestNetworkDAO extends TestDAO
+public class TestNetworkDAO 
 
 {
  //   private static final NetworkDAO dao = DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)

@@ -22,28 +22,11 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.tinkerpop.blueprints.Direction;
 
 public abstract class OrientdbDAO {
-//	protected FramedGraphFactory _graphFactory = null;
 	protected ODatabaseDocumentTx _ndexDatabase = null;
-//	protected FramedGraph<OrientBaseGraph> _orientDbGraph = null;
 	
 	protected ODatabaseDocumentTx db;
 	private static final Logger logger = Logger.getLogger(OrientdbDAO.class.getName());
 
-	public OrientdbDAO( ){
-/*		_graphFactory = new FramedGraphFactory(new GremlinGroovyModule(),
-				new TypedGraphModuleBuilder().withClass(IGroup.class)
-						.withClass(IUser.class)
-						.withClass(IGroupMembership.class)
-						.withClass(INetworkMembership.class)
-						.withClass(IGroupInvitationRequest.class)
-						.withClass(IJoinGroupRequest.class)
-						.withClass(INetworkAccessRequest.class)
-						.withClass(IBaseTerm.class)
-						.withClass(IReifiedEdgeTerm.class)
-						.withClass(IFunctionTerm.class).build());
-*/
-	}
-	
 	public OrientdbDAO(ODatabaseDocumentTx db) {
 		this.db = db;
 	}
@@ -52,7 +35,7 @@ public abstract class OrientdbDAO {
 	 * Opens a connection to OrientDB and initializes the OrientDB Graph ORM.
 	 * @throws NdexException 
 	 **************************************************************************/
-	protected void setupDatabase() throws NdexException {
+//	protected void setupDatabase() throws NdexException {
 
 		
 		// When starting up this application, tell OrientDB's global
@@ -60,7 +43,7 @@ public abstract class OrientdbDAO {
 		// OrientDB connection pooling doesn't work as expected
 		// OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
-		_ndexDatabase =  NdexAOrientDBConnectionPool.getInstance().acquire();
+//		_ndexDatabase =  NdexAOrientDBConnectionPool.getInstance().acquire();
 
 	/*	if (Boolean.parseBoolean(Configuration.getInstance().getProperty(
 				"OrientDB-Use-Transactions")))
@@ -73,15 +56,15 @@ public abstract class OrientdbDAO {
 		/*
 		 * only initialize the ORM once
 		 */
-		if (!NdexSchemaManager.INSTANCE.isInitialized()) {
+/*		if (!NdexSchemaManager.INSTANCE.isInitialized()) {
 			NdexSchemaManager.INSTANCE.init(_ndexDatabase);
 		}
 	}
-
+*/
 	/*
 	 * return the connection to the pool
 	 */
-	protected void teardownDatabase() {
+	private void teardownDatabase() {
 
 		if (_ndexDatabase != null) {
 			_ndexDatabase.close();

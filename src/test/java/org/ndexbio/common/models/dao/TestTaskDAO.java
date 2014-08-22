@@ -15,7 +15,7 @@ import org.ndexbio.model.object.Priority;
 import com.orientechnologies.orient.core.id.ORID;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestTaskDAO extends TestDAO
+public class TestTaskDAO
 {
    
 

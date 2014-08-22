@@ -10,7 +10,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import com.orientechnologies.orient.core.id.ORID;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestRequestDAO extends TestDAO {
+public class TestRequestDAO  {
 	
 	/*
 	// instantiate the correct type of dao for testing

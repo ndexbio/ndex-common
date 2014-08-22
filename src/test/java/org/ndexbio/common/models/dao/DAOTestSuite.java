@@ -6,7 +6,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 
 @RunWith(Suite.class)
-@SuiteClasses({ TestTaskDAO.class, TestFeedbackDAO.class, 
+@SuiteClasses({ TestTaskDAO.class, 
 	 TestRequestDAO.class})
 public class DAOTestSuite
 {

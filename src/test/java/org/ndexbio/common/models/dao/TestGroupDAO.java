@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
-public class TestGroupDAO extends TestDAO
+public class TestGroupDAO 
 {
 	private static UserDAO	userDAO;
 	private static GroupDAO dao;
@@ -103,7 +103,7 @@ public class TestGroupDAO extends TestDAO
 	@After
 	public void teardown() {
 		deleteTestGroup();
-		deleteTestUser();
+	//	deleteTestUser();
 	}
 	
 	
@@ -428,7 +428,7 @@ public class TestGroupDAO extends TestDAO
 		}
 	}
 	
-	private void deleteTestUser() {
+/*	private void deleteTestUser() {
 		
 		try {
 			
@@ -444,7 +444,7 @@ public class TestGroupDAO extends TestDAO
 			
 		}
 		
-	}
+	} */
 	
   /*  private static final GroupDAO dao = DAOFactorySupplier.INSTANCE.resolveDAOFactoryByType(CommonDAOValues.ORIENTDB_DAO_TYPE)
 			.get().getGroupDAO();

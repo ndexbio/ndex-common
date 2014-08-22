@@ -31,6 +31,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import org.junit.runners.MethodSorters;
+
+import org.junit.FixMethodOrder;
+
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+
 public class NetworkDAOTest {
 
 	static ODatabaseDocumentTx db;
@@ -47,6 +53,22 @@ public class NetworkDAOTest {
 		db.close();
 	}
 
+	@Test
+	public void test0() {
+//		NetworkDAO dao = new NetworkDAO(db);
+	
+		boolean s =Helper.canRemoveAdmin(db, "473d36ff-28d0-11e4-a48c-90b11c72aefa", "9e97e66f-28c9-11e4-a01a-90b11c72aefa");
+
+		System.out.println(s);
+		s =Helper.canRemoveAdmin(db, "473d36ff-28d0-11e4-a48c-90b11c72aefa", "9e9dd9e5-28c9-11e4-a01a-90b11c72aefa");
+
+		
+//		Permissions s  = Hdao.getNetworkPermissionByAccout("473d36ff-28d0-11e4-a48c-90b11c72aefa", "9e97e66f-28c9-11e4-a01a-90b11c72aefa");
+		
+		System.out.println(s);
+		
+	}
+	
 	@Test
 	public void testPropertyGraph() throws JsonProcessingException, NdexException {
 		NetworkDAO dao = new NetworkDAO(db);
@@ -69,7 +91,7 @@ public class NetworkDAOTest {
 	}
 	
 	@Test
-    public void test() throws NdexException, JsonProcessingException {
+    public void test2() throws NdexException, JsonProcessingException {
 /*		NetworkDAO dao = new NetworkDAO(db);
 		
 		System.out.println(dao.checkPrivilege("Support", "e026e93c-1997-11e4-8f64-90b11c72aefa", Permissions.READ));
@@ -158,3 +180,4 @@ public class NetworkDAOTest {
 	}
 	
 }
+

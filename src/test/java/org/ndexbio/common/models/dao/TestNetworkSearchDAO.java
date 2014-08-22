@@ -20,7 +20,7 @@ import org.ndexbio.model.object.NewUser;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
-public class TestNetworkSearchDAO  extends TestDAO {
+public class TestNetworkSearchDAO   {
 	//relys on test database
 	
 	private static NetworkSearchDAO dao;

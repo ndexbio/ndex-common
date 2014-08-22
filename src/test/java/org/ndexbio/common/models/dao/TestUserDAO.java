@@ -24,7 +24,7 @@ import org.ndexbio.model.object.NewUser;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
-public class TestUserDAO extends TestDAO{
+public class TestUserDAO {
 
 	private static UserDAO dao;
 	private static NdexDatabase database;

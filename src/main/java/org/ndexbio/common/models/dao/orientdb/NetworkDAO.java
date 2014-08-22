@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
@@ -39,13 +41,15 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 
-public class NetworkDAO {
+public class NetworkDAO extends OrientdbDAO {
 	
-	private ODatabaseDocumentTx db;
+//	private ODatabaseDocumentTx db;
 	
 	//flag to specify whether need to search in the current un-commited transaction. 
 	//This is used to work around the problem that sql query doesn't search the current 
@@ -58,14 +62,15 @@ public class NetworkDAO {
 	static Logger logger = Logger.getLogger(NetworkDAO.class.getName());
 	
 	public NetworkDAO (ODatabaseDocumentTx db) {
-		this.db = db;
+	    super(db);
+//		this.db = db;
 		this.searchCurrentTx = false;
 		mapper = new ObjectMapper();
 		graph = new OrientGraph(this.db,false);
 	}
 
 	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {
-		this.db = db;
+	    super(db);
 		this.searchCurrentTx = searchCurrentTransaction;
 	}
 
@@ -1369,46 +1374,37 @@ public class NetworkDAO {
     
     public int grantPrivilege(String networkUUID, String accountUUID, Permissions permission) throws NdexException {
     	// check if the edge already exists?
-    	
-    	String edgeStr = "out_";
-    	switch (permission) {
-        	case ADMIN:
-        	  edgeStr += NdexClasses.E_admin;
-                 break;
-        	case READ:  edgeStr += NdexClasses.account_E_canRead;
-                 break;
-        	case WRITE:  edgeStr += NdexClasses.account_E_canEdit;
-                 break;
-        	default: 
-        		throw new NdexException ("Invalid permission type " + permission + " for network");
-    	}
 
-      //  String query = "select RID from (traverse " +edgeStr+ " from (select * from " + NdexClasses.Account + 
-      //  		" where UUID='"+ accountUUID + "')) where UUID = '"+ networkUUID + "'";
-     
-        String queryStr = "select RID from (traverse " +edgeStr+ " from (select * from " + NdexClasses.Account + 
-          		" where UUID = ? )) where UUID = ? ";
-        OSQLSynchQuery<ORecordId> query = new OSQLSynchQuery<ORecordId>(queryStr);
-        List<ORecordId> result = this.db.command(query).execute(accountUUID, networkUUID);
+    	Permissions p = Helper.getNetworkPermissionByAccout(db,networkUUID, accountUUID);
 
-        if ( !result.isEmpty()) {
+        if ( p!=null && p == permission) {
         	logger.info("Permission " + permission + " already exists between account " + accountUUID + 
         			 " and network " + networkUUID + ". Igore grant request."); 
         	return 0;
         }
         
+        //check if this network has other admins
+        if ( permission != Permissions.ADMIN && !Helper.canRemoveAdmin(db, networkUUID, accountUUID)) {
+        	
+        	throw new NdexException ("Privilege change failed. Network " + networkUUID +" will not have an administrator if permission " +
+        	    permission + " are granted to account " + accountUUID);
+        }
         
+        ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
+        ODocument accountdoc = this.getRecordById(UUID.fromString(accountUUID), NdexClasses.Account);
+        OrientVertex networkV = graph.getVertex(networkdoc);
+        OrientVertex accountV = graph.getVertex(accountdoc);
+        
+        for ( com.tinkerpop.blueprints.Edge e : accountV.getEdges(networkV, Direction.IN)) { 
+        		                   //NdexClasses.E_admin, NdexClasses.account_E_canEdit,NdexClasses.account_E_canRead)) {
+          	graph.removeEdge(e);
+        }
+
+        accountV.addEdge(permission.toString().toLowerCase(), networkV);
     	return 1;
     }
     
-    
-    private Permissions getNetworkPermissionByAccout(String networkUUID, String accountUUID) {
-        String queryStr = "select RID from (traverse out_admin from (select * from " + NdexClasses.Account + 
-          		" where UUID = ? )) where UUID = ? ";
-        OSQLSynchQuery<ORecordId> query = new OSQLSynchQuery<ORecordId>(queryStr);
-        List<ORecordId> result = this.db.command(query).execute(accountUUID, networkUUID);
-
-    	
-    	return null;
-    }
 }
+
+
+
