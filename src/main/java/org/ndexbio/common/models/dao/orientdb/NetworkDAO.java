@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 
 public class NetworkDAO extends OrientdbDAO {
 	
-//	private ODatabaseDocumentTx db;
 	
 	//flag to specify whether need to search in the current un-commited transaction. 
 	//This is used to work around the problem that sql query doesn't search the current 
@@ -1395,7 +1394,7 @@ public class NetworkDAO extends OrientdbDAO {
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         
-        for ( com.tinkerpop.blueprints.Edge e : accountV.getEdges(networkV, Direction.IN)) { 
+        for ( com.tinkerpop.blueprints.Edge e : accountV.getEdges(networkV, Direction.OUT)) { 
         		                   //NdexClasses.E_admin, NdexClasses.account_E_canEdit,NdexClasses.account_E_canRead)) {
           	graph.removeEdge(e);
         }
@@ -1403,6 +1402,39 @@ public class NetworkDAO extends OrientdbDAO {
         accountV.addEdge(permission.toString().toLowerCase(), networkV);
     	return 1;
     }
+
+    public int revokePrivilege(String networkUUID, String accountUUID) throws NdexException {
+    	// check if the edge exists?
+
+    	Permissions p = Helper.getNetworkPermissionByAccout(this.db,networkUUID, accountUUID);
+
+        if ( p ==null ) {
+        	logger.info("Permission doesn't exists between account " + accountUUID + 
+        			 " and network " + networkUUID + ". Igore revoke request."); 
+        	return 0;
+        }
+        
+        //check if this network has other admins
+        if ( p == Permissions.ADMIN && !Helper.canRemoveAdmin(this.db, networkUUID, accountUUID)) {
+        	
+        	throw new NdexException ("Privilege revoke failed. Network " + networkUUID +" only has account " + accountUUID
+        			+ " as the administrator.");
+        }
+        
+        ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
+        ODocument accountdoc = this.getRecordById(UUID.fromString(accountUUID), NdexClasses.Account);
+        OrientVertex networkV = graph.getVertex(networkdoc);
+        OrientVertex accountV = graph.getVertex(accountdoc);
+        
+        for ( com.tinkerpop.blueprints.Edge e : accountV.getEdges(networkV, Direction.OUT)) { 
+        		                   //NdexClasses.E_admin, NdexClasses.account_E_canEdit,NdexClasses.account_E_canRead)) {
+          	graph.removeEdge(e);
+          	break;
+        }
+
+    	return 1;
+    }
+    
     
 }
 

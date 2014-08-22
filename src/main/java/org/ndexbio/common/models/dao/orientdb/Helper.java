@@ -52,6 +52,46 @@ public class Helper {
     	return null;
     }
 
+    public static boolean isAdminOfNetwork(ODatabaseDocumentTx db, String networkUUID, 
+			String accountUUID) {
+    	String query = "select $path from (traverse out_admin,out_member,out_groupadmin from (select * from " + NdexClasses.Account + 
+    			" where UUID='"+ accountUUID + "') while $depth < 3 ) where UUID = '"+ networkUUID + "'";
+
+    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    	for ( ODocument d : result ) { 
+    		String s = d.field("$path");
+    		Pattern pattern = Pattern.compile("out_admin");
+    		Matcher matcher = pattern.matcher(s);
+    		if (matcher.find())
+    		{
+    			return true;
+    		}  
+    	}
+
+    	return false;
+    }
+/*    
+    public static boolean isAdminOfNetworkByAccountName(ODatabaseDocumentTx db, String networkUUID, 
+			String accountName) {
+    	String query = "select $path from (traverse out_admin,out_member,out_groupadmin from (select * from " + NdexClasses.Account + 
+    			" where accountName='"+ accountName + "') while $depth < 3 ) where UUID = '"+ networkUUID + "'";
+
+    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    	for ( ODocument d : result ) { 
+    		String s = d.field("$path");
+    		Pattern pattern = Pattern.compile("out_admin");
+    		Matcher matcher = pattern.matcher(s);
+    		if (matcher.find())
+    		{
+    			return true;
+    		}  
+    	}
+
+    	return false;
+    }
+ */   
     /**
      * Check if an admin account exists on the given network other than the one specified in the parameter.
      *  Basically used to check if an admin edge are allowed to be removed between the network and given account. 
@@ -71,6 +111,18 @@ public class Helper {
 	    if ((long) result.get(0).field("c") > 1 ) return true;
     	return false;
     }
-    
+
+    public static boolean canRemoveAdminByAccount(ODatabaseDocumentTx db, String networkUUID, 
+			String accountName) {
+
+    	String query = "select count(*) as c from (traverse in_" + NdexClasses.E_admin + " from (select from " +
+    			NdexClasses.Network +" where UUID = '"+ networkUUID + "')) where accountName <> '"+ accountName +"'";
+
+    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    	if ((long) result.get(0).field("c") > 1 ) return true;
+		return false;
+    }
+
     
 }
