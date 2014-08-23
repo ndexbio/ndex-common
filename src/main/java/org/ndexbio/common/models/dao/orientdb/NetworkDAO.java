@@ -1344,7 +1344,7 @@ public class NetworkDAO extends OrientdbDAO {
         		ODocument doc = (ODocument) reifiedTRec;
 
         		if ( doc.getClassName().equals(NdexClasses.BaseTerm)) {
-        			BaseTerm t = NetworkDAO.getBaseTerm(doc,null);
+        			BaseTerm t = getBaseTerm(doc,null);
         			baseTerms.add(t);
         		}
         	}
