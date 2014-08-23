@@ -490,19 +490,23 @@ public class NdexPersistenceService extends PersistenceService {
 		this.network.setIsLocked(false);
 		this.network.setIsComplete(false);
 
-		if ( version != null)
-			this.network.setVersion(version);
         
 		this.networkDoc = new ODocument (NdexClasses.Network)
-		  .field(NdexClasses.Network_P_UUID,this.network.getExternalId().toString())
-		  .field(NdexClasses.ExternalObj_cDate, this.network.getCreationDate())
-		  .field(NdexClasses.ExternalObj_mDate, this.network.getModificationDate())
-		  .field(NdexClasses.Network_P_name, this.network.getName())
-		  .field(NdexClasses.Network_P_isLocked, this.network.getIsLocked())
-		  .field(NdexClasses.Network_P_isComplete, this.network.getIsComplete())
-		  .field(NdexClasses.Network_P_visibility, this.network.getVisibility().toString())
-          .save();
-		    
+		  .fields(NdexClasses.Network_P_UUID,this.network.getExternalId().toString(),
+		  	NdexClasses.ExternalObj_cDate, this.network.getCreationDate(),
+		  	NdexClasses.ExternalObj_mDate, this.network.getModificationDate(),
+		  	NdexClasses.Network_P_name, this.network.getName(),
+		  	NdexClasses.Network_P_isLocked, this.network.getIsLocked(),
+		  	NdexClasses.Network_P_isComplete, this.network.getIsComplete(),
+		  	NdexClasses.Network_P_visibility, this.network.getVisibility().toString());
+
+		if ( version != null) {
+			this.network.setVersion(version);
+			this.networkDoc.field(NdexClasses.Network_P_version, version);
+		}
+			
+		this.networkDoc =this.networkDoc.save();
+		
 		this.networkVertex = this.graph.getVertex(getNetworkDoc());
 		
 		OrientVertex ownerV = this.graph.getVertex(this.ownerDoc);
@@ -1054,12 +1058,12 @@ public class NdexPersistenceService extends PersistenceService {
 	public void setNetworkTitleAndDescription(String title, String description) {
 	   if ( description != null ) {
 		   this.network.setDescription(description);
-		   this.networkDoc.field(NdexClasses.Network_P_desc, title).save();
+		   this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_desc, description).save();
 	   }
 	   
 	   if ( title != null) {
 		   this.network.setName(title);
-		   this.networkDoc.field(NdexClasses.Network_P_name, title).save();
+		   this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_name, title).save();
 	   }
 	   
 	}
@@ -1080,6 +1084,8 @@ public class NdexPersistenceService extends PersistenceService {
 		pDoc = pDoc.save();
         OrientVertex pV = graph.getVertex(pDoc);
         v.addEdge(NdexClasses.E_ndexProperties, pV);
+        elementDoc = v.getRecord();
+        this.elementIdCache.put(elementId, elementDoc);
 	}
 	
 	public void setElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
@@ -1090,6 +1096,8 @@ public class NdexPersistenceService extends PersistenceService {
 		pDoc = pDoc.save();
         OrientVertex pV = graph.getVertex(pDoc);
         v.addEdge(NdexClasses.E_ndexPresentationProps, pV);
+        elementDoc = v.getRecord();
+        this.elementIdCache.put(elementId, elementDoc);
 	}
 	
 	public void setNodeProperties(Long nodeId, Collection<NdexProperty> properties, 

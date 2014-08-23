@@ -678,7 +678,7 @@ public class NetworkDAO extends OrientdbDAO {
        //TODO: need to check the current transaction.      
 	}
 	
-	private static BaseTerm getBaseTerm(ODocument o, Network network) {
+	private BaseTerm getBaseTerm(ODocument o, Network network) {
 		BaseTerm t = new BaseTerm();
 		t.setId((long)o.field(NdexClasses.Element_ID));
 		t.setName((String)o.field(NdexClasses.BTerm_P_name));
@@ -822,7 +822,7 @@ public class NetworkDAO extends OrientdbDAO {
     		ODocument doc = (ODocument) reifiedTRec;
 
     		if ( doc.getClassName().equals(NdexClasses.Citation)) {
-    			namespaces.add(NetworkDAO.getNamespace(doc));
+    			namespaces.add(getNamespace(doc));
     		}
     	}
     	return namespaces;
@@ -870,11 +870,13 @@ public class NetworkDAO extends OrientdbDAO {
         return null;
 	}
 */	
-    private static Namespace getNamespace(ODocument ns) {
+    private Namespace getNamespace(ODocument ns) {
        Namespace rns = new Namespace();
        rns.setId((long)ns.field("id"));
        rns.setPrefix((String)ns.field(NdexClasses.ns_P_prefix));
        rns.setUri((String)ns.field(NdexClasses.ns_P_uri));
+       
+       getPropertiesFromDocument(rns, ns);
        return rns;
     } 
     
@@ -1340,7 +1342,7 @@ public class NetworkDAO extends OrientdbDAO {
     		ODocument doc = (ODocument) reifiedTRec;
 
     		if ( doc.getClassName().equals(NdexClasses.Namespace)) {
-    			Namespace ns1 = NetworkDAO.getNamespace(doc);
+    			Namespace ns1 = getNamespace(doc);
     			if ( ns1.getPrefix()!=null && ns1.getPrefix().equals(nsPrefix)) {
     				nsdoc = doc;
     				break;
@@ -1356,7 +1358,7 @@ public class NetworkDAO extends OrientdbDAO {
         		ODocument doc = (ODocument) reifiedTRec;
 
         		if ( doc.getClassName().equals(NdexClasses.BaseTerm)) {
-        			BaseTerm t = NetworkDAO.getBaseTerm(doc,null);
+        			BaseTerm t = getBaseTerm(doc,null);
         			baseTerms.add(t);
         		}
         	}
