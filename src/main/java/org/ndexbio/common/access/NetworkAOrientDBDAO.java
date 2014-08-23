@@ -64,10 +64,14 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#getTerms(java.lang.String, int, int)
 	 */
-	public List<BaseTerm> getTerms(User user, final String networkId,
+	public List<BaseTerm> getBaseTerms(User user, final String networkId,
 			final int skipBlocks, final int blockSize)
 			throws IllegalArgumentException, NdexException {
-		final ORID networkRid = checkAndConvertNetworkId(networkId);
+		
+		NetworkDAO dao = new NetworkDAO(this._ndexDatabase);
+		ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
+		
+		final ORID networkRid = networkDoc.getIdentity();
 		checkBlockSize(blockSize);
 
 		final List<BaseTerm> foundTerms = new ArrayList<BaseTerm>();
@@ -1100,5 +1104,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		}
       	return null;
    }
+
+
 
 }

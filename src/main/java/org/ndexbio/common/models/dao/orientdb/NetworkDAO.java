@@ -14,9 +14,11 @@ import java.util.regex.Pattern;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
+import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -1326,6 +1328,30 @@ public class NetworkDAO extends OrientdbDAO {
 	    
 	    //TODO: check the current Transaction.
 	    return results;
+    }
+    
+	public Collection<BaseTerm> getBaseTerms(String networkUUID) {
+		ArrayList<BaseTerm> baseTerms = new ArrayList<BaseTerm>();
+		
+		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
+		
+		
+        	for (OIdentifiable reifiedTRec : new OTraverse()
+     			.field("in_"+ NdexClasses.Network_E_BaseTerms)
+     			.target(networkDoc)
+     			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+        		ODocument doc = (ODocument) reifiedTRec;
+
+        		if ( doc.getClassName().equals(NdexClasses.BaseTerm)) {
+        			BaseTerm t = NetworkDAO.getBaseTerm(doc,null);
+        			baseTerms.add(t);
+        		}
+        	}
+    	  	
+    	
+    	return baseTerms;
+    	
     }
     
     public Collection<BaseTerm> getBaseTermsByPrefix(String networkUUID, String nsPrefix) {
