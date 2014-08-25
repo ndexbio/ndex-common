@@ -47,7 +47,7 @@ public class GroupDAO extends OrientdbDAO {
 	    **************************************************************************/
 	public GroupDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
 		super(db);
-		this.db = db;
+		this.db = graph.getRawGraph();
 		this.graph = graph;
 	}
 	
@@ -396,15 +396,17 @@ public class GroupDAO extends OrientdbDAO {
 	    **************************************************************************/
 	public void updateMember(Membership membership, UUID groupId, UUID adminId)
 			throws ObjectNotFoundException, NdexException {
-		Preconditions.checkArgument(membership.getMembershipType().equals( MembershipType.GROUP ),
+		Preconditions.checkArgument((membership.getMembershipType() != null)  
+				&& membership.getMembershipType().equals( MembershipType.GROUP ),
 				"Incorrect membership type");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(membership.getMemberUUID().toString()),
+		Preconditions.checkArgument(membership.getMemberUUID() != null,
 				"member UUID required");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId.toString()),
+		Preconditions.checkArgument(groupId != null,
 				"group UUID required");
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(adminId.toString()),
+		Preconditions.checkArgument(adminId != null,
 				"admin UUID required");
-		Preconditions.checkArgument( (membership.getPermissions().equals( Permissions.GROUPADMIN) )
+		Preconditions.checkArgument( (membership.getPermissions() != null) 
+				|| (membership.getPermissions().equals( Permissions.GROUPADMIN) )
 				|| (membership.getPermissions().equals( Permissions.MEMBER) ) ,
 				"Valid permissions required");
 		
