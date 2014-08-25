@@ -67,6 +67,7 @@ public class UserDAO extends OrientdbDAO {
 	 **************************************************************************/
 	public UserDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
 		super(db);
+		this.db = graph.getRawGraph();
 		this.graph = graph;
 	}
 
@@ -310,7 +311,7 @@ public class UserDAO extends OrientdbDAO {
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> users;
 		final List<User> foundUsers = new ArrayList<User>();
-
+		
 		if (simpleQuery.getPermission() == null)
 			traversePermission = "in_groupadmin, in_member";
 		else
@@ -324,6 +325,7 @@ public class UserDAO extends OrientdbDAO {
 		try {
 
 			if (!Strings.isNullOrEmpty(simpleQuery.getAccountName())) {
+				//TODO user orientdbDAO method
 				OIndex<?> accountNameIdx = this.db.getMetadata()
 						.getIndexManager().getIndex("index-user-username");
 				OIdentifiable nGroup = (OIdentifiable) accountNameIdx

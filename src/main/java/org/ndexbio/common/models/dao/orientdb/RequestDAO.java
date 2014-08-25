@@ -39,7 +39,7 @@ public class RequestDAO extends OrientdbDAO  {
 	    **************************************************************************/
 	public RequestDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
 		super(db);
-		this.db = db;
+		this.db = graph.getRawGraph();
 		this.graph = graph;
 	}
 
