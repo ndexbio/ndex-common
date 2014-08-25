@@ -1474,6 +1474,15 @@ public class NetworkDAO extends OrientdbDAO {
 		// 
 		return 1;
 	}
+
+	public void rollback() {
+		graph.rollback();		
+	}
+
+	public void commit() {
+		graph.commit();
+		
+	}
     
 }
 
