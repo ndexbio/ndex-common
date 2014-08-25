@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -196,9 +197,21 @@ public class NetworkDAO extends OrientdbDAO {
         if (nDoc==null) return null;
    
         Network network = getNetwork(nDoc);
+        
+        for (OIdentifiable nodeDoc : new OTraverse()
+        	.field("out_"+ NdexClasses.Network_E_Nodes )
+        	.target(nDoc)
+        	.predicate( new OSQLPredicate("$depth <= 1"))) {
 
-	    // get Edges
-//	    int i = 0 ;
+        	ODocument doc = (ODocument) nodeDoc;
+
+        	if ( doc.getClassName().equals(NdexClasses.Node) ) {
+        		Node node = getNode(doc,network);
+        		network.getNodes().put(node.getId(), node);
+ 
+        	}
+        }
+
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
@@ -207,12 +220,10 @@ public class NetworkDAO extends OrientdbDAO {
             ODocument doc = (ODocument) nodeDoc;
          
             if ( doc.getClassName().equals(NdexClasses.Edge) ) {
-//            	   i++;	
               	   Edge e = getEdgeFromDocument(doc,network);
               	   network.getEdges().put(e.getId(), e);
             	 
             }
-//            System.out.println ("got " + i + " edges from iterator.");
         }
         
         return network;
@@ -449,7 +460,7 @@ public class NetworkDAO extends OrientdbDAO {
 		
 		//populate citations
     	for (OIdentifiable citationRec : new OTraverse()
- 				.field("out_"+ NdexClasses.Node_E_ciations )
+ 				.field("out_"+ NdexClasses.Edge_E_citations )
  				.target(doc)
  				.predicate( new OSQLPredicate("$depth <= 1"))) {
     		ODocument citationDoc = (ODocument) citationRec;
@@ -466,7 +477,7 @@ public class NetworkDAO extends OrientdbDAO {
    		
 		//populate support
     	for (OIdentifiable supportRec : new OTraverse()
- 				.field("out_"+ NdexClasses.Node_E_supports )
+ 				.field("out_"+ NdexClasses.Edge_E_supports )
  				.target(doc)
  				.predicate( new OSQLPredicate("$depth <= 1"))) {
     		ODocument supportDoc = (ODocument) supportRec;
@@ -793,6 +804,11 @@ public class NetworkDAO extends OrientdbDAO {
         return getCitationFromDoc(c);
 	}
 	
+	/**
+	 *  This function returns the citations in this network.
+	 * @param networkUUID
+	 * @return
+	 */
 	public Collection<Citation> getNetworkCitations(String networkUUID) {
 		ArrayList<Citation> citations = new ArrayList<Citation>();
 		
@@ -811,6 +827,45 @@ public class NetworkDAO extends OrientdbDAO {
     	}
     	return citations;
 	}
+
+	/**
+	 * Get all citations (including citations relate to the network and citations that only 
+	 * related to certain edges.) .  
+	 * @param networkUUID
+	 * @return
+	 * @throws NdexException 
+	 * @throws ObjectNotFoundException 
+	 */
+/*	
+	public Collection<Citation> getNetworkCitationsAll(String networkUUID) throws ObjectNotFoundException, NdexException {
+		Collection<Citation> citations = getNetworkCitations(networkUUID);
+		
+		TreeMap <OIdentifiable, Citation> citationMap = new TreeMap <OIdentifiable,Citation>();
+		
+		ODocument networkDoc = this.getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
+
+    	for (OIdentifiable reifiedTRec : new OTraverse()
+ 			.fields("out_"+ NdexClasses.Network_E_Edges, "out_" + NdexClasses.Edge_E_citations )
+ 			.target( networkDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 2"))) {
+
+    		ODocument doc = (ODocument) reifiedTRec;
+
+    		if ( doc.getClassName().equals(NdexClasses.Citation)) {
+    			if ( !citationMap.containsKey(doc))
+    				citationMap.put(doc , this.getCitationFromDoc(doc));
+    		}
+    	}
+		
+    	TreeSet<Citation> finalCitations = new TreeSet<Citation> ();
+    	
+    	finalCitations.addAll(citations);
+    	
+    	finalCitations.addAll(citationMap.values());
+    	
+		return finalCitations;
+	}
+*/	
 	
 	public Collection<Namespace> getNetworkNamespaces(String networkUUID) {
 		ArrayList<Namespace> namespaces = new ArrayList<Namespace>();
@@ -838,6 +893,11 @@ public class NetworkDAO extends OrientdbDAO {
 		result.setTitle((String)doc.field(NdexClasses.Citation_P_title));
 		result.setIdType((String)doc.field(NdexClasses.Citation_p_idType));
 		result.setIdentifier((String)doc.field(NdexClasses.Citation_P_identifier));
+		
+		List<String> o = doc.field(NdexClasses.Citation_P_contributors);
+		
+		if ( o!=null && !o.isEmpty())
+			result.setContributors(o);
 		
 		getPropertiesFromDocument(result,doc);
 
@@ -1395,9 +1455,38 @@ public class NetworkDAO extends OrientdbDAO {
     	
     }
     
-    //TODO: implement this function.
+    /**
+     * This funciton return a self-contained sub network from a given citation. It is mainly for the XBel exporter.
+     * No networkSummary values are populated from the db in the result.
+     * @param networkUUID
+     * @param citationId
+     * @return
+     * @throws NdexException
+     */
     public Network getSubnetworkByCitation(String networkUUID, Long citationId) throws NdexException {
-    	throw new NdexException("getSubnetworkFromCitation is not implmented yet.");
+//    	ODocument networkDoc = this.getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
+    	Network result = new Network();
+    	
+    	ODocument citationDoc = this.getDocumentByElementId(NdexClasses.Citation, citationId);
+    	Citation c = this.getCitationFromDoc(citationDoc);
+    	result.getCitations().put(c.getId(), c);
+    	
+    	for (OIdentifiable reifiedTRec : new OTraverse()
+ 			.field("in_"+ NdexClasses.Edge_E_citations)
+ 			.target(citationDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument doc = (ODocument) reifiedTRec;
+
+    		if ( doc.getClassName().equals(NdexClasses.Edge)) {
+    			Edge e = getEdgeFromDocument(doc, result);
+    			result.getEdges().put(e.getId(), e);
+    		}
+    	}
+    	result.setEdgeCount(result.getEdges().size());
+    	result.setNodeCount(result.getNodes().size());
+    	
+    	return result;
     }
     
     public int grantPrivilege(String networkUUID, String accountUUID, Permissions permission) throws NdexException {

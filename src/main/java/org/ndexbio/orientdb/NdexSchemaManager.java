@@ -247,7 +247,7 @@ public class NdexSchemaManager
         
         if (orientDbGraph.getVertexType(NdexClasses.Network) == null)
         {
-            OClass networkClass = orientDbGraph.createVertexType(NdexClasses.Network);
+            OClass networkClass = orientDbGraph.createVertexType(NdexClasses.Network,clsNdxExternalObj);
        //     networkClass.createProperty("copyright", OType.STRING);
             networkClass.createProperty("description", OType.STRING);
             networkClass.createProperty("edgeCount", OType.INTEGER);

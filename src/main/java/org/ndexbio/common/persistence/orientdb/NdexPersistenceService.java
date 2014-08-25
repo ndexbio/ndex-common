@@ -434,6 +434,7 @@ public class NdexPersistenceService extends PersistenceService {
 
 		    this.network.setEdgeCount(this.network.getEdgeCount()+1);
 		    
+		    // add citation.
 		    if (citation != null) {
 				ODocument citationDoc = this.elementIdCache.get(citation.getId());
 		    	OrientVertex citationV = this.graph.getVertex(citationDoc);
