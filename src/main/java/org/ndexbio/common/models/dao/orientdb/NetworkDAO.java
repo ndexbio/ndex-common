@@ -30,6 +30,7 @@ import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphEdge;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.network.PropertyGraphNode;
+import org.ndexbio.model.object.network.Provenance;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
@@ -823,7 +824,7 @@ public class NetworkDAO extends OrientdbDAO {
 
     		ODocument doc = (ODocument) reifiedTRec;
 
-    		if ( doc.getClassName().equals(NdexClasses.Citation)) {
+    		if ( doc.getClassName().equals(NdexClasses.Namespace)) {
     			namespaces.add(getNamespace(doc));
     		}
     	}
@@ -1462,7 +1463,17 @@ public class NetworkDAO extends OrientdbDAO {
 
     	return 1;
     }
+
+	public Provenance getProvenance(String networkId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
     
+	public int setProvenance(String networkId, Provenance provenance) {
+		// TODO 
+		// 
+		return 1;
+	}
     
 }
 
