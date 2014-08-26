@@ -71,6 +71,48 @@ public class Helper {
 
     	return false;
     }
+
+    public static boolean checkPermissionOnNetworkByAccountName(ODatabaseDocumentTx db, String networkUUID, 
+			String accountName, Permissions expectedPermission) {
+    	String query = "select $path from (traverse out_admin,out_member,out_groupadmin,out_write,out_read from (select * from " + NdexClasses.Account + 
+    			" where accountName='"+ accountName + "') while $depth < 3 ) where UUID = '"+ networkUUID + "'";
+
+    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    	for ( ODocument d : result ) { 
+    		String s = d.field("$path");
+    		Pattern pattern = Pattern.compile("(out_admin|out_write|out_read)");
+    		Matcher matcher = pattern.matcher(s);
+    		if (matcher.find())
+    		{
+    			Permissions p = Permissions.valueOf(matcher.group(1).substring(4).toUpperCase());
+    			if ( permissionSatisfied( expectedPermission, p))
+    				return true;
+    		}  
+    	}
+
+    	return false;
+    }
+
+    
+    /**
+     * Check if the actual permission meets the required permission level.
+     * @param requiredPermission
+     * @param acturalPermission
+     * @return
+     */
+    public static boolean permissionSatisfied(Permissions requiredPermission, Permissions actualPermission) {
+    	if ( actualPermission == Permissions.ADMIN) return true;
+    	if ( actualPermission == Permissions.WRITE) {
+    		if (requiredPermission == Permissions.ADMIN)
+    			return false;
+    		return true;
+    	}
+    	if ( actualPermission == Permissions.READ && requiredPermission == Permissions.READ) 
+    			return true;
+    	return false;
+    }
+    
 /*    
     public static boolean isAdminOfNetworkByAccountName(ODatabaseDocumentTx db, String networkUUID, 
 			String accountName) {
