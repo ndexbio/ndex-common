@@ -90,19 +90,10 @@ public abstract class OrientdbDAO {
 			OIdentifiable record = null;
 			
 			for(String oclass : orientClass) {
-				if(oclass.equals(NdexClasses.Network)) {
 					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
 					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
-					if(temp != null)
+					if((temp != null) && oclass.equals( ((ODocument) temp.getRecord()).getClassName() ) )
 						record = temp;
-				} else {
-					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-					record = (OIdentifiable) Idx.get(id.toString());
-					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
-					if(temp != null)
-						record = temp;
-				}
 				
 			}
 			

@@ -25,7 +25,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class RequestDAO extends OrientdbDAO  {
 	private static final Logger logger = Logger.getLogger(RequestDAO.class.getName());
-	private ODatabaseDocumentTx db;
+	//private ODatabaseDocumentTx db;
 	private OrientGraph graph;
 	
 	/**************************************************************************
@@ -39,14 +39,14 @@ public class RequestDAO extends OrientdbDAO  {
 	@Deprecated
 	public RequestDAO(ODatabaseDocumentTx db, OrientGraph graph) {
 		super(db);
-		this.db = graph.getRawGraph();
+		//this.db = graph.getRawGraph();
 		this.graph = graph;
 	}
 	
 	public RequestDAO(ODatabaseDocumentTx db, boolean autoStartTx) {
 		super(db);
 		this.graph = new OrientGraph(db, autoStartTx);
-		this.db = this.graph.getRawGraph();
+		//this.db = this.graph.getRawGraph();
 	}
 
 	/**************************************************************************
@@ -243,7 +243,7 @@ public class RequestDAO extends OrientdbDAO  {
 				"A Request object is required");
 		Preconditions.checkArgument(updatedRequest.getResponse().equals(ResponseType.ACCEPTED)
 				|| updatedRequest.getResponse().equals(ResponseType.DECLINED),
-				"A proper reponse type is required");
+				"A proper response type is required");
 		Preconditions.checkArgument(account != null,
 				"Must be logged in to update a request");
 
@@ -288,7 +288,7 @@ public class RequestDAO extends OrientdbDAO  {
 	}
 
 	public void commit() {
-		//this.graph.commit();
+		this.graph.commit();
 	}
 	
 	public void rollback() {
@@ -296,9 +296,10 @@ public class RequestDAO extends OrientdbDAO  {
 	}
 	
 	public void close() {
-		this.graph.shutdown();
-		//if(!this.db.isClosed())
-		//	this.db.close();
+		//this.graph.getRawGraph().close(); // closing raw graph will prevent commit
+		//this.graph.shutdown();
+		//if(!this.db.isClosed())  // needed to empty pool?
+			this.db.close();
 	}
 	
 	

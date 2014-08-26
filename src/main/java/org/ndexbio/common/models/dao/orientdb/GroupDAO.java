@@ -33,7 +33,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class GroupDAO extends OrientdbDAO {
 	
-	private ODatabaseDocumentTx db;
+	//private ODatabaseDocumentTx db;
 	private OrientGraph graph;
 	private static final Logger logger = Logger.getLogger(GroupDAO.class.getName());
 
@@ -48,14 +48,14 @@ public class GroupDAO extends OrientdbDAO {
 	@Deprecated
 	public GroupDAO(ODatabaseDocumentTx db, OrientGraph graph) {
 		super(db);
-		this.db = graph.getRawGraph();
+		//this.db = graph.getRawGraph();
 		this.graph = graph;
 	}
 	
 	public GroupDAO(ODatabaseDocumentTx db, boolean autoStartTx) {
 		super(db);
 		this.graph = new OrientGraph(db, autoStartTx);
-		this.db = this.graph.getRawGraph();
+		//this.db = this.graph.getRawGraph();
 	}
 	
 	/**************************************************************************
@@ -679,7 +679,7 @@ public class GroupDAO extends OrientdbDAO {
 	}
 
 	public void commit() {
-		//this.graph.commit();
+		this.graph.commit();
 	}
 	
 	public void rollback() {
@@ -687,9 +687,10 @@ public class GroupDAO extends OrientdbDAO {
 	}
 	
 	public void close() {
-		this.graph.shutdown();
-		//if(!this.db.isClosed())
-			//this.db.close();
+		//this.graph.getRawGraph().close(); // closing raw graph will prevent commit
+		//this.graph.shutdown();
+		//if(!this.db.isClosed())  // needed to empty pool?
+			this.db.close();
 	}
 	
 	
