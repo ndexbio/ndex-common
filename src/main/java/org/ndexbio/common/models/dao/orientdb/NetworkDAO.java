@@ -147,24 +147,19 @@ public class NetworkDAO extends OrientdbDAO {
      * @param UUID  id of the network
      * @param permission  permission to be verified.
      * @return true if the account has that privilege.
+     * @throws NdexException 
+     * @throws ObjectNotFoundException 
      */
 	
-	public boolean checkPrivilege(String accountName, String UUID, Permissions permission) {
-	    String permissionList = "in_" + NdexClasses.E_admin;
-	    if ( permission == Permissions.WRITE) {
-	    	permissionList += ",in_" + NdexClasses.account_E_canEdit; 
-	    } else if ( permission == Permissions.READ) {
-	    	permissionList += ",in_" + NdexClasses.account_E_canEdit + ",in_" + NdexClasses.account_E_canRead;;
-	    }; 
-		String query = "select @RID from (traverse " + permissionList + 
-				" from (select from network where UUID='" + UUID +"') while $path <=1) where $depth > 0 where accountName = '"
-				+ accountName +"'";
-        final List<ODocument> users = db.query(new OSQLSynchQuery<ODocument>(query));
-        
-        if (users.isEmpty())
-	        return false;
+	public boolean checkPrivilege(String accountName, String UUIDStr, Permissions permission) throws ObjectNotFoundException, NdexException {
+		
+		ODocument d = this.getRecordById(UUID.fromString(UUIDStr), NdexClasses.Network);
+		
+		VisibilityType v = d.field(NdexClasses.Network_P_visibility);
+		
+		if ( v == VisibilityType.PUBLIC) return true;
 
-        return true;
+		return Helper.checkPermissionOnNetworkByAccountName(db,UUIDStr, accountName, permission);
 	}
 	
 	
