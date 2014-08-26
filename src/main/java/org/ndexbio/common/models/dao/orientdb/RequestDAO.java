@@ -20,14 +20,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class RequestDAO extends OrientdbDAO  {
 	private static final Logger logger = Logger.getLogger(RequestDAO.class.getName());
-	@SuppressWarnings("unused")
 	private ODatabaseDocumentTx db;
-	private OrientBaseGraph graph;
+	private OrientGraph graph;
 	
 	/**************************************************************************
 	    * RequestDAO
@@ -37,10 +36,17 @@ public class RequestDAO extends OrientdbDAO  {
 	    * @param graph
 	    * 			OrientBaseGraph layer on top of db instance. 
 	    **************************************************************************/
-	public RequestDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
+	@Deprecated
+	public RequestDAO(ODatabaseDocumentTx db, OrientGraph graph) {
 		super(db);
 		this.db = graph.getRawGraph();
 		this.graph = graph;
+	}
+	
+	public RequestDAO(ODatabaseDocumentTx db, boolean autoStartTx) {
+		super(db);
+		this.graph = new OrientGraph(db, autoStartTx);
+		this.db = this.graph.getRawGraph();
 	}
 
 	/**************************************************************************
@@ -275,6 +281,26 @@ public class RequestDAO extends OrientdbDAO  {
 			throw new NdexException("Failed to update the request.");
 		} 
 	}
+	
+
+	public void begin() {
+		this.graph.getRawGraph().begin();
+	}
+
+	public void commit() {
+		//this.graph.commit();
+	}
+	
+	public void rollback() {
+		this.graph.rollback();
+	}
+	
+	public void close() {
+		this.graph.shutdown();
+		//if(!this.db.isClosed())
+		//	this.db.close();
+	}
+	
 	
 	public static Request getRequestFromDocument(ODocument request) throws NdexException {
 		try {

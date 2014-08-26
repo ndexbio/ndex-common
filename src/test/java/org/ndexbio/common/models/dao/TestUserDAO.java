@@ -22,6 +22,7 @@ import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.NewUser;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 public class TestUserDAO {
@@ -29,7 +30,7 @@ public class TestUserDAO {
 	private static UserDAO dao;
 	private static NdexDatabase database;
 	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
-	private static OrientGraphNoTx graph;
+	private static OrientGraph graph;
 	private static User testUser;
 	private static User user;
 	private static User user2;
@@ -43,7 +44,7 @@ public class TestUserDAO {
 		// For use with the Orient Document API
 		localConnection = database.getAConnection();
 		
-		graph = new OrientGraphNoTx(localConnection);
+		graph = new OrientGraph(localConnection);
 		
 		dao = new UserDAO(localConnection, graph);
 		

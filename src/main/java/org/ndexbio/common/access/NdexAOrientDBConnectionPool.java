@@ -43,7 +43,7 @@ public class NdexAOrientDBConnectionPool {
 	      }
 	      return INSTANCE;
 	}
-	
+
 	public ODatabaseDocumentTx acquire() {
 		ODatabaseDocumentTx conn = pool.acquire();
 		

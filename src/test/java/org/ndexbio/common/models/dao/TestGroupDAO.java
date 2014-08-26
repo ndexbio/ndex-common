@@ -22,6 +22,7 @@ import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.NewUser;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
@@ -31,7 +32,7 @@ public class TestGroupDAO
 	private static GroupDAO dao;
 	private static NdexDatabase database;
 	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
-	private static OrientGraphNoTx graph;
+	private static OrientGraph graph;
 	
 	private static User testUserGroupOwner;
 	private static User testUser;
@@ -44,7 +45,7 @@ public class TestGroupDAO
 		// For acquiring connections from the pool
 		database = new NdexDatabase();
 		localConnection = database.getAConnection();
-		graph = new OrientGraphNoTx(localConnection);
+		graph = new OrientGraph(localConnection);
 		userDAO = new UserDAO(localConnection, graph);
 		dao = new GroupDAO(localConnection, graph);
 		

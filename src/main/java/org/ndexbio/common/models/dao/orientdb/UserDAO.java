@@ -42,13 +42,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class UserDAO extends OrientdbDAO {
 
-	private OrientBaseGraph graph;
+	private OrientGraph graph;
 	private static final Logger logger = Logger.getLogger(UserDAO.class
 			.getName());
 
@@ -65,7 +64,8 @@ public class UserDAO extends OrientdbDAO {
 	 * @param graph
 	 *            OrientGraph instance for Graph API operations
 	 **************************************************************************/
-	public UserDAO(ODatabaseDocumentTx db, OrientBaseGraph graph) {
+	@Deprecated
+	public UserDAO(ODatabaseDocumentTx db, OrientGraph graph) {
 		super(db);
 		this.db = graph.getRawGraph();
 		this.graph = graph;
@@ -75,6 +75,12 @@ public class UserDAO extends OrientdbDAO {
 		super(db);
 		this.db = db;
 		this.graph = new OrientGraph(db, false);
+	}
+	
+	public UserDAO(ODatabaseDocumentTx db, boolean autoStartTx) {
+		super(db);
+		this.graph = new OrientGraph(db);
+		this.db = this.graph.getRawGraph();
 	}
 
 	/**************************************************************************
@@ -1030,7 +1036,25 @@ public class UserDAO extends OrientdbDAO {
 			throw new NdexException("Unable to retrieve user tasks");
 		}
 	}
+	
+	public void begin() {
+		this.graph.getRawGraph().begin();
+	}
 
+	public void commit() {
+		//this.graph.commit();
+	}
+	
+	public void rollback() {
+		this.graph.rollback();
+	}
+	
+	public void close() {
+		this.graph.shutdown();
+		//if(!this.db.isClosed())
+			//this.db.close();
+	}
+	
 	/*
 	 * Convert the database results into our object model TODO should this be
 	 * moved to util? being used by other classes, not really a data object but
