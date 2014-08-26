@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -19,6 +20,7 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
+import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
@@ -31,12 +33,13 @@ import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphEdge;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.network.PropertyGraphNode;
-import org.ndexbio.model.object.network.Provenance;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -63,6 +66,7 @@ public class NetworkDAO extends OrientdbDAO {
 	private OrientGraph graph;
 	
 	static Logger logger = Logger.getLogger(NetworkDAO.class.getName());
+	
 	
 	public NetworkDAO (ODatabaseDocumentTx db) {
 	    super(db);
@@ -1548,14 +1552,23 @@ public class NetworkDAO extends OrientdbDAO {
     	return 1;
     }
 
-	public Provenance getProvenance(String networkId) {
-		// TODO Auto-generated method stub
-		return null;
+	public ProvenanceEntity getProvenance(UUID networkId) throws JsonParseException, JsonMappingException, IOException {
+		// get the network document
+		ODocument nDoc = getNetworkDocByUUID(networkId);
+		// get the provenance string
+		String provenanceString = nDoc.field("provenance");
+		// deserialize it to create a ProvenanceEntity object
+		return mapper.readValue(provenanceString, ProvenanceEntity.class);
 	}
     
-	public int setProvenance(String networkId, Provenance provenance) {
-		// TODO 
-		// 
+	public int setProvenance(UUID networkId, ProvenanceEntity provenance) throws JsonProcessingException {
+		// get the network document
+		ODocument nDoc = getNetworkDocByUUID(networkId);	
+		// serialize the ProvenanceEntity
+		String provenanceString = mapper.writeValueAsString(provenance);
+		// store provenance string
+		nDoc.field("provenance", provenanceString);
+				
 		return 1;
 	}
 
