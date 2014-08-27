@@ -159,7 +159,9 @@ public class NetworkDAO extends OrientdbDAO {
 		
 		ODocument d = this.getRecordById(UUID.fromString(UUIDStr), NdexClasses.Network);
 		
-		VisibilityType v = d.field(NdexClasses.Network_P_visibility);
+		String vstr = d.field(NdexClasses.Network_P_visibility);
+		
+		VisibilityType v = VisibilityType.valueOf(vstr);
 		
 		if ( v == VisibilityType.PUBLIC) return true;
 
