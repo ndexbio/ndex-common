@@ -1570,6 +1570,7 @@ public class NetworkDAO extends OrientdbDAO {
 		String provenanceString = mapper.writeValueAsString(provenance);
 		// store provenance string
 		nDoc.field("provenance", provenanceString);
+		nDoc.save();
 				
 		return 1;
 	}
