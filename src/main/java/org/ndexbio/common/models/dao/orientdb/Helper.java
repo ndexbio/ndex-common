@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.model.object.NdexExternalObject;
 import org.ndexbio.model.object.Permissions;
+import org.ndexbio.model.object.network.VisibilityType;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -92,6 +93,19 @@ public class Helper {
     	}
 
     	return false;
+    }
+    
+    public static VisibilityType getNetworkVisibility(ODatabaseDocumentTx db, String networkUUID) {
+    	String query = "select " + NdexClasses.Network_P_visibility + " from " + NdexClasses.Network + 
+    			" where UUID='"+ networkUUID + "'";
+
+    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    	if ( result.isEmpty()) return null;
+ 
+    	String s = result.get(0).field(NdexClasses.Network_P_visibility);
+    	return VisibilityType.valueOf(s);
+    	
     }
 
     
