@@ -1051,9 +1051,9 @@ public class UserDAO extends OrientdbDAO {
 	
 	public void close() {
 		//this.graph.getRawGraph().close(); // closing raw graph will prevent commit
-		//this.graph.shutdown();
+		this.graph.shutdown();
 		//if(!this.db.isClosed())  // needed to empty pool?
-			this.db.close();
+			//this.db.close();
 	}
 	
 	/*

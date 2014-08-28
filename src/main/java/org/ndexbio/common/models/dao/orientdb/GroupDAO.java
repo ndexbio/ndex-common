@@ -447,6 +447,9 @@ public class GroupDAO extends OrientdbDAO {
 					if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vMember.getIdentity() ) ) 
 						graph.removeEdge(e);
 				}
+				//do we need to update our current records?
+				vGroup.getRecord().reload();
+				vMember.getRecord().reload();
 				
 				graph.addEdge(null, vMember, vGroup, membership.getPermissions().toString().toLowerCase());
 				logger.info("Added membership edge between group "
@@ -688,9 +691,9 @@ public class GroupDAO extends OrientdbDAO {
 	
 	public void close() {
 		//this.graph.getRawGraph().close(); // closing raw graph will prevent commit
-		//this.graph.shutdown();
+		this.graph.shutdown();
 		//if(!this.db.isClosed())  // needed to empty pool?
-			this.db.close();
+			//this.db.close();
 	}
 	
 	
