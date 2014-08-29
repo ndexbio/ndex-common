@@ -178,14 +178,12 @@ public class TaskDAO extends OrientdbDAO {
     	return task;
     }
     
-    public int deleteTask (UUID taskID) {
-    	int i = 0;
-    	for ( Vertex v : graph.getVertices(NdexClasses.NdexExternalObject + "." + NdexClasses.ExternalObj_ID, 
-    			           taskID.toString())) {
-    		v.remove();
-    		i++;
-    	}
+    public int deleteTask (UUID taskID) throws ObjectNotFoundException, NdexException {
+        ODocument d = this.getRecordById(taskID,NdexClasses.Task);
+        
+        OrientVertex v = graph.getVertex(d);
+   		v.remove();
     			           
-    	return i;		           
+    	return 1;		           
     }
 }
