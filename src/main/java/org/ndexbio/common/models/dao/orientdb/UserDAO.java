@@ -835,12 +835,13 @@ public class UserDAO extends OrientdbDAO {
 	 *             Invalid userId
 	 **************************************************************************/
 
-	public Membership getMembership(UUID account, UUID resource)
+	public Membership getMembership(UUID account, UUID resource, int depth)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
 
 		Preconditions.checkArgument(account != null, "Account UUID required");
 		Preconditions.checkArgument(resource != null, "Resource UUID required");
+		Preconditions.checkArgument(depth > 0 && depth < 3, "Depth range: [1,2]");
 
 		ODocument OAccount = this.getRecordById(account, NdexClasses.Account);
 		ODocument OResource = this.getRecordById(resource, null);
@@ -850,11 +851,11 @@ public class UserDAO extends OrientdbDAO {
 
 		if (OResource.getClassName().equals(NdexClasses.Group)) {
 			if (this.checkPermission(OAccount.getIdentity(),
-					OResource.getIdentity(), Direction.OUT, 1,
+					OResource.getIdentity(), Direction.OUT, depth,
 					Permissions.GROUPADMIN))
 				permission = Permissions.GROUPADMIN;
 			if (this.checkPermission(OAccount.getIdentity(),
-					OResource.getIdentity(), Direction.OUT, 1,
+					OResource.getIdentity(), Direction.OUT, depth,
 					Permissions.MEMBER))
 				permission = Permissions.MEMBER;
 
@@ -869,15 +870,15 @@ public class UserDAO extends OrientdbDAO {
 
 		} else {
 			if (this.checkPermission(OAccount.getIdentity(),
-					OResource.getIdentity(), Direction.OUT, 2,
+					OResource.getIdentity(), Direction.OUT, depth,
 					Permissions.ADMIN))
 				permission = Permissions.ADMIN;
 			if (this.checkPermission(OAccount.getIdentity(),
-					OResource.getIdentity(), Direction.OUT, 2,
+					OResource.getIdentity(), Direction.OUT, depth,
 					Permissions.WRITE))
 				permission = Permissions.WRITE;
 			if (this.checkPermission(OAccount.getIdentity(),
-					OResource.getIdentity(), Direction.OUT, 2, Permissions.READ))
+					OResource.getIdentity(), Direction.OUT, depth, Permissions.READ))
 				permission = Permissions.READ;
 
 			membership.setMemberAccountName((String) OAccount
