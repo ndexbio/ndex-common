@@ -1560,7 +1560,11 @@ public class NetworkDAO extends OrientdbDAO {
 		// get the provenance string
 		String provenanceString = nDoc.field("provenance");
 		// deserialize it to create a ProvenanceEntity object
-		return mapper.readValue(provenanceString, ProvenanceEntity.class);
+		if (provenanceString != null && provenanceString.length() > 0){
+			return mapper.readValue(provenanceString, ProvenanceEntity.class);
+		} else {
+			return new ProvenanceEntity();
+		}
 	}
     
 	public int setProvenance(UUID networkId, ProvenanceEntity provenance) throws JsonProcessingException {
@@ -1570,6 +1574,7 @@ public class NetworkDAO extends OrientdbDAO {
 		String provenanceString = mapper.writeValueAsString(provenance);
 		// store provenance string
 		nDoc.field("provenance", provenanceString);
+		nDoc.save();
 				
 		return 1;
 	}
