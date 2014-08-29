@@ -872,14 +872,15 @@ public class UserDAO extends OrientdbDAO {
 		} else {
 			if (this.checkPermission(OAccount.getIdentity(),
 					OResource.getIdentity(), Direction.OUT, depth,
-					Permissions.ADMIN))
+					Permissions.ADMIN, Permissions.GROUPADMIN, Permissions.MEMBER))
 				permission = Permissions.ADMIN;
 			if (this.checkPermission(OAccount.getIdentity(),
 					OResource.getIdentity(), Direction.OUT, depth,
-					Permissions.WRITE))
+					Permissions.WRITE, Permissions.GROUPADMIN, Permissions.MEMBER))
 				permission = Permissions.WRITE;
 			if (this.checkPermission(OAccount.getIdentity(),
-					OResource.getIdentity(), Direction.OUT, depth, Permissions.READ))
+					OResource.getIdentity(), Direction.OUT, depth, 
+					Permissions.READ, Permissions.GROUPADMIN, Permissions.MEMBER))
 				permission = Permissions.READ;
 
 			membership.setMemberAccountName((String) OAccount
