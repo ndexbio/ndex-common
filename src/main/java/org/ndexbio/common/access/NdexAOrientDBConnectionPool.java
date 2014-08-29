@@ -47,7 +47,7 @@ public class NdexAOrientDBConnectionPool {
 	public ODatabaseDocumentTx acquire() {
 		ODatabaseDocumentTx conn = pool.acquire();
 		
-	    logger.info("Connection to " 
+	    logger.info(pool.getAvailableConnections(dbURLPropName, dbUserPropName) + " connections available. Connection to " 
 	    		 + Configuration.getInstance().getProperty(dbUserPropName) +
 	    		 "@" + Configuration.getInstance().getProperty(dbURLPropName) + " acquired.");
 	    return conn;
