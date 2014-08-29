@@ -77,11 +77,12 @@ public class UserDAO extends OrientdbDAO {
 		this.graph = new OrientGraph(db, false);
 	}
 	
+	/*
 	public UserDAO(ODatabaseDocumentTx db, boolean autoStartTx) {
 		super(db);
 		this.graph = new OrientGraph(db);
 		//this.db = this.graph.getRawGraph();
-	}
+	} */
 
 	/**************************************************************************
 	 * Authenticates a user trying to login.
