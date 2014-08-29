@@ -842,10 +842,8 @@ public class UserDAO extends OrientdbDAO {
 		Preconditions.checkArgument(account != null, "Account UUID required");
 		Preconditions.checkArgument(resource != null, "Resource UUID required");
 
-		ODocument OAccount = this.getRecordById(account, NdexClasses.User,
-				NdexClasses.Group);
-		ODocument OResource = this.getRecordById(resource, NdexClasses.Network,
-				NdexClasses.Group);
+		ODocument OAccount = this.getRecordById(account, NdexClasses.Account);
+		ODocument OResource = this.getRecordById(resource, null);
 
 		Permissions permission = null;
 		Membership membership = new Membership();
@@ -1051,9 +1049,9 @@ public class UserDAO extends OrientdbDAO {
 	
 	public void close() {
 		//this.graph.getRawGraph().close(); // closing raw graph will prevent commit
-		//this.graph.shutdown();
+		this.graph.shutdown();
 		//if(!this.db.isClosed())  // needed to empty pool?
-			this.db.close();
+			//this.db.close();
 	}
 	
 	/*

@@ -86,7 +86,7 @@ public class RequestDAO extends OrientdbDAO  {
 				"Must be logged in to make a request");
 		
 		// setup
-		ODocument sourceAccount = this.getRecordById(newRequest.getSourceUUID(), NdexClasses.Group, NdexClasses.User);
+		ODocument sourceAccount = this.getRecordById(newRequest.getSourceUUID(), NdexClasses.Account);
 		ODocument userAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
 		
 		ODocument destinationResource;
@@ -127,11 +127,18 @@ public class RequestDAO extends OrientdbDAO  {
 			
 			this.graph.addEdge(null, vUser, vRequest, "requests");
 			
+			//need to reload?
+			vUser.getRecord().reload();
+			vRequest.getRecord().reload();
+			
 			for(Vertex v : vResource.getVertices(Direction.IN, Permissions.GROUPADMIN.name().toLowerCase(), Permissions.ADMIN.name().toLowerCase()) ) {
-				if( ((OrientVertex) v).getRecord().getClassName().equals(NdexClasses.User) )
+				if( ((OrientVertex) v).getRecord().getClassName().equals(NdexClasses.User) ) {
 					graph.addEdge(null, vRequest, v, "requests");
+					vRequest.getRecord().reload();
+				}
 				
 				for(Vertex vv : v.getVertices(Direction.IN, Permissions.GROUPADMIN.name().toLowerCase())) {
+					vRequest.getRecord().reload();
 					graph.addEdge(null, vRequest, vv, "requests");
 				}
 				
@@ -297,9 +304,9 @@ public class RequestDAO extends OrientdbDAO  {
 	
 	public void close() {
 		//this.graph.getRawGraph().close(); // closing raw graph will prevent commit
-		//this.graph.shutdown();
+		this.graph.shutdown();
 		//if(!this.db.isClosed())  // needed to empty pool?
-			this.db.close();
+			//this.db.close();
 	}
 	
 	

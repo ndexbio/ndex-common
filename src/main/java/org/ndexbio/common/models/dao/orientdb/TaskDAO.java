@@ -142,10 +142,10 @@ public class TaskDAO extends OrientdbDAO {
 				if(((OrientVertex) v).getIdentity().equals(userAccount.getIdentity())) {
 					taskDocument.field(NdexClasses.Task_P_status, status).save();
 					return this.getTaskByUUID(UUIDString);
-				} else {
-					logger.severe("Account " + account.getAccountName() + " is not owner of task " + UUIDString);
-					throw new SecurityException("access denied - " + account.getAccountName() + " is not owner of task " + UUIDString); // message will not be saved
-				}
+				} 
+				logger.severe("Account " + account.getAccountName() + " is not owner of task " + UUIDString);
+				throw new SecurityException("access denied - " + account.getAccountName() + " is not owner of task " + UUIDString); // message will not be saved
+				
     		}
 		} catch (SecurityException e){
 			throw e;
@@ -167,5 +167,16 @@ public class TaskDAO extends OrientdbDAO {
     	doc.field(NdexClasses.Task_P_status, status).save();
     	task.setStatus(status);
     	return task;
+    }
+    
+    public int deleteTask (UUID taskID) {
+    	int i = 0;
+    	for ( Vertex v : graph.getVertices(NdexClasses.NdexExternalObject + "." + NdexClasses.ExternalObj_ID, 
+    			           taskID.toString())) {
+    		v.remove();
+    		i++;
+    	}
+    			           
+    	return i;		           
     }
 }

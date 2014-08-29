@@ -2,10 +2,12 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.SimpleNetworkQuery;
@@ -19,9 +21,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-public class NetworkSearchDAO {
+public class NetworkSearchDAO extends OrientdbDAO{
 	
-	private ODatabaseDocumentTx db;
 	private static final Logger logger = Logger.getLogger(NetworkSearchDAO.class.getName());
 	
 	/**************************************************************************
@@ -31,7 +32,7 @@ public class NetworkSearchDAO {
 	    *            Database instance from the Connection pool, should be opened
 	    **************************************************************************/
 	public NetworkSearchDAO (ODatabaseDocumentTx db) {
-		this.db = db;
+		super( db);
 	}
 	
 	public List<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, User loggedInUser) 
@@ -48,6 +49,10 @@ public class NetworkSearchDAO {
 		final List<NetworkSummary> foundNetworks = new ArrayList<NetworkSummary>();
 		final int startIndex = skip * top;
 		
+		// treat "*" and "" the same way
+		if (simpleNetworkQuery.getSearchString().equals("*") )
+			simpleNetworkQuery.setSearchString("");
+
 		if( simpleNetworkQuery.getPermission() == null ) 
 			traversePermission = "out_admin, out_write, out_read";
 		else 
@@ -115,8 +120,9 @@ public class NetworkSearchDAO {
 					
 				return foundNetworks;
 			    
-			} else {
-				query = new OSQLSynchQuery<ODocument>(
+			} 
+			
+			query = new OSQLSynchQuery<ODocument>(
 			  			"SELECT UUID, createdDate, modificationDate, name, isComplete, isLocked, visibility, isPublished, version, nodeCount, edgeCount FROM " + NdexClasses.Network
 			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			 			+ " AND ( visibility <> 'PRIVATE'"
@@ -125,18 +131,18 @@ public class NetworkSearchDAO {
 			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
 				
-				networks = this.db.command(query).execute();
+			networks = this.db.command(query).execute();
 			    
 				// no results returned, return arbitrary selection. may need to be converted to select for performance
-				if( !networks.iterator().hasNext() ) 
+			if( !networks.iterator().hasNext() && simpleNetworkQuery.getSearchString().equals("")) 
 					networks = db.browseClass(NdexClasses.Network).setLimit(top);
 				
-				for (final ODocument network : networks) {
+			for (final ODocument network : networks) {
 					foundNetworks.add(NetworkDAO.getNetworkSummary(network));
-				}
-					
-				return foundNetworks;
 			}
+					
+			return foundNetworks;
+			
 			
 		} catch (Exception e) {
 			
@@ -145,4 +151,16 @@ public class NetworkSearchDAO {
 			
 		} 
 	}
+
+/*	
+	private List<NetworkSummary> getNetworkSummaryByOwnerAccount(String accountName) throws NdexException {
+		try {
+			ODocument accountDoc = this.getRecordByAccountName(accountName, NdexClasses.Account);
+			
+		} catch (ObjectNotFoundException e) {
+			return new ArrayList<NetworkSummary>(0);
+		}
+		
+		
+	} */ 
 }

@@ -31,73 +31,28 @@ public abstract class OrientdbDAO {
 		this.db = db;
 	}
 
-	/**************************************************************************
-	 * Opens a connection to OrientDB and initializes the OrientDB Graph ORM.
-	 * @throws NdexException 
-	 **************************************************************************/
-//	protected void setupDatabase() throws NdexException {
-
-		
-		// When starting up this application, tell OrientDB's global
-		// configuration to close the storage; this is required here otherwise
-		// OrientDB connection pooling doesn't work as expected
-		// OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-
-//		_ndexDatabase =  NdexAOrientDBConnectionPool.getInstance().acquire();
-
-	/*	if (Boolean.parseBoolean(Configuration.getInstance().getProperty(
-				"OrientDB-Use-Transactions")))
-			_orientDbGraph = _graphFactory
-					.create((OrientBaseGraph) new OrientGraph(_ndexDatabase));
-		else
-			_orientDbGraph = _graphFactory
-					.create((OrientBaseGraph) new OrientGraphNoTx(_ndexDatabase));
-*/
-		/*
-		 * only initialize the ORM once
-		 */
-/*		if (!NdexSchemaManager.INSTANCE.isInitialized()) {
-			NdexSchemaManager.INSTANCE.init(_ndexDatabase);
-		}
-	}
-*/
-	/*
-	 * return the connection to the pool
-	 */
-	private void teardownDatabase() {
-
-		if (_ndexDatabase != null) {
-			_ndexDatabase.close();
-			_ndexDatabase = null;
-		}
-/*
-		if (_orientDbGraph != null) {
-			_orientDbGraph.shutdown();
-			_orientDbGraph = null;
-		} */
-	}
-
 	/*
 	 * resolving a user is a common requirement across all DAO classes
 	 * 
 	 */
 
-	protected ODocument getRecordById(UUID id, String... orientClass) 
+	//TODO: review the needs for parameter orientClass
+	protected ODocument getRecordById(UUID id, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
 		
 		try {
 			OIndex<?> Idx;
 			OIdentifiable record = null;
 			
-			for(String oclass : orientClass) {
+//			for(String oclass : orientClass) {
 					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
 					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
-					if((temp != null) && oclass.equals( ((ODocument) temp.getRecord()).getClassName() ) )
+					if((temp != null) )
 						record = temp;
 				
-			}
+//			}
 			
-			if(orientClass.length > 0 && record == null) 
+/*			if(orientClass.length > 0 && record == null) 
 				throw new ObjectNotFoundException("Object", id.toString());
 			
 			if(orientClass.length > 0)
@@ -107,16 +62,13 @@ public abstract class OrientdbDAO {
 				Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
 				record = (OIdentifiable) Idx.get(id.toString());
 			}
-			
+*/			
 			if(record == null) 
 				throw new ObjectNotFoundException("Object", id.toString());
 			
 			return (ODocument) record.getRecord();
 			
-		} catch (ObjectNotFoundException e) {
-			logger.severe("Object with UUID " + id + " does not exist for class: " + orientClass);
-			throw e;
-		} catch (Exception e) {
+		}  catch (Exception e) {
 			logger.severe("Unexpected error on user retrieval by UUID : " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		}
@@ -166,21 +118,6 @@ public abstract class OrientdbDAO {
 		return false;
 	}
 	
-/*	protected IUser findIuserById(final String userId) {
-		Preconditions.checkState(null != this._ndexDatabase && null != this._orientDbGraph,
-				"findUserById invoked without database connection");	
-		try {
-			
-			return  _orientDbGraph.getVertex(
-					IdConverter.toRid(userId),
-					IUser.class);
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		} 
-		return null;
-		
-		
-	} */
 
+	
 }
