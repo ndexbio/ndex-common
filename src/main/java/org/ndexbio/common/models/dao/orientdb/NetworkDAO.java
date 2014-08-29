@@ -1588,6 +1588,26 @@ public class NetworkDAO extends OrientdbDAO {
 		
 	}
     
+	
+	public void updateNetworkProfile(UUID networkId, NetworkSummary newSummary) {
+		ODocument doc = this.getNetworkDocByUUID(networkId);
+		
+		if ( newSummary.getName() != null)
+			doc = doc.field( NdexClasses.Network_P_name, newSummary.getName());
+			
+		if ( newSummary.getDescription() != null)
+			doc = doc.field( NdexClasses.Network_P_desc, newSummary.getDescription());
+		
+		if ( newSummary.getVersion()!=null )
+			doc = doc.field( NdexClasses.Network_P_version, newSummary.getVersion());
+		
+		if ( newSummary.getVisibility()!=null )
+			doc = doc.field( NdexClasses.Network_P_visibility, newSummary.getVisibility());
+		
+		doc.field(NdexClasses.ExternalObj_mDate, new Date())
+		   .save();
+	}
+	
 }
 
 
