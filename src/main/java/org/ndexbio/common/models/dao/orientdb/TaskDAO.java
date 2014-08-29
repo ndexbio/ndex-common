@@ -15,6 +15,7 @@ import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.network.FileFormat;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -69,9 +70,13 @@ public class TaskDAO extends OrientdbDAO {
 					NdexClasses.Task_P_priority, newTask.getPriority(),
 					NdexClasses.Task_P_progress, newTask.getProgress(),
 					NdexClasses.Task_P_taskType, newTask.getTaskType(),
-					NdexClasses.Task_P_resource, newTask.getResource())
-				.save();	
+					NdexClasses.Task_P_resource, newTask.getResource());
 	
+		if ( newTask.getFormat() != null) 
+			taskDoc = taskDoc.field(NdexClasses.Task_P_fileFormat, newTask.getFormat());
+		
+		taskDoc = taskDoc.save();
+		
 		this.graph.getVertex(taskDoc).addEdge(NdexClasses.Task_E_owner, this.graph.getVertex(userDoc));
 		return taskUUID;
 		
@@ -93,6 +98,10 @@ public class TaskDAO extends OrientdbDAO {
 		
 		result.setTaskOwnerId(UUID.fromString((String)ownerDoc.field(NdexClasses.ExternalObj_ID)));
 
+		String str = doc.field(NdexClasses.Task_P_fileFormat);
+		
+		if ( str != null) result.setFormat(FileFormat.valueOf(str));
+		
         return result;
 	}
 	

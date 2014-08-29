@@ -139,6 +139,7 @@ public class NdexClasses {
     public static final String Task_P_progress = "progress";
     public static final String Task_P_taskType = "taskType";
     public static final String Task_P_resource = "resource";
+    public static final String Task_P_fileFormat = "format";
     
     public static final String Task_E_owner   = "ownedBy";
     
