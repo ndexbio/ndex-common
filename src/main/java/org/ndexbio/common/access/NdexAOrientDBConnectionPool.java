@@ -11,7 +11,7 @@ public class NdexAOrientDBConnectionPool {
 	
 	private static NdexAOrientDBConnectionPool INSTANCE = null;
 
-	private static int poolSize = 1000;
+	private static int poolSize = 60;
 	private static final String dbURLPropName  = "OrientDB-URL";
 	private static final String dbUserPropName = "OrientDB-Username";
 	

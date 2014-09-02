@@ -384,9 +384,9 @@ public class UserDAO extends OrientdbDAO {
 				}
 				return foundUsers;
 
-			} else {
-
-				query = new OSQLSynchQuery<ODocument>("SELECT FROM "
+			} 
+				
+			query = new OSQLSynchQuery<ODocument>("SELECT FROM "
 						+ NdexClasses.User + " "
 						+ "WHERE accountName.toLowerCase() LIKE '%"
 						+ simpleQuery.getSearchString() + "%'"
@@ -397,17 +397,16 @@ public class UserDAO extends OrientdbDAO {
 						+ "  ORDER BY creation_date DESC " + " SKIP "
 						+ startIndex + " LIMIT " + top);
 
-				users = this.db.command(query).execute();
+			users = this.db.command(query).execute();
 
-				if (!users.iterator().hasNext() && simpleQuery.getSearchString().equals(""))
-					users = db.browseClass(NdexClasses.User).setLimit(top);
+			if (!users.iterator().hasNext() && simpleQuery.getSearchString().equals(""))
+				users = db.browseClass(NdexClasses.User).setLimit(top);
 
-				for (final ODocument user : users) {
+
+			for (final ODocument user : users) {
 					foundUsers.add(UserDAO.getUserFromDocument(user));
-				}
-				return foundUsers;
-
 			}
+			return foundUsers;
 
 		} catch (Exception e) {
 			logger.severe("Unable to query the database");

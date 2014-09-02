@@ -8,7 +8,7 @@ import org.ndexbio.model.object.Permissions;
  * @author chenjing
  *
  */
-public class NdexClasses {
+public interface NdexClasses {
 	
 	public static final String NdexExternalObject = "NdexExternalObject"; 
 	public static final String Account            = "account";
