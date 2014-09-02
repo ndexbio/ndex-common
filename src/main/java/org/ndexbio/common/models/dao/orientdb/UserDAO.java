@@ -319,6 +319,9 @@ public class UserDAO extends OrientdbDAO {
 		Iterable<ODocument> users;
 		final List<User> foundUsers = new ArrayList<User>();
 		
+		if (simpleQuery.getSearchString().equals("*") )
+			simpleQuery.setSearchString("");
+		
 		if (simpleQuery.getPermission() == null)
 			traversePermission = "in_groupadmin, in_member";
 		else
@@ -332,12 +335,7 @@ public class UserDAO extends OrientdbDAO {
 		try {
 
 			if (!Strings.isNullOrEmpty(simpleQuery.getAccountName())) {
-				//TODO user orientdbDAO method
-				OIndex<?> accountNameIdx = this.db.getMetadata()
-						.getIndexManager().getIndex("index-user-username");
-				OIdentifiable nGroup = (OIdentifiable) accountNameIdx
-						.get(simpleQuery.getAccountName()); // account to
-															// traverse by
+				ODocument nGroup = this.getRecordByAccountName(simpleQuery.getAccountName(), NdexClasses.Group);
 
 				if (nGroup == null)
 					throw new NdexException("Invalid accountName to filter by");
@@ -368,7 +366,7 @@ public class UserDAO extends OrientdbDAO {
 
 				users = this.db.command(query).execute();
 
-				if (!users.iterator().hasNext()) {
+				if (!users.iterator().hasNext()  && simpleQuery.getSearchString().equals("")) {
 
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
 							+ " (TRAVERSE " + traversePermission + " FROM"
@@ -401,7 +399,7 @@ public class UserDAO extends OrientdbDAO {
 
 				users = this.db.command(query).execute();
 
-				if (!users.iterator().hasNext())
+				if (!users.iterator().hasNext() && simpleQuery.getSearchString().equals(""))
 					users = db.browseClass(NdexClasses.User).setLimit(top);
 
 				for (final ODocument user : users) {
@@ -870,18 +868,19 @@ public class UserDAO extends OrientdbDAO {
 			membership.setMembershipType(MembershipType.GROUP);
 
 		} else {
+			// order allows us to return most permissive permission
 			if (this.checkPermission(OAccount.getIdentity(),
-					OResource.getIdentity(), Direction.OUT, depth,
-					Permissions.ADMIN, Permissions.GROUPADMIN, Permissions.MEMBER))
-				permission = Permissions.ADMIN;
+					OResource.getIdentity(), Direction.OUT, depth, 
+					Permissions.READ, Permissions.GROUPADMIN, Permissions.MEMBER))
+				permission = Permissions.READ;
 			if (this.checkPermission(OAccount.getIdentity(),
 					OResource.getIdentity(), Direction.OUT, depth,
 					Permissions.WRITE, Permissions.GROUPADMIN, Permissions.MEMBER))
 				permission = Permissions.WRITE;
 			if (this.checkPermission(OAccount.getIdentity(),
-					OResource.getIdentity(), Direction.OUT, depth, 
-					Permissions.READ, Permissions.GROUPADMIN, Permissions.MEMBER))
-				permission = Permissions.READ;
+					OResource.getIdentity(), Direction.OUT, depth,
+					Permissions.ADMIN, Permissions.GROUPADMIN, Permissions.MEMBER))
+				permission = Permissions.ADMIN;
 
 			membership.setMemberAccountName((String) OAccount
 					.field("accountName"));

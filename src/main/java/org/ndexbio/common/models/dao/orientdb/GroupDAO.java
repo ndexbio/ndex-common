@@ -313,6 +313,9 @@ public class GroupDAO extends OrientdbDAO {
 		final List<Group> foundgroups = new ArrayList<Group>();
 		final int startIndex = skipBlocks * blockSize;
 		
+		if (simpleQuery.getSearchString().equals("*") )
+			simpleQuery.setSearchString("");
+		
 		if( simpleQuery.getPermission() == null ) 
 			traversePermission = "out_groupadmin, out_member";
 		else 
@@ -322,8 +325,7 @@ public class GroupDAO extends OrientdbDAO {
 		
 		try {
 			if(!Strings.isNullOrEmpty(simpleQuery.getAccountName())) {
-				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
-				OIdentifiable nUser = (OIdentifiable) accountNameIdx.get(simpleQuery.getAccountName()); // account to traverse by
+				ODocument nUser = this.getRecordByAccountName(simpleQuery.getAccountName(), NdexClasses.User);
 				
 				if(nUser == null) 
 					throw new NdexException("Invalid accountName to filter by");
@@ -342,7 +344,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				groups = this.db.command(query).execute();
 				
-				if( !groups.iterator().hasNext() ) {
+				if( !groups.iterator().hasNext() && simpleQuery.getSearchString().equals("") ) {
 					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
 						+ " (TRAVERSE "+traversePermission+" FROM"
 			  				+ " " + traverseRID
@@ -371,7 +373,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				groups = this.db.command(query).execute();
 				
-				if( !groups.iterator().hasNext() ) 
+				if( !groups.iterator().hasNext() && simpleQuery.getSearchString().equals("") ) 
 					groups = this.db.browseClass(NdexClasses.Group).setLimit(blockSize);
 				
 				for (final ODocument group : groups) {
