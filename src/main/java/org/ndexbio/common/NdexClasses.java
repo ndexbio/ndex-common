@@ -126,6 +126,8 @@ public interface NdexClasses {
     public static final String ndexProp_P_predicateStr = "predicateStr";
     public static final String ndexProp_P_value        = "value";
     public static final String ndexProp_P_datatype		= "dType";
+    public static final String ndexProp_P_predicateId  = "predicateId";
+    public static final String ndexProp_P_valueId	= "valueId";
     
     //user
 

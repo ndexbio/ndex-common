@@ -9,6 +9,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
@@ -20,6 +21,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public abstract class OrientdbDAO {
 	protected ODatabaseDocumentTx _ndexDatabase = null;
@@ -119,5 +121,5 @@ public abstract class OrientdbDAO {
 	}
 	
 
-	
+
 }

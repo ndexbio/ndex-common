@@ -599,7 +599,7 @@ public class NetworkDAO extends OrientdbDAO {
     
     
     // set properties in the passed in object by the information stored in a db document. 
-    private static void getPropertiesFromDocument(PropertiedObject obj, ODocument doc) {
+    public static void getPropertiesFromDocument(PropertiedObject obj, ODocument doc) {
     	for (OIdentifiable ndexPropertyDoc : new OTraverse()
     			.field("out_"+ NdexClasses.E_ndexProperties )
     			.target(doc)
@@ -1595,6 +1595,66 @@ public class NetworkDAO extends OrientdbDAO {
 		doc.field(NdexClasses.ExternalObj_mDate, new Date())
 		   .save();
 	}
+	
+	/**
+	 * This function sets network properties using the given property list. All Existing properties
+	 * of the network will be deleted. 
+	 * @param networkId
+	 * @param properties
+	 * @param isPresentationProperty
+	 * @return
+	 * @throws ObjectNotFoundException
+	 * @throws NdexException
+	 */
+	public int setNetworkProperties (UUID networkId, Collection<NdexProperty> properties,
+			 boolean isPresentationProperty) throws ObjectNotFoundException, NdexException {
+
+		
+		ODocument rec = this.getRecordById(networkId, null);
+		OrientVertex networkV = graph.getVertex(rec);
+		String traverseField = "out_" + 
+		    (isPresentationProperty ? NdexClasses.E_ndexPresentationProps : NdexClasses.E_ndexProperties); 
+		
+    	for (OIdentifiable ndexPropertyDoc : new OTraverse()
+			.field(traverseField)
+			.target(rec)
+			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument propDoc = (ODocument) ndexPropertyDoc;
+
+    		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
+    			OrientVertex v = graph.getVertex(propDoc);
+    			v.remove();
+    		}
+    	}
+
+		int counter = 0 ;
+		for (NdexProperty e : properties) {
+			ODocument pDoc = this.createNdexPropertyDoc(e);
+            OrientVertex pV = graph.getVertex(pDoc);
+       		if ( isPresentationProperty) {
+	            networkV.addEdge(NdexClasses.E_ndexPresentationProps, pV);
+			} else 
+				networkV.addEdge(NdexClasses.E_ndexProperties, pV);
+       		counter ++;
+		}
+		return counter;
+	}
+	
+	
+	private ODocument createNdexPropertyDoc(NdexProperty property) {
+		ODocument pDoc = new ODocument(NdexClasses.NdexProperty)
+		.fields(NdexClasses.ndexProp_P_predicateStr,property.getPredicateString(),
+				NdexClasses.ndexProp_P_value, property.getValue(),
+				NdexClasses.ndexProp_P_datatype, property.getDataType());
+		if ( property.getPredicateId() >0) 
+			pDoc = pDoc.field(NdexClasses.ndexProp_P_predicateId, property.getPredicateId());
+		if (property.getValueId() >0)
+			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId());
+		return  pDoc.save();
+	}
+	
+
 	
 }
 
