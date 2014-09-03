@@ -21,36 +21,47 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class PropertyGraphLoader {
 	
-	private NdexPersistenceService persistenceService;
+//	private NdexPersistenceService persistenceService;
+	NdexDatabase db;
 	private ObjectMapper mapper;
 	
 	public PropertyGraphLoader (NdexDatabase db)  {
-		this.persistenceService = new NdexPersistenceService(db);
+		this.db = db;
+//		this.persistenceService = new NdexPersistenceService(db);
 		mapper = new ObjectMapper();
 	}
 	
 	public NetworkSummary insertNetwork(PropertyGraphNetwork network, String accountName) throws Exception {
 		UUID uuid = null;
+		NdexPersistenceService persistenceService = null;
+		try {
+			persistenceService = new NdexPersistenceService(db);;
 		
-		for ( NdexProperty p : network.getProperties()) {
-			if ( p.getPredicateString().equals ( PropertyGraphNetwork.uuid) ) {
-				uuid = UUID.fromString(p.getValue());
-				break;
+			for ( NdexProperty p : network.getProperties()) {
+				if ( p.getPredicateString().equals ( PropertyGraphNetwork.uuid) ) {
+					uuid = UUID.fromString(p.getValue());
+					break;
+				}
 			}
-		}
 		
-		if ( uuid == null) {
-			uuid = NdexUUIDFactory.INSTANCE.getNDExUUID();
-			insertNewNetwork(uuid, network, accountName);
-		} else
-			updateNetwork(uuid, network, accountName);
+			if ( uuid == null) {
+				uuid = NdexUUIDFactory.INSTANCE.getNDExUUID();
+				insertNewNetwork(uuid, network, accountName,persistenceService );
+			} else
+				updateNetwork(uuid, network, accountName,persistenceService );
 
-		persistenceService.persistNetwork();
-		return persistenceService.getSummaryOfCurrentNetwork();
+			persistenceService.persistNetwork();
+			NetworkSummary result = persistenceService.getSummaryOfCurrentNetwork();
+			persistenceService = null;
+			return result;
+		} finally {
+			if ( persistenceService !=null) persistenceService.close();
+		}
 	}
 	
 
-	private void insertNewNetwork(UUID uuid, PropertyGraphNetwork network, String accountName) throws Exception {
+	private void insertNewNetwork(UUID uuid, PropertyGraphNetwork network, String accountName,
+			NdexPersistenceService persistenceService) throws Exception {
         String title = null;
         String description = null;
         String version = null;
@@ -142,11 +153,13 @@ public class PropertyGraphLoader {
 		
 	}
 	
-	private void updateNetwork (UUID uuid, PropertyGraphNetwork network, String accountName) throws Exception {
+	private void updateNetwork (UUID uuid, PropertyGraphNetwork network, String accountName,
+			NdexPersistenceService persistenceService) throws Exception {
 		//TODO: remove the network from system first.
 		
-		insertNewNetwork(uuid,network, accountName);
+		insertNewNetwork(uuid,network, accountName, persistenceService);
 		
 	}
+	
 	
 }

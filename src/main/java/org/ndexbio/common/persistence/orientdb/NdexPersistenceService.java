@@ -26,9 +26,12 @@ import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.network.Namespace;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -69,7 +72,7 @@ public class NdexPersistenceService extends PersistenceService {
 	// maps a node name to Node Id.
     private Map<String, Long> namedNodeMap;
 	private Map<RawNamespace, Namespace> namespaceMap;
-	private Network network;
+	private NetworkSummary network;
 
 	// key is the full URI or other fully qualified baseTerm as a string.
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
@@ -483,7 +486,7 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 
-    private Network createNetwork(String title, String version, UUID uuid){
+    private NetworkSummary createNetwork(String title, String version, UUID uuid){
 		this.network = new Network();
 		this.network.setExternalId(uuid);
 		this.network.setName(title);
@@ -713,7 +716,9 @@ public class NdexPersistenceService extends PersistenceService {
 		return null;
 	}
 
-	 protected Long createBaseTerm(String localTerm, long nsId) throws ExecutionException {
+	/*
+	 @Override
+	protected Long createBaseTerm(String localTerm, long nsId) throws ExecutionException {
 
 			Long termId = database.getNextId();
 			
@@ -738,7 +743,7 @@ public class NdexPersistenceService extends PersistenceService {
 			return termId;
 	 }
 
-
+*/
 	
 	/**
 	 * Find or create a base term from a string, and return its identifier.
@@ -819,7 +824,7 @@ public class NdexPersistenceService extends PersistenceService {
 		return citationId; 
 	}
 	
-	public Network getCurrentNetwork() {
+	public NetworkSummary getCurrentNetwork() {
 		return this.network;
 	}
 	
@@ -1054,6 +1059,16 @@ public class NdexPersistenceService extends PersistenceService {
 	public void setNetworkProperties(Collection<NdexProperty> properties, 
 			Collection<NdexProperty> presentationProperties) {
 		addPropertiesToVertex ( networkVertex, properties, presentationProperties);
+	}
+	
+	public void setNetworkProvenance(ProvenanceEntity e) throws JsonProcessingException {
+	
+		ObjectMapper mapper = new ObjectMapper();
+		String provenanceString = mapper.writeValueAsString(e);
+		// store provenance string
+		this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_provenance, provenanceString)
+				.save();
+
 	}
 	
 	public void setNetworkTitleAndDescription(String title, String description) {

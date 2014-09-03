@@ -81,12 +81,6 @@ public class NetworkDAO extends OrientdbDAO {
 		this.searchCurrentTx = searchCurrentTransaction;
 	}
 
-/*	public NetworkDAO(NdexDatabase db, UUID networkID) {
-		this.db = db;
-		this.network = getNetworkById(networkID);
-		
-	} */
-	
 	
 	/**
 	 * Returns a subnetwork based on a block of edges selected from the network specified by networkUUID 
@@ -370,7 +364,7 @@ public class NetworkDAO extends OrientdbDAO {
             		mapper.writeValueAsString(nsList)));
        }
 
-       this.getPropertiesFromDocument(network,doc);
+       getPropertiesFromDocument(network,doc);
 	}
 	
 
@@ -605,7 +599,7 @@ public class NetworkDAO extends OrientdbDAO {
     
     
     // set properties in the passed in object by the information stored in a db document. 
-    private void getPropertiesFromDocument(PropertiedObject obj, ODocument doc) {
+    private static void getPropertiesFromDocument(PropertiedObject obj, ODocument doc) {
     	for (OIdentifiable ndexPropertyDoc : new OTraverse()
     			.field("out_"+ NdexClasses.E_ndexProperties )
     			.target(doc)
@@ -642,26 +636,17 @@ public class NetworkDAO extends OrientdbDAO {
 		
 		setNetworkSummary(n, result);
 
-		getPropertiesFromDocument(result,n);
+//		getPropertiesFromDocument(result,n);
 		
 		//TODO: populate all fields.
 		
 		return result;
 	}
 	
-	// first parameter is namespaceID, second parameter is base term
-	final static private String baseTermQuery = "select from (traverse in_" + NdexClasses.BTerm_E_Namespace +
-			  " from (select from " + NdexClasses.Namespace + " where " + 
-			NdexClasses.Element_ID +"= ?)) where @class='" +NdexClasses.BaseTerm + "' and "+NdexClasses.BTerm_P_name +
-	    		 " =?"; 
 	final static private String baseTermQuery2 = "select from " + NdexClasses.BaseTerm +
 			  " where out_" + NdexClasses.BTerm_E_Namespace + " is null and "+NdexClasses.BTerm_P_name +
 	    		 " =?"; 
 	
-	final static private String baseTermQuery3 = "select from (traverse out_" + NdexClasses.Network_E_BaseTerms +
-			" from (select from " + NdexClasses.Network + " where " +
-  		  NdexClasses.Network_P_UUID + "= ?)) where @class='"+  NdexClasses.BaseTerm + "' and " + 
-	       NdexClasses.BTerm_P_name +  " =?";
 	// namespaceID < 0 means baseTerm has a local namespace
 	public BaseTerm getBaseTerm(String baseterm, long namespaceID, String networkId) {
 		List<ODocument> terms;
@@ -1234,7 +1219,9 @@ public class NetworkDAO extends OrientdbDAO {
     
     public static NetworkSummary getNetworkSummary(ODocument doc) {
     	NetworkSummary networkSummary = new NetworkSummary();
-    	return setNetworkSummary(doc,networkSummary);
+    	setNetworkSummary(doc,networkSummary);
+    	getPropertiesFromDocument(networkSummary, doc);
+    	return networkSummary;
     }
     
     public Citation getCitationById(long elementId) {
@@ -1562,9 +1549,10 @@ public class NetworkDAO extends OrientdbDAO {
 		// deserialize it to create a ProvenanceEntity object
 		if (provenanceString != null && provenanceString.length() > 0){
 			return mapper.readValue(provenanceString, ProvenanceEntity.class);
-		} else {
-			return new ProvenanceEntity();
-		}
+		} 
+		
+		return new ProvenanceEntity();
+		
 	}
     
 	public int setProvenance(UUID networkId, ProvenanceEntity provenance) throws JsonProcessingException {
@@ -1573,7 +1561,7 @@ public class NetworkDAO extends OrientdbDAO {
 		// serialize the ProvenanceEntity
 		String provenanceString = mapper.writeValueAsString(provenance);
 		// store provenance string
-		nDoc.field("provenance", provenanceString);
+		nDoc.field(NdexClasses.Network_P_provenance, provenanceString);
 		nDoc.save();
 				
 		return 1;

@@ -81,5 +81,5 @@ public class NdexDatabase {
     	return pool.acquire();
     }
     
-    public ODatabaseDocumentTx getTransactionConnection() {return ndexDatabase;}
+ //   public ODatabaseDocumentTx getTransactionConnection() {return ndexDatabase;}
 }

@@ -61,6 +61,7 @@ public interface NdexClasses {
     public static final String Network_P_version = "version";
     public static final String Network_P_nodeCount = "nodeCount";
     public static final String Network_P_edgeCount = "edgeCount";
+    public static final String Network_P_provenance = "provenance";
     
     public static final String Network_E_Namespace = "networkNS";
     public static final String Network_E_BaseTerms = "BaseTerms";
