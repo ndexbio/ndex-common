@@ -18,9 +18,9 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class Helper {
 	
 	public static NdexExternalObject populateExternalObjectFromDoc(NdexExternalObject obj, ODocument doc) {
-		obj.setCreationDate((Date)doc.field(NdexClasses.ExternalObj_cDate));
+		obj.setCreationTime((Date)doc.field(NdexClasses.ExternalObj_cDate));
 		obj.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
-		obj.setModificationDate((Date)doc.field(NdexClasses.ExternalObj_mDate));
+		obj.setModificationTime((Date)doc.field(NdexClasses.ExternalObj_mDate));
 		
 	    return obj;
 	}

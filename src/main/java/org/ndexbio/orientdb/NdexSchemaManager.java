@@ -54,8 +54,8 @@ public class NdexSchemaManager
         {
         	clsNdxExternalObj = orientDbGraph.createVertexType(NdexClasses.NdexExternalObject);
             clsNdxExternalObj.createProperty(NdexClasses.Network_P_UUID, OType.STRING);
-            clsNdxExternalObj.createProperty("createdDate", OType.DATE);
-            clsNdxExternalObj.createProperty("modificationDate", OType.DATE);
+            clsNdxExternalObj.createProperty("createdDate", OType.DATETIME);
+            clsNdxExternalObj.createProperty("modificationDate", OType.DATETIME);
             
             clsNdxExternalObj.createIndex(NdexClasses.Index_externalID, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
         }

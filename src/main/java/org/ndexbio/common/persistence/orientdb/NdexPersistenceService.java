@@ -497,8 +497,8 @@ public class NdexPersistenceService extends PersistenceService {
         
 		this.networkDoc = new ODocument (NdexClasses.Network)
 		  .fields(NdexClasses.Network_P_UUID,this.network.getExternalId().toString(),
-		  	NdexClasses.ExternalObj_cDate, this.network.getCreationDate(),
-		  	NdexClasses.ExternalObj_mDate, this.network.getModificationDate(),
+		  	NdexClasses.ExternalObj_cDate, this.network.getCreationTime(),
+		  	NdexClasses.ExternalObj_mDate, this.network.getModificationTime(),
 		  	NdexClasses.Network_P_name, this.network.getName(),
 		  	NdexClasses.Network_P_isLocked, this.network.getIsLocked(),
 		  	NdexClasses.Network_P_isComplete, this.network.getIsComplete(),
@@ -1001,13 +1001,13 @@ public class NdexPersistenceService extends PersistenceService {
 	public NetworkSummary getSummaryOfCurrentNetwork() {
 		NetworkSummary summary = new NetworkSummary ();
 		
-		summary.setCreationDate(network.getCreationDate());
+		summary.setCreationTime(network.getCreationTime());
 		summary.setDescription(network.getDescription());
 		summary.setEdgeCount(network.getEdgeCount());
 		summary.setExternalId(network.getExternalId());
 		summary.setIsComplete(network.getIsComplete());
 		summary.setIsLocked(network.getIsLocked());
-		summary.setModificationDate(network.getModificationDate());
+		summary.setModificationTime(network.getModificationTime());
 		summary.setName(network.getName());
 		summary.setNodeCount(network.getNodeCount());
 		summary.setVersion(network.getVersion());

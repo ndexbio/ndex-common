@@ -63,8 +63,8 @@ public class TaskDAO extends OrientdbDAO {
 		UUID taskUUID = NdexUUIDFactory.INSTANCE.getNDExUUID();
 		ODocument taskDoc = new ODocument(NdexClasses.Task)
 				.fields(NdexClasses.ExternalObj_ID, taskUUID.toString(),
-					NdexClasses.ExternalObj_cDate, newTask.getCreationDate(),
-					NdexClasses.ExternalObj_mDate, newTask.getModificationDate(),
+					NdexClasses.ExternalObj_cDate, newTask.getCreationTime(),
+					NdexClasses.ExternalObj_mDate, newTask.getModificationTime(),
 					NdexClasses.Task_P_description, newTask.getDescription(),
 					NdexClasses.Task_P_status, newTask.getStatus(),
 					NdexClasses.Task_P_priority, newTask.getPriority(),

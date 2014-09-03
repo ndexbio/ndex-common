@@ -25,7 +25,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class RequestDAO extends OrientdbDAO  {
 	private static final Logger logger = Logger.getLogger(RequestDAO.class.getName());
-	//private ODatabaseDocumentTx db;
 	private OrientGraph graph;
 	
 	/**************************************************************************
@@ -36,18 +35,17 @@ public class RequestDAO extends OrientdbDAO  {
 	    * @param graph
 	    * 			OrientBaseGraph layer on top of db instance. 
 	    **************************************************************************/
-	@Deprecated
-	public RequestDAO(ODatabaseDocumentTx db, OrientGraph graph) {
+	public RequestDAO(ODatabaseDocumentTx db) {
 		super(db);
 		//this.db = graph.getRawGraph();
-		this.graph = graph;
+		this.graph = new OrientGraph(db);
 	}
 	
-	public RequestDAO(ODatabaseDocumentTx db, boolean autoStartTx) {
+/*	public RequestDAO(ODatabaseDocumentTx db, boolean autoStartTx) {
 		super(db);
 		this.graph = new OrientGraph(db, autoStartTx);
 		//this.db = this.graph.getRawGraph();
-	}
+	} */
 
 	/**************************************************************************
 	    * Creates a request. 
@@ -116,8 +114,10 @@ public class RequestDAO extends OrientdbDAO  {
 			request.field("message", newRequest.getMessage() );
 			request.field("requestPermission", newRequest.getPermission().name() );
 			request.field("response", ResponseType.PENDING );
-			request.field("creationDate", newRequest.getCreationDate() );
-			request.field("UUID", newRequest.getExternalId().toString() );
+			request.field(NdexClasses.ExternalObj_cDate, newRequest.getCreationTime() );
+			request.field(NdexClasses.ExternalObj_ID, newRequest.getExternalId().toString() )
+			.field(NdexClasses.ExternalObj_mDate, newRequest.getModificationTime());
+			
 			request = request.save();
 			
 			// create links
@@ -313,6 +313,8 @@ public class RequestDAO extends OrientdbDAO  {
 	public static Request getRequestFromDocument(ODocument request) throws NdexException {
 		try {
 			Request result = new Request();
+			
+			Helper.populateExternalObjectFromDoc(result, request);
 			result.setSourceName((String) request.field("sourceName"));
 			result.setSourceUUID( UUID.fromString( (String) request.field("sourceUUID") ) ); 
 			result.setDestinationName((String) request.field("destinationName"));
@@ -322,9 +324,9 @@ public class RequestDAO extends OrientdbDAO  {
 			result.setResponder((String) request.field("responder"));
 			result.setResponse( ResponseType.valueOf( (String) request.field("response") ) );
 			result.setResponseMessage((String) request.field("responseMessage"));
-			result.setExternalId( UUID.fromString( (String) request.field("UUID") ) );
-			result.setCreationDate( (Date) request.field("creationDate") );
-			result.setModificationDate( (Date) request.field("modificationDate") );
+/*			result.setExternalId( UUID.fromString( (String) request.field("UUID") ) );
+			result.setCreationTime( (Date) request.field("creationDate") );
+			result.setModificationTime( (Date) request.field("modificationDate") ); */
 			return result;
 		} catch (Exception e) {
 			logger.severe(e.getMessage());
