@@ -83,7 +83,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				
 				String traverseRID = nAccount.getIdentity().toString();
 				query = new OSQLSynchQuery<ODocument>(
-			  			"SELECT UUID, createdDate, modificationDate, name, isComplete, isLocked, visibility, isPublished, version, nodeCount, edgeCount FROM"
+			  			"SELECT  FROM"
 			  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
 			  				+ " " + traverseRID
 			  				+ "  WHILE $depth <= "+traverseDepth.toString()+" )"
@@ -100,7 +100,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				//no results returned, eliminate search filter and return
 				if( !networks.iterator().hasNext() ) {
 					query = new OSQLSynchQuery<ODocument>(
-				  			"SELECT UUID, createdDate, modificationDate, name, isComplete, isLocked, visibility, isPublished, version, nodeCount, edgeCount FROM"
+				  			"SELECT FROM"
 				  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
 				  				+ " " + traverseRID
 				  				+ "  WHILE $depth <= "+traverseDepth.toString()+" )"
@@ -123,7 +123,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			} 
 			
 			query = new OSQLSynchQuery<ODocument>(
-			  			"SELECT UUID, createdDate, modificationDate, name, isComplete, isLocked, visibility, isPublished, version, nodeCount, edgeCount FROM " + NdexClasses.Network
+			  			"SELECT FROM " + NdexClasses.Network
 			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			 			+ " AND ( visibility <> 'PRIVATE'"
 						+ " OR in() contains "+userRID
