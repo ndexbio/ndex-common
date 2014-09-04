@@ -324,9 +324,6 @@ public class RequestDAO extends OrientdbDAO  {
 			result.setResponder((String) request.field("responder"));
 			result.setResponse( ResponseType.valueOf( (String) request.field("response") ) );
 			result.setResponseMessage((String) request.field("responseMessage"));
-/*			result.setExternalId( UUID.fromString( (String) request.field("UUID") ) );
-			result.setCreationTime( (Date) request.field("creationDate") );
-			result.setModificationTime( (Date) request.field("modificationDate") ); */
 			return result;
 		} catch (Exception e) {
 			logger.severe(e.getMessage());

@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -707,15 +708,14 @@ public class GroupDAO extends OrientdbDAO {
 	public static Group getGroupFromDocument(ODocument n) {
 		
 		Group result = new Group();
-		
-		result.setExternalId(UUID.fromString((String)n.field(NdexClasses.ExternalObj_ID)));
+
+		Helper.populateExternalObjectFromDoc (result, n);
+
 		result.setAccountName((String)n.field(NdexClasses.account_P_accountName));
 		result.setOrganizationName((String)n.field("organizationName"));
 		result.setWebsite((String)n.field("websiteURL"));
 		result.setDescription((String)n.field("description"));
 		result.setImage((String)n.field("imageURL"));
-		result.setCreationTime((Date)n.field(NdexClasses.ExternalObj_cDate));
-		result.setModificationTime((Date)n.field(NdexClasses.ExternalObj_mDate));
 		
 		return result;
 	}

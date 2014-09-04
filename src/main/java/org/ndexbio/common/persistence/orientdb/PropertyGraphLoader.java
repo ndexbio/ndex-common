@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.util.NdexUUIDFactory;
-import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Namespace;
@@ -37,7 +37,7 @@ public class PropertyGraphLoader {
 		try {
 			persistenceService = new NdexPersistenceService(db);;
 		
-			for ( NdexProperty p : network.getProperties()) {
+			for ( NdexPropertyValuePair p : network.getProperties()) {
 				if ( p.getPredicateString().equals ( PropertyGraphNetwork.uuid) ) {
 					uuid = UUID.fromString(p.getValue());
 					break;
@@ -65,10 +65,10 @@ public class PropertyGraphLoader {
         String title = null;
         String description = null;
         String version = null;
-        List<NdexProperty> otherAttributes = new ArrayList<NdexProperty>();
+        List<NdexPropertyValuePair> otherAttributes = new ArrayList<NdexPropertyValuePair>();
         
         Namespace[] namespaces = null;
-        for ( NdexProperty p : network.getProperties()) {
+        for ( NdexPropertyValuePair p : network.getProperties()) {
 			if ( p.getPredicateString().equals(PropertyGraphNetwork.name) ) {
 				title = p.getValue();
 			} else if ( p.getPredicateString().equals(PropertyGraphNetwork.version) ) {
@@ -101,9 +101,9 @@ public class PropertyGraphLoader {
 			
 			String nodeName = null;
 			String baseTerm = null;
-			ArrayList<NdexProperty> otherProperties = new ArrayList<NdexProperty>(); 
+			ArrayList<NdexPropertyValuePair> otherProperties = new ArrayList<NdexPropertyValuePair>(); 
 			
-			for ( NdexProperty p : n.getProperties()) {
+			for ( NdexPropertyValuePair p : n.getProperties()) {
 			  if (p.getPredicateString().equals(PropertyGraphNode.represents)) {
 				  baseTerm = p.getValue();  
 			  } else if ( p.getPredicateString().equals(PropertyGraphNode.name)) {
@@ -135,8 +135,8 @@ public class PropertyGraphLoader {
 			// process the citation , property list ...
 			Support support = null;
 			Citation citation = null;
-			ArrayList<NdexProperty> otherProperties = new ArrayList<NdexProperty> (e.getProperties().size()); 
-			for ( NdexProperty p : e.getProperties()) {
+			ArrayList<NdexPropertyValuePair> otherProperties = new ArrayList<NdexPropertyValuePair> (e.getProperties().size()); 
+			for ( NdexPropertyValuePair p : e.getProperties()) {
 				if ( p.getPredicateString().equals(PropertyGraphEdge.supports)) {
 					support = mapper.readValue(p.getValue(), Support.class);
 				} else if ( p.getPredicateString().equals(PropertyGraphEdge.citations)) {

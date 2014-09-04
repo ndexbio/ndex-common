@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -8,7 +9,9 @@ import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.model.object.NdexExternalObject;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
+import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.network.VisibilityType;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -18,11 +21,14 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class Helper {
 	
 	public static NdexExternalObject populateExternalObjectFromDoc(NdexExternalObject obj, ODocument doc) {
-		obj.setCreationTime((Date)doc.field(NdexClasses.ExternalObj_cDate));
 		obj.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
-		obj.setModificationTime((Date)doc.field(NdexClasses.ExternalObj_mDate));
 		
-	    return obj;
+		Date d = doc.field(NdexClasses.ExternalObj_cDate);
+		obj.setCreationTime(new Timestamp(d.getTime()));
+		d = doc.field(NdexClasses.ExternalObj_cDate);
+		obj.setModificationTime(new Timestamp(d.getTime()));
+
+		return obj;
 	}
 
 	
@@ -179,6 +185,43 @@ public class Helper {
     	if ((long) result.get(0).field("c") > 1 ) return true;
 		return false;
     }
+
+	public static NdexPropertyValuePair getNdexPropertyFromDoc(ODocument doc) {
+		NdexPropertyValuePair p = new NdexPropertyValuePair();
+		p.setPredicateString((String)doc.field(NdexClasses.ndexProp_P_predicateStr));
+		p.setValue((String)doc.field(NdexClasses.ndexProp_P_value)) ;
+    	p.setDataType((String)doc.field(NdexClasses.ndexProp_P_datatype));
+		return p;
+	}
+	
+	public static SimplePropertyValuePair getSimplePropertyFromDoc(ODocument doc) {
+		SimplePropertyValuePair p = new SimplePropertyValuePair();
+		p.setName((String)doc.field(NdexClasses.SimpleProp_P_name));
+		p.setValue((String)doc.field(NdexClasses.SimpleProp_P_value)) ;
+    	
+		return p;
+	}
+
+
+	public static ODocument createNdexPropertyDoc(NdexPropertyValuePair property) {
+		ODocument pDoc = new ODocument(NdexClasses.NdexProperty)
+		.fields(NdexClasses.ndexProp_P_predicateStr,property.getPredicateString(),
+				NdexClasses.ndexProp_P_value, property.getValue(),
+				NdexClasses.ndexProp_P_datatype, property.getDataType());
+		if ( property.getPredicateId() >0) 
+			pDoc = pDoc.field(NdexClasses.ndexProp_P_predicateId, property.getPredicateId());
+		if (property.getValueId() >0)
+			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId());
+		return  pDoc.save();
+	}
+	
+	public static ODocument createSimplePropertyDoc(SimplePropertyValuePair property) {
+		ODocument pDoc = new ODocument(NdexClasses.SimpleProperty)
+			.fields(NdexClasses.SimpleProp_P_name,property.getName(),
+					NdexClasses.SimpleProp_P_value, property.getValue())
+			.save();
+		return  pDoc;
+	}
 
     
 }

@@ -15,6 +15,7 @@ public interface NdexClasses {
 	public static final String Group          	  = "group";
 	public static final String Membership         = "membership";
 	public static final String NdexProperty       = "NdexProperty";
+	public static final String SimpleProperty     = "SimpleProperty";
 	public static final String Request            = "request";
 	public static final String Task				  = "task";
 	public static final String User				  = "user";
@@ -33,6 +34,9 @@ public interface NdexClasses {
 	public static final String Subnetwork         = "Subnetwork";
 	public static final String Support            = "support";
 	
+	//presentationProperty
+	public static final String SimpleProp_P_name = "name";
+	public static final String SimpleProp_P_value = "value";
 	
 	//account edges
 	public static final String E_admin               = Permissions.ADMIN.toString().toLowerCase();
@@ -51,8 +55,6 @@ public interface NdexClasses {
     
 	// network properties and edges.
     public static final String Network_P_UUID    = ExternalObj_ID;
-//    public static final String Network_P_cDate   = "createdDate";
-//    public static final String Network_P_mDate   = "modificationDate";
     public static final String Network_P_name    = "name";
     public static final String Network_P_visibility = "visibility";
     public static final String Network_P_isLocked   = "isLocked";
@@ -150,4 +152,10 @@ public interface NdexClasses {
     
     public static final String GRP_E_admin = Permissions.GROUPADMIN.toString().toLowerCase();
     public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
+    
+    //request
+    public static final String Request_P_sourceUUID = "sourceUUID";
+    public static final String Request_P_sourceName = "sourceName";
+    
 }
+

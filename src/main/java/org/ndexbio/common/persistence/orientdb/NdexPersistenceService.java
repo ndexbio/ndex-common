@@ -25,8 +25,9 @@ import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
-import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
+import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.network.Namespace;
 
@@ -218,7 +219,7 @@ public class NdexPersistenceService extends PersistenceService {
                 OrientVertex pV = graph.getVertex(pDoc);
                 nodeVertex.addEdge(NdexClasses.E_ndexProperties, pV);
                 
-                NdexProperty p = new NdexProperty();
+                NdexPropertyValuePair p = new NdexPropertyValuePair();
                 p.setPredicateString(e.getKey());
                 p.setDataType(e.getValue());
 			}
@@ -230,7 +231,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 
 	
-	public void addPropertyToNode(long nodeId, NdexProperty p, boolean isPresentationProperty) throws ExecutionException {
+	public void addPropertyToNode(long nodeId, NdexPropertyValuePair p, boolean isPresentationProperty) throws ExecutionException {
 		ODocument nodeDoc = elementIdCache.get(nodeId);
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
 
@@ -374,7 +375,7 @@ public class NdexPersistenceService extends PersistenceService {
                     OrientVertex pV = graph.getVertex(pDoc);
                     edgeVertex.addEdge(NdexClasses.E_ndexProperties, pV);
                     
-                    NdexProperty p = new NdexProperty();
+                    NdexPropertyValuePair p = new NdexPropertyValuePair();
                     p.setPredicateString(e.getKey());
                     p.setDataType(e.getValue());
 				}
@@ -409,7 +410,8 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 	
 	public Edge createEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
-			 Support support, Citation citation, List<NdexProperty> properties, List<NdexProperty> presentationProps )
+			 Support support, Citation citation, List<NdexPropertyValuePair> properties,
+			 List<SimplePropertyValuePair> presentationProps )
 			throws NdexException, ExecutionException {
 		if (null != objectNodeId && null != subjectNodeId && null != predicateId) {
 			
@@ -1056,8 +1058,8 @@ public class NdexPersistenceService extends PersistenceService {
 		}
 	}
 	
-	public void setNetworkProperties(Collection<NdexProperty> properties, 
-			Collection<NdexProperty> presentationProperties) {
+	public void setNetworkProperties(Collection<NdexPropertyValuePair> properties, 
+			Collection<SimplePropertyValuePair> presentationProperties) {
 		addPropertiesToVertex ( networkVertex, properties, presentationProperties);
 	}
 	
@@ -1116,8 +1118,8 @@ public class NdexPersistenceService extends PersistenceService {
         this.elementIdCache.put(elementId, elementDoc);
 	}
 	
-	public void setNodeProperties(Long nodeId, Collection<NdexProperty> properties, 
-			Collection<NdexProperty> presentationProperties) throws ExecutionException {
+	public void setNodeProperties(Long nodeId, Collection<NdexPropertyValuePair> properties, 
+			Collection<SimplePropertyValuePair> presentationProperties) throws ExecutionException {
 		ODocument nodeDoc = this.elementIdCache.get(nodeId);
 		OrientVertex v = graph.getVertex(nodeDoc);
 		addPropertiesToVertex ( v, properties, presentationProperties);

@@ -54,8 +54,8 @@ public class NdexSchemaManager
         {
         	clsNdxExternalObj = orientDbGraph.createVertexType(NdexClasses.NdexExternalObject);
             clsNdxExternalObj.createProperty(NdexClasses.Network_P_UUID, OType.STRING);
-            clsNdxExternalObj.createProperty("createdDate", OType.DATETIME);
-            clsNdxExternalObj.createProperty("modificationDate", OType.DATETIME);
+            clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_cDate, OType.DATETIME);
+            clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_mDate, OType.DATETIME);
             
             clsNdxExternalObj.createIndex(NdexClasses.Index_externalID, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
         }
@@ -88,28 +88,25 @@ public class NdexSchemaManager
         {
             OClass groupClass = orientDbGraph.createVertexType(NdexClasses.Group, clsAccount);
             groupClass.createProperty("organizationName", OType.STRING);
-            groupClass.createProperty("type", OType.STRING);
             
 //            groupClass.createIndex("index-group-name", OClass.INDEX_TYPE.UNIQUE, "name");
         }
         
- /*  removed in 1.0
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Membership);  
-        if ( cls == null)
-        {
-        	cls = orientDbGraph.createVertexType(NdexClasses.Membership,clsNdxExternalObj);
-            cls.createProperty("permissions", OType.STRING);
-            cls.createProperty("membershipType", OType.STRING);
-        //    cls.createProperty("type", OType.STRING);
-        }
-*/
+ 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexProperty);  
         if ( cls == null)
         {
         	cls = orientDbGraph.createVertexType(NdexClasses.NdexProperty);
             cls.createProperty("value", OType.STRING);
             cls.createProperty("dataType", OType.STRING);
- //           cls.createProperty("type", OType.STRING);
+        }
+
+        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.SimpleProperty);  
+        if ( cls == null)
+        {
+        	cls = orientDbGraph.createVertexType(NdexClasses.SimpleProperty);
+            cls.createProperty(NdexClasses.SimpleProp_P_name, OType.STRING);
+            cls.createProperty(NdexClasses.SimpleProp_P_value, OType.STRING);
         }
 
         
@@ -117,12 +114,12 @@ public class NdexSchemaManager
         if (cls == null)
         {
         	cls = orientDbGraph.createVertexType(NdexClasses.Request,clsNdxExternalObj);
-        	cls.createProperty("sourceUUID", OType.STRING);
-        	cls.createProperty("sourceName", OType.STRING);
+        	cls.createProperty(NdexClasses.Request_P_sourceUUID, OType.STRING);
+        	cls.createProperty(NdexClasses.Request_P_sourceName, OType.STRING);
         	cls.createProperty("destinationUUID", OType.STRING);
         	cls.createProperty("destiniationName", OType.STRING);
         	cls.createProperty("message", OType.STRING);
-            cls.createProperty("requestTime", OType.DATETIME);
+            cls.createProperty("permission", OType.STRING);
             cls.createProperty("response", OType.STRING);
             cls.createProperty("responder", OType.STRING);
             cls.createProperty("responseMessage", OType.STRING);
@@ -271,7 +268,7 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_P_name, OType.STRING);
             nodeClass.createProperty(NdexClasses.Element_ID,  OType.LONG);
             nodeClass.createProperty("properties", OType.EMBEDDEDLIST);
-            nodeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+//            nodeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             
             nodeClass.createProperty(NdexClasses.Node_E_represents, OType.LINK, bTermClass);
             nodeClass.createProperty(NdexClasses.Edge_E_subject, OType.LINKSET, edgeClass);
@@ -301,7 +298,7 @@ public class NdexSchemaManager
             clss.createProperty("subnetworktype", OType.STRING);
             clss.createProperty("name", OType.STRING);
             clss.createProperty("properties", OType.EMBEDDEDLIST);
-            clss.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+  //          clss.createProperty("presentationProperties", OType.EMBEDDEDLIST);
         }
 
 

@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -17,10 +18,11 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.ProvenanceEntity;
+import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
@@ -332,18 +334,18 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	private void populatePropetyGraphNetworkFromDoc(PropertyGraphNetwork network, ODocument doc)
 			throws JsonProcessingException {
-        network.getProperties().add(new NdexProperty(
+        network.getProperties().add(new NdexPropertyValuePair(
         		PropertyGraphNetwork.uuid, doc.field(NdexClasses.Network_P_UUID).toString()));
         
-        network.getProperties().add(new NdexProperty(
+        network.getProperties().add(new NdexPropertyValuePair(
         		PropertyGraphNetwork.name, (String)doc.field(NdexClasses.Network_P_name)));
         
         String desc = doc.field(NdexClasses.Network_P_desc);
         if ( desc != null) 
-        	network.getProperties().add(new NdexProperty(PropertyGraphNetwork.description, desc));
+        	network.getProperties().add(new NdexPropertyValuePair(PropertyGraphNetwork.description, desc));
         String version = doc.field(NdexClasses.Network_P_version);
         if ( version != null) 
-        	network.getProperties().add(new NdexProperty(PropertyGraphNetwork.version, version));
+        	network.getProperties().add(new NdexPropertyValuePair(PropertyGraphNetwork.version, version));
         
         //namespace
         List<Namespace> nsList = new ArrayList<Namespace>();
@@ -359,7 +361,7 @@ public class NetworkDAO extends OrientdbDAO {
         	  nsList.add(getNamespace(nsDoc));
           }
           if ( ! nsList.isEmpty()) 
-        	  network.getProperties().add(new NdexProperty(
+        	  network.getProperties().add(new NdexPropertyValuePair(
             		PropertyGraphNetwork.namspaces, 
             		mapper.writeValueAsString(nsList)));
        }
@@ -498,7 +500,7 @@ public class NetworkDAO extends OrientdbDAO {
         //populate node name
         String name = doc.field(NdexClasses.Node_P_name);
         if ( name != null) {
-        	n.getProperties().add(new NdexProperty(PropertyGraphNode.name, name));
+        	n.getProperties().add(new NdexPropertyValuePair(PropertyGraphNode.name, name));
         }
         
     	ODocument o = doc.field("out_" + NdexClasses.Node_E_represents);
@@ -519,7 +521,7 @@ public class NetworkDAO extends OrientdbDAO {
     						"' found for term Id record:" + o.getIdentity().toString());
     		}
     		// original 
-    		NdexProperty p = new NdexProperty( PropertyGraphNode.represents, repString);
+    		NdexPropertyValuePair p = new NdexPropertyValuePair( PropertyGraphNode.represents, repString);
 
     		n.getProperties().add(p);
     	}
@@ -609,7 +611,7 @@ public class NetworkDAO extends OrientdbDAO {
   
     		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
 				
-    			obj.getProperties().add( getNdexPropertyFromDoc(propDoc));
+    			obj.getProperties().add( Helper.getNdexPropertyFromDoc(propDoc));
     		}
     	}
 
@@ -624,7 +626,7 @@ public class NetworkDAO extends OrientdbDAO {
   
     		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
 				
-    			obj.getPresentationProperties().add( getNdexPropertyFromDoc(propDoc));
+    			obj.getPresentationProperties().add( Helper.getSimplePropertyFromDoc(propDoc));
     		}
     	}
     	
@@ -890,35 +892,6 @@ public class NetworkDAO extends OrientdbDAO {
 		return result;
 	}
 	
-	
-	
-	private static NdexProperty getNdexPropertyFromDoc(ODocument doc) {
-		NdexProperty p = new NdexProperty();
-		p.setPredicateString((String)doc.field(NdexClasses.ndexProp_P_predicateStr));
-		p.setValue((String)doc.field(NdexClasses.ndexProp_P_value)) ;
-    	p.setDataType((String)doc.field(NdexClasses.ndexProp_P_datatype));
-		return p;
-
-	}
-	
-/*	//This function is no longer needed.
-	public ODocument getNamespaceDocByEId (long elementID) {
-		String query = "select from " + NdexClasses.Namespace + " where " + 
-	        NdexClasses.Element_ID + "=" +elementID;
-        final List<ODocument> nss = db.query(new OSQLSynchQuery<ODocument>(query));
-  
-        if (!nss.isEmpty())
- 	       return nss.get(0);
-        
-        List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClasses.Namespace);
-        for (ORecordOperation op : txOperations) {
-        	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
-        if (id == elementID)
-           return (ODocument) op.getRecord();
-        }
-        return null;
-	}
-*/	
     private Namespace getNamespace(ODocument ns) {
        Namespace rns = new Namespace();
        rns.setId((long)ns.field("id"));
@@ -1203,12 +1176,11 @@ public class NetworkDAO extends OrientdbDAO {
     }
     
     private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
-    	nSummary.setCreationTime((Date)doc.field(NdexClasses.ExternalObj_cDate));
-    	nSummary.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
+    	
+		Helper.populateExternalObjectFromDoc (nSummary, doc);
+
     	nSummary.setName((String)doc.field(NdexClasses.Network_P_name));
     	nSummary.setDescription((String)doc.field(NdexClasses.Network_P_desc));
-    	
-    	nSummary.setModificationTime((Date)doc.field(NdexClasses.ExternalObj_mDate));
     	nSummary.setEdgeCount((int)doc.field(NdexClasses.Network_P_edgeCount));
     	nSummary.setNodeCount((int)doc.field(NdexClasses.Network_P_nodeCount));
     	nSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
@@ -1606,14 +1578,13 @@ public class NetworkDAO extends OrientdbDAO {
 	 * @throws ObjectNotFoundException
 	 * @throws NdexException
 	 */
-	public int setNetworkProperties (UUID networkId, Collection<NdexProperty> properties,
-			 boolean isPresentationProperty) throws ObjectNotFoundException, NdexException {
+	public int setNetworkProperties (UUID networkId, Collection<NdexPropertyValuePair> properties
+			 ) throws ObjectNotFoundException, NdexException {
 
 		
 		ODocument rec = this.getRecordById(networkId, null);
 		OrientVertex networkV = graph.getVertex(rec);
-		String traverseField = "out_" + 
-		    (isPresentationProperty ? NdexClasses.E_ndexPresentationProps : NdexClasses.E_ndexProperties); 
+		String traverseField = "out_" + NdexClasses.E_ndexProperties; 
 		
     	for (OIdentifiable ndexPropertyDoc : new OTraverse()
 			.field(traverseField)
@@ -1629,31 +1600,46 @@ public class NetworkDAO extends OrientdbDAO {
     	}
 
 		int counter = 0 ;
-		for (NdexProperty e : properties) {
-			ODocument pDoc = this.createNdexPropertyDoc(e);
+		for (NdexPropertyValuePair e : properties) {
+			ODocument pDoc = Helper.createNdexPropertyDoc(e);
             OrientVertex pV = graph.getVertex(pDoc);
-       		if ( isPresentationProperty) {
-	            networkV.addEdge(NdexClasses.E_ndexPresentationProps, pV);
-			} else 
-				networkV.addEdge(NdexClasses.E_ndexProperties, pV);
+			networkV.addEdge(NdexClasses.E_ndexProperties, pV);
        		counter ++;
 		}
 		return counter;
 	}
-	
-	
-	private ODocument createNdexPropertyDoc(NdexProperty property) {
-		ODocument pDoc = new ODocument(NdexClasses.NdexProperty)
-		.fields(NdexClasses.ndexProp_P_predicateStr,property.getPredicateString(),
-				NdexClasses.ndexProp_P_value, property.getValue(),
-				NdexClasses.ndexProp_P_datatype, property.getDataType());
-		if ( property.getPredicateId() >0) 
-			pDoc = pDoc.field(NdexClasses.ndexProp_P_predicateId, property.getPredicateId());
-		if (property.getValueId() >0)
-			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId());
-		return  pDoc.save();
+
+	public int setNetworkPresentationProperties (UUID networkId, 
+				Collection<SimplePropertyValuePair> properties
+			 ) throws ObjectNotFoundException, NdexException {
+
+		
+		ODocument rec = this.getRecordById(networkId, null);
+		OrientVertex networkV = graph.getVertex(rec);
+		String traverseField = "out_" + NdexClasses.E_ndexPresentationProps; 
+		
+		for (OIdentifiable ndexPropertyDoc : new OTraverse()
+			.field(traverseField)
+			.target(rec)
+			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+			ODocument propDoc = (ODocument) ndexPropertyDoc;
+
+			if ( propDoc.getClassName().equals(NdexClasses.SimpleProperty)) {
+				OrientVertex v = graph.getVertex(propDoc);
+				v.remove();
+   			}
+		}
+
+		int counter = 0 ;
+		for (SimplePropertyValuePair e : properties) {
+			ODocument pDoc = Helper.createSimplePropertyDoc(e);
+			OrientVertex pV = graph.getVertex(pDoc);
+            networkV.addEdge(NdexClasses.E_ndexPresentationProps, pV);
+      		counter ++;
+		}
+		return counter;
 	}
-	
 
 	
 }

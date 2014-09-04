@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -1064,7 +1065,8 @@ public class UserDAO extends OrientdbDAO {
 
 		User result = new User();
 
-		result.setExternalId(UUID.fromString((String) n.field(NdexClasses.ExternalObj_ID)));
+		Helper.populateExternalObjectFromDoc (result, n);
+
 		result.setAccountName((String) n.field("accountName"));
 		result.setEmailAddress((String) n.field("emailAddress"));
 		result.setFirstName((String) n.field("firstName"));
@@ -1072,8 +1074,7 @@ public class UserDAO extends OrientdbDAO {
 		result.setWebsite((String) n.field("websiteURL"));
 		result.setDescription((String) n.field("description"));
 		result.setImage((String) n.field("imageURL"));
-		result.setCreationTime((Date) n.field(NdexClasses.ExternalObj_cDate));
-		result.setModificationTime((Date) n.field(NdexClasses.ExternalObj_mDate));
+		Date d = n.field(NdexClasses.ExternalObj_mDate);
 
 		return result;
 	}

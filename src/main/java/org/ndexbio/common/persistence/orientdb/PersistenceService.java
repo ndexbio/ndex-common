@@ -10,7 +10,8 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
-import org.ndexbio.model.object.NdexProperty;
+import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.SimplePropertyValuePair;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -62,11 +63,11 @@ public abstract class PersistenceService {
     }
     
 
-	protected void addPropertiesToVertex (OrientVertex vertex, Collection<NdexProperty> properties, 
-			Collection<NdexProperty> presentationProperties) {
+	protected void addPropertiesToVertex (OrientVertex vertex, Collection<NdexPropertyValuePair> properties, 
+			Collection<SimplePropertyValuePair> presentationProperties) {
 
 		if ( properties != null) {
-			for (NdexProperty e : properties) {
+			for (NdexPropertyValuePair e : properties) {
 				ODocument pDoc = this.createNdexPropertyDoc(e.getPredicateString(),e.getValue());
 				pDoc.field(NdexClasses.ndexProp_P_datatype, e.getDataType())
 				.save();
@@ -77,10 +78,8 @@ public abstract class PersistenceService {
 		}
 
 		if ( presentationProperties !=null ) {
-			for (NdexProperty e : presentationProperties) {
-				ODocument pDoc = this.createNdexPropertyDoc(e.getPredicateString(),e.getValue());
-				pDoc.field(NdexClasses.ndexProp_P_datatype, e.getDataType())
-				.save();
+			for (SimplePropertyValuePair e : presentationProperties) {
+				ODocument pDoc = this.createSimplePropertyDoc(e.getName(),e.getValue());
                OrientVertex pV = graph.getVertex(pDoc);
                vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
 			}
@@ -96,6 +95,13 @@ public abstract class PersistenceService {
 			return pDoc;
 		}
 
+	 private ODocument createSimplePropertyDoc(String key, String value) {
+			ODocument pDoc = new ODocument(NdexClasses.SimpleProperty)
+				.fields(NdexClasses.SimpleProp_P_name,key,
+						NdexClasses.SimpleProp_P_value, value)
+			   .save();
+			return pDoc;
+		}
 
 	 public void commit () {
 			//graph.commit();
@@ -156,7 +162,7 @@ public abstract class PersistenceService {
 	 
 	 protected Long createCitation(String title, String idType, String identifier, 
 				List<String> contributors, 
-				Collection<NdexProperty> properties, Collection<NdexProperty> presentationProperties) {
+				Collection<NdexPropertyValuePair> properties, Collection<SimplePropertyValuePair> presentationProperties) {
 			Long citationId = database.getNextId();
 
 			ODocument citationDoc = new ODocument(NdexClasses.Citation)

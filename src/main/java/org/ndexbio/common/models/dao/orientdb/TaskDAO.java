@@ -82,7 +82,7 @@ public class TaskDAO extends OrientdbDAO {
 		
 	}
 
-	static Task getTaskFromDocument(ODocument doc) {
+	protected static Task getTaskFromDocument(ODocument doc) {
 		Task result = new Task();
 
 		Helper.populateExternalObjectFromDoc(result, doc);
