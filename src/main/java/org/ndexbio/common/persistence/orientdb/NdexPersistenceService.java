@@ -488,9 +488,10 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 
-    private NetworkSummary createNetwork(String title, String version, UUID uuid){
-		this.network = new Network();
+    private NetworkSummary createNetwork(String title, String version, UUID uuid) throws NdexException{
+		this.network = new NetworkSummary();
 		this.network.setExternalId(uuid);
+		this.network.setURI(NdexDatabase.getURIPrefix()+"/" + uuid.toString());
 		this.network.setName(title);
 		this.network.setVisibility(VisibilityType.PRIVATE);
 		this.network.setIsLocked(false);
@@ -999,7 +1000,7 @@ public class NdexPersistenceService extends PersistenceService {
 		return reifiedEdgeTermId;
 	}
 
-	
+/*	
 	public NetworkSummary getSummaryOfCurrentNetwork() {
 		NetworkSummary summary = new NetworkSummary ();
 		
@@ -1017,7 +1018,7 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		return summary;
 	}
-
+*/
 	
 	public Long getSupportId(String literal, Long citationId) throws ExecutionException {
 		

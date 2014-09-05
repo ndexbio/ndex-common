@@ -118,9 +118,11 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 	
-	private void cloneNetworkNode()  {
+	private void cloneNetworkNode() throws NdexException  {
 
-		this.networkSummary.setExternalId( NdexUUIDFactory.INSTANCE.getNDExUUID());		
+		this.networkSummary.setExternalId( NdexUUIDFactory.INSTANCE.getNDExUUID());	
+		this.networkSummary.setURI(NdexDatabase.getURIPrefix() + "/"
+					+ this.networkSummary.getExternalId().toString());
 		this.networkSummary.setName(srcNetwork.getName());
 		this.networkSummary.setEdgeCount(srcNetwork.getEdges().size());
 		this.networkSummary.setNodeCount(srcNetwork.getNodes().size());

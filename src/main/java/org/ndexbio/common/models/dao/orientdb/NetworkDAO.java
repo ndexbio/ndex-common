@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
@@ -632,7 +634,7 @@ public class NetworkDAO extends OrientdbDAO {
     	
     }
 	
-	private Network getNetwork(ODocument n) {
+	private Network getNetwork(ODocument n) throws NdexException {
 		
 		Network result = new Network();
 		
@@ -816,44 +818,7 @@ public class NetworkDAO extends OrientdbDAO {
     	return citations;
 	}
 
-	/**
-	 * Get all citations (including citations relate to the network and citations that only 
-	 * related to certain edges.) .  
-	 * @param networkUUID
-	 * @return
-	 * @throws NdexException 
-	 * @throws ObjectNotFoundException 
-	 */
-/*	
-	public Collection<Citation> getNetworkCitationsAll(String networkUUID) throws ObjectNotFoundException, NdexException {
-		Collection<Citation> citations = getNetworkCitations(networkUUID);
-		
-		TreeMap <OIdentifiable, Citation> citationMap = new TreeMap <OIdentifiable,Citation>();
-		
-		ODocument networkDoc = this.getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
 
-    	for (OIdentifiable reifiedTRec : new OTraverse()
- 			.fields("out_"+ NdexClasses.Network_E_Edges, "out_" + NdexClasses.Edge_E_citations )
- 			.target( networkDoc)
- 			.predicate( new OSQLPredicate("$depth <= 2"))) {
-
-    		ODocument doc = (ODocument) reifiedTRec;
-
-    		if ( doc.getClassName().equals(NdexClasses.Citation)) {
-    			if ( !citationMap.containsKey(doc))
-    				citationMap.put(doc , this.getCitationFromDoc(doc));
-    		}
-    	}
-		
-    	TreeSet<Citation> finalCitations = new TreeSet<Citation> ();
-    	
-    	finalCitations.addAll(citations);
-    	
-    	finalCitations.addAll(citationMap.values());
-    	
-		return finalCitations;
-	}
-*/	
 	
 	public Collection<Namespace> getNetworkNamespaces(String networkUUID) {
 		ArrayList<Namespace> namespaces = new ArrayList<Namespace>();
@@ -1175,7 +1140,7 @@ public class NetworkDAO extends OrientdbDAO {
     	return term;
     }
     
-    private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
+    private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) throws NdexException {
     	
 		Helper.populateExternalObjectFromDoc (nSummary, doc);
 
@@ -1186,10 +1151,12 @@ public class NetworkDAO extends OrientdbDAO {
     	nSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
         nSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
 
+        nSummary.setURI(NdexDatabase.getURIPrefix()+ "/" + nSummary.getExternalId().toString());
+        
         return nSummary;
     }
     
-    public static NetworkSummary getNetworkSummary(ODocument doc) {
+    public static NetworkSummary getNetworkSummary(ODocument doc) throws NdexException {
     	NetworkSummary networkSummary = new NetworkSummary();
     	setNetworkSummary(doc,networkSummary);
     	getPropertiesFromDocument(networkSummary, doc);

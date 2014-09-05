@@ -51,7 +51,7 @@ public class PropertyGraphLoader {
 				updateNetwork(uuid, network, accountName,persistenceService );
 
 			persistenceService.persistNetwork();
-			NetworkSummary result = persistenceService.getSummaryOfCurrentNetwork();
+			NetworkSummary result = persistenceService.getCurrentNetwork();
 			persistenceService = null;
 			return result;
 		} finally {

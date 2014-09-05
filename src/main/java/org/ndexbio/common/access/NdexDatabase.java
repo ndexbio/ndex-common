@@ -1,6 +1,10 @@
 package org.ndexbio.common.access;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -27,6 +31,9 @@ public class NdexDatabase {
 	
 	private ODocument vdoc;
 	
+	static private String URIPrefix = null;
+	
+	
 	public NdexDatabase() throws NdexException {
 		pool = NdexAOrientDBConnectionPool.getInstance();
 		ndexDatabase = pool.acquire();
@@ -42,6 +49,22 @@ public class NdexDatabase {
 			ndexDatabase.commit();	
 		} 
 		batchCounter=blockSize;
+		
+	}
+	
+	static public String getURIPrefix () throws NdexException {
+		if ( URIPrefix == null) {
+			URIPrefix = Configuration.getInstance().getProperty("HostURI");
+			if ( URIPrefix == null) {
+				try {
+					URIPrefix = "http://" + InetAddress.getLocalHost().getHostName() ;
+				} catch (UnknownHostException e) {
+					throw new NdexException ("Failed to construct base URI for Ndex server because of UnknownHostException: " 
+							+ e.getMessage());
+				}
+			}
+		}
+		return URIPrefix;
 
 	}
 	
