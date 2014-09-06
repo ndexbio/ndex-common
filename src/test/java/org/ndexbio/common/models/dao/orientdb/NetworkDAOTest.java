@@ -1,38 +1,18 @@
 package org.ndexbio.common.models.dao.orientdb;
 
-import static org.junit.Assert.*;
-
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.ndexbio.common.NdexClasses;
+import org.junit.runners.MethodSorters;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
-import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.persistence.orientdb.PropertyGraphLoader;
-import org.ndexbio.model.object.Permissions;
-import org.ndexbio.model.object.network.Network;
-import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.model.object.network.Node;
-import org.ndexbio.model.object.network.PropertyGraphEdge;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
-import org.ndexbio.model.object.network.PropertyGraphNode;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
-import org.junit.runners.MethodSorters;
-
-import org.junit.FixMethodOrder;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
