@@ -13,7 +13,6 @@ import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.persistence.orientdb.PropertyGraphLoader;
-import org.ndexbio.model.object.NdexProperty;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSummary;
