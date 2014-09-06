@@ -71,7 +71,8 @@ public abstract class OrientdbDAO {
 			return (ODocument) record.getRecord();
 			
 		}  catch (Exception e) {
-			logger.severe("Unexpected error on user retrieval by UUID : " + e.getMessage());
+			logger.severe("Unexpected error on external object retrieval by UUID : " + e.getMessage());
+			e.printStackTrace();
 			throw new NdexException(e.getMessage());
 		}
 		

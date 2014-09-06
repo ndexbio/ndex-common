@@ -32,7 +32,7 @@ public abstract class PersistenceService {
 
 	protected OrientVertex networkVertex;
 
-	private NetworkDAO  networkDAO;
+	protected NetworkDAO  networkDAO;
 	
     protected Logger logger ;
 

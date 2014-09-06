@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawNamespace;
@@ -1140,5 +1141,14 @@ public class NdexPersistenceService extends PersistenceService {
 		OrientVertex termV = graph.getVertex(termDoc);
 		
 		nodeV.addEdge(NdexClasses.Node_E_represents, termV);
+	}
+	
+	public void saveNetworkSummary() throws ObjectNotFoundException, NdexException {
+		this.networkDAO.updateNetworkProfile(this.network.getExternalId(),
+				this.network);
+		this.networkDAO.setNetworkPresentationProperties(
+				this.network.getExternalId(),this.network.getPresentationProperties());
+		this.networkDAO.setNetworkProperties(this.network.getExternalId(),
+				this.network.getProperties());
 	}
 }
