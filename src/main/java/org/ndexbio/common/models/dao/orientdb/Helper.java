@@ -25,9 +25,9 @@ public class Helper {
 	public static NdexExternalObject populateExternalObjectFromDoc(NdexExternalObject obj, ODocument doc) {
 		obj.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
 		
-		Date d = doc.field(NdexClasses.ExternalObj_cDate);
+		Date d = doc.field(NdexClasses.ExternalObj_cTime);
 		obj.setCreationTime(new Timestamp(d.getTime()));
-		d = doc.field(NdexClasses.ExternalObj_cDate);
+		d = doc.field(NdexClasses.ExternalObj_cTime);
 		obj.setModificationTime(new Timestamp(d.getTime()));
 
 		return obj;
@@ -248,7 +248,7 @@ public class Helper {
 	  if ( newSummary.getVisibility()!=null )
 		doc = doc.field( NdexClasses.Network_P_visibility, newSummary.getVisibility());
 	
-	  doc.field(NdexClasses.ExternalObj_mDate, new Date())
+	  doc.field(NdexClasses.ExternalObj_mTime, new Date())
 	     .save();
 	  
 	  return doc;

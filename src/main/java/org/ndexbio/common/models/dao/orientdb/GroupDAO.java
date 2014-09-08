@@ -106,8 +106,8 @@ public class GroupDAO extends OrientdbDAO {
 				group.field("organizationName", newGroup.getOrganizationName());
 			    group.field(NdexClasses.account_P_accountName, newGroup.getAccountName());
 			    group.field(NdexClasses.ExternalObj_ID, result.getExternalId());
-			    group.field(NdexClasses.ExternalObj_cDate, result.getCreationTime());
-			    group.field(NdexClasses.ExternalObj_mDate, result.getModificationTime());
+			    group.field(NdexClasses.ExternalObj_cTime, result.getCreationTime());
+			    group.field(NdexClasses.ExternalObj_mTime, result.getModificationTime());
 			
 				group = group.save();
 				
@@ -272,7 +272,7 @@ public class GroupDAO extends OrientdbDAO {
 			if(!Strings.isNullOrEmpty(updatedGroup.getWebsite())) group.field("websiteURL", updatedGroup.getWebsite());
 			if(!Strings.isNullOrEmpty(updatedGroup.getImage())) group.field("imageURL", updatedGroup.getImage());
 			if(!Strings.isNullOrEmpty(updatedGroup.getOrganizationName())) group.field("organizationName", updatedGroup.getOrganizationName()); 
-			group.field(NdexClasses.ExternalObj_mDate, updatedGroup.getModificationTime());
+			group.field(NdexClasses.ExternalObj_mTime, updatedGroup.getModificationTime());
 
 			group = group.save();
 			logger.info("Updated group profile with UUID " + groupId);
@@ -339,7 +339,7 @@ public class GroupDAO extends OrientdbDAO {
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
 			  			+ " AND accountName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
 						+ " OR organizationName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
-						+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " 
+						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
 				
@@ -351,7 +351,7 @@ public class GroupDAO extends OrientdbDAO {
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
-						+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " 
+						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
 					
@@ -369,7 +369,7 @@ public class GroupDAO extends OrientdbDAO {
 						+ " " + NdexClasses.Group
 						+ " WHERE accountName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
 						+ " OR organizationName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
-						+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " 
+						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
 				
@@ -587,7 +587,7 @@ public class GroupDAO extends OrientdbDAO {
 		  				+ " " + groupRID
 		  				+ "  WHILE $depth <=1)"
 		  			+ " WHERE @class = '" + NdexClasses.Network + "'"
-		 			+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " + " SKIP " + startIndex
+		 			+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP " + startIndex
 		 			+ " LIMIT " + blockSize);
 			
 			List<ODocument> records = this.db.command(query).execute(); 
@@ -654,7 +654,7 @@ public class GroupDAO extends OrientdbDAO {
 		  				+ " " + groupRID
 		  				+ "  WHILE $depth <=1)"
 		  			+ " WHERE @class = '" + NdexClasses.User + "'"
-		 			+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " + " SKIP " + startIndex
+		 			+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP " + startIndex
 		 			+ " LIMIT " + blockSize);
 			
 			List<ODocument> records = this.db.command(query).execute(); 

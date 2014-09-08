@@ -128,8 +128,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 		networkDoc = new ODocument (NdexClasses.Network)
 		  .fields(NdexClasses.Network_P_UUID,this.network.getExternalId().toString(),
-		          NdexClasses.ExternalObj_cDate, network.getCreationTime(),
-		          NdexClasses.ExternalObj_mDate, network.getModificationTime(),
+		          NdexClasses.ExternalObj_cTime, network.getCreationTime(),
+		          NdexClasses.ExternalObj_mTime, network.getModificationTime(),
 		          NdexClasses.Network_P_name, srcNetwork.getName(),
 		          NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
 		          NdexClasses.Network_P_nodeCount, network.getNodeCount(),

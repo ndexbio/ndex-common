@@ -114,9 +114,9 @@ public class RequestDAO extends OrientdbDAO  {
 			request.field("message", newRequest.getMessage() );
 			request.field("requestPermission", newRequest.getPermission().name() );
 			request.field("response", ResponseType.PENDING );
-			request.field(NdexClasses.ExternalObj_cDate, newRequest.getCreationTime() );
+			request.field(NdexClasses.ExternalObj_cTime, newRequest.getCreationTime() );
 			request.field(NdexClasses.ExternalObj_ID, newRequest.getExternalId().toString() )
-			.field(NdexClasses.ExternalObj_mDate, newRequest.getModificationTime());
+			.field(NdexClasses.ExternalObj_mTime, newRequest.getModificationTime());
 			
 			request = request.save();
 			
@@ -271,7 +271,7 @@ public class RequestDAO extends OrientdbDAO  {
 				logger.info("User credentials match with request");
 				
 				request.field("responder", account.getAccountName());
-				request.field("modificationDate", new Date());
+				request.field(NdexClasses.ExternalObj_mTime, new Date());
 				if(updatedRequest.getPermission() != null) request.field("requestPermission", updatedRequest.getPermission().name());
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponseMessage() )) request.field("responseMessage", updatedRequest.getResponseMessage() );
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponse().name() )) request.field("response", updatedRequest.getResponse().name());

@@ -165,8 +165,8 @@ public class UserDAO extends OrientdbDAO {
 			user.field("accountName", newUser.getAccountName());
 			user.field("password", Security.hashText(newUser.getPassword()));
 			user.field(NdexClasses.ExternalObj_ID, NdexUUIDFactory.INSTANCE.getNDExUUID());
-			user.field(NdexClasses.ExternalObj_cDate, new Date());
-			user.field(NdexClasses.ExternalObj_mDate, new Date());
+			user.field(NdexClasses.ExternalObj_cTime, new Date());
+			user.field(NdexClasses.ExternalObj_mTime, new Date());
 
 			user = user.save();
 
@@ -361,7 +361,7 @@ public class UserDAO extends OrientdbDAO {
 						+ "  OR firstName.toLowerCase() LIKE '%"
 						+ simpleQuery.getSearchString()
 						+ "%'"
-						+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC "
+						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC "
 						+ " SKIP "
 						+ startIndex + " LIMIT " + top);
 
@@ -373,7 +373,7 @@ public class UserDAO extends OrientdbDAO {
 							+ " (TRAVERSE " + traversePermission + " FROM"
 							+ " " + traverseRID + " WHILE $depth <=1)"
 							+ " WHERE @class = '" + NdexClasses.User + "'"
-							+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " + " SKIP "
+							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + top);
 
 					users = this.db.command(query).execute();
@@ -395,7 +395,7 @@ public class UserDAO extends OrientdbDAO {
 						+ simpleQuery.getSearchString() + "%'"
 						+ "  OR firstName.toLowerCase() LIKE '%"
 						+ simpleQuery.getSearchString() + "%'"
-						+ "  ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " + " SKIP "
+						+ "  ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 						+ startIndex + " LIMIT " + top);
 
 			users = this.db.command(query).execute();
@@ -660,7 +660,7 @@ public class UserDAO extends OrientdbDAO {
 				user.field("firstName", updatedUser.getFirstName());
 			if (!Strings.isNullOrEmpty(updatedUser.getLastName()))
 				user.field("lastName", updatedUser.getLastName());
-			user.field("modificationDate", updatedUser.getModificationTime());
+			user.field(NdexClasses.ExternalObj_mTime, updatedUser.getModificationTime());
 
 			user = user.save();
 			logger.info("Updated user profile with UUID " + id);
@@ -722,7 +722,7 @@ public class UserDAO extends OrientdbDAO {
 							+ permission.name().toString().toLowerCase()
 							+ " FROM" + " " + userRID + "  WHILE $depth <=2)"
 							+ " WHERE @class = '" + NdexClasses.Network + "'"
-							+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " + " SKIP "
+							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + blockSize);
 
 			List<ODocument> records = this.db.command(query).execute();
@@ -791,7 +791,7 @@ public class UserDAO extends OrientdbDAO {
 							+ permission.name().toString().toLowerCase()
 							+ " FROM" + " " + userRID + "  WHILE $depth <=1)"
 							+ " WHERE @class = '" + NdexClasses.Group + "'"
-							+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " + " SKIP "
+							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + blockSize);
 
 			List<ODocument> records = this.db.command(query).execute();
@@ -932,7 +932,7 @@ public class UserDAO extends OrientdbDAO {
 							+ user.getIdentity().toString()
 							+ "  WHILE $depth <=1)" + " WHERE @class = '"
 							+ NdexClasses.Request + "'"
-							+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " + " SKIP "
+							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + blockSize);
 
 			List<ODocument> records = this.db.command(query).execute();
@@ -981,7 +981,7 @@ public class UserDAO extends OrientdbDAO {
 							+ "  WHILE $depth <=1)" + " WHERE @class = '"
 							+ NdexClasses.Request + "'" + " AND response = '"
 							+ ResponseType.PENDING + "'"
-							+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " + " SKIP "
+							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + blockSize);
 
 			List<ODocument> records = this.db.command(query).execute();
@@ -1020,7 +1020,7 @@ public class UserDAO extends OrientdbDAO {
 							+ "  WHILE $depth <=1)"
 							+ " WHERE @class = '" + NdexClasses.Task + "'" 
 							+ statusFilter
-							+ " ORDER BY " + NdexClasses.ExternalObj_cDate + " DESC " 
+							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 							+ " SKIP " + startIndex 
 							+ " LIMIT " + blockSize);
 
@@ -1074,7 +1074,7 @@ public class UserDAO extends OrientdbDAO {
 		result.setWebsite((String) n.field("websiteURL"));
 		result.setDescription((String) n.field("description"));
 		result.setImage((String) n.field("imageURL"));
-		Date d = n.field(NdexClasses.ExternalObj_mDate);
+		Date d = n.field(NdexClasses.ExternalObj_mTime);
 
 		return result;
 	}

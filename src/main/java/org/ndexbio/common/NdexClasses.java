@@ -48,8 +48,8 @@ public interface NdexClasses {
     
     //extertnal object
     public static final String ExternalObj_ID = "UUID";
-    public static final String ExternalObj_cDate = "createdDate";
-    public static final String ExternalObj_mDate = "modificationDate";
+    public static final String ExternalObj_cTime = "createdTime";
+    public static final String ExternalObj_mTime = "modificationTime";
 
     public static final String Index_externalID = "index-external-id";
     
