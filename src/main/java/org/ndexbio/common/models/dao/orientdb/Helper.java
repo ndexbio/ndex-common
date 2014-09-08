@@ -12,11 +12,13 @@ import org.ndexbio.model.object.NdexExternalObject;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 public class Helper {
 	
@@ -188,10 +190,30 @@ public class Helper {
 
 	public static NdexPropertyValuePair getNdexPropertyFromDoc(ODocument doc) {
 		NdexPropertyValuePair p = new NdexPropertyValuePair();
-		p.setPredicateString((String)doc.field(NdexClasses.ndexProp_P_predicateStr));
+		
+		ODocument baseTermDoc = doc.field("out_" + NdexClasses.ndexProp_E_predicate);
+		if ( baseTermDoc == null ) {
+			p.setPredicateString((String)doc.field(NdexClasses.ndexProp_P_predicateStr));
+		} else {
+			p.setPredicateString(getBaseTermStrFromDocument (baseTermDoc));
+			p.setPredicateId((long)baseTermDoc.field(NdexClasses.Element_ID));
+		}
+		
 		p.setValue((String)doc.field(NdexClasses.ndexProp_P_value)) ;
     	p.setDataType((String)doc.field(NdexClasses.ndexProp_P_datatype));
 		return p;
+	}
+	
+	private static String getBaseTermStrFromDocument(ODocument doc) {
+		ODocument nsDoc = doc.field("out_" + NdexClasses.BTerm_E_Namespace);
+		String localName = doc.field(NdexClasses.BTerm_P_name);
+		if ( nsDoc !=null) {
+			String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
+			if ( prefix != null)
+				return prefix + ":" + localName;
+			return nsDoc.field(NdexClasses.ns_P_uri) + localName;
+		} else 
+			return localName;
 	}
 	
 	public static SimplePropertyValuePair getSimplePropertyFromDoc(ODocument doc) {
@@ -203,17 +225,6 @@ public class Helper {
 	}
 
 
-	public static ODocument createNdexPropertyDoc(NdexPropertyValuePair property) {
-		ODocument pDoc = new ODocument(NdexClasses.NdexProperty)
-		.fields(NdexClasses.ndexProp_P_predicateStr,property.getPredicateString(),
-				NdexClasses.ndexProp_P_value, property.getValue(),
-				NdexClasses.ndexProp_P_datatype, property.getDataType());
-		if ( property.getPredicateId() >0) 
-			pDoc = pDoc.field(NdexClasses.ndexProp_P_predicateId, property.getPredicateId());
-		if (property.getValueId() >0)
-			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId());
-		return  pDoc.save();
-	}
 	
 	public static ODocument createSimplePropertyDoc(SimplePropertyValuePair property) {
 		ODocument pDoc = new ODocument(NdexClasses.SimpleProperty)
@@ -223,5 +234,23 @@ public class Helper {
 		return  pDoc;
 	}
 
-    
+	public static ODocument updateNetworkProfile(ODocument doc, NetworkSummary newSummary){
+	
+	   if ( newSummary.getName() != null)
+		doc = doc.field( NdexClasses.Network_P_name, newSummary.getName());
+		
+	  if ( newSummary.getDescription() != null)
+		doc = doc.field( NdexClasses.Network_P_desc, newSummary.getDescription());
+	
+	  if ( newSummary.getVersion()!=null )
+		doc = doc.field( NdexClasses.Network_P_version, newSummary.getVersion());
+	
+	  if ( newSummary.getVisibility()!=null )
+		doc = doc.field( NdexClasses.Network_P_visibility, newSummary.getVisibility());
+	
+	  doc.field(NdexClasses.ExternalObj_mDate, new Date())
+	     .save();
+	  
+	  return doc;
+	}
 }

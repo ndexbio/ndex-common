@@ -1152,7 +1152,9 @@ public class NetworkDAO extends OrientdbDAO {
         nSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
 
         nSummary.setURI(NdexDatabase.getURIPrefix()+ "/" + nSummary.getExternalId().toString());
-        
+       
+		getPropertiesFromDocument(nSummary,doc);
+
         return nSummary;
     }
     
@@ -1519,20 +1521,7 @@ public class NetworkDAO extends OrientdbDAO {
 	public void updateNetworkProfile(UUID networkId, NetworkSummary newSummary) {
 		ODocument doc = this.getNetworkDocByUUID(networkId);
 		
-		if ( newSummary.getName() != null)
-			doc = doc.field( NdexClasses.Network_P_name, newSummary.getName());
-			
-		if ( newSummary.getDescription() != null)
-			doc = doc.field( NdexClasses.Network_P_desc, newSummary.getDescription());
-		
-		if ( newSummary.getVersion()!=null )
-			doc = doc.field( NdexClasses.Network_P_version, newSummary.getVersion());
-		
-		if ( newSummary.getVisibility()!=null )
-			doc = doc.field( NdexClasses.Network_P_visibility, newSummary.getVisibility());
-		
-		doc.field(NdexClasses.ExternalObj_mDate, new Date())
-		   .save();
+		Helper.updateNetworkProfile(doc, newSummary);
 	}
 	
 	/**
@@ -1568,7 +1557,7 @@ public class NetworkDAO extends OrientdbDAO {
 
 		int counter = 0 ;
 		for (NdexPropertyValuePair e : properties) {
-			ODocument pDoc = Helper.createNdexPropertyDoc(e);
+			ODocument pDoc = createNdexPropertyDoc(e);
             OrientVertex pV = graph.getVertex(pDoc);
 			networkV.addEdge(NdexClasses.E_ndexProperties, pV);
        		counter ++;
@@ -1608,7 +1597,22 @@ public class NetworkDAO extends OrientdbDAO {
 		return counter;
 	}
 
-	
+	//TODO: need to modify this to create baseterm and namespace first.
+	private static ODocument createNdexPropertyDoc( //OrientBaseGraph graph,
+			NdexPropertyValuePair property) {
+		
+	//	ODatabaseDocumentTx db = graph.getRawGraph();
+		ODocument pDoc = new ODocument(NdexClasses.NdexProperty)
+		.fields(NdexClasses.ndexProp_P_predicateStr,property.getPredicateString(),
+				NdexClasses.ndexProp_P_value, property.getValue(),
+				NdexClasses.ndexProp_P_datatype, property.getDataType());
+		if ( property.getPredicateId() >0) 
+			pDoc = pDoc.field(NdexClasses.ndexProp_P_predicateId, property.getPredicateId());
+		if (property.getValueId() >0)
+			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId());
+		return  pDoc.save();
+	}
+
 }
 
 

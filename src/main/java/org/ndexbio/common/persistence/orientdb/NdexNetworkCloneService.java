@@ -24,7 +24,6 @@ import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 
 import com.google.common.base.Preconditions;
-import com.google.common.cache.LoadingCache;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -32,7 +31,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 	private Network   srcNetwork;
 
-	private NetworkSummary networkSummary;
+//	private NetworkSummary networkSummary;
 
 	// key is the full URI or other fully qualified baseTerm as a string.
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
@@ -66,7 +65,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		Preconditions.checkNotNull(sourceNetwork.getName(),"A network title is required");
 		
 		this.srcNetwork = sourceNetwork;
-		this.networkSummary = new NetworkSummary();
+		this.network = new NetworkSummary();
 
 		// find the network owner in the database
 		UserDAO userdao = new UserDAO(localConnection, graph);
@@ -103,14 +102,14 @@ public class NdexNetworkCloneService extends PersistenceService {
             createLinksforRefiedEdgeTerm();
             createLinksFunctionTerm();
 		
-			networkSummary.setIsLocked(false);
-			networkSummary.setIsComplete(true);
+			network.setIsLocked(false);
+			network.setIsComplete(true);
 		
 			networkDoc.field(NdexClasses.Network_P_isComplete,true)
 				.save();
 
-			logger.info("The new network " + networkSummary.getName() + " is complete.");
-			return this.networkSummary;
+			logger.info("The new network " + network.getName() + " is complete.");
+			return this.network;
 		} finally {
 			this.localConnection.commit();
 	//		localConnection.close();
@@ -118,34 +117,34 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 	
-	private void cloneNetworkNode() throws NdexException  {
+	private void cloneNetworkNode() throws NdexException, ExecutionException  {
 
-		this.networkSummary.setExternalId( NdexUUIDFactory.INSTANCE.getNDExUUID());	
-		this.networkSummary.setURI(NdexDatabase.getURIPrefix() + "/"
-					+ this.networkSummary.getExternalId().toString());
-		this.networkSummary.setName(srcNetwork.getName());
-		this.networkSummary.setEdgeCount(srcNetwork.getEdges().size());
-		this.networkSummary.setNodeCount(srcNetwork.getNodes().size());
+		this.network.setExternalId( NdexUUIDFactory.INSTANCE.getNDExUUID());	
+		this.network.setURI(NdexDatabase.getURIPrefix() + "/"
+					+ this.network.getExternalId().toString());
+		this.network.setName(srcNetwork.getName());
+		this.network.setEdgeCount(srcNetwork.getEdges().size());
+		this.network.setNodeCount(srcNetwork.getNodes().size());
 
 		networkDoc = new ODocument (NdexClasses.Network)
-		  .fields(NdexClasses.Network_P_UUID,this.networkSummary.getExternalId().toString(),
-		          NdexClasses.ExternalObj_cDate, networkSummary.getCreationTime(),
-		          NdexClasses.ExternalObj_mDate, networkSummary.getModificationTime(),
+		  .fields(NdexClasses.Network_P_UUID,this.network.getExternalId().toString(),
+		          NdexClasses.ExternalObj_cDate, network.getCreationTime(),
+		          NdexClasses.ExternalObj_mDate, network.getModificationTime(),
 		          NdexClasses.Network_P_name, srcNetwork.getName(),
-		          NdexClasses.Network_P_edgeCount, networkSummary.getEdgeCount(),
-		          NdexClasses.Network_P_nodeCount, networkSummary.getNodeCount(),
+		          NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
+		          NdexClasses.Network_P_nodeCount, network.getNodeCount(),
 		          NdexClasses.Network_P_isLocked, false,
 		          NdexClasses.Network_P_isComplete, false,
 		          NdexClasses.Network_P_visibility, srcNetwork.getVisibility().toString());
 		
 		if ( srcNetwork.getDescription() != null) {
 			networkDoc.field(NdexClasses.Network_P_desc,srcNetwork.getDescription());
-			networkSummary.setDescription(srcNetwork.getDescription());
+			network.setDescription(srcNetwork.getDescription());
 		}
 
 		if ( srcNetwork.getVersion() != null) {
 			networkDoc.field(NdexClasses.Network_P_version,srcNetwork.getVersion());
-			networkSummary.setDescription(srcNetwork.getVersion());
+			network.setDescription(srcNetwork.getVersion());
 		}
 		
 		networkDoc = networkDoc.save();
@@ -189,7 +188,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 
-	private void cloneCitations() {
+	private void cloneCitations() throws NdexException, ExecutionException {
 		if ( srcNetwork.getCitations()!= null) {
 			for ( Citation citation : srcNetwork.getCitations().values() ) {
 				Long citationId = this.createCitation(citation.getTitle(),
