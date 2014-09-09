@@ -32,7 +32,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public abstract class PersistenceService {
 
-	private static final long CACHE_SIZE =  200000L;
+	private static final long CACHE_SIZE = 200000L;
 
 	protected NdexDatabase database;
 
@@ -73,7 +73,7 @@ public abstract class PersistenceService {
 				.build(new CacheLoader<Long, ODocument>() {
 				   @Override
 				   public ODocument load(Long key) throws NdexException, ExecutionException {
-					   logger.info("Element Id loading cache loading element " + key + " from db .");
+//					   logger.info("Element Id loading cache loading element " + key + " from db .");
 					   ODocument o = networkDAO.getDocumentByElementId(key);
                     if ( o == null )
                     	throw new NdexException ("Document is not found for element id: " + key);
@@ -119,6 +119,7 @@ public abstract class PersistenceService {
  		 OrientVertex pV = graph.getVertex(pDoc);
  		 pV.addEdge(NdexClasses.ndexProp_E_predicate, btV);
  		 e.setPredicateId(baseTermId);
+ 		 this.elementIdCache.put(baseTermId, btV.getRecord());
  		 return pV;
 		}
 
@@ -229,7 +230,7 @@ public abstract class PersistenceService {
 			}
 			  
 	        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
-	        elementIdCache.put(termId, btDoc);
+	        elementIdCache.put(termId, basetermV.getRecord());
 			return termId;
 	 }
 
@@ -251,7 +252,7 @@ public abstract class PersistenceService {
 			OrientVertex citationV = graph.getVertex(citationDoc);
 			networkVertex.addEdge(NdexClasses.Network_E_Citations, citationV);
 			this.addPropertiesToVertex(citationV, properties, presentationProperties);
-			elementIdCache.put(citationId, citationDoc);
+			elementIdCache.put(citationId, citationV.getRecord());
 			return citationId; 
 		}
 
@@ -272,7 +273,8 @@ public abstract class PersistenceService {
 			supportV.addEdge(NdexClasses.Support_E_citation, citationV);
 			networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
 
-			elementIdCache.put(supportId, supportDoc);
+			elementIdCache.put(supportId, supportV.getRecord());
+			elementIdCache.put(citationId, citationV.getRecord());
 			return supportId; 
 			
 		}
