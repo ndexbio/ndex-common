@@ -728,7 +728,7 @@ public class GroupDAO extends OrientdbDAO {
 		
 		List<ODocument> existingGroups = db.query(
 				new OSQLSynchQuery<Object>(
-						"SELECT FROM " + NdexClasses.Group
+						"SELECT FROM " + NdexClasses.Account
 						+ " WHERE accountName = '" + group.getAccountName() + "'"));
 		
 		if (!existingGroups.isEmpty()) {
