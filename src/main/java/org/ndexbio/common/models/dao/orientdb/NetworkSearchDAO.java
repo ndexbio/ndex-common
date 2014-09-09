@@ -92,7 +92,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			 			+ " AND ( visibility <> 'PRIVATE'"
 						+ " OR in() contains "+userRID
 						+ " OR in().in() contains "+userRID+" )"
-			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+			 			+ " ORDER BY "+ NdexClasses.ExternalObj_cTime +" DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
 				
 				networks = this.db.command(query).execute();
@@ -108,7 +108,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				 			+ " AND ( visibility <> 'PRIVATE'"
 							+ " OR in() contains "+userRID
 							+ " OR in().in() contains "+userRID+" )"
-				 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+				 			+ " ORDER BY "+ NdexClasses.ExternalObj_cTime +" DESC " + " SKIP " + startIndex
 				 			+ " LIMIT " + top);
 					
 					networks = this.db.command(query).execute();
@@ -128,7 +128,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			 			+ " AND ( visibility <> 'PRIVATE'"
 						+ " OR in() contains "+userRID
 						+ " OR in().in() contains "+userRID+" )"
-			 			+ " ORDER BY creation_date DESC " + " SKIP " + startIndex
+			 			+ " ORDER BY "+ NdexClasses.ExternalObj_cTime +" DESC " + " SKIP " + startIndex
 			 			+ " LIMIT " + top);
 				
 			networks = this.db.command(query).execute();
