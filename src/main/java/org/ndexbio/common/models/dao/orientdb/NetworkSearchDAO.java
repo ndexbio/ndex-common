@@ -89,7 +89,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			  				+ "  WHILE $depth <= "+traverseDepth.toString()+" )"
 			  			+ " WHERE name.toLowerCase() LIKE '%" + simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
 			  			+ " AND @class = '"+ NdexClasses.Network +"'"
-			  			+ " AND isComplete"
+			  			+ " AND isComplete = true"
 			 			+ " AND ( visibility <> 'PRIVATE'"
 						+ " OR in() contains "+userRID
 						+ " OR in().in() contains "+userRID+" )"
@@ -106,7 +106,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				  				+ " " + traverseRID
 				  				+ "  WHILE $depth <= "+traverseDepth.toString()+" )"
 				  			+ " WHERE @class = '"+ NdexClasses.Network +"'"
-						  	+ " AND isComplete"
+						  	+ " AND isComplete = true"
 				 			+ " AND ( visibility <> 'PRIVATE'"
 							+ " OR in() contains "+userRID
 							+ " OR in().in() contains "+userRID+" )"
@@ -127,7 +127,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			query = new OSQLSynchQuery<ODocument>(
 			  			"SELECT FROM " + NdexClasses.Network
 			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
-			  			+ " AND isComplete"
+			  			+ " AND isComplete = true"
 			 			+ " AND ( visibility <> 'PRIVATE'"
 						+ " OR in() contains "+userRID
 						+ " OR in().in() contains "+userRID+" )"
