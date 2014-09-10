@@ -337,8 +337,9 @@ public class RequestDAO extends OrientdbDAO  {
 		OrientVertex vUser = this.graph.getVertex(user);
 		for(Vertex v : vUser.getVertices(Direction.OUT, "requests") ) {
 			if( ((OrientVertex) v).getRecord().field("destinationUUID").equals( destination.field("UUID") )
-					&& ((OrientVertex) v).getRecord().field("sourceUUID").equals( source.field("UUID") )) 
-				throw new DuplicateObjectException("Request has been made");
+					&& ((OrientVertex) v).getRecord().field("sourceUUID").equals( source.field("UUID") )
+					&& ((OrientVertex) v).getRecord().field("requestPermission").equals( permission.name() ) ) 
+				throw new DuplicateObjectException("Request has already been issued");
 		}
 		
 		if(this.checkPermission(source.getIdentity(), destination.getIdentity(), Direction.OUT, 1, permission))

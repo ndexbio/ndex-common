@@ -1465,6 +1465,7 @@ public class NetworkDAO extends OrientdbDAO {
 		  				+ " " + networkRID
 		  				+ "  WHILE $depth <=1)"
 		  			+ " WHERE @class = '" + NdexClasses.User + "'"
+		  			+ " OR @class='" + NdexClasses.Group + "'"
 		 			+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP " + startIndex
 		 			+ " LIMIT " + blockSize);
 			

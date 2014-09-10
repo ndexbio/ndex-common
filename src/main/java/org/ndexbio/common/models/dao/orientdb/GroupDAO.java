@@ -125,7 +125,7 @@ public class GroupDAO extends OrientdbDAO {
 			} 
 			catch(Exception e) {
 				logger.severe("Could not save new group to the database:" + e.getMessage());
-				throw new NdexException(e.getMessage());
+				throw new NdexException("Unable to create new group with accountName " + newGroup.getAccountName());
 			}
 		}
 	
@@ -229,9 +229,13 @@ public class GroupDAO extends OrientdbDAO {
 			
 			group.delete();
 		}
+		catch (NdexException e) {
+			logger.severe("Could not delete group from the database " + e.getMessage());
+			throw e;
+		}
 		catch (Exception e) {
-			logger.severe("Could not delete group from the database");
-			throw new NdexException(e.getMessage());
+			logger.severe("Could not delete group from the database " + e.getMessage());
+			throw new NdexException("Unable to delete group");
 		}
 		
 	}
@@ -281,8 +285,8 @@ public class GroupDAO extends OrientdbDAO {
 			
 		} catch (Exception e) {
 			
-			logger.severe("An error occured while updating group profile with UUID " + groupId);
-			throw new NdexException(e.getMessage());
+			logger.severe("An error occured while updating group profile with UUID " + groupId + e.getMessage());
+			throw new NdexException("Unable to update group");
 			
 		} 
 	}
@@ -466,12 +470,16 @@ public class GroupDAO extends OrientdbDAO {
 				throw new NdexException("Specified user is not an admin for the group");
 			}
 			
+		} catch (NdexException e) {
+			logger.severe(e.getMessage());
+			throw e;
 		} catch (Exception e) {
 			logger.severe("Unable to update membership permissions for "
 					+ "group with UUID "+ groupId
 					+ " and admin with UUID " + adminId
 					+ " and member with UUID " + membership.getMemberUUID());
-			throw new NdexException(e.getMessage());
+			logger.severe(e.getMessage());
+			throw new NdexException("Unable to update privileges for user");
 		}
 		
 	}
@@ -537,12 +545,16 @@ public class GroupDAO extends OrientdbDAO {
 				throw new NdexException("Specified user is not an admin for the group");
 			}
 			
+		} catch (NdexException e) {
+			logger.severe(e.getMessage());
+			throw e;
 		} catch (Exception e) {
 			logger.severe("Unable to remove member for "
 					+ "group with UUID "+ groupId
 					+ " and admin with UUID " + adminId
 					+ " and member with UUID " + memberId);
-			throw new NdexException(e.getMessage());
+			logger.severe(e.getMessage());
+			throw new NdexException("Cannot remove member");
 		}
 	}
 	
@@ -608,8 +620,8 @@ public class GroupDAO extends OrientdbDAO {
 			return memberships;
 			
 		} catch(Exception e) {
-			logger.severe("An unexpected error occured while retrieving group-network memberships");
-			throw new NdexException(e.getMessage());
+			logger.severe("An unexpected error occured while retrieving group-network memberships " + e.getMessage());
+			throw new NdexException("Unable to get network memberships for group with UUID "+groupId);
 		}
 	}
 	
@@ -675,11 +687,54 @@ public class GroupDAO extends OrientdbDAO {
 			return memberships;
 			
 		} catch(Exception e) {
-			logger.severe("An unexpected error occured while retrieving group-user memberships");
-			throw new NdexException(e.getMessage());
+			logger.severe("An unexpected error occured while retrieving group-user memberships "+e.getMessage());
+			throw new NdexException("Unable to get user memberships for group with UUID "+groupId);
 		}
 	}
 	
+	public Membership getMembershipToNetwork(UUID groupId, UUID networkId) 
+		throws IllegalArgumentException, ObjectNotFoundException, NdexException {
+		
+		Preconditions.checkArgument(groupId != null, "UUID for group required");
+		Preconditions.checkArgument(networkId != null, "UUID for network required");
+		
+		Permissions permission = null;
+		Membership membership = new Membership();
+		
+		ODocument OGroup = this.getRecordById(groupId, NdexClasses.Group);
+		ODocument ONetwork = this.getRecordById(networkId, NdexClasses.Network);
+		
+		// order allows us to return most permissive permission
+		if (this.checkPermission(OGroup.getIdentity(), 
+								ONetwork.getIdentity(), 
+								Direction.OUT, 
+								1, 
+								Permissions.READ))
+			permission = Permissions.READ;
+		
+		if (this.checkPermission(OGroup.getIdentity(),
+								ONetwork.getIdentity(), 
+								Direction.OUT, 
+								1,
+								Permissions.WRITE))
+			permission = Permissions.WRITE;
+		
+		if (this.checkPermission(OGroup.getIdentity(),
+								ONetwork.getIdentity(), 
+								Direction.OUT, 
+								1,
+								Permissions.ADMIN))
+			permission = Permissions.ADMIN;
+
+		membership.setMemberAccountName((String) OGroup.field("accountName"));
+		membership.setMemberUUID(groupId);
+		membership.setResourceName((String) ONetwork.field("name"));
+		membership.setResourceUUID(networkId);
+		membership.setPermissions(permission);
+		membership.setMembershipType(MembershipType.NETWORK);
+		
+		return membership;
+	}
 	
 	public void begin() {
 		this.graph.getRawGraph().begin();
