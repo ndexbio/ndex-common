@@ -20,6 +20,8 @@ import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.object.Membership;
+import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
@@ -45,6 +47,8 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -1417,6 +1421,76 @@ public class NetworkDAO extends OrientdbDAO {
     	
     	return result;
     }
+    
+	/**************************************************************************
+	    * getNetworkUserMemberships
+	    *
+	    * @param networkId
+	    *            UUID for network
+	    * @param permission
+	    * 			Type of memberships to retrieve, ADMIN, WRITE, or READ
+	    * @param skipBlocks
+	    * 			amount of blocks to skip
+	    * @param blockSize
+	    * 			The size of blocks to be skipped and retrieved
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid groupId
+	    **************************************************************************/
+	
+	public List<Membership> getNetworkUserMemberships(UUID networkId, Permissions permission, int skipBlocks, int blockSize) 
+			throws ObjectNotFoundException, NdexException {
+		
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId.toString()),
+				"A network UUID is required");
+		Preconditions.checkArgument( 
+				(permission.equals( Permissions.ADMIN) )
+				|| (permission.equals( Permissions.WRITE ))
+				|| (permission.equals( Permissions.READ )),
+				"Valid permission required");
+		
+		ODocument network = this.getRecordById(networkId, NdexClasses.Network);
+		
+		final int startIndex = skipBlocks
+				* blockSize;
+		
+		try {
+			List<Membership> memberships = new ArrayList<Membership>();
+			
+			String networkRID = network.getIdentity().toString();
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+		  			"SELECT FROM"
+		  			+ " (TRAVERSE "+ NdexClasses.Network +".in_"+ permission.name().toString().toLowerCase() +" FROM"
+		  				+ " " + networkRID
+		  				+ "  WHILE $depth <=1)"
+		  			+ " WHERE @class = '" + NdexClasses.User + "'"
+		 			+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP " + startIndex
+		 			+ " LIMIT " + blockSize);
+			
+			List<ODocument> records = this.db.command(query).execute(); 
+			for(ODocument member: records) {
+				
+				Membership membership = new Membership();
+				membership.setMembershipType( MembershipType.NETWORK );
+				membership.setMemberAccountName( (String) member.field(NdexClasses.account_P_accountName) ); 
+				membership.setMemberUUID( UUID.fromString( (String) member.field(NdexClasses.ExternalObj_ID) ) );
+				membership.setPermissions( permission );
+				membership.setResourceName( (String) network.field("name") );
+				membership.setResourceUUID( networkId );
+				
+				memberships.add(membership);
+			}
+			
+			logger.info("Successfuly retrieved network-user memberships");
+			return memberships;
+			
+		} catch(Exception e) {
+			logger.severe("An unexpected error occured while retrieving network-user memberships");
+			throw new NdexException(e.getMessage());
+		}
+	}
+	
     
     public int grantPrivilege(String networkUUID, String accountUUID, Permissions permission) throws NdexException {
     	// check if the edge already exists?
