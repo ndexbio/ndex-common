@@ -1347,6 +1347,36 @@ public class NetworkDAO extends OrientdbDAO {
     	return baseTerms;
     	
     }
+	
+	public Collection<Namespace> getNamespaces(String networkUUID) {
+		ArrayList<Namespace> namespaces = new ArrayList<Namespace>();
+		
+		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
+		
+		
+        	for (OIdentifiable reifiedTRec : new OTraverse()
+     			.field("in_"+ NdexClasses.Network_E_BaseTerms)
+     			.target(networkDoc)
+     			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+        		ODocument doc = (ODocument) reifiedTRec;
+
+        		if ( doc.getClassName().equals(NdexClasses.Namespace)) {
+        			Namespace n = getNamespace(doc);
+        			namespaces.add(n);
+        		}
+        	}
+    	return namespaces;
+	}
+	
+	/**
+	 * This function adds a namespace to a network, unless the namespace is already present.
+	 */
+	public int addNetworkNamespace (UUID networkId, Namespace namespace
+			 ) throws  NdexException {
+
+		return 1;
+	}
     
     public Collection<BaseTerm> getBaseTermsByPrefix(String networkUUID, String nsPrefix) {
 		ArrayList<BaseTerm> baseTerms = new ArrayList<BaseTerm>();
@@ -1687,6 +1717,8 @@ public class NetworkDAO extends OrientdbDAO {
 			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId());
 		return  pDoc.save();
 	}
+
+
 
 }
 
