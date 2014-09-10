@@ -1165,7 +1165,6 @@ public class NetworkDAO extends OrientdbDAO {
     public static NetworkSummary getNetworkSummary(ODocument doc) throws NdexException {
     	NetworkSummary networkSummary = new NetworkSummary();
     	setNetworkSummary(doc,networkSummary);
-    	getPropertiesFromDocument(networkSummary, doc);
     	return networkSummary;
     }
     

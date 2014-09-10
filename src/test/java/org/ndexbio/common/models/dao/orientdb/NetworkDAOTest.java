@@ -1,5 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.AfterClass;
@@ -9,6 +11,8 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,9 +37,17 @@ public class NetworkDAOTest {
 	}
 
 	@Test
-	public void test0() {
-//		NetworkDAO dao = new NetworkDAO(db);
+	public void test0() throws ObjectNotFoundException, NdexException {
+		NetworkDAO dao = new NetworkDAO(db);
 	
+		List<NdexPropertyValuePair> properties = new ArrayList<NdexPropertyValuePair>();
+		
+		properties.add(new NdexPropertyValuePair ("something", "good"));
+		
+		dao.setNetworkProperties(UUID.fromString(
+				"bee7d26d-37a6-11e4-8cf5-90b11c72aefa"), properties);
+		
+		
 		boolean s =Helper.canRemoveAdmin(db, "473d36ff-28d0-11e4-a48c-90b11c72aefa", "9e97e66f-28c9-11e4-a01a-90b11c72aefa");
 
 		System.out.println(s);

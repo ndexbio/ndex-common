@@ -30,7 +30,6 @@ public class TestUserDAO {
 	private static UserDAO dao;
 	private static NdexDatabase database;
 	private static ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
-	private static OrientGraph graph;
 	private static User testUser;
 	private static User user;
 	private static User user2;
@@ -44,18 +43,19 @@ public class TestUserDAO {
 		// For use with the Orient Document API
 		localConnection = database.getAConnection();
 		
-		graph = new OrientGraph(localConnection);
+//		graph = new OrientGraph(localConnection);
 		
-		dao = new UserDAO(localConnection, graph);
+		dao = new UserDAO(localConnection);
 		
 		// Create some users for testing. 
 		NewUser newUser = new NewUser();
-        newUser.setEmailAddress("test@test.org");
+        newUser.setEmailAddress("admin@ndexbio.org");
         newUser.setPassword("test");
-        newUser.setAccountName("test");
-        newUser.setFirstName("test");
-        newUser.setLastName("test");
+        newUser.setAccountName("ndexadministrator");
+        newUser.setFirstName("admin");
+        newUser.setLastName("admin");
         user = dao.createNewUser(newUser);
+        dao.commit();
         
         newUser = new NewUser();
         newUser.setEmailAddress("test2@test.org");
@@ -64,6 +64,7 @@ public class TestUserDAO {
         newUser.setFirstName("test2");
         newUser.setLastName("test2");
         user2 = dao.createNewUser(newUser);
+        dao.commit();
         
         newUser = new NewUser();
         newUser.setEmailAddress("test3@test.org");
@@ -72,6 +73,7 @@ public class TestUserDAO {
         newUser.setFirstName("test3");
         newUser.setLastName("test3");
         user3 = dao.createNewUser(newUser);
+        dao.commit();
 	}
 	
 	@AfterClass
