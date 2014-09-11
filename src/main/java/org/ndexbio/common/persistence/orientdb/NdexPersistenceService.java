@@ -163,10 +163,11 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		// make sure everything relate to the network is deleted.
 		//localConnection.begin();
-		deleteNetwork();
+		logger.info("Deleting partial network "+ network.getExternalId().toString() + " in order to rollback in response to error");
+		this.networkDAO.deleteNetwork(network.getExternalId().toString());
 		//localConnection.commit();
 		graph.commit();
-		System.out.println("Deleting network in order to rollback in response to error");
+		logger.info("Partial network "+ network.getExternalId().toString() + " is deleted.");
 	}
 	
 	// alias is treated as a baseTerm
@@ -518,13 +519,13 @@ public class NdexPersistenceService extends PersistenceService {
 	/**
 	 * performing delete the current network but not commiting it.
 	 */
-	public void deleteNetwork() {
+/*	public void deleteNetwork() {
 		// TODO Implement deletion of network
 		System.out
 		.println("deleteNetwork called. Not yet implemented");
 		
 		
-	}
+	} */
 
 	
 	/**
