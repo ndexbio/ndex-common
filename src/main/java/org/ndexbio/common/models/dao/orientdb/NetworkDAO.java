@@ -190,7 +190,7 @@ public class NetworkDAO extends OrientdbDAO {
         	counter ++;
         }
         
-        db.commit();
+ //       db.commit();
 		return counter;
 	}
 	
