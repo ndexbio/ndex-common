@@ -1354,7 +1354,7 @@ public class NetworkDAO extends OrientdbDAO {
 		
 		
         	for (OIdentifiable reifiedTRec : new OTraverse()
-     			.field("in_"+ NdexClasses.Network_E_BaseTerms)
+     			.field("out_"+ NdexClasses.Network_E_Namespace)
      			.target(networkDoc)
      			.predicate( new OSQLPredicate("$depth <= 1"))) {
 
@@ -1371,11 +1371,11 @@ public class NetworkDAO extends OrientdbDAO {
 	/**
 	 * This function adds a namespace to a network, unless the namespace is already present.
 	 */
-	public int addNetworkNamespace (UUID networkId, Namespace namespace
+/*	public int addNetworkNamespace (UUID networkId, Namespace namespace
 			 ) throws  NdexException {
 
 		return 1;
-	}
+	} */
     
     public Collection<BaseTerm> getBaseTermsByPrefix(String networkUUID, String nsPrefix) {
 		ArrayList<BaseTerm> baseTerms = new ArrayList<BaseTerm>();
