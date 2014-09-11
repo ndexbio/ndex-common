@@ -124,10 +124,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			    
 			} 
 			
+			
 			query = new OSQLSynchQuery<ODocument>(
 			  			"SELECT FROM " + NdexClasses.Network
-			  			+ " WHERE name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
-			  			+ " AND isComplete = true"
+			  			+ " WHERE isComplete = true "
+			  			
+			  			+ (simpleNetworkQuery.getSearchString().equals("") ? " " : 
+			  			  "AND name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'")
+			  			  
 			 			+ " AND ( visibility <> 'PRIVATE'"
 						+ " OR in() contains "+userRID
 						+ " OR in().in() contains "+userRID+" )"
@@ -136,9 +140,6 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				
 			networks = this.db.command(query).execute();
 			    
-				// no results returned, return arbitrary selection. may need to be converted to select for performance
-			if( !networks.iterator().hasNext() && simpleNetworkQuery.getSearchString().equals("")) 
-					networks = db.browseClass(NdexClasses.Network).setLimit(top);
 				
 			for (final ODocument network : networks) {
 					foundNetworks.add(NetworkDAO.getNetworkSummary(network));
