@@ -17,6 +17,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.Helper;
+import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.RawSupport;
@@ -128,6 +129,31 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 
+	
+	public NdexPersistenceService(NdexDatabase db, UUID networkID) throws NdexException  {
+		super(db);
+		
+		this.networkDoc = this.networkDAO.getNetworkDocByUUID(networkID);
+		this.network = NetworkDAO.getNetworkSummary(networkDoc);
+		
+		
+		this.rawCitationMap  = new TreeMap <RawCitation, Long> ();
+        this.baseTermNodeIdMap = new TreeMap <Long,Long> ();
+		this.namedNodeMap  = new TreeMap <String, Long> ();
+		this.reifiedEdgeTermIdNodeIdMap = new HashMap<Long,Long>(100);
+		this.edgeIdReifiedEdgeTermIdMap = new HashMap<Long,Long>(100);
+		this.rawFunctionTermFunctionTermIdMap = new TreeMap<FunctionTerm, Long> ();
+		this.rawSupportMap  = new TreeMap<RawSupport, Long> ();
+		this.functionTermIdNodeIdMap = new HashMap<Long,Long>(100);
+		// intialize caches.
+		
+		externalIdNodeMap = new TreeMap<String,Long>(); 
+
+	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
+
+	}
+	
+	
 	public void abortTransaction() {
 		System.out.println(this.getClass().getName()
 				+ ".abortTransaction has been invoked.");

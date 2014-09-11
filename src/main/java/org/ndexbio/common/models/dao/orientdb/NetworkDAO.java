@@ -1546,7 +1546,7 @@ public class NetworkDAO extends OrientdbDAO {
         OrientVertex accountV = graph.getVertex(accountdoc);
         
         for ( com.tinkerpop.blueprints.Edge e : accountV.getEdges(networkV, Direction.OUT)) { 
-        		                   //NdexClasses.E_admin, NdexClasses.account_E_canEdit,NdexClasses.account_E_canRead)) {
+        //NdexClasses.E_admin, NdexClasses.account_E_canEdit,NdexClasses.account_E_canRead)) {
           	graph.removeEdge(e);
         }
 
