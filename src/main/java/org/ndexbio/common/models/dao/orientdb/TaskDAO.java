@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
@@ -185,5 +186,11 @@ public class TaskDAO extends OrientdbDAO {
    		v.remove();
     			           
     	return 1;		           
+    }
+    
+    public void flagStagedTaskAsErrors() {
+    	db.command( new OCommandSQL("update "+ NdexClasses.Task + " set " + 
+    	  NdexClasses.Task_P_status + " = '"+ Status.COMPLETED_WITH_ERRORS + "' where " +
+    	  NdexClasses.Task_P_status + " = '"+ Status.STAGED.toString() + "'")).execute();
     }
 }

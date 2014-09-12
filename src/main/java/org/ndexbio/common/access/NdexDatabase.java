@@ -31,7 +31,7 @@ public class NdexDatabase {
 	
 	private ODocument vdoc;
 	
-	static private String URIPrefix = null;
+//	static private String URIPrefix = null;
 	
 	
 	public NdexDatabase() throws NdexException {
@@ -53,8 +53,8 @@ public class NdexDatabase {
 	}
 	
 	static public String getURIPrefix () throws NdexException {
-		if ( URIPrefix == null) {
-			URIPrefix = Configuration.getInstance().getProperty("HostURI");
+//		if ( URIPrefix == null) {
+		String	URIPrefix = Configuration.getInstance().getProperty("HostURI");
 			if ( URIPrefix == null) {
 				try {
 					URIPrefix = "http://" + InetAddress.getLocalHost().getHostName() ;
@@ -63,7 +63,7 @@ public class NdexDatabase {
 							+ e.getMessage());
 				}
 			}
-		}
+//		}
 		return URIPrefix;
 
 	}
