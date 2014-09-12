@@ -1155,7 +1155,7 @@ public class NetworkDAO extends OrientdbDAO {
     	nSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
         nSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
 
-        nSummary.setURI(NdexDatabase.getURIPrefix()+ "/" + nSummary.getExternalId().toString());
+        nSummary.setURI(NdexDatabase.getURIPrefix()+ "/network/" + nSummary.getExternalId().toString());
        
 		getPropertiesFromDocument(nSummary,doc);
 

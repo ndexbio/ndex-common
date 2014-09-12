@@ -134,6 +134,7 @@ public class NdexPersistenceService extends PersistenceService {
 		super(db);
 		
 		this.networkDoc = this.networkDAO.getNetworkDocByUUID(networkID);
+		this.networkVertex = graph.getVertex(this.networkDoc);
 		this.network = NetworkDAO.getNetworkSummary(networkDoc);
 		
 		
@@ -439,7 +440,7 @@ public class NdexPersistenceService extends PersistenceService {
     private NetworkSummary createNetwork(String title, String version, UUID uuid) throws NdexException{
 		this.network = new NetworkSummary();
 		this.network.setExternalId(uuid);
-		this.network.setURI(NdexDatabase.getURIPrefix()+"/" + uuid.toString());
+		this.network.setURI(NdexDatabase.getURIPrefix()+ "/network/"+ uuid.toString());
 		this.network.setName(title);
 		this.network.setVisibility(VisibilityType.PRIVATE);
 		this.network.setIsLocked(false);

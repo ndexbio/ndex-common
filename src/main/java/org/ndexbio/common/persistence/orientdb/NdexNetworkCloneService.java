@@ -10,6 +10,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.network.BaseTerm;
@@ -120,7 +121,11 @@ public class NdexNetworkCloneService extends PersistenceService {
 	private void cloneNetworkNode() throws NdexException, ExecutionException  {
 
 		this.network.setExternalId( NdexUUIDFactory.INSTANCE.getNDExUUID());	
-		this.network.setURI(NdexDatabase.getURIPrefix() + "/"
+		
+//		logger.info("using network prefix: " + NdexDatabase.getURIPrefix() );
+//		logger.info("Configuration is HostURI=" + Configuration.getInstance().getProperty("HostURI") );
+		
+		this.network.setURI(NdexDatabase.getURIPrefix() + "/network/"
 					+ this.network.getExternalId().toString());
 		this.network.setName(srcNetwork.getName());
 		this.network.setEdgeCount(srcNetwork.getEdges().size());
