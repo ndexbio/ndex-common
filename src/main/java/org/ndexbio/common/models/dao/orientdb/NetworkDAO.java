@@ -1445,6 +1445,39 @@ public class NetworkDAO extends OrientdbDAO {
     			result.getEdges().put(e.getId(), e);
     		}
     	}
+    	
+    	// get orphan nodes and support
+    	
+    	for (OIdentifiable supportRec : new OTraverse()
+ 			.field("in_"+ NdexClasses.Support_E_citation)
+ 			.target(citationDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument supportDoc = (ODocument) supportRec;
+
+    		if ( supportDoc.getClassName().equals(NdexClasses.Support)){
+    			Long supportId = supportDoc.field(NdexClasses.Element_ID);
+    			if ( !result.getSupports().containsKey(supportId)) {
+    				Support support = getSupportFromDoc(supportDoc, result);
+    				result.getSupports().put(supportId, support);
+    				
+    				//get nodes under this support
+    				
+    		    	for (OIdentifiable nodeRec : new OTraverse()
+    	 				.field("in_"+ NdexClasses.Node_E_supports)
+    	 				.target(supportDoc)
+    	 				.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		    		ODocument nodeDoc = (ODocument) nodeRec;
+    		    		if ( nodeDoc.getClassName().equals(NdexClasses.Node)){
+    		    			Node n = this.getNode(nodeDoc,result);
+    		    		    result.getNodes().put(n.getId(), n);	
+    		    		}
+    		    	}
+    			}
+    		}
+    	}
+    	
     	result.setEdgeCount(result.getEdges().size());
     	result.setNodeCount(result.getNodes().size());
     	
