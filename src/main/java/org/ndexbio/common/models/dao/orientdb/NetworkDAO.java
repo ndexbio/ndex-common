@@ -118,7 +118,7 @@ public class NetworkDAO extends OrientdbDAO {
 
         NetworkDAO.setNetworkSummary(nDoc, network);
 
-        for (OIdentifiable nodeDoc : new OTraverse()
+         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
                       	.predicate( new OSQLPredicate("$depth <= 1"))) {
@@ -200,6 +200,10 @@ public class NetworkDAO extends OrientdbDAO {
         if (nDoc==null) return null;
    
         Network network = getNetwork(nDoc);
+        
+        for ( Namespace ns : this.getNamespacesFromNetworkDoc(nDoc)) {
+        	network.getNamespaces().put(ns.getId(),ns);
+        }
         
         for (OIdentifiable nodeDoc : new OTraverse()
         	.field("out_"+ NdexClasses.Network_E_Nodes )
@@ -630,7 +634,7 @@ public class NetworkDAO extends OrientdbDAO {
 
     		ODocument propDoc = (ODocument) ndexPropertyDoc;
   
-    		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
+    		if ( propDoc.getClassName().equals(NdexClasses.SimpleProperty)) {
 				
     			obj.getPresentationProperties().add( Helper.getSimplePropertyFromDoc(propDoc));
     		}
@@ -825,11 +829,15 @@ public class NetworkDAO extends OrientdbDAO {
 
 	
 	public Collection<Namespace> getNetworkNamespaces(String networkUUID) {
+		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
+		return getNamespacesFromNetworkDoc(networkDoc);
+	}
+	
+	
+	private Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc) {
 		ArrayList<Namespace> namespaces = new ArrayList<Namespace>();
 		
-		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
-		
-    	for (OIdentifiable reifiedTRec : new OTraverse()
+		for (OIdentifiable reifiedTRec : new OTraverse()
  			.field("out_"+ NdexClasses.Network_E_Namespace)
  			.target(networkDoc)
  			.predicate( new OSQLPredicate("$depth <= 1"))) {
@@ -842,7 +850,6 @@ public class NetworkDAO extends OrientdbDAO {
     	}
     	return namespaces;
 	}
-	
 	
 	private Citation getCitationFromDoc(ODocument doc) {
 		Citation result = new Citation();

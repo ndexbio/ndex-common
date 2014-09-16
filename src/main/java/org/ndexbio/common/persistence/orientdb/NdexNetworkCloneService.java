@@ -165,7 +165,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 
 	
-	private void cloneNamespaces() throws NdexException {
+	private void cloneNamespaces() throws NdexException, ExecutionException {
 		TreeSet<String> prefixSet = new TreeSet<String>();
 
 		if ( srcNetwork.getNamespaces() != null) {
@@ -173,6 +173,12 @@ public class NdexNetworkCloneService extends PersistenceService {
 				if ( ns.getPrefix() !=null && prefixSet.contains(ns.getPrefix()))
 					throw new NdexException("Duplicated Prefix " + ns.getPrefix() + " found." );
 				Long nsId = createNamespace(ns.getPrefix(), ns.getUri());
+
+				ODocument nsDoc = this.elementIdCache.get(nsId);
+				OrientVertex nsV = graph.getVertex(nsDoc);
+				
+				addPropertiesToVertex(nsV, ns.getProperties(), ns.getPresentationProperties());
+	
 				this.namespaceIdMap.put(ns.getId(), nsId);
 			}
 		}
