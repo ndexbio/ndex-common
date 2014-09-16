@@ -19,6 +19,7 @@ import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.object.network.RawCitation;
+import org.ndexbio.common.models.object.network.RawEdge;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.RawSupport;
 import org.ndexbio.model.object.network.Citation;
@@ -73,6 +74,8 @@ public class NdexPersistenceService extends PersistenceService {
 	// maps a node name to Node Id.
     private Map<String, Long> namedNodeMap;
 
+    private Map<RawEdge, Long> edgeMap;
+    
 	// key is the full URI or other fully qualified baseTerm as a string.
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
 
@@ -120,6 +123,7 @@ public class NdexPersistenceService extends PersistenceService {
 		this.edgeIdReifiedEdgeTermIdMap = new HashMap<Long,Long>(100);
 		this.rawFunctionTermFunctionTermIdMap = new TreeMap<FunctionTerm, Long> ();
 		this.rawSupportMap  = new TreeMap<RawSupport, Long> ();
+		this.edgeMap = new TreeMap<RawEdge, Long>();
 		this.functionTermIdNodeIdMap = new HashMap<Long,Long>(100);
 		// intialize caches.
 		
@@ -280,6 +284,15 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
 	
+	
+	public Long getEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
+			 Long supportId, Long citationId, Map<String,String> annotation ) throws NdexException, ExecutionException {
+		RawEdge rawEdge = new RawEdge(subjectNodeId, predicateId, objectNodeId );
+		Long edgeId = this.edgeMap.get(rawEdge);
+		if ( edgeId != null) return edgeId;
+		
+		return createEdge(subjectNodeId, objectNodeId, predicateId, supportId, citationId, annotation);
+	}	
 
 	/**
 	 *  Create an edge in the database.
@@ -293,7 +306,7 @@ public class NdexPersistenceService extends PersistenceService {
 	 * @throws NdexException
 	 * @throws ExecutionException
 	 */
-	public Long createEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
+	private Long createEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
 			 Long supportId, Long citationId, Map<String,String> annotation )
 			throws NdexException, ExecutionException {
 		if (null != objectNodeId && null != subjectNodeId && null != predicateId) {
@@ -350,6 +363,7 @@ public class NdexPersistenceService extends PersistenceService {
 		    elementIdCache.put(subjectNodeId, subjectV.getRecord() );
 		    elementIdCache.put(objectNodeId, objectV.getRecord());
 		    elementIdCache.put(predicateId, predicateV.getRecord());
+		    edgeMap.put(new RawEdge(subjectNodeId, predicateId, objectNodeId), edgeId);
 			return edgeId;
 		} 
 		throw new NdexException("Null value for one of the parameter when creating Edge.");
