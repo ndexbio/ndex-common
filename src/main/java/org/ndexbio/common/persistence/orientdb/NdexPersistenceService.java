@@ -912,11 +912,13 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 
-	public void setElementProperty(Long elementId, String key, String value) throws ExecutionException, NdexException {
+	public void setElementProperty(Long elementId, String key, String value, String type) throws ExecutionException, NdexException {
 		ODocument elementDoc = this.elementIdCache.get(elementId);
 		OrientVertex v = graph.getVertex(elementDoc);
 		
-		v = this.addPropertyToVertex(v, new NdexPropertyValuePair(key,value));
+		NdexPropertyValuePair p = new NdexPropertyValuePair(key,value);
+		p.setDataType(type);
+		v = this.addPropertyToVertex(v, p);
         elementDoc = v.getRecord();
         this.elementIdCache.put(elementId, elementDoc);
 	}
