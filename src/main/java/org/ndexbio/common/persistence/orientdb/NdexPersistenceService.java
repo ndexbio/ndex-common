@@ -284,7 +284,19 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
 	
-	
+	/**
+	 *  Look up in the current context, if an edge with the same subject,predicate and object exists, return that edge,
+	 *  otherwise create a new edge and return the id of the new edge.  
+	 * @param subjectNodeId
+	 * @param objectNodeId
+	 * @param predicateId
+	 * @param supportId
+	 * @param citationId
+	 * @param annotation
+	 * @return
+	 * @throws NdexException
+	 * @throws ExecutionException
+	 */
 	public Long getEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
 			 Long supportId, Long citationId, Map<String,String> annotation ) throws NdexException, ExecutionException {
 		RawEdge rawEdge = new RawEdge(subjectNodeId, predicateId, objectNodeId );
@@ -306,7 +318,7 @@ public class NdexPersistenceService extends PersistenceService {
 	 * @throws NdexException
 	 * @throws ExecutionException
 	 */
-	private Long createEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
+	public Long createEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
 			 Long supportId, Long citationId, Map<String,String> annotation )
 			throws NdexException, ExecutionException {
 		if (null != objectNodeId && null != subjectNodeId && null != predicateId) {
