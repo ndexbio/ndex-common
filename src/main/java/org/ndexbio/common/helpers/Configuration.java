@@ -1,6 +1,8 @@
 package org.ndexbio.common.helpers;
 
 import java.util.Properties;
+
+import org.ndexbio.common.exceptions.NdexException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,7 +10,7 @@ public class Configuration
 {
     public static final String UPLOADED_NETWORKS_PATH_PROPERTY = "Uploaded-Networks-Path";
     
-    private static final Configuration INSTANCE = new Configuration();
+    private static Configuration INSTANCE = null;
     private static final Logger _logger = LoggerFactory.getLogger(Configuration.class);
     private final Properties _configurationProperties = new Properties();
     
@@ -16,8 +18,9 @@ public class Configuration
     
     /**************************************************************************
     * Default constructor. Made private to prevent instantiation. 
+     * @throws NdexException 
     **************************************************************************/
-    private Configuration()
+    private Configuration() throws NdexException
     {
         try
         {
@@ -26,6 +29,7 @@ public class Configuration
         catch (Exception e)
         {
             _logger.error("Failed to load the configuration file.", e);
+            throw new NdexException ("Failed to load the configuration file. " + e.getMessage());
         }
     }
     
@@ -33,9 +37,13 @@ public class Configuration
     
     /**************************************************************************
     * Gets the singleton instance. 
+     * @throws NdexException 
     **************************************************************************/
-    public static Configuration getInstance()
+    public static Configuration getInstance() throws NdexException
     {
+    	if ( INSTANCE == null)  { 
+    		INSTANCE = new Configuration();
+    	}
         return INSTANCE;
     }
 

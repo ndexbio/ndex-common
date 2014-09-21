@@ -200,7 +200,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 				
 				
-	public void addCitationToElement(long elementId, Long citationId, String className) throws ExecutionException {
+	public void addCitationToElement(long elementId, Long citationId, String className) throws ExecutionException, NdexException{
 		ODocument elementRec = elementIdCache.get(elementId);
 		OrientVertex nodeV = graph.getVertex(elementRec);
 		
@@ -208,15 +208,41 @@ public class NdexPersistenceService extends PersistenceService {
 		OrientVertex citationV = graph.getVertex(citationRec);
 		
 		if ( className.equals(NdexClasses.Node) ) {
- 	       	nodeV.addEdge(NdexClasses.Node_E_ciations, graph.getVertex(citationV));
+ 	       	nodeV.addEdge(NdexClasses.Node_E_citations, graph.getVertex(citationV));
 		} else if ( className.equals(NdexClasses.Edge) ) {
 			nodeV.addEdge(NdexClasses.Edge_E_citations, graph.getVertex(citationV));
+		} else {
+			throw new NdexException ("Citation can only be added to node or edges of network, can't added to " + className);
 		}
 		
+		elementIdCache.put(citationId, citationV.getRecord());
 		ODocument o = nodeV.getRecord();
 //		o.reload();
 		elementIdCache.put(elementId, o);
 	}
+	
+	public void addSupportToElement(long elementId, Long supportId, String className) throws ExecutionException, NdexException {
+		ODocument elementRec = elementIdCache.get(elementId);
+		OrientVertex nodeV = graph.getVertex(elementRec);
+		
+		ODocument supportRec = elementIdCache.get(supportId);
+		OrientVertex supportV = graph.getVertex(supportRec);
+		
+		if ( className.equals(NdexClasses.Node) ) {
+			nodeV.addEdge(NdexClasses.Node_E_supports, graph.getVertex(supportV));
+ 	       	
+		} else if ( className.equals(NdexClasses.Edge) ) {
+			nodeV.addEdge(NdexClasses.Edge_E_supports, graph.getVertex(supportV));
+		} else {
+			throw new NdexException ("Support can only be added to node or edges of network, can't added to " + className);
+		}
+		
+		elementIdCache.put(supportId, supportV.getRecord());
+		
+		ODocument o = nodeV.getRecord();
+		elementIdCache.put(elementId, o);
+	}
+	
 	
 	//TODO: generalize this function so that createEdge(....) can use it.
 	public void addMetaDataToNode (Long subjectNodeId, Long supportId, Long citationId,  Map<String,String> annotations) 
@@ -235,7 +261,7 @@ public class NdexPersistenceService extends PersistenceService {
 	    if (citationId != null) {
 			ODocument citationDoc = elementIdCache.get(citationId) ;
 	    	OrientVertex citationV = graph.getVertex(citationDoc);
-	    	nodeVertex.addEdge(NdexClasses.Node_E_ciations, citationV);
+	    	nodeVertex.addEdge(NdexClasses.Node_E_citations, citationV);
 	    	this.elementIdCache.put(citationId, citationV.getRecord());
 	    	
 	    }
@@ -359,16 +385,20 @@ public class NdexPersistenceService extends PersistenceService {
 		    
 		    if (citationId != null) {
 				ODocument citationDoc = elementIdCache.get(citationId) ; 
+				if (citationDoc == null) 
+					throw new NdexException ("Citation Id:" + citationId + " was not found in elementIdCache.");
 		    	OrientVertex citationV = graph.getVertex(citationDoc);
 		    	edgeVertex.addEdge(NdexClasses.Edge_E_citations, citationV);
-		    	this.elementIdCache.put(citationId, citationV.getRecord());
+	//	    	this.elementIdCache.put(citationId, citationV.getRecord());
 		    }
 		    
 		    if ( supportId != null) {
 				ODocument supportDoc =elementIdCache.get(supportId);
 		    	OrientVertex supportV = graph.getVertex(supportDoc);
-		    	edgeVertex.addEdge(NdexClasses.Edge_E_supports, supportV);
-		    	this.elementIdCache.put(supportId, supportV.getRecord());
+		    	Object e = edgeVertex.addEdge(NdexClasses.Edge_E_supports, supportV);
+		    	if ( e == null) 
+		    		throw new NdexException("Orient db error. Failed to create edge.");
+	//	    	this.elementIdCache.put(supportId, supportV.getRecord());
 		    }
 		    
 		    elementIdCache.put(edgeId, edgeVertex.getRecord());
@@ -464,6 +494,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 */
     private NetworkSummary createNetwork(String title, String version, UUID uuid) throws NdexException{
+    	logger.info("Creating network with UUID:" + uuid.toString());
 		this.network = new NetworkSummary();
 		this.network.setExternalId(uuid);
 		this.network.setURI(NdexDatabase.getURIPrefix()+ "/network/"+ uuid.toString());
@@ -754,7 +785,22 @@ public class NdexPersistenceService extends PersistenceService {
 		if (nodeId != null) return nodeId;
 		
 		// otherwise insert Node.
-		nodeId = database.getNextId();
+		nodeId = createNodeFromFunctionTermId(funcTermId);
+		
+		this.functionTermIdNodeIdMap.put(funcTermId, nodeId);
+		return nodeId;
+	}
+	
+	/**
+	 * This function doesn't check if a node with same semantic meaning exists. It doesn't register the created 
+	 * node in the lookup table either. The only external usage of this function is to create orphan node in XBEL networks 
+	 * 
+	 * @param funcTermId
+	 * @return
+	 */
+	
+	public Long createNodeFromFunctionTermId(Long funcTermId) throws ExecutionException {
+		Long nodeId = database.getNextId();
 
 		ODocument termDoc = elementIdCache.get(funcTermId); 
 		
@@ -770,12 +816,54 @@ public class NdexPersistenceService extends PersistenceService {
 		nodeV.addEdge(NdexClasses.Node_E_represents, termV);
 		
 		network.setNodeCount(network.getNodeCount()+1);
+
+		elementIdCache.put(nodeId, nodeV.getRecord());
+		
+		return nodeId;
+		
+	}
+	
+/*
+	public Long createNodeFromFunctionTermId(Long funcTermId, Long citationId, Long supportId) throws ExecutionException {
+		Long nodeId = database.getNextId();
+
+		ODocument termDoc = elementIdCache.get(funcTermId); 
+		
+		ODocument nodeDoc = new ODocument(NdexClasses.Node);
+
+		nodeDoc = nodeDoc.field(NdexClasses.Element_ID, nodeId)
+				.save();
+		
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
+		OrientVertex termV = graph.getVertex(termDoc);
+		nodeV.addEdge(NdexClasses.Node_E_represents, termV);
+		
+		network.setNodeCount(network.getNodeCount()+1);
+
+		// adding support
+		ODocument supportRec = elementIdCache.get(supportId);
+		OrientVertex supportV = graph.getVertex(supportRec);
+		
+		nodeV.addEdge(NdexClasses.Node_E_supports, graph.getVertex(supportV));
+		
+		elementIdCache.put(supportId, supportV.getRecord());
+
+		// adding citation
+		ODocument citationRec = elementIdCache.get(citationId);
+		OrientVertex citationV = graph.getVertex(citationRec);
+		
+	    nodeV.addEdge(NdexClasses.Node_E_ciations, graph.getVertex(citationV));
+		
+		elementIdCache.put(citationId, citationV.getRecord());
+
 		
 		elementIdCache.put(nodeId, nodeV.getRecord());
-		elementIdCache.put(funcTermId, termV.getRecord());
-		this.functionTermIdNodeIdMap.put(funcTermId, nodeId);
 		return nodeId;
+		
 	}
+*/	
 	
 	public Long getNodeIdByName(String key) {
 		Long nodeId = this.namedNodeMap.get(key);
@@ -878,7 +966,7 @@ public class NdexPersistenceService extends PersistenceService {
 		
 	}
 	
-	public void persistNetwork() {
+	public void persistNetwork() throws NdexException {
 		try {
 			
 			network.setIsComplete(true);
@@ -891,8 +979,10 @@ public class NdexPersistenceService extends PersistenceService {
 			System.out.println("The new network " + network.getName()
 					+ " is complete");
 		} catch (Exception e) {
-			System.out.println("unexpected error in persist network...");
 			e.printStackTrace();
+			
+			System.out.println("unexpected error in persist network...");
+			throw new NdexException ("unexpected error in persist network...");
 		} finally {
 			this.localConnection.commit();
 			localConnection.close();

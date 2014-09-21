@@ -276,7 +276,7 @@ public class NdexSchemaManager
             
             nodeClass.createProperty(NdexClasses.Node_E_alias, OType.LINKSET, bTermClass);
             nodeClass.createProperty(NdexClasses.Node_E_relateTo, OType.LINKSET, bTermClass);
-            nodeClass.createProperty(NdexClasses.Node_E_ciations, OType.LINKSET, citationClass);
+            nodeClass.createProperty(NdexClasses.Node_E_citations, OType.LINKSET, citationClass);
             nodeClass.createProperty(NdexClasses.Node_E_supports, OType.LINKSET, supportClass);
             
             nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);

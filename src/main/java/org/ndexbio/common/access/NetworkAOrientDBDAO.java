@@ -939,7 +939,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		
 	}
 
-	public void testSTQuery() {
+	public void testSTQuery() throws NdexException {
 		try {
 			setup();
 			ORID rid = new ORecordId(28,

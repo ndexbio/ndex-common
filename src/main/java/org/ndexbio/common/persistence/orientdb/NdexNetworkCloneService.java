@@ -325,7 +325,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 					throw new NdexException ("Citation id " + citationId + " not found.");
 
 				ODocument citationDoc = elementIdCache.get(newCitationId); 
-				nodeV.addEdge(NdexClasses.Node_E_ciations,	graph.getVertex(citationDoc));
+				nodeV.addEdge(NdexClasses.Node_E_citations,	graph.getVertex(citationDoc));
 			}
 		}
 		

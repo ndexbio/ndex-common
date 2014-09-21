@@ -2,8 +2,10 @@ package org.ndexbio.common.access;
 
 import java.util.logging.Logger;
 
+import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.helpers.Configuration;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -21,8 +23,10 @@ public class NdexAOrientDBConnectionPool {
 	private static final Logger logger = Logger
 			.getLogger(NdexAOrientDBConnectionPool.class.getName());
 
-	private NdexAOrientDBConnectionPool() {
-          
+	private NdexAOrientDBConnectionPool() throws NdexException {
+		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+		OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
+   
 		pool = new ODatabaseDocumentPool(	
 		     Configuration.getInstance().getProperty(dbURLPropName),
              Configuration.getInstance().getProperty(dbUserPropName),
@@ -37,7 +41,7 @@ public class NdexAOrientDBConnectionPool {
 	    		 "@" + Configuration.getInstance().getProperty(dbURLPropName) + " created.");
 	}
 	
-	public static synchronized NdexAOrientDBConnectionPool getInstance() {
+	public static synchronized NdexAOrientDBConnectionPool getInstance() throws NdexException {
 	      if(INSTANCE == null) {
 	         INSTANCE = new NdexAOrientDBConnectionPool();
 	      }
@@ -53,7 +57,7 @@ public class NdexAOrientDBConnectionPool {
 	    return conn;
 	}
    	
-   public static synchronized void close() { 	
+   public static synchronized void close() throws NdexException { 	
 	 
        if ( INSTANCE != null) {	   
 	     INSTANCE.pool.close();

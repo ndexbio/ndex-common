@@ -1057,7 +1057,7 @@ public class NetworkDAO extends OrientdbDAO {
     	
 		//populate citations
     	for (OIdentifiable citationRec : new OTraverse()
- 				.field("out_"+ NdexClasses.Node_E_ciations )
+ 				.field("out_"+ NdexClasses.Node_E_citations )
  				.target(nodeDoc)
  				.predicate( new OSQLPredicate("$depth <= 1"))) {
     		ODocument doc = (ODocument) citationRec;
@@ -1455,33 +1455,16 @@ public class NetworkDAO extends OrientdbDAO {
     	
     	// get orphan nodes and support
     	
-    	for (OIdentifiable supportRec : new OTraverse()
- 			.field("in_"+ NdexClasses.Support_E_citation)
+    	for (OIdentifiable nodeRec : new OTraverse()
+ 			.field("in_"+ NdexClasses.Node_E_citations)
  			.target(citationDoc)
  			.predicate( new OSQLPredicate("$depth <= 1"))) {
 
-    		ODocument supportDoc = (ODocument) supportRec;
+    		ODocument nodeDoc = (ODocument) nodeRec;
 
-    		if ( supportDoc.getClassName().equals(NdexClasses.Support)){
-    			Long supportId = supportDoc.field(NdexClasses.Element_ID);
-    			if ( !result.getSupports().containsKey(supportId)) {
-    				Support support = getSupportFromDoc(supportDoc, result);
-    				result.getSupports().put(supportId, support);
-    				
-    				//get nodes under this support
-    				
-    		    	for (OIdentifiable nodeRec : new OTraverse()
-    	 				.field("in_"+ NdexClasses.Node_E_supports)
-    	 				.target(supportDoc)
-    	 				.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-    		    		ODocument nodeDoc = (ODocument) nodeRec;
-    		    		if ( nodeDoc.getClassName().equals(NdexClasses.Node)){
-    		    			Node n = this.getNode(nodeDoc,result);
-    		    		    result.getNodes().put(n.getId(), n);	
-    		    		}
-    		    	}
-    			}
+    		if ( nodeDoc.getClassName().equals(NdexClasses.Node)){
+    			Node n = this.getNode(nodeDoc,result);
+    		    result.getNodes().put(n.getId(), n);	
     		}
     	}
     	
