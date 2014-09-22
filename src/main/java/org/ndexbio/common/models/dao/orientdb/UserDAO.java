@@ -1,25 +1,16 @@
 package org.ndexbio.common.models.dao.orientdb;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.Date;
 
-import javax.ws.rs.core.Response;
-
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.helpers.Configuration;
 import org.ndexbio.common.models.dao.CommonDAOValues;
-import org.ndexbio.common.util.Email;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
 import org.ndexbio.model.object.Membership;
@@ -39,7 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -431,7 +421,7 @@ public class UserDAO extends OrientdbDAO {
 	 *             user with account name does not exist
 	 * @returns response
 	 **************************************************************************/
-	public Response emailNewPassword(String accountName)
+	public String setNewPassword(String accountName)
 			throws IllegalArgumentException, ObjectNotFoundException,
 			NdexException {
 
@@ -443,12 +433,14 @@ public class UserDAO extends OrientdbDAO {
 			ODocument userToSave = this.getRecordByAccountName(accountName,
 					NdexClasses.User);
 
-			final User authUser = UserDAO.getUserFromDocument(userToSave);
+	//		final User authUser = UserDAO.getUserFromDocument(userToSave);
 			final String newPassword = Security.generatePassword();
 			final String password = Security.hashText(newPassword);
-			userToSave.field("password", password);
-
-			final File forgotPasswordFile = new File(Configuration
+			userToSave.field("password", password).save();
+            
+			return newPassword;
+			
+/*			final File forgotPasswordFile = new File(Configuration
 					.getInstance().getProperty("Forgot-Password-File"));
 
 			if (!forgotPasswordFile.exists()) {
@@ -474,7 +466,7 @@ public class UserDAO extends OrientdbDAO {
 					forgotPasswordText.toString());
 
 			logger.info("Sent password recovery email to user " + accountName);
-			return Response.ok().build();
+			return Response.ok().build(); */
 
 		} catch (ObjectNotFoundException onfe) {
 
@@ -552,7 +544,7 @@ public class UserDAO extends OrientdbDAO {
 	 *             user does not exist
 	 * @returns response
 	 **************************************************************************/
-	public Response changeEmailAddress(String emailAddress, UUID id)
+/*	public Response changeEmailAddress(String emailAddress, UUID id)
 			throws IllegalArgumentException, NdexException,
 			ObjectNotFoundException, DuplicateObjectException {
 
@@ -622,7 +614,7 @@ public class UserDAO extends OrientdbDAO {
 		}
 
 	}
-
+*/
 	/**************************************************************************
 	 * Update a user
 	 * 
