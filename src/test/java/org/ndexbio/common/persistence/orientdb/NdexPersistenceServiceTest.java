@@ -19,7 +19,7 @@ public class NdexPersistenceServiceTest {
 	private static NdexPersistenceService service;
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		service = new NdexPersistenceService(new NdexDatabase());
+		service = new NdexPersistenceService(new NdexDatabase("http://localhost"));
 	}
 
 	@AfterClass

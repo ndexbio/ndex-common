@@ -1,5 +1,6 @@
 package org.ndexbio.orientdb;
 
+import org.apache.log4j.spi.LoggerFactory;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 
@@ -48,6 +49,8 @@ public class NdexSchemaManager
         **********************************************************************/
         orientDbGraph.getRawGraph().commit();
 
+        System.out.println("Creating schema in db.");
+        
         OClass clsNdxExternalObj = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexExternalObject);
         
         if (clsNdxExternalObj == null)

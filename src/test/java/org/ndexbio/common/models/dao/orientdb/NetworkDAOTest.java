@@ -25,7 +25,7 @@ public class NetworkDAOTest {
 	static ODatabaseDocumentTx db;
 	
 	@BeforeClass
-    public static void initializeTests() 
+    public static void initializeTests() throws NdexException 
     {
     	NdexAOrientDBConnectionPool p = NdexAOrientDBConnectionPool.getInstance();
     	db = p.acquire();

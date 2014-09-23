@@ -13,7 +13,7 @@ public class NdexDatabaseTest {
 	static NdexDatabase db;
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		db = new NdexDatabase();
+		db = new NdexDatabase("http://localhost/");
 	}
 
 	@AfterClass

@@ -43,7 +43,7 @@ public class TestGroupDAO
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		// For acquiring connections from the pool
-		database = new NdexDatabase();
+		database = new NdexDatabase("http://localhost");
 		localConnection = database.getAConnection();
 		graph = new OrientGraph(localConnection);
 		userDAO = new UserDAO(localConnection, graph);

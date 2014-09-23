@@ -30,7 +30,7 @@ public class TestNetworkSearchDAO   {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		// For acquiring connections from the pool
-		database = new NdexDatabase();
+		database = new NdexDatabase("http://localhost");
 		
 		// For use with Orient Document API
 		localConnection = database.getAConnection();
