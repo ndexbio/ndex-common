@@ -23,9 +23,11 @@ public class NdexAOrientDBConnectionPool {
 			.getLogger(NdexAOrientDBConnectionPool.class.getName());
 
 	private NdexAOrientDBConnectionPool(String dbURL, String dbUserName, String dbPassword) {
+
 		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
 		OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-   
+		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue( false );
+		
 		pool = new ODatabaseDocumentPool(dbURL, dbUserName, dbPassword);
 	    pool.setup(1,poolSize);
 	    
