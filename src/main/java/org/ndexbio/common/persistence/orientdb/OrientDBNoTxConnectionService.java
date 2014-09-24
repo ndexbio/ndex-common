@@ -26,12 +26,9 @@ public class OrientDBNoTxConnectionService {
 	private boolean setup;
 	private OrientGraph graph;
 
-	public OrientDBNoTxConnectionService() throws NdexException {
+	public OrientDBNoTxConnectionService() {
 		this.setSetup(false);
 		
-		//TODO: Check if this is needed, this statement will hold a connection once an object
-		// is created. Commented out by CJ for now.
-		this.setupDatabase();
 	}
 
 	
