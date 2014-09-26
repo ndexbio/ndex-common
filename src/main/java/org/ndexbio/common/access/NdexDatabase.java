@@ -1,7 +1,5 @@
 package org.ndexbio.common.access;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
