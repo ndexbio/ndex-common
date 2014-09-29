@@ -1,4 +1,4 @@
-package org.ndexbio.common.helpers;
+package org.ndexbio.common.util;
 
 import java.util.regex.Pattern;
 

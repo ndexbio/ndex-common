@@ -10,7 +10,6 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.models.dao.CommonDAOValues;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
 import org.ndexbio.model.object.Membership;
@@ -308,7 +307,7 @@ public class UserDAO extends OrientdbDAO {
 		String traversePermission;
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> users;
-		final List<User> foundUsers = new ArrayList<User>();
+		final List<User> foundUsers = new ArrayList<>();
 		
 		if (simpleQuery.getSearchString().equals("*") )
 			simpleQuery.setSearchString("");
@@ -332,7 +331,7 @@ public class UserDAO extends OrientdbDAO {
 					throw new NdexException("Invalid accountName to filter by");
 
 				String traverseRID = nGroup.getIdentity().toString();
-				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
+				query = new OSQLSynchQuery<>("SELECT FROM"
 						+ " (TRAVERSE "
 						+ traversePermission
 						+ " FROM"
@@ -359,7 +358,7 @@ public class UserDAO extends OrientdbDAO {
 
 				if (!users.iterator().hasNext()  && simpleQuery.getSearchString().equals("")) {
 
-					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
+					query = new OSQLSynchQuery<>("SELECT FROM"
 							+ " (TRAVERSE " + traversePermission + " FROM"
 							+ " " + traverseRID + " WHILE $depth <=1)"
 							+ " WHERE @class = '" + NdexClasses.User + "'"
@@ -377,7 +376,7 @@ public class UserDAO extends OrientdbDAO {
 
 			} 
 				
-			query = new OSQLSynchQuery<ODocument>("SELECT FROM "
+			query = new OSQLSynchQuery<>("SELECT FROM "
 						+ NdexClasses.User + " "
 						+ "WHERE accountName.toLowerCase() LIKE '%"
 						+ simpleQuery.getSearchString() + "%'"
@@ -775,10 +774,10 @@ public class UserDAO extends OrientdbDAO {
 		final int startIndex = skipBlocks * blockSize;
 
 		try {
-			List<Membership> memberships = new ArrayList<Membership>();
+			List<Membership> memberships = new ArrayList<>();
 
 			String userRID = user.getIdentity().toString();
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 					"SELECT FROM" + " (TRAVERSE " + NdexClasses.User + ".out_"
 							+ permission.name().toString().toLowerCase()
 							+ " FROM" + " " + userRID + "  WHILE $depth <=1)"
@@ -911,7 +910,7 @@ public class UserDAO extends OrientdbDAO {
 		// TODO May possibly add extra parameter to specify type of request to
 		// return
 
-		final List<Request> requests = new ArrayList<Request>();
+		final List<Request> requests = new ArrayList<>();
 
 		ODocument user = this.getRecordById(account.getExternalId(),
 				NdexClasses.User);
@@ -919,7 +918,7 @@ public class UserDAO extends OrientdbDAO {
 
 		try {
 
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 					"SELECT FROM" + " (TRAVERSE out_requests FROM" + " "
 							+ user.getIdentity().toString()
 							+ "  WHILE $depth <=1)" + " WHERE @class = '"
@@ -960,14 +959,14 @@ public class UserDAO extends OrientdbDAO {
 		// TODO May possibly add extra parameter to specify type of request to
 		// return
 
-		final List<Request> requests = new ArrayList<Request>();
+		final List<Request> requests = new ArrayList<>();
 
 		ODocument user = this.getRecordById(account.getExternalId(),
 				NdexClasses.User);
 		final int startIndex = skipBlocks * blockSize;
 
 		try {
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 					"SELECT FROM" + " (TRAVERSE in_requests FROM" + " "
 							+ user.getIdentity().toString()
 							+ "  WHILE $depth <=1)" + " WHERE @class = '"
@@ -994,7 +993,7 @@ public class UserDAO extends OrientdbDAO {
 
 		Preconditions.checkArgument(account != null, "Must be logged in");
 
-		final List<Task> tasks = new ArrayList<Task>();
+		final List<Task> tasks = new ArrayList<>();
 
 		ODocument user = this.getRecordById(account.getExternalId(),
 				NdexClasses.User);
@@ -1006,7 +1005,7 @@ public class UserDAO extends OrientdbDAO {
 		}
 
 		try {
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 					"SELECT FROM" + " (TRAVERSE in_ownedBy FROM" + " "
 							+ user.getIdentity().toString()
 							+ "  WHILE $depth <=1)"
@@ -1049,9 +1048,7 @@ public class UserDAO extends OrientdbDAO {
 	}
 	
 	/*
-	 * Convert the database results into our object model TODO should this be
-	 * moved to util? being used by other classes, not really a data object but
-	 * a helper class
+	 * Convert the database results into our object model 
 	 */
 	public static User getUserFromDocument(ODocument n) {
 
@@ -1066,7 +1063,6 @@ public class UserDAO extends OrientdbDAO {
 		result.setWebsite((String) n.field("websiteURL"));
 		result.setDescription((String) n.field("description"));
 		result.setImage((String) n.field("imageURL"));
-		Date d = n.field(NdexClasses.ExternalObj_mTime);
 
 		return result;
 	}

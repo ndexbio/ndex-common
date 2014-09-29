@@ -3,7 +3,6 @@ package org.ndexbio.common.persistence.orientdb;
 import java.util.List;
 
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.TaskDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.model.object.Status;
@@ -11,13 +10,8 @@ import org.ndexbio.model.object.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Vertex;
 
 /*
  * Represents a collection of methods for interacting with Tasks in the orientdb database
@@ -33,7 +27,7 @@ public class NdexTaskService
     private static final Logger logger = LoggerFactory.getLogger(NdexTaskService.class);
     private OrientDBNoTxConnectionService ndexService;
     
-    public NdexTaskService() throws NdexException
+    public NdexTaskService()
     {
     	ndexService = new OrientDBNoTxConnectionService();  
     }

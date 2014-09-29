@@ -1,8 +1,6 @@
 package org.ndexbio.common.models.dao.orientdb;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -11,7 +9,6 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.models.dao.CommonDAOValues;
 import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.Group;
@@ -23,8 +20,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -315,7 +310,7 @@ public class GroupDAO extends OrientdbDAO {
 		String traversePermission;
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> groups;
-		final List<Group> foundgroups = new ArrayList<Group>();
+		final List<Group> foundgroups = new ArrayList<>();
 		final int startIndex = skipBlocks * blockSize;
 		
 		if (simpleQuery.getSearchString().equals("*") )
@@ -336,7 +331,7 @@ public class GroupDAO extends OrientdbDAO {
 					throw new NdexException("Invalid accountName to filter by");
 				
 				String traverseRID = nUser.getIdentity().toString();
-				query = new OSQLSynchQuery<ODocument>("SELECT FROM"
+				query = new OSQLSynchQuery<>("SELECT FROM"
 						+ " (TRAVERSE "+traversePermission+" FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
@@ -350,7 +345,7 @@ public class GroupDAO extends OrientdbDAO {
 				groups = this.db.command(query).execute();
 				
 				if( !groups.iterator().hasNext() && simpleQuery.getSearchString().equals("") ) {
-					query = new OSQLSynchQuery<ODocument>("SELECT FROM"
+					query = new OSQLSynchQuery<>("SELECT FROM"
 						+ " (TRAVERSE "+traversePermission+" FROM"
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
@@ -369,7 +364,7 @@ public class GroupDAO extends OrientdbDAO {
 			
 			} 
 			
-			query = new OSQLSynchQuery<ODocument>("SELECT FROM"
+			query = new OSQLSynchQuery<>("SELECT FROM"
 						+ " " + NdexClasses.Group
 						+ " WHERE accountName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
 						+ " OR organizationName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
@@ -591,9 +586,9 @@ public class GroupDAO extends OrientdbDAO {
 				* blockSize;
 		
 		try {
-			List<Membership> memberships = new ArrayList<Membership>();
+			List<Membership> memberships = new ArrayList<>();
 			String groupRID = group.getIdentity().toString();
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 		  			"SELECT FROM"
 		  			+ " (TRAVERSE "+ NdexClasses.Group +".out_"+ permission.name().toString().toLowerCase() +" FROM"
 		  				+ " " + groupRID
@@ -657,10 +652,10 @@ public class GroupDAO extends OrientdbDAO {
 				* blockSize;
 		
 		try {
-			List<Membership> memberships = new ArrayList<Membership>();
+			List<Membership> memberships = new ArrayList<>();
 			
 			String groupRID = group.getIdentity().toString();
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 		  			"SELECT FROM"
 		  			+ " (TRAVERSE "+ NdexClasses.Group +".in_"+ permission.name().toString().toLowerCase() +" FROM"
 		  				+ " " + groupRID
@@ -782,7 +777,7 @@ public class GroupDAO extends OrientdbDAO {
 				"UUID required");
 		
 		List<ODocument> existingGroups = db.query(
-				new OSQLSynchQuery<Object>(
+				new OSQLSynchQuery<>(
 						"SELECT FROM " + NdexClasses.Account
 						+ " WHERE accountName = '" + group.getAccountName() + "'"));
 		

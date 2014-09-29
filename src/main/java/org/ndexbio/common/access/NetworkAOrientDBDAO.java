@@ -22,10 +22,8 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.FunctionTerm;
-import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
-import org.ndexbio.model.object.network.PropertyGraphEdge;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.SimplePathQuery;
@@ -261,7 +259,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 	
 	private Set<ORID> getEdgeRids(ORID networkRid, int skipBlocks, int blockSize) {
-		Set<ORID> result = new HashSet<ORID>();
+		Set<ORID> result = new HashSet<>();
 
 		final String query = 
 				"SELECT @rid as rid FROM "
@@ -319,7 +317,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 					//parameters.getStartingTermStrings(),
 					true); // change to
 																// nodes
-			List<ORID> includedPredicateRids = new ArrayList<ORID>();
+			List<ORID> includedPredicateRids = new ArrayList<>();
 			// getBaseTermRids(networkRid,parameters.getIncludedPredicateIds());
 			int maxDepth = parameters.getSearchDepth();
 			
@@ -710,8 +708,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			Set<ORID> sourceNodeRids, List<ORID> includedPredicateRids,
 			int maxDepth) {
 
-		Set<ORID> foundEdgeRids = new HashSet<ORID>();
-		Set<ORID> foundNodeRids = new HashSet<ORID>();
+		Set<ORID> foundEdgeRids = new HashSet<>();
+		Set<ORID> foundNodeRids = new HashSet<>();
 
 			
 			searchFromNode(
@@ -739,7 +737,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 		results.addAll(sourceSearchQuery(sourceNodeRids, includedPredicateRids, true));
 		
-		Set<ORID> nextSourceNodeRids = new HashSet<ORID>();
+		Set<ORID> nextSourceNodeRids = new HashSet<>();
 		
 		// for each edgeId + nodeId pair found:
 		for (ORID[] result : results) {
@@ -782,7 +780,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		List<ODocument> paths = _ndexDatabase
 				.query(new OSQLSynchQuery<ODocument>(query));
 
-		List<ORID[]> results = new ArrayList<ORID[]>();
+		List<ORID[]> results = new ArrayList<>();
 
 		for (ODocument doc : paths) {
 			String path = (String) doc.fieldValues()[0];

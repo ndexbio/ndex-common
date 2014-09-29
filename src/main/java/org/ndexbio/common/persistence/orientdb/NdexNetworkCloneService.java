@@ -165,7 +165,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 	
 	private void cloneNamespaces() throws NdexException, ExecutionException {
-		TreeSet<String> prefixSet = new TreeSet<String>();
+		TreeSet<String> prefixSet = new TreeSet<>();
 
 		if ( srcNetwork.getNamespaces() != null) {
 			for ( Namespace ns : srcNetwork.getNamespaces().values() ) {

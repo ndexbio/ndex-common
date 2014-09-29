@@ -134,7 +134,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 
 	
-	public NdexPersistenceService(NdexDatabase db, UUID networkID) throws NdexException  {
+	public NdexPersistenceService(NdexDatabase db, UUID networkID)  {
 		super(db);
 		
 		this.networkDoc = this.networkDAO.getNetworkDocByUUID(networkID);
@@ -493,7 +493,7 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 */
-    private NetworkSummary createNetwork(String title, String version, UUID uuid) throws NdexException{
+    private NetworkSummary createNetwork(String title, String version, UUID uuid){
     	logger.info("Creating network with UUID:" + uuid.toString());
 		this.network = new NetworkSummary();
 		this.network.setExternalId(uuid);

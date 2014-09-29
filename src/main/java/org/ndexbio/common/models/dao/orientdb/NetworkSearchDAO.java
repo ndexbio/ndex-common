@@ -2,12 +2,10 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.SimpleNetworkQuery;
@@ -46,7 +44,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		Integer traverseDepth;
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> networks;
-		final List<NetworkSummary> foundNetworks = new ArrayList<NetworkSummary>();
+		final List<NetworkSummary> foundNetworks = new ArrayList<>();
 		final int startIndex = skip * top;
 		
 		// treat "*" and "" the same way
@@ -82,7 +80,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 					throw new NdexException("Invalid accountName to filter by");
 				
 				String traverseRID = nAccount.getIdentity().toString();
-				query = new OSQLSynchQuery<ODocument>(
+				query = new OSQLSynchQuery<>(
 			  			"SELECT  FROM"
 			  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
 			  				+ " " + traverseRID
@@ -98,24 +96,6 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				
 				networks = this.db.command(query).execute();
 				
-				//no results returned, eliminate search filter and return
-				if( !networks.iterator().hasNext() ) {
-					query = new OSQLSynchQuery<ODocument>(
-				  			"SELECT FROM"
-				  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
-				  				+ " " + traverseRID
-				  				+ "  WHILE $depth <= "+traverseDepth.toString()+" )"
-				  			+ " WHERE @class = '"+ NdexClasses.Network +"'"
-						  	+ " AND isComplete = true"
-				 			+ " AND ( visibility <> 'PRIVATE'"
-							+ " OR in() contains "+userRID
-							+ " OR in().in() contains "+userRID+" )"
-				 			+ " ORDER BY "+ NdexClasses.ExternalObj_cTime +" DESC " + " SKIP " + startIndex
-				 			+ " LIMIT " + top);
-					
-					networks = this.db.command(query).execute();
-				}
-				
 				for (final ODocument network : networks) {
 					foundNetworks.add(NetworkDAO.getNetworkSummary(network));
 				}
@@ -124,8 +104,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			    
 			} 
 			
-			
-			query = new OSQLSynchQuery<ODocument>(
+			query = new OSQLSynchQuery<>(
 			  			"SELECT FROM " + NdexClasses.Network
 			  			+ " WHERE isComplete = true "
 			  			

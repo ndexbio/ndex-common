@@ -109,9 +109,9 @@ public class NetworkQueryParameters
     **************************************************************************/
     private void initCollections()
     {
-        _startingTermIds = new ArrayList<String>();
-        _startingTermStrings = new ArrayList<String>();
-        _includedPredicateIds = new ArrayList<String>();
-        _excludedPredicateIds = new ArrayList<String>();
+        _startingTermIds = new ArrayList<>();
+        _startingTermStrings = new ArrayList<>();
+        _includedPredicateIds = new ArrayList<>();
+        _excludedPredicateIds = new ArrayList<>();
     }
 }

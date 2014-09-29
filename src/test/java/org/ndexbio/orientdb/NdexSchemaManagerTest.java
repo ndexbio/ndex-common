@@ -19,13 +19,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NdexSchemaManagerTest {
 
 	 private static ODatabaseDocumentTx db;
-	 private static String DB_URL = "memory:ndex";
+	 //private static String DB_URL = "memory:ndex";
 	 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -74,7 +73,7 @@ public class NdexSchemaManagerTest {
 		ns.field("in_ns",network,OType.LINK);
 		ns.save();
 	//	String id1 = ns.getIdentity().toString();
-		Set<ODocument> s = new HashSet<ODocument> ();
+		Set<ODocument> s = new HashSet<> ();
 		s.add(ns);
 		network.field("out_ns", s, OType.LINKSET);
 		network.save();

@@ -135,7 +135,7 @@ public class PropertyGraphLoader {
 			// process the citation , property list ...
 			Support support = null;
 			Citation citation = null;
-			ArrayList<NdexPropertyValuePair> otherProperties = new ArrayList<NdexPropertyValuePair> (e.getProperties().size()); 
+			ArrayList<NdexPropertyValuePair> otherProperties = new ArrayList<> (e.getProperties().size()); 
 			for ( NdexPropertyValuePair p : e.getProperties()) {
 				if ( p.getPredicateString().equals(PropertyGraphEdge.supports)) {
 					support = mapper.readValue(p.getValue(), Support.class);

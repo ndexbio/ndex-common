@@ -1,22 +1,15 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
@@ -27,7 +20,6 @@ import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
-import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -60,7 +52,6 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 
 public class NetworkDAO extends OrientdbDAO {
 	
@@ -268,7 +259,7 @@ public class NetworkDAO extends OrientdbDAO {
 	    int endPosition = skipBlocks * blockSize + blockSize;
 	    
         
-        TreeMap <ORID, String> termStringMap = new TreeMap<ORID,String> ();
+        TreeMap <ORID, String> termStringMap = new TreeMap<> ();
 
         for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
@@ -396,7 +387,7 @@ public class NetworkDAO extends OrientdbDAO {
 		Long subjectId = s.field(NdexClasses.Element_ID);
 		e.setSubjectId(subjectId );
 
-		if ( network!=null && !network.getNodes().containsKey(subjectId)) {
+		if ( !network.getNodes().containsKey(subjectId)) {
 			PropertyGraphNode n = getPropertyGraphNode(s,network, termStringMap);
 			network.getNodes().put(n.getId(), n);
 		}
@@ -406,7 +397,7 @@ public class NetworkDAO extends OrientdbDAO {
 		Long objectId = o.field(NdexClasses.Element_ID);
 		e.setObjectId(objectId);
 
-		if ( network!=null && !network.getNodes().containsKey(objectId)) {
+		if ( !network.getNodes().containsKey(objectId)) {
 			PropertyGraphNode n = getPropertyGraphNode(o,network, termStringMap);
 			network.getNodes().put(n.getId(), n);
 		}
@@ -642,14 +633,12 @@ public class NetworkDAO extends OrientdbDAO {
     	
     }
 	
-	private Network getNetwork(ODocument n) throws NdexException {
+	private Network getNetwork(ODocument n) {
 		
 		Network result = new Network();
 		
 		setNetworkSummary(n, result);
 
-//		getPropertiesFromDocument(result,n);
-		
 		//TODO: populate all fields.
 		
 		return result;
@@ -1166,7 +1155,7 @@ public class NetworkDAO extends OrientdbDAO {
         return nSummary;
     }
     
-    public static NetworkSummary getNetworkSummary(ODocument doc) throws NdexException {
+    public static NetworkSummary getNetworkSummary(ODocument doc) {
     	NetworkSummary networkSummary = new NetworkSummary();
     	setNetworkSummary(doc,networkSummary);
     	return networkSummary;
@@ -1250,7 +1239,7 @@ public class NetworkDAO extends OrientdbDAO {
     // This function will find the correspondent FunctionTerm from db.
     public FunctionTerm getFunctionTerm(FunctionTerm func) {
    		OSQLSynchQuery<ODocument> query = 
-   				new OSQLSynchQuery<ODocument>(functionTermQuery);
+   				new OSQLSynchQuery<>(functionTermQuery);
    		List<ODocument> nodes = db.command(query).execute( func.getFunctionTermId());
        	
    		if (nodes.isEmpty())
@@ -1315,7 +1304,7 @@ public class NetworkDAO extends OrientdbDAO {
     	
 	    final List<ODocument> nodes = db.query(new OSQLSynchQuery<ODocument>(query));
 	    
-    	List<Node> results = new ArrayList<Node>();
+    	List<Node> results = new ArrayList<>();
 	    if ( !nodes.isEmpty()) {
 	    	for ( ODocument doc : nodes) {
 	    		results.add(getNode(doc,null));
@@ -1328,7 +1317,7 @@ public class NetworkDAO extends OrientdbDAO {
     }
     
 	public Collection<BaseTerm> getBaseTerms(String networkUUID) {
-		ArrayList<BaseTerm> baseTerms = new ArrayList<BaseTerm>();
+		ArrayList<BaseTerm> baseTerms = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
 		
@@ -1352,7 +1341,7 @@ public class NetworkDAO extends OrientdbDAO {
     }
 	
 	public Collection<Namespace> getNamespaces(String networkUUID) {
-		ArrayList<Namespace> namespaces = new ArrayList<Namespace>();
+		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
 		
@@ -1382,7 +1371,7 @@ public class NetworkDAO extends OrientdbDAO {
 	} */
     
     public Collection<BaseTerm> getBaseTermsByPrefix(String networkUUID, String nsPrefix) {
-		ArrayList<BaseTerm> baseTerms = new ArrayList<BaseTerm>();
+		ArrayList<BaseTerm> baseTerms = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
 		
@@ -1505,10 +1494,10 @@ public class NetworkDAO extends OrientdbDAO {
 				* blockSize;
 		
 		try {
-			List<Membership> memberships = new ArrayList<Membership>();
+			List<Membership> memberships = new ArrayList<>();
 			
 			String networkRID = network.getIdentity().toString();
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 		  			"SELECT FROM"
 		  			+ " (TRAVERSE "+ NdexClasses.Network +".in_"+ permission.name().toString().toLowerCase() +" FROM"
 		  				+ " " + networkRID

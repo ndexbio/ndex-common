@@ -1,4 +1,4 @@
-package org.ndexbio.common.models.dao;
+package org.ndexbio.common.models.dao.orientdb;
 
 /*
  * Represents a set of literals used throughout dao related classes

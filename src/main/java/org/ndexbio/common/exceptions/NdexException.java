@@ -1,12 +1,10 @@
 package org.ndexbio.common.exceptions;
 
-import java.io.Serializable;
 
-public class NdexException extends Exception implements Serializable
+public class NdexException extends Exception
 {
     private static final long serialVersionUID = 1L;
 
-    
 
     public NdexException(String message)
     {

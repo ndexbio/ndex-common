@@ -63,10 +63,10 @@ public abstract class PersistenceService {
 		
 		this.networkDAO = new NetworkDAO(localConnection,true);
 
-		this.baseTermStrMap = new TreeMap <String, Long>();
-		prefixMap = new HashMap<String,Namespace>();
-		this.namespaceMap   = new TreeMap <RawNamespace, Namespace>();
-		URINamespaceMap = new HashMap<String,Namespace>();
+		this.baseTermStrMap = new TreeMap <>();
+		prefixMap = new HashMap<>();
+		this.namespaceMap   = new TreeMap <>();
+		URINamespaceMap = new HashMap<>();
 
 		this.elementIdCache = CacheBuilder
 				.newBuilder().maximumSize(CACHE_SIZE*5)
