@@ -306,7 +306,7 @@ public class NetworkDAO extends OrientdbDAO {
 
 		this.populatePropetyGraphNetworkFromDoc(network, networkDoc);
 		
-		TreeMap<ORID, String> termStringMap = new TreeMap<ORID, String>();
+		TreeMap<ORID, String> termStringMap = new TreeMap<>();
 		
         Map<Long,PropertyGraphNode> nodeList = network.getNodes();
          for (OIdentifiable nodeDoc : new OTraverse()
@@ -358,7 +358,7 @@ public class NetworkDAO extends OrientdbDAO {
         	network.getProperties().add(new NdexPropertyValuePair(PropertyGraphNetwork.version, version));
         
         //namespace
-        List<Namespace> nsList = new ArrayList<Namespace>();
+        List<Namespace> nsList = new ArrayList<>();
         for (OIdentifiable nodeDoc : new OTraverse()
    	    	.field("out_"+ NdexClasses.Network_E_Namespace )
    	    	.target(doc)
@@ -782,7 +782,7 @@ public class NetworkDAO extends OrientdbDAO {
 /*		String query = "select from " + NdexClasses.Citation + " where " +
 	    		  NdexClasses.Citation_P_title + "='" + title +"' " ;
 	    final List<ODocument> citations = db.query(new OSQLSynchQuery<ODocument>(query)); */
-		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(citationQuery1);
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(citationQuery1);
 		final List<ODocument> citations = db.command(query)
 				.execute(title,idType,identifier); 
 	    
@@ -808,7 +808,7 @@ public class NetworkDAO extends OrientdbDAO {
 	 * @return
 	 */
 	public Collection<Citation> getNetworkCitations(String networkUUID) {
-		ArrayList<Citation> citations = new ArrayList<Citation>();
+		ArrayList<Citation> citations = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
 		
@@ -835,7 +835,7 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	
 	private Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc) {
-		ArrayList<Namespace> namespaces = new ArrayList<Namespace>();
+		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
 		for (OIdentifiable reifiedTRec : new OTraverse()
  			.field("out_"+ NdexClasses.Network_E_Namespace)
@@ -883,7 +883,7 @@ public class NetworkDAO extends OrientdbDAO {
          NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
     
     public Node findNodeByBaseTermId(long baseTermID) throws NdexException {
-		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(nodeQuery);
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(nodeQuery);
 		List<ODocument> nodes = db.command(query).execute( baseTermID);
     	
 		if (nodes.isEmpty())
@@ -898,8 +898,7 @@ public class NetworkDAO extends OrientdbDAO {
             NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
        
     public Node findNodeByFunctionTermId(long functionTermID) throws NdexException {
-   		OSQLSynchQuery<ODocument> query = 
-   				new OSQLSynchQuery<ODocument>(functionTermNodeQuery);
+   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(functionTermNodeQuery);
    		List<ODocument> nodes = db.command(query).execute( functionTermID);
        	
    		if (nodes.isEmpty())
@@ -914,8 +913,7 @@ public class NetworkDAO extends OrientdbDAO {
             NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
 
     public Node findNodeByReifiedEdgeTermId (long reifiedEdgeTermId) throws NdexException {
-   		OSQLSynchQuery<ODocument> query = 
-   				new OSQLSynchQuery<ODocument>(reifedEdgeTermNodeQuery);
+   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(reifedEdgeTermNodeQuery);
    		List<ODocument> nodes = db.command(query).execute( reifiedEdgeTermId);
        	
    		if (nodes.isEmpty())
@@ -931,8 +929,7 @@ public class NetworkDAO extends OrientdbDAO {
     		NdexClasses.ReifiedEdgeTerm +"'";
        
     public ReifiedEdgeTerm findReifiedEdgeTermByEdgeId(long edgeId) {
-   		OSQLSynchQuery<ODocument> query = 
-   				new OSQLSynchQuery<ODocument>(refiedEdgeTermQuery);
+   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(refiedEdgeTermQuery);
    		List<ODocument> nodes = this.db.command(query).execute( edgeId);
        	
    		if (!nodes.isEmpty()) {
@@ -1151,7 +1148,7 @@ public class NetworkDAO extends OrientdbDAO {
     	return term;
     }
     
-    private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) throws NdexException {
+    private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
     	
 		Helper.populateExternalObjectFromDoc (nSummary, doc);
 

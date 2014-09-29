@@ -116,18 +116,18 @@ public class NdexPersistenceService extends PersistenceService {
 		this.network = null;
 		this.ownerDoc = null;
 		
-		this.rawCitationMap  = new TreeMap <RawCitation, Long> ();
-        this.baseTermNodeIdMap = new TreeMap <Long,Long> ();
-		this.namedNodeMap  = new TreeMap <String, Long> ();
-		this.reifiedEdgeTermIdNodeIdMap = new HashMap<Long,Long>(100);
-		this.edgeIdReifiedEdgeTermIdMap = new HashMap<Long,Long>(100);
-		this.rawFunctionTermFunctionTermIdMap = new TreeMap<FunctionTerm, Long> ();
-		this.rawSupportMap  = new TreeMap<RawSupport, Long> ();
-		this.edgeMap = new TreeMap<RawEdge, Long>();
-		this.functionTermIdNodeIdMap = new HashMap<Long,Long>(100);
+		this.rawCitationMap  = new TreeMap <> ();
+        this.baseTermNodeIdMap = new TreeMap <> ();
+		this.namedNodeMap  = new TreeMap <> ();
+		this.reifiedEdgeTermIdNodeIdMap = new HashMap<>(100);
+		this.edgeIdReifiedEdgeTermIdMap = new HashMap<>(100);
+		this.rawFunctionTermFunctionTermIdMap = new TreeMap<> ();
+		this.rawSupportMap  = new TreeMap<> ();
+		this.edgeMap = new TreeMap<>();
+		this.functionTermIdNodeIdMap = new HashMap<>(100);
 		// intialize caches.
 		
-		externalIdNodeMap = new TreeMap<String,Long>(); 
+		externalIdNodeMap = new TreeMap<>(); 
 
 	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
 
@@ -142,17 +142,17 @@ public class NdexPersistenceService extends PersistenceService {
 		this.network = NetworkDAO.getNetworkSummary(networkDoc);
 		
 		
-		this.rawCitationMap  = new TreeMap <RawCitation, Long> ();
-        this.baseTermNodeIdMap = new TreeMap <Long,Long> ();
-		this.namedNodeMap  = new TreeMap <String, Long> ();
-		this.reifiedEdgeTermIdNodeIdMap = new HashMap<Long,Long>(100);
-		this.edgeIdReifiedEdgeTermIdMap = new HashMap<Long,Long>(100);
-		this.rawFunctionTermFunctionTermIdMap = new TreeMap<FunctionTerm, Long> ();
-		this.rawSupportMap  = new TreeMap<RawSupport, Long> ();
-		this.functionTermIdNodeIdMap = new HashMap<Long,Long>(100);
+		this.rawCitationMap  = new TreeMap <> ();
+        this.baseTermNodeIdMap = new TreeMap <> ();
+		this.namedNodeMap  = new TreeMap <> ();
+		this.reifiedEdgeTermIdNodeIdMap = new HashMap<>(100);
+		this.edgeIdReifiedEdgeTermIdMap = new HashMap<>(100);
+		this.rawFunctionTermFunctionTermIdMap = new TreeMap<> ();
+		this.rawSupportMap  = new TreeMap<> ();
+		this.functionTermIdNodeIdMap = new HashMap<>(100);
 		// intialize caches.
 		
-		externalIdNodeMap = new TreeMap<String,Long>(); 
+		externalIdNodeMap = new TreeMap<>(); 
 
 	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
 

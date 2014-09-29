@@ -71,14 +71,14 @@ public class NdexNetworkCloneService extends PersistenceService {
 		UserDAO userdao = new UserDAO(localConnection, graph);
 		ownerDoc = userdao.getRecordByAccountName(ownerAccountName, null) ;
 		
-		this.baseTermIdMap    = new HashMap <Long, Long>(1000);
-		this.namespaceIdMap   = new HashMap <Long, Long>(1000);
-		this.citationIdMap    = new HashMap <Long, Long> (1000);
-		this.reifiedEdgeTermIdMap = new HashMap<Long,Long>(1000);
-		this.nodeIdMap      = new HashMap<Long,Long>(1000);
-		this.edgeIdMap      = new HashMap<Long, Long> ();
-		this.supportIdMap   = new HashMap<Long, Long> (1000);
-		this.functionTermIdMap = new HashMap<Long,Long>(1000);
+		this.baseTermIdMap    = new HashMap <>(1000);
+		this.namespaceIdMap   = new HashMap <>(1000);
+		this.citationIdMap    = new HashMap <> (1000);
+		this.reifiedEdgeTermIdMap = new HashMap<>(1000);
+		this.nodeIdMap      = new HashMap<>(1000);
+		this.edgeIdMap      = new HashMap<> ();
+		this.supportIdMap   = new HashMap<> (1000);
+		this.functionTermIdMap = new HashMap<>(1000);
 		// intialize caches.
 	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
 

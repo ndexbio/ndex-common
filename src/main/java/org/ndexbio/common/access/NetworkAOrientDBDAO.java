@@ -74,7 +74,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		final ORID networkRid = networkDoc.getIdentity();
 		checkBlockSize(blockSize);
 
-		final List<BaseTerm> foundTerms = new ArrayList<BaseTerm>();
+		final List<BaseTerm> foundTerms = new ArrayList<>();
 		final int startIndex = skipBlocks * blockSize;
 
 		final String query = "SELECT name, id, out_baseTermNamespace.jdexId as namespaceId FROM (TRAVERSE out_networkTerms FROM "
@@ -441,7 +441,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	 */
 
 	private List<Edge> getEdgesByEdgeRids(Set<ORID> edgeRids) {
-		List<Edge> result = new ArrayList<Edge>();
+		List<Edge> result = new ArrayList<>();
 		String edgeIdCsv = ridsToCsv(edgeRids);
 
 		final String query = 

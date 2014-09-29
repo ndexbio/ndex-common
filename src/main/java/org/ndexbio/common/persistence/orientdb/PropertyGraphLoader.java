@@ -65,7 +65,7 @@ public class PropertyGraphLoader {
         String title = null;
         String description = null;
         String version = null;
-        List<NdexPropertyValuePair> otherAttributes = new ArrayList<NdexPropertyValuePair>();
+        List<NdexPropertyValuePair> otherAttributes = new ArrayList<>();
         
         Namespace[] namespaces = null;
         for ( NdexPropertyValuePair p : network.getProperties()) {
@@ -101,7 +101,7 @@ public class PropertyGraphLoader {
 			
 			String nodeName = null;
 			String baseTerm = null;
-			ArrayList<NdexPropertyValuePair> otherProperties = new ArrayList<NdexPropertyValuePair>(); 
+			ArrayList<NdexPropertyValuePair> otherProperties = new ArrayList<>(); 
 			
 			for ( NdexPropertyValuePair p : n.getProperties()) {
 			  if (p.getPredicateString().equals(PropertyGraphNode.represents)) {

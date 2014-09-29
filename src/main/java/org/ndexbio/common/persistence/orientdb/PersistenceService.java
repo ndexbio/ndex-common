@@ -32,7 +32,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public abstract class PersistenceService {
 
-	private static final long CACHE_SIZE = 2 ;//200000L;
+	//TODO: turn this into configuration property
+	private static final long CACHE_SIZE = 200000L;
 
 	protected NdexDatabase database;
 

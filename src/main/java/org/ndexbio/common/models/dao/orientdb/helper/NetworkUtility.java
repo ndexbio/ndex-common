@@ -137,7 +137,7 @@ public class NetworkUtility {
 	}
 
 	public  static Set<Long> getEdgeSupports(final Collection<Edge> edges) {
-		final Set<Long> edgeSupports = new HashSet<Long>();
+		final Set<Long> edgeSupports = new HashSet<>();
 	
 		for (final Edge edge : edges) {
 			for (final Long support : edge.getSupports())
@@ -149,7 +149,7 @@ public class NetworkUtility {
 
 	public static Set<Long> getEdgeCitations(final Collection<Edge> edges,
 			final Collection<Support> supports) {
-		final Set<Long> edgeCitations = new HashSet<Long>();
+		final Set<Long> edgeCitations = new HashSet<>();
 		for (final Edge edge : edges) {
 			for (final Long citation : edge.getCitations())
 				edgeCitations.add(citation);
@@ -163,7 +163,7 @@ public class NetworkUtility {
 	}
 
 	public static Set<Long> getEdgeNodes(final Collection<Edge> edges) {
-		final Set<Long> edgeNodes = new HashSet<Long>();
+		final Set<Long> edgeNodes = new HashSet<>();
 	
 		for (final Edge edge : edges) {
 			edgeNodes.add(edge.getSubjectId());
@@ -174,8 +174,8 @@ public class NetworkUtility {
 	}
 
 	public static Set<Long> getEdgeTerms(final Collection<Edge> edges,
-			final Collection<Node> nodes) throws NdexException {
-		final Set<Long> edgeTerms = new HashSet<Long>();
+			final Collection<Node> nodes) {
+		final Set<Long> edgeTerms = new HashSet<>();
 	
 		if (null != edges){
 			for (final Edge edge : edges)

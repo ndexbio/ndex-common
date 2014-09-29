@@ -703,11 +703,11 @@ public class UserDAO extends OrientdbDAO {
 		final int startIndex = skipBlocks * blockSize;
 
 		try {
-			List<Membership> memberships = new ArrayList<Membership>();
+			List<Membership> memberships = new ArrayList<>();
 
 			String userRID = user.getIdentity().toString();
 
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 					"SELECT FROM" + " (TRAVERSE out_"
 							+ Permissions.GROUPADMIN.name().toLowerCase()
 							+ ", out_"
