@@ -63,7 +63,7 @@ public class NdexPersistenceService extends PersistenceService {
     private Map<Long, Long> baseTermNodeIdMap;
 	// Store the mapping in memory to have better performance.
 //	private NdexDatabase database;
- // key is the edge id which this term reifed.
+ // key is the edge id which this term reified.
     private Map<Long,Long>  edgeIdReifiedEdgeTermIdMap;
 	// maps an external node id to new node id created in Ndex.
     private Map<String, Long> externalIdNodeMap; 
@@ -940,8 +940,8 @@ public class NdexPersistenceService extends PersistenceService {
 		ODocument edgeDoc = elementIdCache.get(edgeId);
 		
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
-		etV.addEdge(NdexClasses.ReifedEdge_E_edge, edgeV);
-		networkVertex.addEdge(NdexClasses.Network_E_ReifedEdgeTerms,
+		etV.addEdge(NdexClasses.ReifiedEdge_E_edge, edgeV);
+		networkVertex.addEdge(NdexClasses.Network_E_ReifiedEdgeTerms,
 				etV);
 		
 		elementIdCache.put(reifiedEdgeTermId, etV.getRecord());

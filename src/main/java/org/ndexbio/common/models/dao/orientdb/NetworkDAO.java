@@ -541,7 +541,7 @@ public class NetworkDAO extends OrientdbDAO {
     	String name = termStringMap.get(doc.getIdentity());
 		if ( name != null) return name;
 
-        ODocument o = doc.field("out_"+NdexClasses.ReifedEdge_E_edge);
+        ODocument o = doc.field("out_"+NdexClasses.ReifiedEdge_E_edge);
         Long edgeId = o.field(NdexClasses.Element_ID);
         
         name = PropertyGraphNetwork.reifiedEdgeTerm + "("+edgeId+")";
@@ -896,13 +896,13 @@ public class NetworkDAO extends OrientdbDAO {
        	return getNode(nodes.get(0),null);
     }
     
-    private static final String reifedEdgeTermNodeQuery = 
+    private static final String reifiedEdgeTermNodeQuery = 
     		"select from (traverse in_" + NdexClasses.Node_E_represents + 
     		" from (select from "+ NdexClasses.ReifiedEdgeTerm + " where " +
             NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
 
     public Node findNodeByReifiedEdgeTermId (long reifiedEdgeTermId) throws NdexException {
-   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(reifedEdgeTermNodeQuery);
+   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(reifiedEdgeTermNodeQuery);
    		List<ODocument> nodes = db.command(query).execute( reifiedEdgeTermId);
        	
    		if (nodes.isEmpty())
@@ -912,7 +912,7 @@ public class NetworkDAO extends OrientdbDAO {
     }
     
     private static final String refiedEdgeTermQuery = 
-    		"select from (traverse in_" + NdexClasses.ReifedEdge_E_edge + 
+    		"select from (traverse in_" + NdexClasses.ReifiedEdge_E_edge + 
     		" from (select from "+ NdexClasses.Edge + " where " +
             NdexClasses.Element_ID + " = ?)) where @class='"+ 
     		NdexClasses.ReifiedEdgeTerm +"'";
@@ -934,7 +934,7 @@ public class NetworkDAO extends OrientdbDAO {
 	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
 	            if (id == edgeId) {
 	            	for (OIdentifiable reifiedTRec : new OTraverse()
-      	       	    			.field("in_"+ NdexClasses.ReifedEdge_E_edge )
+      	       	    			.field("in_"+ NdexClasses.ReifiedEdge_E_edge )
       	       	    			.target((ODocument) op.getRecord())
       	       	    			.predicate( new OSQLPredicate("$depth <= 1"))) {
 
@@ -1132,7 +1132,7 @@ public class NetworkDAO extends OrientdbDAO {
     private ReifiedEdgeTerm getReifiedEdgeTermFromDoc(ODocument doc) {
     	ReifiedEdgeTerm term = new ReifiedEdgeTerm();
     	term.setId((long)doc.field(NdexClasses.Element_ID));
-    	ODocument e = doc.field("out_" +NdexClasses.ReifedEdge_E_edge );
+    	ODocument e = doc.field("out_" +NdexClasses.ReifiedEdge_E_edge );
     	term.setEdgeId((long)e.field(NdexClasses.Element_ID));
     	return term;
     }

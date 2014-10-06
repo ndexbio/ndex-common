@@ -72,7 +72,7 @@ public interface NdexClasses {
     public static final String Network_E_FunctionTerms = "FunctionTerms";
     public static final String Network_E_Citations  = "citations";
     public static final String Network_E_Supports   = "supports";
-    public static final String Network_E_ReifedEdgeTerms = "reifiedETerms";    
+    public static final String Network_E_ReifiedEdgeTerms = "reifiedETerms";    
     // element 
     public static final String Element_ID  = "id";
     
@@ -99,7 +99,7 @@ public interface NdexClasses {
     public static final String BTerm_E_Namespace   = "baseTermNS";
 
     //ReifiedEdgeTerm
-    public static final String ReifedEdge_E_edge  ="reify";
+    public static final String ReifiedEdge_E_edge  ="reify";
     
     //FunctionTerm
     public static final String FunctionTerm_E_baseTerm = "FuncBaseTerm";

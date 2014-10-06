@@ -433,7 +433,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 				ODocument edgeDoc = elementIdCache.get(newEdgeId); 
 				ODocument reifiedEdgeTermDoc = elementIdCache.get(newReifiedEdgeId);
 				graph.getVertex(reifiedEdgeTermDoc).addEdge(
-						NdexClasses.ReifedEdge_E_edge, graph.getVertex(edgeDoc));
+						NdexClasses.ReifiedEdge_E_edge, graph.getVertex(edgeDoc));
 			}
 		}
 	}
