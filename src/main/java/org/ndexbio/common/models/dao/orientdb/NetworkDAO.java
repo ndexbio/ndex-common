@@ -163,6 +163,20 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	
 	public int deleteNetwork (String UUID) {
+		int counter = deleteNetworkElements(UUID);
+		
+		String query = "select from network where UUID='"+ UUID + "'";
+        final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
+        
+        for ( ODocument n: networks ) {
+        	graph.removeVertex(graph.getVertex(n));
+        	counter ++;
+        }
+        
+ 		return counter;
+	}
+	
+	public int deleteNetworkElements(String UUID) {
 		int counter = 0;
 		
 		String query = "traverse * from ( traverse out_networkNodes from (select from network where UUID='"
@@ -174,17 +188,40 @@ public class NetworkDAO extends OrientdbDAO {
         	graph.removeVertex(graph.getVertex(element));
         	counter ++;
         }
-		query = "select from network where UUID='"+ UUID + "'";
-        final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
-        
-        for ( ODocument n: networks ) {
-        	graph.removeVertex(graph.getVertex(n));
-        	counter ++;
-        }
-        
- //       db.commit();
-		return counter;
+        return counter;
 	}
+	
+	/** 
+	 * delete all ndex and presentation properties from a network record.
+	 * Properities on network elements won't be deleted.
+	 */
+	public void deleteNetworkProperties(ODocument networkDoc) {
+
+        for (OIdentifiable propertyDoc : new OTraverse()
+    	.field("out_"+ NdexClasses.E_ndexProperties )
+    	.target(networkDoc)
+    	.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+        	ODocument doc = (ODocument) propertyDoc;
+
+        	if ( doc.getClassName().equals(NdexClasses.NdexProperty) ) {
+        		graph.removeVertex(graph.getVertex(doc));
+        	}
+        }
+
+        for (OIdentifiable propertyDoc : new OTraverse()
+    	.field("out_"+ NdexClasses.E_ndexPresentationProps )
+    	.target(networkDoc)
+    	.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+        	ODocument doc = (ODocument) propertyDoc;
+
+        	if ( doc.getClassName().equals(NdexClasses.SimpleProperty) ) {
+        		graph.removeVertex(graph.getVertex(doc));
+        	}
+        }
+	}
+	
 	
 	public Network getNetworkById(UUID id) throws NdexException {
 		ODocument nDoc = getNetworkDocByUUID(id);
