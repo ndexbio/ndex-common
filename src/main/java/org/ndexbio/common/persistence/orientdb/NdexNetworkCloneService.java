@@ -1,5 +1,6 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
@@ -10,6 +11,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.network.BaseTerm;
@@ -85,10 +87,70 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 
 
-	public NetworkSummary cloneNetwork() throws NdexException, ExecutionException {
+	/**
+	 * 
+	 * @return
+	 * @throws NdexException
+	 * @throws ExecutionException
+	 */
+	public NetworkSummary updateNetwork() throws NdexException, ExecutionException {
 		try {
 			// need to keep this order because of the dependency between objects.
-			cloneNetworkNode ();
+			updateNetworkNode ();
+			
+			cloneNetworkElements();
+			return this.network;
+		} finally {
+			this.localConnection.commit();
+
+		}
+	}
+	
+	private void updateNetworkNode() throws NdexException, ExecutionException {
+		if ( this.srcNetwork.getExternalId() == null)
+			throw new NdexException("Source network doesn't have a UUID. ");
+		
+		this.networkDoc = networkDAO.getNetworkDocByUUID(this.srcNetwork.getExternalId());
+		
+		if (networkDoc == null)
+			throw new NdexException("Network with UUID " + this.srcNetwork.getExternalId()
+					+ " is not found in this server");
+		
+		this.network = NetworkDAO.getNetworkSummary(networkDoc);
+		
+		this.network.setName(srcNetwork.getName());
+		this.network.setEdgeCount(srcNetwork.getEdges().size());
+		this.network.setNodeCount(srcNetwork.getNodes().size());
+		this.network.setDescription(srcNetwork.getDescription());
+		this.network.setVersion(srcNetwork.getVersion());
+		
+		networkDoc = networkDoc.fields(
+		          NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
+		          NdexClasses.Network_P_name, srcNetwork.getName(),
+		          NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
+		          NdexClasses.Network_P_nodeCount, network.getNodeCount(),
+		          NdexClasses.Network_P_desc,srcNetwork.getDescription(),
+		          NdexClasses.Network_P_version,srcNetwork.getVersion(),
+		          NdexClasses.Network_P_isLocked, false,
+		          NdexClasses.Network_P_isComplete, false);
+		
+		networkDoc = networkDoc.save();
+		
+		networkVertex = graph.getVertex(networkDoc);
+		
+		networkDAO.deleteNetworkProperties(networkDoc);
+
+		networkDAO.deleteNetworkElements(network.getExternalId().toString());
+		
+		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+		
+		logger.info("NDEx network titled: " +srcNetwork.getName() +" has been updated.");
+
+	}
+
+	private void cloneNetworkElements() throws NdexException, ExecutionException {
+		try {
+			// need to keep this order because of the dependency between objects.
 			cloneNamespaces ();
 			cloneBaseTerms ();
 			cloneCitations();
@@ -109,11 +171,21 @@ public class NdexNetworkCloneService extends PersistenceService {
 				.save();
 
 			logger.info("The new network " + network.getName() + " is complete.");
+		} finally {
+			this.localConnection.commit();
+		}
+		
+	}
+
+	public NetworkSummary cloneNetwork() throws NdexException, ExecutionException {
+		try {
+			// need to keep this order because of the dependency between objects.
+			cloneNetworkNode ();
+
+			cloneNetworkElements();
 			return this.network;
 		} finally {
 			this.localConnection.commit();
-	//		localConnection.close();
-	//		database.close();
 		}
 	}
 	

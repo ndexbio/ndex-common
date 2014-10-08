@@ -298,6 +298,9 @@ public abstract class PersistenceService {
 	        	fTermV.addEdge(NdexClasses.FunctionTerm_E_paramter, graph.getVertex(o));
 	        }
 		    
+	        //add link to the network vertex
+	        this.networkVertex.addEdge(NdexClasses.Network_E_FunctionTerms, fTermV);
+	        
 	        elementIdCache.put(functionTermId, fTerm);
 	        return functionTermId;
 		}

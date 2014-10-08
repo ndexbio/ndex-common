@@ -1,54 +1,48 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.NdexPropertyValuePair;
-import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphEdge;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.network.PropertyGraphNode;
 import org.ndexbio.model.object.network.Support;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class PropertyGraphLoader {
 	
-//	private NdexPersistenceService persistenceService;
 	NdexDatabase db;
 	private ObjectMapper mapper;
 	
 	public PropertyGraphLoader (NdexDatabase db)  {
 		this.db = db;
-//		this.persistenceService = new NdexPersistenceService(db);
 		mapper = new ObjectMapper();
 	}
 	
 	public NetworkSummary insertNetwork(PropertyGraphNetwork network, String accountName) throws Exception {
-		UUID uuid = null;
+
 		NdexPersistenceService persistenceService = null;
 		try {
-			persistenceService = new NdexPersistenceService(db);;
 		
-			for ( NdexPropertyValuePair p : network.getProperties()) {
-				if ( p.getPredicateString().equals ( PropertyGraphNetwork.uuid) ) {
-					uuid = UUID.fromString(p.getValue());
-					break;
-				}
-			}
-		
-			if ( uuid == null) {
-				uuid = NdexUUIDFactory.INSTANCE.getNDExUUID();
-				insertNewNetwork(uuid, network, accountName,persistenceService );
-			} else
-				updateNetwork(uuid, network, accountName,persistenceService );
+			persistenceService = new NdexPersistenceService(db);
+			insertNewNetwork(network, accountName,persistenceService );
 
 			persistenceService.persistNetwork();
 			NetworkSummary result = persistenceService.getCurrentNetwork();
@@ -60,14 +54,45 @@ public class PropertyGraphLoader {
 	}
 	
 
-	private void insertNewNetwork(UUID uuid, PropertyGraphNetwork network, String accountName,
+	public NetworkSummary updateNetwork(PropertyGraphNetwork network) throws Exception {
+		UUID uuid = null;
+		NdexPersistenceService persistenceService = null;
+		try {
+		
+			for ( NdexPropertyValuePair p : network.getProperties()) {
+				if ( p.getPredicateString().equals ( PropertyGraphNetwork.uuid) ) {
+					uuid = UUID.fromString(p.getValue());
+					break;
+				}
+			}
+			
+			if(uuid == null) 
+				throw new NdexException("updateNetwork: UUID not found in PropertyGraph.");
+			
+			persistenceService = new NdexPersistenceService(db,uuid);
+			updateNetwork(uuid, network, persistenceService );
+
+			persistenceService.persistNetwork();
+			NetworkSummary result = persistenceService.getCurrentNetwork();
+			persistenceService = null;
+			return result;
+		} finally {
+			if ( persistenceService !=null) persistenceService.close();
+		}
+	}
+	
+	
+	private void insertNewNetwork(PropertyGraphNetwork network, String accountName,
 			NdexPersistenceService persistenceService) throws Exception {
-        String title = null;
+
+		String title = null;
         String description = null;
         String version = null;
         List<NdexPropertyValuePair> otherAttributes = new ArrayList<>();
         
-        Namespace[] namespaces = null;
+		UUID uuid = NdexUUIDFactory.INSTANCE.getNDExUUID();
+
+		//        Namespace[] namespaces = null;
         for ( NdexPropertyValuePair p : network.getProperties()) {
 			if ( p.getPredicateString().equals(PropertyGraphNetwork.name) ) {
 				title = p.getValue();
@@ -75,12 +100,12 @@ public class PropertyGraphLoader {
 				version = p.getValue();
 			} else if ( p.getPredicateString().equals(PropertyGraphNetwork.description) ) {
 				description = p.getValue();
-			} else if (p.getPredicateString().equals(PropertyGraphNetwork.namspaces)) {
+/*			} else if (p.getPredicateString().equals(PropertyGraphNetwork.namspaces)) {
 				namespaces = mapper.readValue(p.getValue(), Namespace[].class);
 			} else if (p.getPredicateString().equals(PropertyGraphNetwork.supports)) {
 				Support[] supports = mapper.readValue(p.getValue(), Support[].class);
 			} else if (p.getPredicateString().equals(PropertyGraphNetwork.citations)) {
-				
+*/				
 			} else if ( !p.getPredicateString().equals(PropertyGraphNetwork.uuid) ) {
 				otherAttributes.add(p);
 			} 
@@ -89,13 +114,36 @@ public class PropertyGraphLoader {
 		persistenceService.createNewNetwork(accountName, title, version, uuid);
 		persistenceService.setNetworkTitleAndDescription(title, description);
 
+		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
+		
+		insertNetworkElements(network,persistenceService);
+		
+	}
+	
+	
+	private void insertNetworkElements(PropertyGraphNetwork network, NdexPersistenceService persistenceService) throws NdexException, 
+		JsonParseException, JsonMappingException, IOException, ExecutionException {
+
+		
+        Namespace[] namespaces = null;
+        for ( NdexPropertyValuePair p : network.getProperties()) {
+			if (p.getPredicateString().equals(PropertyGraphNetwork.namspaces)) {
+				namespaces = mapper.readValue(p.getValue(), Namespace[].class);
+			} 
+		/*	TODO: need to review if we have support and citation that only applied to network but not to nodes and edges.
+			else if (p.getPredicateString().equals(PropertyGraphNetwork.supports)) {
+				Support[] supports = mapper.readValue(p.getValue(), Support[].class);
+			} else if (p.getPredicateString().equals(PropertyGraphNetwork.citations)) {
+				
+			}  */
+		}
+		
 		if ( namespaces != null) {
 			for ( Namespace ns : namespaces ) {
 				persistenceService.createNamespace(ns.getPrefix(), ns.getUri());
 			}
 		}
 
-		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
 		
 		for ( PropertyGraphNode n : network.getNodes().values()) {
 			
@@ -153,11 +201,43 @@ public class PropertyGraphLoader {
 		
 	}
 	
-	private void updateNetwork (UUID uuid, PropertyGraphNetwork network, String accountName,
-			NdexPersistenceService persistenceService) throws Exception {
-		//TODO: remove the network from system first.
+	private void updateNetwork (UUID uuid, PropertyGraphNetwork network,  NdexPersistenceService persistenceService) throws Exception {
 		
-		insertNewNetwork(uuid,network, accountName, persistenceService);
+			NetworkDAO dao = new NetworkDAO(persistenceService.localConnection);
+			ODocument networkDoc = persistenceService.networkVertex.getRecord();
+			
+			//TODO: remove the network from system first.
+			dao.deleteNetworkElements(uuid.toString());
+			dao.deleteNetworkProperties(persistenceService.networkVertex.getRecord());
+			
+			//save the network info
+	        String title = null;
+	        String description = null;
+	        String version = null;
+	        List<NdexPropertyValuePair> otherAttributes = new ArrayList<>();
+	        
+	        for ( NdexPropertyValuePair p : network.getProperties()) {
+				if ( p.getPredicateString().equals(PropertyGraphNetwork.name) ) {
+					title = p.getValue();
+				} else if ( p.getPredicateString().equals(PropertyGraphNetwork.version) ) {
+					version = p.getValue();
+				} else if ( p.getPredicateString().equals(PropertyGraphNetwork.description) ) {
+					description = p.getValue();
+
+				} else if ( !p.getPredicateString().equals(PropertyGraphNetwork.uuid) ) {
+					otherAttributes.add(p);
+				} 
+			}			
+			
+	        networkDoc = networkDoc.fields(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
+	        		NdexClasses.Network_P_name, title,
+	        		NdexClasses.Network_P_desc, description,
+	        		NdexClasses.Network_P_version, version).save();
+	        
+			persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
+
+			// redo populate the elements
+		    insertNetworkElements(network, persistenceService);
 		
 	}
 	
