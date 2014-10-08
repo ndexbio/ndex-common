@@ -170,6 +170,7 @@ public class NetworkDAO extends OrientdbDAO {
         final List<ODocument> elements = db.query(new OSQLSynchQuery<ODocument>(query));
         
         for ( ODocument element : elements ) {
+        	element.reload();
         	graph.removeVertex(graph.getVertex(element));
         	counter ++;
         }

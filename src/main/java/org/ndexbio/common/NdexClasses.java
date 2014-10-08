@@ -35,7 +35,7 @@ public interface NdexClasses {
 	public static final String Support            = "support";
 	
 	//presentationProperty
-	public static final String SimpleProp_P_name = "name";
+	public static final String SimpleProp_P_name  = "name";
 	public static final String SimpleProp_P_value = "value";
 	
 	//account edges
@@ -47,21 +47,21 @@ public interface NdexClasses {
     public static final String Index_accountName = "index-user-username";
     
     //extertnal object
-    public static final String ExternalObj_ID = "UUID";
+    public static final String ExternalObj_ID    = "UUID";
     public static final String ExternalObj_cTime = "createdTime";
     public static final String ExternalObj_mTime = "modificationTime";
 
     public static final String Index_externalID = "index-external-id";
     
 	// network properties and edges.
-    public static final String Network_P_UUID    = ExternalObj_ID;
-    public static final String Network_P_name    = "name";
+    public static final String Network_P_UUID       = ExternalObj_ID;
+    public static final String Network_P_name       = "name";
     public static final String Network_P_visibility = "visibility";
     public static final String Network_P_isLocked   = "isLocked";
     public static final String Network_P_isComplete = "isComplete";
-    public static final String Network_P_desc    = "description";
-    public static final String Network_P_version = "version";
-    public static final String Network_P_nodeCount = "nodeCount";
+    public static final String Network_P_desc       = "description";
+    public static final String Network_P_version    = "version";
+    public static final String Network_P_nodeCount  = "nodeCount";
     public static final String Network_P_edgeCount = "edgeCount";
     public static final String Network_P_provenance = "provenance";
     
@@ -77,7 +77,7 @@ public interface NdexClasses {
     public static final String Element_ID  = "id";
     
     // propertiedObject
-    public static final String E_ndexProperties = "ndexProps";
+    public static final String E_ndexProperties        = "ndexProps";
     public static final String E_ndexPresentationProps = "ndexPresProp";
     
     
@@ -86,10 +86,10 @@ public interface NdexClasses {
     public static final String ns_P_uri    = "uri";
     
     // citation
-    public static final String Citation_P_title       = "title";
+    public static final String Citation_P_title        = "title";
     public static final String Citation_P_contributors = "authors";
-    public static final String Citation_p_idType	="idType";
-    public static final String Citation_P_identifier ="identifier";
+    public static final String Citation_p_idType	   = "idType";
+    public static final String Citation_P_identifier   = "identifier";
     //support
     public static final String Support_P_text     = "text";
     public static final String Support_E_citation = "citeFrom";
@@ -125,12 +125,12 @@ public interface NdexClasses {
     public static final String Edge_E_supports   = "eSupport";
     
     // ndexProperty
-    public static final String ndexProp_P_predicateStr = "predicateStr";
-    public static final String ndexProp_P_value        = "value";
+    public static final String ndexProp_P_predicateStr  = "predicateStr";
+    public static final String ndexProp_P_value         = "value";
     public static final String ndexProp_P_datatype		= "dType";
-    public static final String ndexProp_P_predicateId  = "predicateId";
-    public static final String ndexProp_P_valueId	= "valueId";
-    public static final String ndexProp_E_predicate = "prop";
+    public static final String ndexProp_P_predicateId   = "predicateId";
+    public static final String ndexProp_P_valueId	    = "valueId";
+    public static final String ndexProp_E_predicate     = "prop";
     
     //user
 
