@@ -253,4 +253,10 @@ public class Helper {
 	  
 	  return doc;
 	}
+	
+
+	//TODO: this is a quick fix. Need to review Orientdb string escape rules to properly implement it.
+	public static String escapeOrientDBSQL(String str) {
+		return str.replace("'", "\\'");
+	}
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
@@ -336,8 +337,8 @@ public class GroupDAO extends OrientdbDAO {
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
-			  			+ " AND accountName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
-						+ " OR organizationName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
+			  			+ " AND accountName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%'"
+						+ " OR organizationName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%'"
 						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
@@ -366,8 +367,8 @@ public class GroupDAO extends OrientdbDAO {
 			
 			query = new OSQLSynchQuery<>("SELECT FROM"
 						+ " " + NdexClasses.Group
-						+ " WHERE accountName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
-						+ " OR organizationName.toLowerCase() LIKE '%"+ simpleQuery.getSearchString() +"%'"
+						+ " WHERE accountName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%'"
+						+ " OR organizationName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%'"
 						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
@@ -770,16 +771,22 @@ public class GroupDAO extends OrientdbDAO {
 		return result;
 	}
 	
+	private static String accountQuery = "SELECT FROM " + NdexClasses.Account + " WHERE accountName = ?";
+	
 	private void checkForExistingGroup(final Group group) 
 			throws DuplicateObjectException, IllegalArgumentException {
 		
 		Preconditions.checkArgument(null != group, 
 				"UUID required");
 		
-		List<ODocument> existingGroups = db.query(
+		/*List<ODocument> existingGroups = db.query(
 				new OSQLSynchQuery<>(
 						"SELECT FROM " + NdexClasses.Account
-						+ " WHERE accountName = '" + group.getAccountName() + "'"));
+						+ " WHERE accountName = '" + group.getAccountName() + "'")); */
+
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(accountQuery);
+		final List<ODocument> existingGroups = db.command(query).execute(group.getAccountName()); 
+		
 		
 		if (!existingGroups.isEmpty()) {
 			logger.info("Group with accountName " + group.getAccountName() + " already exists");

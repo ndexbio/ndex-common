@@ -1597,6 +1597,8 @@ public class NetworkDAO extends OrientdbDAO {
           	graph.removeEdge(e);
         }
 
+        networkdoc.reload();
+        accountdoc.reload();
         accountV.addEdge(permission.toString().toLowerCase(), networkV);
     	return 1;
     }
