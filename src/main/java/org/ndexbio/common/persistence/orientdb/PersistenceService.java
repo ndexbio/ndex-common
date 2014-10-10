@@ -11,11 +11,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import javax.xml.namespace.QName;
+
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
+import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.network.Namespace;
@@ -397,12 +400,13 @@ public abstract class PersistenceService {
 				// ignore and move on to next case
 			  }
 			}
-			// case 2: termString is of the form NamespacePrefix:Identifier
+			// case 2: termString is of the form (NamespacePrefix:)*Identifier
 			// find or create the namespace based on the prefix
 			// when creating, set the URI based on the PREFIX-URI table for known
 			// namespaces, otherwise do not set.
 			//
-			String[] termStringComponents = termString.split(":");
+			
+			String[] termStringComponents = TermUtilities.getNdexQName(termString);
 			if (termStringComponents != null && termStringComponents.length == 2) {
 				String identifier = termStringComponents[1];
 				String prefix = termStringComponents[0];
@@ -432,6 +436,8 @@ public abstract class PersistenceService {
 			
 		}
 	
+		
+		
 		
 		private Long createBaseTerm (String prefix, String localName) throws ExecutionException {
 			Namespace namespace = this.prefixMap.get(prefix);
