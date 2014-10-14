@@ -345,7 +345,7 @@ public class GroupDAO extends OrientdbDAO {
 				
 				groups = this.db.command(query).execute();
 				
-				if( !groups.iterator().hasNext() && simpleQuery.getSearchString().equals("") ) {
+			/*	if( !groups.iterator().hasNext() && simpleQuery.getSearchString().equals("") ) {
 					query = new OSQLSynchQuery<>("SELECT FROM"
 						+ " (TRAVERSE "+traversePermission+" FROM"
 			  				+ " " + traverseRID
@@ -356,7 +356,7 @@ public class GroupDAO extends OrientdbDAO {
 						+ " LIMIT " + blockSize );
 					
 					groups = this.db.command(query).execute();
-				}
+				} */
 				
 				for (final ODocument group : groups) {
 					foundgroups.add(GroupDAO.getGroupFromDocument(group));
@@ -375,8 +375,8 @@ public class GroupDAO extends OrientdbDAO {
 				
 			groups = this.db.command(query).execute();
 				
-			if( !groups.iterator().hasNext() && simpleQuery.getSearchString().equals("") ) 
-					groups = this.db.browseClass(NdexClasses.Group).setLimit(blockSize);
+//			if( !groups.iterator().hasNext() && simpleQuery.getSearchString().equals("") ) 
+//					groups = this.db.browseClass(NdexClasses.Group).setLimit(blockSize);
 				
 				for (final ODocument group : groups) {
 					foundgroups.add(GroupDAO.getGroupFromDocument(group));

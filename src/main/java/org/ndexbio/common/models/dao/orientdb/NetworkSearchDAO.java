@@ -41,7 +41,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		String userRID;
 		String traversePermission;
-		Integer traverseDepth;
+		int traverseDepth;
 		OSQLSynchQuery<ODocument> query;
 		Iterable<ODocument> networks;
 		final List<NetworkSummary> foundNetworks = new ArrayList<>();
@@ -60,6 +60,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			traverseDepth = 2;
 		else
 			traverseDepth = 1;
+		
+		String searchStr = Helper.escapeOrientDBSQL(simpleNetworkQuery.getSearchString().toLowerCase());
 		
 		try {
 			
@@ -84,8 +86,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			  			"SELECT  FROM"
 			  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
 			  				+ " " + traverseRID
-			  				+ "  WHILE $depth <= "+traverseDepth.toString()+" )"
-			  			+ " WHERE name.toLowerCase() LIKE '%" + simpleNetworkQuery.getSearchString().toLowerCase() +"%'"
+			  				+ "  WHILE $depth <= "+traverseDepth+" )"
+			  			+ " WHERE name.toLowerCase() LIKE '%" + searchStr +"%'"
 			  			+ " AND @class = '"+ NdexClasses.Network +"'"
 			  			+ " AND isComplete = true"
 			 			+ " AND ( visibility <> 'PRIVATE'"
@@ -108,8 +110,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			  			"SELECT FROM " + NdexClasses.Network
 			  			+ " WHERE isComplete = true "
 			  			
-			  			+ (simpleNetworkQuery.getSearchString().equals("") ? " " : 
-			  			  "AND name.toLowerCase() LIKE '%"+ simpleNetworkQuery.getSearchString().toLowerCase() +"%'")
+			  			+ (searchStr.equals("") ? " " : 
+			  			  "AND name.toLowerCase() LIKE '%"+ searchStr +"%'")
 			  			  
 			 			+ " AND ( visibility <> 'PRIVATE'"
 						+ " OR in() contains "+userRID

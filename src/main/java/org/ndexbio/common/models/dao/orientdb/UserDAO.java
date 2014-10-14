@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.Date;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.NdexException;
@@ -309,8 +310,10 @@ public class UserDAO extends OrientdbDAO {
 		Iterable<ODocument> users;
 		final List<User> foundUsers = new ArrayList<>();
 		
-		if (simpleQuery.getSearchString().equals("*") )
-			simpleQuery.setSearchString("");
+		String searchStr = simpleQuery.getSearchString().toLowerCase();
+		
+		if (searchStr.equals("*") )
+			searchStr = "";
 		
 		if (simpleQuery.getPermission() == null)
 			traversePermission = "in_groupadmin, in_member";
@@ -318,8 +321,8 @@ public class UserDAO extends OrientdbDAO {
 			traversePermission = "in_"
 					+ simpleQuery.getPermission().name().toLowerCase();
 
-		simpleQuery.setSearchString(simpleQuery.getSearchString().toLowerCase()
-				.trim());
+		//StringEscapeUtils.escapeJava()
+		searchStr = Helper.escapeOrientDBSQL(searchStr.toLowerCase().trim());
 		final int startIndex = skip * top;
 
 		try {
@@ -342,13 +345,13 @@ public class UserDAO extends OrientdbDAO {
 						+ NdexClasses.User
 						+ "'"
 						+ " AND accountName.toLowerCase() LIKE '%"
-						+ simpleQuery.getSearchString()
+						+ searchStr
 						+ "%'"
 						+ "  OR lastName.toLowerCase() LIKE '%"
-						+ simpleQuery.getSearchString()
+						+ searchStr
 						+ "%'"
 						+ "  OR firstName.toLowerCase() LIKE '%"
-						+ simpleQuery.getSearchString()
+						+ searchStr
 						+ "%'"
 						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC "
 						+ " SKIP "
@@ -356,7 +359,7 @@ public class UserDAO extends OrientdbDAO {
 
 				users = this.db.command(query).execute();
 
-				if (!users.iterator().hasNext()  && simpleQuery.getSearchString().equals("")) {
+		/*		if (!users.iterator().hasNext()  && simpleQuery.getSearchString().equals("")) {
 
 					query = new OSQLSynchQuery<>("SELECT FROM"
 							+ " (TRAVERSE " + traversePermission + " FROM"
@@ -367,7 +370,7 @@ public class UserDAO extends OrientdbDAO {
 
 					users = this.db.command(query).execute();
 
-				}
+				} */
 
 				for (final ODocument user : users) {
 					foundUsers.add(UserDAO.getUserFromDocument(user));
@@ -379,19 +382,15 @@ public class UserDAO extends OrientdbDAO {
 			query = new OSQLSynchQuery<>("SELECT FROM "
 						+ NdexClasses.User + " "
 						+ "WHERE accountName.toLowerCase() LIKE '%"
-						+ simpleQuery.getSearchString() + "%'"
+						+ searchStr + "%'"
 						+ "  OR lastName.toLowerCase() LIKE '%"
-						+ simpleQuery.getSearchString() + "%'"
+						+ searchStr + "%'"
 						+ "  OR firstName.toLowerCase() LIKE '%"
-						+ simpleQuery.getSearchString() + "%'"
+						+ searchStr + "%'"
 						+ "  ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 						+ startIndex + " LIMIT " + top);
 
 			users = this.db.command(query).execute();
-
-			if (!users.iterator().hasNext() && simpleQuery.getSearchString().equals(""))
-				users = db.browseClass(NdexClasses.User).setLimit(top);
-
 
 			for (final ODocument user : users) {
 					foundUsers.add(UserDAO.getUserFromDocument(user));
