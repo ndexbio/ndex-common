@@ -25,10 +25,14 @@ public class TermUtilities {
 		String[] termStringComponents = termString.split(":");
 		if ( termStringComponents.length<2) return null;
 		
-		for ( String str : termStringComponents) {
-			
-				if (!str.matches("^[a-zA-Z_]([0-9a-zA-Z._-])*$"))
+		for ( int i = 0 ; i < termStringComponents.length; i ++) {
+			if ( i == 0 ) {
+				if (!termStringComponents[i].matches("^[a-zA-Z_]([0-9a-zA-Z._-])*$"))
 					return null;
+			} else {
+				if (!termStringComponents[i].matches("^[0-9a-zA-Z_].*$"))
+					return null;
+			}
 		}
 		String rest ="";
 		
