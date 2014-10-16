@@ -140,7 +140,7 @@ public class NetworkUtility {
 		final Set<Long> edgeSupports = new HashSet<>();
 	
 		for (final Edge edge : edges) {
-			for (final Long support : edge.getSupports())
+			for (final Long support : edge.getSupportIds())
 				edgeSupports.add(support);
 		}
 	
@@ -151,13 +151,13 @@ public class NetworkUtility {
 			final Collection<Support> supports) {
 		final Set<Long> edgeCitations = new HashSet<>();
 		for (final Edge edge : edges) {
-			for (final Long citation : edge.getCitations())
+			for (final Long citation : edge.getCitationIds())
 				edgeCitations.add(citation);
 		}
 	
 		for (final Support support : supports) {
-			if (support.getCitation() >0 ) 
-				edgeCitations.add(support.getCitation());
+			if (support.getCitationId() >0 ) 
+				edgeCitations.add(support.getCitationId());
 		}
 		return edgeCitations;
 	}

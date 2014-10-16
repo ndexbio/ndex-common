@@ -7,12 +7,24 @@ import java.util.logging.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.ndexbio.common.util.TermUtilities;
 
 public class NdexDatabaseTest {
 
 	static NdexDatabase db;
+	
+	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
+		String[] foo = TermUtilities.getNdexQName("abc:3fg");
+		System.out.println(foo);
+		
+		foo = TermUtilities.getNdexQName("abc:3 fg");
+		System.out.println(foo);
+
+		foo = TermUtilities.getNdexQName("ab(c:3fg)");
+		System.out.println(foo);
+
 		db = new NdexDatabase("http://localhost/");
 	}
 
@@ -30,6 +42,9 @@ public class NdexDatabaseTest {
 //	   	  System.out.println(db.getNextId());
 		l.info("end");
 	*/	
+		
+		
+		
 		long n1 = db.getNextId();
 		long n2 = db.getNextId();
 		assertEquals (n2, n1+1);

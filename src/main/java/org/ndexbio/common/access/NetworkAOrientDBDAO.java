@@ -97,7 +97,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 				BaseTerm bterm = new BaseTerm();
 				bterm.setId( (long)doc.field("jdexId"));
 				bterm.setName( (String)doc.field("name"));
-				bterm.setNamespace((long)doc.field("namespaceId"));
+				bterm.setNamespaceId((long)doc.field("namespaceId"));
 
 				foundTerms.add(bterm);
 			}
@@ -676,7 +676,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 				BaseTerm baseTerm = new BaseTerm();
 				baseTerm.setName(termName);
 				if (null != namespaceId){
-					baseTerm.setNamespace(namespaceId);
+					baseTerm.setNamespaceId(namespaceId);
 					namespaceIdRidMap.put(namespaceId, namespaceRid);
 				}
 				network.getBaseTerms().put(termId, baseTerm);
@@ -691,7 +691,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			//	functionTerm.setTermFunction(functionId);
 			    Integer parameterIndex = 0;
 				for (Long parameterId : parameters){
-					functionTerm.getParameters().add(parameterId);
+					functionTerm.getParameterIds().add(parameterId);
 					parameterIndex++;
 				} 
 				network.getFunctionTerms().put(functionId,functionTerm);

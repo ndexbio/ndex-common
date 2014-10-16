@@ -259,10 +259,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 		if ( srcNetwork.getBaseTerms()!= null) {
 			for ( BaseTerm term : srcNetwork.getBaseTerms().values() ) {
 				Long nsId = (long)-1 ;
-				if ( term.getNamespace() >0 ) {
-					nsId = namespaceIdMap.get(term.getNamespace());
+				if ( term.getNamespaceId() >0 ) {
+					nsId = namespaceIdMap.get(term.getNamespaceId());
 					if ( nsId == null)  
-						throw new NdexException ("Namespece Id " + term.getNamespace() + " is not found in name space list.");
+						throw new NdexException ("Namespece Id " + term.getNamespaceId() + " is not found in name space list.");
 				}
 				Long baseTermId = createBaseTerm(term.getName(), nsId);
 				this.baseTermIdMap.put(term.getId(), baseTermId);
@@ -285,9 +285,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 	private void cloneSupports() throws NdexException, ExecutionException {
 		if ( srcNetwork.getSupports()!= null) {
 			for ( Support support : srcNetwork.getSupports().values() ) {
-				Long citationId = citationIdMap.get(support.getCitation());
+				Long citationId = citationIdMap.get(support.getCitationId());
 				if ( citationId == null )
-					throw new NdexException ("Citation Id " + support.getCitation() + " is not found in citation list.");
+					throw new NdexException ("Citation Id " + support.getCitationId() + " is not found in citation list.");
 				Long supportId = createSupport(support.getText(),citationId);
 				this.supportIdMap.put(support.getId(), supportId);
 			}
@@ -460,8 +460,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 	   ODocument termDoc = elementIdCache.get(newPredicateId); 
        edgeV.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(termDoc));
 	   
-		if ( edge.getCitations() != null) {
-			for ( Long citationId : edge.getCitations()) {
+		if ( edge.getCitationIds() != null) {
+			for ( Long citationId : edge.getCitationIds()) {
 				Long newCitationId = citationIdMap.get(citationId);
 				if ( newCitationId == null)
 					throw new NdexException ("Citation id " + citationId + " not found.");
@@ -471,8 +471,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 			}
 		}
 		
-		if ( edge.getSupports() != null) {
-			for ( Long supportId : edge.getSupports()) {
+		if ( edge.getSupportIds() != null) {
+			for ( Long supportId : edge.getSupportIds()) {
 				Long newSupportId = supportIdMap.get(supportId);
 				if ( newSupportId == null)
 					throw new NdexException ("Support id " + supportId + " not found.");
@@ -523,7 +523,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 				ODocument newFunctionNameDoc = elementIdCache.get(newFunctionNameId);
 				functionTermV.addEdge(NdexClasses.FunctionTerm_E_baseTerm, graph.getVertex(newFunctionNameDoc));
 				
-				for ( Long argId : functionTerm.getParameters()) {
+				for ( Long argId : functionTerm.getParameterIds()) {
 					Long newId = findTermId(argId);
 					if ( newId == null)
 						throw new NdexException ("Term Id " + argId + " is not found in any term list.");

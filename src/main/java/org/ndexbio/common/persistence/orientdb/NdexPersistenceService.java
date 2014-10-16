@@ -450,7 +450,7 @@ public class NdexPersistenceService extends PersistenceService {
 		    	OrientVertex citationV = this.graph.getVertex(citationDoc);
 		    	edgeVertex.addEdge(NdexClasses.Edge_E_citations, citationV);
 		    	
-		    	edge.getCitations().add(citation.getId());
+		    	edge.getCitationIds().add(citation.getId());
 		    	this.elementIdCache.put(citation.getId(),citationV.getRecord());
 		    }
 		    
@@ -459,7 +459,7 @@ public class NdexPersistenceService extends PersistenceService {
 		    	OrientVertex supportV = this.graph.getVertex(supportDoc);
 		    	edgeVertex.addEdge(NdexClasses.Edge_E_supports, supportV);
 		    	
-		    	edge.getSupports().add(support.getId());
+		    	edge.getSupportIds().add(support.getId());
 		    	this.elementIdCache.put(support.getId(), supportV.getRecord());
 		    	
 		    }
@@ -750,7 +750,7 @@ public class NdexPersistenceService extends PersistenceService {
 		func.setFunctionTermId(baseTermId);
 			
 		for ( Long termId : termList) {
-			  func.getParameters().add( termId);
+			  func.getParameterIds().add( termId);
 		}		  
 	
 		Long functionTermId = this.rawFunctionTermFunctionTermIdMap.get(func);

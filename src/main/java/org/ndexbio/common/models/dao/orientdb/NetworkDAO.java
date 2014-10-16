@@ -507,7 +507,7 @@ public class NetworkDAO extends OrientdbDAO {
 					Citation citation = getCitationFromDoc(citationDoc);
 					network.getCitations().put(citationId, citation);
 				}
-				e.getCitations().add(citationId);
+				e.getCitationIds().add(citationId);
     		}
     	}
    		
@@ -524,7 +524,7 @@ public class NetworkDAO extends OrientdbDAO {
 					Support support = getSupportFromDoc(supportDoc, network);
 					network.getSupports().put(supportId, support);
 				}
-				e.getSupports().add(supportId);
+				e.getSupportIds().add(supportId);
     		}
     	}
 
@@ -725,7 +725,7 @@ public class NetworkDAO extends OrientdbDAO {
 		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
 		if ( nsDoc != null) {
 			Long nsId = nsDoc.field(NdexClasses.Element_ID);
-			t.setNamespace(nsId);
+			t.setNamespaceId(nsId);
 			
 			if ( network != null &&
 				 ! network.getNamespaces().containsKey(nsId)) {
@@ -733,7 +733,7 @@ public class NetworkDAO extends OrientdbDAO {
 				network.getNamespaces().put(nsId, ns);
 			}
 		} else
-			t.setNamespace(-1);
+			t.setNamespaceId(-1);
 		
 		return t;
 	}
@@ -1161,7 +1161,7 @@ public class NetworkDAO extends OrientdbDAO {
     		     }
     		   }
      		   Long argElementId = parameterDoc.field(NdexClasses.Element_ID);
-     		   term.getParameters().add(argElementId);	
+     		   term.getParameterIds().add(argElementId);	
     		}
     	}
     	return term;
@@ -1258,7 +1258,7 @@ public class NetworkDAO extends OrientdbDAO {
     	s.setId((long)doc.field(NdexClasses.Element_ID));
     	ODocument citationDoc = doc.field("out_" + NdexClasses.Support_E_citation);
     	Long citationId = citationDoc.field(NdexClasses.Element_ID);
-    	s.setCitation(citationId);
+    	s.setCitationId(citationId);
         if ( network != null && 
         		! network.getCitations().containsKey(citationId)) {
         	Citation citation = getCitationFromDoc(citationDoc);
@@ -1297,19 +1297,19 @@ public class NetworkDAO extends OrientdbDAO {
              if ( clsName.equals(NdexClasses.BaseTerm) ||
             	  clsName.equals(NdexClasses.ReifiedEdgeTerm) || 
             	  clsName.equals(NdexClasses.FunctionTerm)) {
-            	 if ( doc.field(NdexClasses.Element_ID).equals(func.getParameters().get(counter)) ) {
+            	 if ( doc.field(NdexClasses.Element_ID).equals(func.getParameterIds().get(counter)) ) {
             		 counter ++;
             	 } else 
             		 break;
 	         
              }
    			}
-   			if ( counter == func.getParameters().size()) {
+   			if ( counter == func.getParameterIds().size()) {
    				FunctionTerm result = new FunctionTerm();
    				result.setId((long)n.field(NdexClasses.Element_ID));
    				result.setFunctionTermId(func.getFunctionTermId());
-   				for (Long pid : func.getParameters()) 
-   				  result.getParameters().add(pid);
+   				for (Long pid : func.getParameterIds()) 
+   				  result.getParameterIds().add(pid);
    				
    				return result;
    				
