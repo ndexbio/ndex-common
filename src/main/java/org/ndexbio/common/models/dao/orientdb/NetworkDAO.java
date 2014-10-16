@@ -1092,7 +1092,7 @@ public class NetworkDAO extends OrientdbDAO {
 					Citation citation = getCitationFromDoc(doc);
 					network.getCitations().put(citationId, citation);
 				}
-				n.getCitations().add(citationId);
+				n.getCitationIds().add(citationId);
     		}
     	}
    		
@@ -1109,7 +1109,7 @@ public class NetworkDAO extends OrientdbDAO {
 					Support support = getSupportFromDoc(doc, network);
 					network.getSupports().put(supportId, support);
 				}
-				n.getSupports().add(supportId);
+				n.getSupportIds().add(supportId);
     		}
     	}
 

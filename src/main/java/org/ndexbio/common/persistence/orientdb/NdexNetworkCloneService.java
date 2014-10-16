@@ -389,8 +389,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 			}
 		}
 		
-		if ( node.getCitations() != null) {
-			for ( Long citationId : node.getCitations()) {
+		if ( node.getCitationIds() != null) {
+			for ( Long citationId : node.getCitationIds()) {
 				Long newCitationId = citationIdMap.get(citationId);
 				if ( newCitationId == null)
 					throw new NdexException ("Citation id " + citationId + " not found.");
@@ -400,8 +400,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 			}
 		}
 		
-		if ( node.getSupports() != null) {
-			for ( Long supportId : node.getSupports()) {
+		if ( node.getSupportIds() != null) {
+			for ( Long supportId : node.getSupportIds()) {
 				Long newSupportId = supportIdMap.get(supportId);
 				if ( newSupportId == null)
 					throw new NdexException ("Support id " + supportId + " not found.");
