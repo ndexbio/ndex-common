@@ -22,6 +22,7 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.FunctionTerm;
+import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
@@ -128,12 +129,12 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 				Set<ORID> edgeRids = getEdgeRids(networkRid, skipBlocks, blockSize);
 				
 				final long getEdgesTime = System.currentTimeMillis();
-				//NetworkDAO dao = new NetworkDAO(this._ndexDatabase);
-				//ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
+				NetworkDAO dao = new NetworkDAO(this._ndexDatabase);
+				ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
 				
 				//final ORID networkRid = networkDoc.getIdentity();
 
-				Network network =  getSubnetworkByEdgeRids( edgeRids);
+				Network network =  getSubnetworkByEdgeRids( edgeRids, networkDoc);
 				final long getSubnetworkTime = System.currentTimeMillis();
 				System.out.println("  Network Nodes : " + network.getNodes().size());
 				System.out.println("  Network Edges : " + network.getEdges().values().size());
@@ -207,7 +208,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 					//,skipBlocks,blockSize
 					);
 			final long getEdgesTime = System.currentTimeMillis();
-			Network network =  getSubnetworkByEdgeRids( edgeRids);
+			Network network =  getSubnetworkByEdgeRids( edgeRids, networkDoc);
 			final long getSubnetworkTime = System.currentTimeMillis();
 			System.out.println("  Network Nodes : " + network.getNodes().size());
 			System.out.println("  Network Edges : " + network.getEdges().values().size());
@@ -459,11 +460,18 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		return result;
 	}
 
-	private Network getSubnetworkByEdgeRids( Set<ORID> edgeRids) throws Exception {
+	private Network getSubnetworkByEdgeRids( Set<ORID> edgeRids, ODocument networkDoc) throws Exception {
 		
 	    Network network = new Network(edgeRids.size());  //result holder
-
+	    
 	    NetworkDAO dao = new NetworkDAO (this._ndexDatabase);
+
+	    // get namespaces from network
+        for ( Namespace ns : dao.getNamespacesFromNetworkDoc(networkDoc)) {
+        	network.getNamespaces().put(ns.getId(),ns);
+        }
+
+
         for (ORID edgeId : edgeRids) {
             ODocument doc = new ODocument(edgeId);
             Edge e = dao.getEdgeFromDocument(doc,network);

@@ -861,7 +861,7 @@ public class NetworkDAO extends OrientdbDAO {
 	}
 	
 	
-	private Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc) {
+	public Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc) {
 		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
 		for (OIdentifiable reifiedTRec : new OTraverse()
@@ -1030,7 +1030,7 @@ public class NetworkDAO extends OrientdbDAO {
     				}
     			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm)) {
     				if ( !network.getReifiedEdgeTerms().containsKey(termId)) {
-    					ReifiedEdgeTerm reTerm = getReifiedEdgeTermFromDoc(o);
+    					ReifiedEdgeTerm reTerm = getReifiedEdgeTermFromDoc(o,network);
     					network.getReifiedEdgeTerms().put(termId, reTerm);
     				}
     			} else if (termType.equals(NdexClasses.FunctionTerm)) {
@@ -1117,7 +1117,7 @@ public class NetworkDAO extends OrientdbDAO {
     }
     
     //TODO: need to make sure the recursion doesn't form a loop.
-    private FunctionTerm getFunctionTermfromDoc(ODocument doc,Network network) {
+    private FunctionTerm getFunctionTermfromDoc(ODocument doc,Network network) throws NdexException {
     	FunctionTerm term = new FunctionTerm();
     	
     	term.setId((long)doc.field(NdexClasses.Element_ID));
@@ -1149,10 +1149,10 @@ public class NetworkDAO extends OrientdbDAO {
     			    if ( !network.getBaseTerms().containsKey(t.getId()))
     			    	network.getBaseTerms().put(t.getId(), t);
     		     } else if(parameterDoc.getClassName().equals(NdexClasses.ReifiedEdgeTerm)) {
-    		    	 ReifiedEdgeTerm t = this.getReifiedEdgeTermFromDoc(parameterDoc);
-    		    	 if ( !network.getReifiedEdgeTerms().containsKey(t.getId())) {
-    		    		 network.getReifiedEdgeTerms().put(t.getId(), t);
-    		    	 }
+    		    	 ReifiedEdgeTerm t = this.getReifiedEdgeTermFromDoc(parameterDoc, network);
+    		    //	 if ( !network.getReifiedEdgeTerms().containsKey(t.getId())) {
+    		    //		 network.getReifiedEdgeTerms().put(t.getId(), t);
+    		    //	 }
     		     } else if ( parameterDoc.getClassName().equals(NdexClasses.FunctionTerm)) {
     		    	 FunctionTerm t = this.getFunctionTermfromDoc(parameterDoc, network);
     		    	 if ( !network.getFunctionTerms().containsKey(t.getId())) {
@@ -1167,11 +1167,20 @@ public class NetworkDAO extends OrientdbDAO {
     	return term;
     }
  
-    private ReifiedEdgeTerm getReifiedEdgeTermFromDoc(ODocument doc) {
+    private ReifiedEdgeTerm getReifiedEdgeTermFromDoc(ODocument doc, Network network) throws NdexException {
     	ReifiedEdgeTerm term = new ReifiedEdgeTerm();
     	term.setId((long)doc.field(NdexClasses.Element_ID));
     	ODocument e = doc.field("out_" +NdexClasses.ReifiedEdge_E_edge );
     	term.setEdgeId((long)e.field(NdexClasses.Element_ID));
+    	if ( network != null) {
+    		if ( !network.getReifiedEdgeTerms().containsKey(term.getId()))
+    			network.getReifiedEdgeTerms().put(term.getId(), term);
+    		if ( !network.getEdges().containsKey(term.getEdgeId())) {
+    			Edge edge = getEdgeFromDocument(e, network);
+    			network.getEdges().put(edge.getId(), edge);
+    		}
+    	}
+    		
     	return term;
     }
     

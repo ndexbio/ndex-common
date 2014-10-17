@@ -24,7 +24,7 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public abstract class OrientdbDAO {
-	protected ODatabaseDocumentTx _ndexDatabase = null;
+//	protected ODatabaseDocumentTx _ndexDatabase = null;
 	
 	protected ODatabaseDocumentTx db;
 	private static final Logger logger = Logger.getLogger(OrientdbDAO.class.getName());

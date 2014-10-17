@@ -1,6 +1,5 @@
 package org.ndexbio.common.models.dao.orientdb;
 
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -10,7 +9,6 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.Priority;
-import org.ndexbio.model.object.ResponseType;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
@@ -35,8 +33,8 @@ public class TaskDAO extends OrientdbDAO {
 	private OrientBaseGraph graph;
 	private static final Logger logger = Logger.getLogger(TaskDAO.class.getName());
 	
-	public TaskDAO (ODatabaseDocumentTx db) {
-		super(db);
+	public TaskDAO (ODatabaseDocumentTx dbConn) {
+		super(dbConn);
 		this.graph = new OrientGraph(this.db,false);
 	}
 
