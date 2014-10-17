@@ -80,12 +80,12 @@
 			<artifactId>resteasy-jaxb-provider</artifactId>
 			<version>3.0.8.Final</version>
 		</dependency>
-<dependency>
-	<groupId>org.opensaml</groupId>
+<!--<dependency>
+ 	<groupId>org.opensaml</groupId>
 	<artifactId>opensaml</artifactId>
 	<version>2.6.1</version>
 </dependency>
-
+ -->
 	<dependency>
 		<groupId>org.jdom</groupId>
 		<artifactId>jdom</artifactId>
