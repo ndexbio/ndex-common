@@ -11,6 +11,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.Citation;
@@ -140,7 +141,7 @@ public class PropertyGraphLoader {
 		
 		if ( namespaces != null) {
 			for ( Namespace ns : namespaces ) {
-				persistenceService.createNamespace(ns.getPrefix(), ns.getUri());
+				persistenceService.getNamespace(new RawNamespace(ns.getPrefix(), ns.getUri()));
 			}
 		}
 

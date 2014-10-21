@@ -76,7 +76,7 @@ public class NetworkDAO extends OrientdbDAO {
 	}
 
 	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {
-	    super(db);
+	    this(db);
 		this.searchCurrentTx = searchCurrentTransaction;
 	}
 
@@ -179,7 +179,7 @@ public class NetworkDAO extends OrientdbDAO {
 	public int deleteNetworkElements(String UUID) {
 		int counter = 0;
 		
-		String query = "traverse * from ( traverse out_networkNodes from (select from network where UUID='"
+		String query = "traverse * from ( traverse out_networkNodes,out_BaseTerms,out_networkNS from (select from network where UUID='"
 				+ UUID + "')) while @class <> 'network'";
         final List<ODocument> elements = db.query(new OSQLSynchQuery<ODocument>(query));
         

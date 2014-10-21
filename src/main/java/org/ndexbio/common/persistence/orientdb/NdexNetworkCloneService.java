@@ -13,6 +13,7 @@ import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
+import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
@@ -99,6 +100,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 			updateNetworkNode ();
 			
 			cloneNetworkElements();
+
+			addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+			
 			return this.network;
 		} finally {
 			this.localConnection.commit();
@@ -142,7 +146,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 		networkDAO.deleteNetworkElements(network.getExternalId().toString());
 		
-		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+		networkVertex.getRecord().reload();
 		
 		logger.info("NDEx network titled: " +srcNetwork.getName() +" has been updated.");
 
@@ -243,7 +247,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			for ( Namespace ns : srcNetwork.getNamespaces().values() ) {
 				if ( ns.getPrefix() !=null && prefixSet.contains(ns.getPrefix()))
 					throw new NdexException("Duplicated Prefix " + ns.getPrefix() + " found." );
-				Long nsId = createNamespace(ns.getPrefix(), ns.getUri());
+				Long nsId = getNamespace( new RawNamespace(ns.getPrefix(), ns.getUri())).getId();
 
 				ODocument nsDoc = this.elementIdCache.get(nsId);
 				OrientVertex nsV = graph.getVertex(nsDoc);

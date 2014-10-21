@@ -145,7 +145,7 @@ public abstract class PersistenceService {
 		//	database.commit();
 		}
 		
-	public Long createNamespace ( String prefix, String URI) throws NdexException {
+	private Long createNamespace ( String prefix, String URI) throws NdexException {
 			if ( prefix !=null && URI == null )
 			 throw new NdexException ("Prefix " + prefix + " is not defined." );
 		
@@ -165,7 +165,7 @@ public abstract class PersistenceService {
 		    return nsId;
 		}
 		
-	public Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
+	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
 		Namespace ns = namespaceMap.get(key);
 
 		if ( ns != null ) {
@@ -233,6 +233,7 @@ public abstract class PersistenceService {
 	  		  basetermV.addEdge(NdexClasses.BTerm_E_Namespace, nsV);
 			}
 			  
+			networkVertex.getRecord().reload();
 	        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
 	        elementIdCache.put(termId, basetermV.getRecord());
 			return termId;
