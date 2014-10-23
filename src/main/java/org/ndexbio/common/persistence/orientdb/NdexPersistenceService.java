@@ -661,7 +661,7 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 	
-	public Long getNodeIdFromBaseTermId(Long bTermId) throws ExecutionException {
+	public Long getNodeIdByBaseTermId(Long bTermId) throws ExecutionException {
 		Long nodeId = this.baseTermNodeIdMap.get(bTermId);
 		
 		if (nodeId != null) 
@@ -814,7 +814,7 @@ public class NdexPersistenceService extends PersistenceService {
 	 */
 	public Long getNodeIdByBaseTerm(String termString) throws ExecutionException, NdexException {
 		Long id = this.getBaseTermId(termString);
-		return this.getNodeIdFromBaseTermId(id);
+		return this.getNodeIdByBaseTermId(id);
 	}
 
 
