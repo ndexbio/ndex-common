@@ -195,10 +195,34 @@ public class NdexPersistenceService extends PersistenceService {
 		    
 		}
 		
-//		nodeV.getRecord().reload();
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
-				
+
+	
+	// alias is treated as a baseTerm
+	public void addAliasToNode(long nodeId, long baseTermId) throws ExecutionException, NdexException {
+		ODocument nodeDoc = elementIdCache.get(nodeId);
+
+	    Long repNodeId = this.baseTermNodeIdMap.get(baseTermId);
+		if ( repNodeId != null && repNodeId.equals(nodeId)) {
+	    	logger.info("Base term ID " + baseTermId  + " is also the represented base term of node " + 
+		    nodeId +". Alias ignored.");
+	    	return;
+	    } 
+		
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		ODocument bTermDoc = elementIdCache.get(baseTermId);
+		if(bTermDoc.getClassName() != NdexClasses.BaseTerm)
+			throw new NdexException ("Element "+ baseTermId +" is not a base term. It is " + 
+							bTermDoc.getClassName() );
+    	OrientVertex bV = graph.getVertex(bTermDoc);
+		nodeV.addEdge(NdexClasses.Node_E_alias, bV);
+
+		elementIdCache.put(nodeId, nodeV.getRecord());
+		elementIdCache.put(baseTermId, bV.getRecord());
+	}
+	
 				
 	public void addCitationToElement(long elementId, Long citationId, String className) throws ExecutionException, NdexException{
 		ODocument elementRec = elementIdCache.get(elementId);
@@ -300,15 +324,30 @@ public class NdexPersistenceService extends PersistenceService {
 		for (String rT : relatedTerms) {
 			Long bID= this.getBaseTermId(rT);
 		
-			ODocument bDoc = elementIdCache.get(bID);
-			OrientVertex bV = graph.getVertex(bDoc);
-			nodeV.addEdge(NdexClasses.Node_E_relateTo, bV);
-			elementIdCache.put(bID, bV.getRecord());
+			addRelatedTermToNode( nodeV, bID);
 		}
 		
-//		nodeV.getRecord().reload();
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
+
+	// alias is treated as a baseTerm
+	public void addRelatedTermToNode(long nodeId, long baseTermId ) throws ExecutionException {
+		ODocument nodeDoc = elementIdCache.get(nodeId);
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		addRelatedTermToNode( nodeV, baseTermId );
+		
+		elementIdCache.put(nodeId, nodeV.getRecord());
+	}
+	
+	// alias is treated as a baseTerm
+	private void addRelatedTermToNode(OrientVertex nodeV, long baseTermId ) throws ExecutionException {
+		ODocument bDoc = elementIdCache.get(baseTermId);
+		OrientVertex bV = graph.getVertex(bDoc);
+		nodeV.addEdge(NdexClasses.Node_E_relateTo, bV);
+		elementIdCache.put(baseTermId, bV.getRecord());
+	}
+	
 	
 	/**
 	 *  Look up in the current context, if an edge with the same subject,predicate and object exists, return that edge,
@@ -622,7 +661,7 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 	
-	private Long findOrCreateNodeIdFromBaseTermId(Long bTermId) throws ExecutionException {
+	public Long getNodeIdFromBaseTermId(Long bTermId) throws ExecutionException {
 		Long nodeId = this.baseTermNodeIdMap.get(bTermId);
 		
 		if (nodeId != null) 
@@ -775,7 +814,7 @@ public class NdexPersistenceService extends PersistenceService {
 	 */
 	public Long getNodeIdByBaseTerm(String termString) throws ExecutionException, NdexException {
 		Long id = this.getBaseTermId(termString);
-		return this.findOrCreateNodeIdFromBaseTermId(id);
+		return this.getNodeIdFromBaseTermId(id);
 	}
 
 

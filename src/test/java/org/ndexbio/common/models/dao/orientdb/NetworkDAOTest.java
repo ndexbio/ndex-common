@@ -22,6 +22,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public class NetworkDAOTest {
 
+	
+	
 	static ODatabaseDocumentTx db;
 	
 	@BeforeClass

@@ -158,6 +158,7 @@ public class NetworkDAO extends OrientdbDAO {
 		
 		if ( v == VisibilityType.PUBLIC) return true;
 
+		if ( accountName == null ) return false;
 		return Helper.checkPermissionOnNetworkByAccountName(db,UUIDStr, accountName, permission);
 	}
 	

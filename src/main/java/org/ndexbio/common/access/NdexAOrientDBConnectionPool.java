@@ -63,7 +63,7 @@ public class NdexAOrientDBConnectionPool {
 	     INSTANCE.pool.close();
 	     INSTANCE=null;
        }
-       logger.info("Connection pool to closed.");
+       logger.info("Connection pool closed.");
    }
    
    
