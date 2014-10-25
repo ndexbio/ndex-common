@@ -295,9 +295,9 @@ public class NdexPersistenceService extends PersistenceService {
                 OrientVertex pV = this.createNdexPropertyVertex(new NdexPropertyValuePair(e.getKey(),e.getValue()));
                 nodeVertex.addEdge(NdexClasses.E_ndexProperties, pV);
                 
-                NdexPropertyValuePair p = new NdexPropertyValuePair();
+/*                NdexPropertyValuePair p = new NdexPropertyValuePair();
                 p.setPredicateString(e.getKey());
-                p.setDataType(e.getValue());
+                p.setDataType(e.getValue()); */
 			}
 		}
 		

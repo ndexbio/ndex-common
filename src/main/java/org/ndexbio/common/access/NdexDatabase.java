@@ -24,7 +24,7 @@ public class NdexDatabase {
 	
 	private long internalCounterBase;
 
-	private static final int blockSize = 50;  
+	private static final int blockSize = 60;  
 	
 	private ODocument vdoc;
 	
