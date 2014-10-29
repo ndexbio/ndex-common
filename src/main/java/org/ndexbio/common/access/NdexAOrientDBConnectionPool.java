@@ -12,7 +12,7 @@ public class NdexAOrientDBConnectionPool {
 	
 	private static NdexAOrientDBConnectionPool INSTANCE = null;
 
-	private static int poolSize = 50;
+//	private static int poolSize = 50;
 //	private static final String dbURLPropName  = "OrientDB-URL";
 //	private static final String dbUserPropName = "OrientDB-Username";
 	
@@ -22,14 +22,17 @@ public class NdexAOrientDBConnectionPool {
 	private static final Logger logger = Logger
 			.getLogger(NdexAOrientDBConnectionPool.class.getName());
 
-	private NdexAOrientDBConnectionPool(String dbURL, String dbUserName, String dbPassword) {
+	private NdexAOrientDBConnectionPool(String dbURL, String dbUserName, String dbPassword, int size) {
 
-		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(true);
 		OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue( false );
+		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue( true );
+		OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue( "nothing" );
+		OGlobalConfiguration.STORAGE_USE_CRC32_FOR_EACH_RECORD.setValue(true);
+		
 		
 		pool = new ODatabaseDocumentPool(dbURL, dbUserName, dbPassword);
-	    pool.setup(1,poolSize);
+	    pool.setup(1,size);
 	    
 	    //TODO: check if we need to set a timeout value for it. Most likely not.
 	    //OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.setValue("3600000");
@@ -38,9 +41,9 @@ public class NdexAOrientDBConnectionPool {
 	}
 	
 	public static synchronized void createOrientDBConnectionPool (String dbURL, String dbUserName,
-				String dbPassword) {
+				String dbPassword, int size) {
 	      if(INSTANCE == null) {
-		         INSTANCE = new NdexAOrientDBConnectionPool(dbURL, dbUserName, dbPassword);
+		         INSTANCE = new NdexAOrientDBConnectionPool(dbURL, dbUserName, dbPassword, size);
 	      }
 	}
 	
