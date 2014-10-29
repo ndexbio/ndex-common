@@ -213,7 +213,7 @@ public class NdexPersistenceService extends PersistenceService {
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
 		
 		ODocument bTermDoc = elementIdCache.get(baseTermId);
-		if(bTermDoc.getClassName() != NdexClasses.BaseTerm)
+		if(!bTermDoc.getClassName().equals(NdexClasses.BaseTerm))
 			throw new NdexException ("Element "+ baseTermId +" is not a base term. It is " + 
 							bTermDoc.getClassName() );
     	OrientVertex bV = graph.getVertex(bTermDoc);
