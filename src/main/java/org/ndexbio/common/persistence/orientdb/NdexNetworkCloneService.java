@@ -174,7 +174,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			networkDoc.field(NdexClasses.Network_P_isComplete,true)
 				.save();
 
-			logger.info("The new network " + network.getName() + " is complete.");
+			logger.info("Updating network " + network.getName() + " is complete.");
 		} finally {
 			this.localConnection.commit();
 		}
@@ -190,6 +190,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			return this.network;
 		} finally {
 			this.localConnection.commit();
+			logger.info("Network "+ network.getName() + " with UUID:"+ network.getExternalId() +" has been saved. ");
 		}
 	}
 	

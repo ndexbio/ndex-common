@@ -27,8 +27,8 @@ public class NdexAOrientDBConnectionPool {
 		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(true);
 		OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
 		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue( true );
-		OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue( "nothing" );
-		OGlobalConfiguration.STORAGE_USE_CRC32_FOR_EACH_RECORD.setValue(true);
+//		OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue( "nothing" );
+//		OGlobalConfiguration.STORAGE_USE_CRC32_FOR_EACH_RECORD.setValue(true);
 		
 		
 		pool = new ODatabaseDocumentPool(dbURL, dbUserName, dbPassword);
