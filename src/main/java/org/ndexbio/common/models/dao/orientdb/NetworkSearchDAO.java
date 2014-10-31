@@ -1,6 +1,8 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -15,6 +17,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -33,13 +36,36 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		super( db);
 	}
 	
-	public List<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, User loggedInUser) 
+	
+	public Collection<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, User loggedInUser) 
 			throws NdexException, IllegalArgumentException {
 		
 		Preconditions.checkArgument(null != simpleNetworkQuery, 
 				"A query is required");
+
+		// treat "*" and "" the same way
+		if (simpleNetworkQuery.getSearchString().equals("*") )
+			simpleNetworkQuery.setSearchString("");
+
+		ORID userRID = null;
+		if( loggedInUser != null ) {
+				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_accountName);
+				OIdentifiable user = (OIdentifiable) accountNameIdx.get( loggedInUser.getAccountName() ); // account to traverse by
+				userRID = user.getIdentity();
+		}
 		
-		String userRID;
+		if ( simpleNetworkQuery.getSearchString().equals(""))
+			return findNetworksV1 (simpleNetworkQuery,skip, top, userRID);
+		
+		return findNetworksV2 (simpleNetworkQuery,skip, top, userRID);
+	}
+	
+	private List<NetworkSummary> findNetworksV1(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID) 
+			throws NdexException, IllegalArgumentException {
+		
+		// get RID for logged in user if any
+		String userRID = userORID == null ? "#0:0" : userORID.toString();
+		
 		String traversePermission;
 		int traverseDepth;
 		OSQLSynchQuery<ODocument> query;
@@ -47,9 +73,6 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		final List<NetworkSummary> foundNetworks = new ArrayList<>();
 		final int startIndex = skip * top;
 		
-		// treat "*" and "" the same way
-		if (simpleNetworkQuery.getSearchString().equals("*") )
-			simpleNetworkQuery.setSearchString("");
 
 		if( simpleNetworkQuery.getPermission() == null ) 
 			traversePermission = "out_admin, out_write, out_read";
@@ -65,14 +88,6 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		try {
 			
-			// get RID for logged in user if any
-			if( loggedInUser != null ) {
-				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
-				OIdentifiable user = (OIdentifiable) accountNameIdx.get( loggedInUser.getAccountName() ); // account to traverse by
-				userRID = user.getIdentity().toString();
-			} else {
-				userRID = "#0:0"; // should fix, done to avoid parsing errors. 
-			}
 			// search across a traversal of an accounts networks if accountName is specified
 			if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
 				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
@@ -137,8 +152,27 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		} 
 	}
 
-/*	
-	private List<NetworkSummary> getNetworkSummaryByOwnerAccount(String accountName) throws NdexException {
+	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userRID) 
+			throws NdexException, IllegalArgumentException {
+		Collection<NetworkSummary> resultList =  new LinkedHashSet<>(top);
+		
+		OIndex<?> networkIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_network_name_desc);
+		
+		String searchStr = Helper.escapeOrientDBSQL(simpleNetworkQuery.getSearchString());
+
+		Collection<OIdentifiable> networkIds =  (Collection<OIdentifiable>) networkIdx.get( searchStr); 
+
+		for ( OIdentifiable dId : networkIds) {
+			ODocument doc = dId.getRecord();
+			resultList .add(NetworkDAO.getNetworkSummary(doc));
+		}
+		
+		return resultList;
+		
+		
+		
+	}
+/*	private List<NetworkSummary> getNetworkSummaryByOwnerAccount(String accountName) throws NdexException {
 		try {
 			ODocument accountDoc = this.getRecordByAccountName(accountName, NdexClasses.Account);
 			

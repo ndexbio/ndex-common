@@ -74,18 +74,17 @@
   		<artifactId>orientdb-client</artifactId>
   		<version>1.7.9</version>
 	</dependency>
-
- 		<dependency>
+	<dependency>
+    	 <groupId>com.orientechnologies</groupId>
+     	<artifactId>orientdb-lucene</artifactId>
+      	<version>1.7.9-SNAPSHOT</version>
+	</dependency>
+	<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jaxb-provider</artifactId>
 			<version>3.0.8.Final</version>
 		</dependency>
-<!--<dependency>
- 	<groupId>org.opensaml</groupId>
-	<artifactId>opensaml</artifactId>
-	<version>2.6.1</version>
-</dependency>
- -->
+
 	<dependency>
 		<groupId>org.jdom</groupId>
 		<artifactId>jdom</artifactId>

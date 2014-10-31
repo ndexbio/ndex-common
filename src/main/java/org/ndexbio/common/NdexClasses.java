@@ -76,6 +76,8 @@ public interface NdexClasses {
     // element 
     public static final String Element_ID  = "id";
     
+    public static final String Index_network_name_desc = "idx_network-name-desc";
+    
     // propertiedObject
     public static final String E_ndexProperties        = "ndexProps";
     public static final String E_ndexPresentationProps = "ndexPresProp";
@@ -97,6 +99,8 @@ public interface NdexClasses {
     //BaseTerm
     public static final String BTerm_P_name        = "name";
     public static final String BTerm_E_Namespace   = "baseTermNS";
+    
+    public static final String Index_BTerm_name    = "idx_baseterm_name";
 
     //ReifiedEdgeTerm
     public static final String ReifiedEdge_E_edge  ="reify";

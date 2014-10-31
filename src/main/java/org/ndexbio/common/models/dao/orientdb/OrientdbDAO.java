@@ -82,7 +82,7 @@ public abstract class OrientdbDAO {
 			throws ObjectNotFoundException, NdexException {
 		
 		try {
-			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
+			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex( NdexClasses.Index_accountName );
 			OIdentifiable user = (OIdentifiable) Idx.get(accountName); // account to traverse by
 			if(user == null) 
 				throw new ObjectNotFoundException("Account ", accountName);
@@ -97,7 +97,7 @@ public abstract class OrientdbDAO {
 			logger.info("Account " + accountName + " does not exist for class: " + orientClass);
 			throw e;
 		} catch (Exception e) {
-			logger.info("Unexpected error on user retrieval by accountName");
+			logger.info("Unexpected error on user retrieval by accountName: " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		}
 		
