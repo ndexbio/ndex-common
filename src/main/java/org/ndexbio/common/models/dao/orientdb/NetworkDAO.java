@@ -1776,6 +1776,60 @@ public class NetworkDAO extends OrientdbDAO {
 		return  pDoc.save();
 	}
 
+	/**
+	 * Get all the node and edges that has no citations as a subnetwork. This is a 
+	 * utitlity function for xbel export.
+	 * @param networkUUID
+	 * @param citationId
+	 * @return
+	 * @throws NdexException
+	 */
+    public Network getNoCitationSubnetwork(String networkUUID) throws NdexException {
+    	
+    	ODocument networkDoc = getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
+    	
+    	Network result = new Network();
+    	
+    	// get all edges that have no citations.
+    	for (OIdentifiable edgeRec : new OTraverse()
+ 			.field("out_"+ NdexClasses.Network_E_Edges)
+ 			.target(networkDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument edgeDoc = (ODocument) edgeRec;
+
+    		if ( edgeDoc.getClassName().equals(NdexClasses.Edge)) {
+    			if ( edgeDoc.field("out_"+NdexClasses.Edge_E_citations) == null) {
+    				Edge e = getEdgeFromDocument(edgeDoc, result);
+    				result.getEdges().put(e.getId(), e);
+    			}
+    		}
+    	}
+    	
+    	// get orphan nodes that has no citations
+    	for (OIdentifiable nodeRec : new OTraverse()
+ 			.field("out_"+ NdexClasses.Network_E_Nodes)
+ 			.target(networkDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument nodeDoc = (ODocument) nodeRec;
+
+    		if ( nodeDoc.getClassName().equals(NdexClasses.Node)){
+                Long nodeId = nodeDoc.field(NdexClasses.Element_ID);
+                if ( !result.getNodes().containsKey(nodeId)) {
+                    if ( nodeDoc.field("out_"+ NdexClasses.Node_E_citations) == null) {
+            			Node n = this.getNode(nodeDoc,result);
+            		    result.getNodes().put(n.getId(), n);	
+                    }
+                }
+    		}
+    	}
+    	
+    	result.setEdgeCount(result.getEdges().size());
+    	result.setNodeCount(result.getNodes().size());
+    	
+    	return result;
+    }
 
 
 }
