@@ -1816,7 +1816,9 @@ public class NetworkDAO extends OrientdbDAO {
 
     		if ( nodeDoc.getClassName().equals(NdexClasses.Node)){
                 Long nodeId = nodeDoc.field(NdexClasses.Element_ID);
-                if ( !result.getNodes().containsKey(nodeId)) {
+                if ( nodeDoc.field("out_" + NdexClasses.Edge_E_subject) == null &&
+                	 nodeDoc.field("in_" + NdexClasses.Edge_E_object) == null && 
+                	 !result.getNodes().containsKey(nodeId)) {
                     if ( nodeDoc.field("out_"+ NdexClasses.Node_E_citations) == null) {
             			Node n = this.getNode(nodeDoc,result);
             		    result.getNodes().put(n.getId(), n);	
