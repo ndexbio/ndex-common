@@ -169,9 +169,12 @@ public class TaskDAO extends OrientdbDAO {
     // This is the method called by trusted applications
     // such as the task runner, where we also update
     // status in the Task object passed in.
+    
+    //TODO: looks like we are having racing conditions here. Need to review the usage and make it thread safe.
     public Task updateTaskStatus(Status status, Task task) {
     	String UUIDString = task.getExternalId().toString();
     	ODocument doc = this.getTaskDocByUUID(UUIDString);
+    	doc.reload();
     	doc.field(NdexClasses.Task_P_status, status).save();
     	task.setStatus(status);
     	return task;

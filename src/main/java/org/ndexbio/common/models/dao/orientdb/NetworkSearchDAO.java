@@ -5,11 +5,15 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.NetworkSummary;
+import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.SimpleNetworkQuery;
 import org.ndexbio.model.object.User;
 
@@ -54,10 +58,10 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				userRID = user.getIdentity();
 		}
 		
-		if ( simpleNetworkQuery.getSearchString().equals(""))
+	//	if ( simpleNetworkQuery.getSearchString().equals(""))
 			return findNetworksV1 (simpleNetworkQuery,skip, top, userRID);
 		
-		return findNetworksV2 (simpleNetworkQuery,skip, top, userRID);
+	//	return findNetworksV2 (simpleNetworkQuery,skip, top, userRID);
 	}
 	
 	private List<NetworkSummary> findNetworksV1(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID) 
@@ -164,7 +168,16 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
-			resultList .add(NetworkDAO.getNetworkSummary(doc));
+			VisibilityType visibility = doc.field(NdexClasses.Network_P_visibility);
+			if ( visibility != VisibilityType.PRIVATE)
+			   resultList .add(NetworkDAO.getNetworkSummary(doc));
+			else { //private network
+				
+			/*	boolean  hasPrivilege = networkDao.checkPrivilege(
+							   ,
+							   networkId, Permissions.READ); */
+				
+			}
 		}
 		
 		return resultList;
@@ -172,6 +185,29 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		
 	}
+	
+	  public static boolean checkPermissionOnNetworkByAccountName(ODatabaseDocumentTx db, String networkUUID, 
+				String accountName, Permissions expectedPermission) {
+	    	String query = "select $path from (traverse out_admin,out_member,out_groupadmin,out_write,out_read from (select * from " + NdexClasses.Account + 
+	    			" where accountName='"+ accountName + "') while $depth < 3 ) where UUID = '"+ networkUUID + "'";
+
+	    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+	    	for ( ODocument d : result ) { 
+	    		String s = d.field("$path");
+	    		Pattern pattern = Pattern.compile("(out_admin|out_write|out_read)");
+	    		Matcher matcher = pattern.matcher(s);
+	    		if (matcher.find())
+	    		{
+	    			Permissions p = Permissions.valueOf(matcher.group(1).substring(4).toUpperCase());
+//	    			if ( permissionSatisfied( expectedPermission, p))
+	    				return true;
+	    		}  
+	    	}
+
+	    	return false;
+	    }
+	
 /*	private List<NetworkSummary> getNetworkSummaryByOwnerAccount(String accountName) throws NdexException {
 		try {
 			ODocument accountDoc = this.getRecordByAccountName(accountName, NdexClasses.Account);
