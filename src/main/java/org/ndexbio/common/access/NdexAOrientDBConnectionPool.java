@@ -24,7 +24,7 @@ public class NdexAOrientDBConnectionPool {
 
 	private NdexAOrientDBConnectionPool(String dbURL, String dbUserName, String dbPassword, int size) {
 
-		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(true);
+		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
 		OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
 		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue( true );
 //		OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue( "nothing" );

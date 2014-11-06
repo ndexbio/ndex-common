@@ -545,6 +545,7 @@ public class NdexPersistenceService extends PersistenceService {
 		  	NdexClasses.ExternalObj_cTime, this.network.getCreationTime(),
 		  	NdexClasses.ExternalObj_mTime, this.network.getModificationTime(),
 		  	NdexClasses.Network_P_name, this.network.getName(),
+		  	NdexClasses.Network_P_desc, "",
 		  	NdexClasses.Network_P_isLocked, this.network.getIsLocked(),
 		  	NdexClasses.Network_P_isComplete, this.network.getIsComplete(),
 		  	NdexClasses.Network_P_visibility, this.network.getVisibility().toString());

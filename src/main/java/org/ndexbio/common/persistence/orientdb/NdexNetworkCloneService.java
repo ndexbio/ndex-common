@@ -128,6 +128,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.network.setDescription(srcNetwork.getDescription());
 		this.network.setVersion(srcNetwork.getVersion());
 		
+		// make description is not null so that the Lucene index will index this field.
+		if ( this.network.getDescription() == null)
+			this.network.setDescription("");
+		
 		networkDoc = networkDoc.fields(
 		          NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
 		          NdexClasses.Network_P_name, srcNetwork.getName(),

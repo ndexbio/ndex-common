@@ -65,10 +65,10 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		
 		
-	//	if ( simpleNetworkQuery.getSearchString().equals(""))
+		if ( simpleNetworkQuery.getSearchString().equals(""))
 			return findNetworksV1 (simpleNetworkQuery,skip, top, userRID);
 		
-	//	return findNetworksV2 (simpleNetworkQuery,skip, top, userRID);
+		return findNetworksV2 (simpleNetworkQuery,skip, top, userRID);
 	}
 	
 	private List<NetworkSummary> findNetworksV1(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID) 
@@ -168,7 +168,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		Collection<NetworkSummary> resultList =  new ArrayList<>(top);
 		
-		TreeSet<UUID> resultUUIDSet = new TreeSet<> ();
+		TreeSet<ORID> resultIDSet = new TreeSet<> ();
 		
 		ORID adminUserRID = null;
 		if( simpleNetworkQuery.getAccountName() != null ) {
@@ -187,38 +187,82 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
-			VisibilityType visibility = doc.field(NdexClasses.Network_P_visibility);
-			if ( visibility != VisibilityType.PRIVATE || networkIsSearchableByAccount(doc,userRID) ) {
-				if ( adminUserRID == null || 
-						networkHasPermissionOnAccount(doc, simpleNetworkQuery.getPermission(),adminUserRID)) {
+            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
 					NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
-					resultUUIDSet.add(network.getExternalId());
+					resultIDSet.add(dId.getIdentity());
 					resultList .add(network);
-				}
 			}
 		}
 		
-		// now search baseterms
+		// search baseterms
 		OIndex<?> basetermIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_BTerm_name);
 		
-		Collection<OIdentifiable> bTermIds =  (Collection<OIdentifiable>) networkIdx.get( searchStr); 
+		Collection<OIdentifiable> bTermIds =  (Collection<OIdentifiable>) basetermIdx.get( searchStr); 
 
-		for ( OIdentifiable dId : networkIds) {
-			ODocument doc = dId.getRecord();
-			VisibilityType visibility = doc.field(NdexClasses.Network_P_visibility);
-			if ( visibility != VisibilityType.PRIVATE || networkIsSearchableByAccount(doc,userRID) ) {
-				if ( adminUserRID == null || 
-						networkHasPermissionOnAccount(doc, simpleNetworkQuery.getPermission(),adminUserRID)) {
-					NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
-					resultUUIDSet.add(network.getExternalId());
-					resultList .add(network);
-				}
-			}
-		}
 		
+		  for (OIdentifiable networkRec : new OTraverse()
+		  				.field(	"in_" + NdexClasses.Network_E_BaseTerms)
+						.target(bTermIds)
+						.predicate( new OSQLPredicate("$depth <= 1"))) {
+			   
+			  ORID id = networkRec.getIdentity();
+			  if ( ! resultIDSet.contains(id)) {
+				
+				  ODocument doc = (ODocument) networkRec;
+			    
+				   if ( doc.getClassName().equals(NdexClasses.Network)) {
+		            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
+							NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+							resultIDSet.add(id);
+							resultList.add(network);
+					}
+				   }
+			   }
+		  }
+
+		  // search node.name
+ 		  OIndex<?> nodeNameIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_node_name);
+			
+ 		  Collection<OIdentifiable> nodeIds =  (Collection<OIdentifiable>) nodeNameIdx.get( searchStr); 
+
+		  for (OIdentifiable networkRec : new OTraverse()
+			  				.field(	"in_" + NdexClasses.Network_E_Nodes)
+							.target(nodeIds)
+							.predicate( new OSQLPredicate("$depth <= 1"))) {
+				   
+			  ORID id = networkRec.getIdentity();
+			  if ( ! resultIDSet.contains(id)) {
+					
+			  ODocument doc = (ODocument) networkRec;
+				    
+				   if ( doc.getClassName().equals(NdexClasses.Network)) {
+			            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
+								NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+								resultIDSet.add(id);
+								resultList.add(network);
+						}
+				   }
+			   }
+			}
+  
 		
 		return resultList;
 	}
+	
+	
+	private static boolean isSearchable(ODocument networkDoc, ORID userRID, Permissions permission, ORID adminUserRID) {
+		
+		VisibilityType visibility = VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
+		if ( visibility != VisibilityType.PRIVATE || networkIsSearchableByAccount(networkDoc,userRID) ) {
+			if ( adminUserRID == null || 
+					networkHasPermissionOnAccount(networkDoc, permission,adminUserRID)) {
+				return true;
+			}
+		}
+		
+		return false;
+
+	 }
 	
 	  private static boolean networkIsSearchableByAccount(ODocument networkDoc, 
 				ORID userORID) {
@@ -257,15 +301,5 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		  
 	    }
 
-	  
-/*	private List<NetworkSummary> getNetworkSummaryByOwnerAccount(String accountName) throws NdexException {
-		try {
-			ODocument accountDoc = this.getRecordByAccountName(accountName, NdexClasses.Account);
-			
-		} catch (ObjectNotFoundException e) {
-			return new ArrayList<NetworkSummary>(0);
-		}
-		
-		
-	} */ 
+
 }

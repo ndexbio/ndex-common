@@ -3,6 +3,7 @@ package org.ndexbio.common.persistence.orientdb;
 import java.util.List;
 
 import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.TaskDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.model.object.Status;
@@ -61,7 +62,7 @@ public class NdexTaskService
     	
     }
     
-    public Task getTask(String taskUUID) {
+    public Task getTask(String taskUUID) throws ObjectNotFoundException, NdexException {
     	TaskDAO dao = new TaskDAO(ndexService._ndexDatabase);
     	return dao.getTaskByUUID(taskUUID);
     }
@@ -112,6 +113,8 @@ public class NdexTaskService
     		
 			this.ndexService.setupDatabase();
 			TaskDAO dao = new TaskDAO(this.ndexService._ndexDatabase);
+			logger.info("Updating status of tasks " + task.getExternalId() + " from " +
+			   task.getStatus() + " to " + status);
 			dao.updateTaskStatus(status, task);
 			this.ndexService._ndexDatabase.commit();
 			return task;

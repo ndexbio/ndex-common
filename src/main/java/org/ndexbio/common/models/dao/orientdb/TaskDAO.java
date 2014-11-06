@@ -38,13 +38,13 @@ public class TaskDAO extends OrientdbDAO {
 		this.graph = new OrientGraph(this.db,false);
 	}
 
-	public Task getTaskByUUID(String UUID) {
+	public Task getTaskByUUID(String UUIDStr) throws ObjectNotFoundException, NdexException {
         
-        return getTaskFromDocument(getTaskDocByUUID(UUID));
+        return getTaskFromDocument(getRecordByExternalId(UUID.fromString(UUIDStr)));
 		
 	}
 	
-	private ODocument getTaskDocByUUID(String uuid) {
+/*	private ODocument getTaskDocByUUID(String uuid) {
 		String query = "select * from " + NdexClasses.Task + " where " + NdexClasses.ExternalObj_ID
 				 + " ='" + uuid + "'";
        final List<ODocument> tasks = db.query(new OSQLSynchQuery<ODocument>(query));
@@ -53,7 +53,7 @@ public class TaskDAO extends OrientdbDAO {
 	        return null;
        
 	   return tasks.get(0);	
-	}
+	} */
 	
 	public UUID createTask(String accountName, Task newTask) throws ObjectNotFoundException, NdexException {
 		UserDAO udao = new UserDAO (db);
@@ -142,7 +142,7 @@ public class TaskDAO extends OrientdbDAO {
     	Preconditions.checkArgument(null != UUIDString, "A Task UUID is required");
     
     	try {
-    		ODocument taskDocument = this.getTaskDocByUUID(UUIDString);
+    		ODocument taskDocument = this.getRecordByExternalId(UUID.fromString(UUIDString));
     		OrientVertex vTask = this.graph.getVertex(taskDocument);
     		ODocument userAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
     	
@@ -171,11 +171,12 @@ public class TaskDAO extends OrientdbDAO {
     // status in the Task object passed in.
     
     //TODO: looks like we are having racing conditions here. Need to review the usage and make it thread safe.
-    public Task updateTaskStatus(Status status, Task task) {
-    	String UUIDString = task.getExternalId().toString();
-    	ODocument doc = this.getTaskDocByUUID(UUIDString);
-    	doc.reload();
-    	doc.field(NdexClasses.Task_P_status, status).save();
+    public Task updateTaskStatus(Status status, Task task) throws ObjectNotFoundException, NdexException {
+    	ODocument doc = this.getRecordByExternalId(task.getExternalId());
+//    	doc.reload();
+    	Status s = Status.valueOf((String)doc.field(NdexClasses.Task_P_status));
+    	if ( s != status )
+    		doc.field(NdexClasses.Task_P_status, status).save();
     	task.setStatus(status);
     	return task;
     }
