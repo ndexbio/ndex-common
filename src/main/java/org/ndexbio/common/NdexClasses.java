@@ -136,10 +136,15 @@ public interface NdexClasses {
     public static final String ndexProp_P_valueId	    = "valueId";
     public static final String ndexProp_E_predicate     = "prop";
     
+    //Group
+    
+    public static final String GRP_E_admin = Permissions.GROUPADMIN.toString().toLowerCase();
+    public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
+
     //user
 
-    public static final String user_E_memberOf        ="member";
-    public static final String user_E_grp_admin	      = "grpAdmin";
+//    public static final String user_E_memberOf        ="member";
+//    public static final String user_E_grp_admin	      = "grpAdmin";
     
     
     // task
@@ -153,10 +158,6 @@ public interface NdexClasses {
     
     public static final String Task_E_owner   = "ownedBy";
     
-    //Group
-    
-    public static final String GRP_E_admin = Permissions.GROUPADMIN.toString().toLowerCase();
-    public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
     
     //request
     public static final String Request_P_sourceUUID = "sourceUUID";

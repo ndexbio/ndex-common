@@ -3,7 +3,10 @@ package org.ndexbio.common.models.dao.orientdb;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,11 +22,13 @@ import org.ndexbio.model.object.User;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NetworkSearchDAO extends OrientdbDAO{
@@ -57,6 +62,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				OIdentifiable user = (OIdentifiable) accountNameIdx.get( loggedInUser.getAccountName() ); // account to traverse by
 				userRID = user.getIdentity();
 		}
+		
+		
 		
 	//	if ( simpleNetworkQuery.getSearchString().equals(""))
 			return findNetworksV1 (simpleNetworkQuery,skip, top, userRID);
@@ -158,56 +165,99 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userRID) 
 			throws NdexException, IllegalArgumentException {
-		Collection<NetworkSummary> resultList =  new LinkedHashSet<>(top);
 		
+		Collection<NetworkSummary> resultList =  new ArrayList<>(top);
+		
+		TreeSet<UUID> resultUUIDSet = new TreeSet<> ();
+		
+		ORID adminUserRID = null;
+		if( simpleNetworkQuery.getAccountName() != null ) {
+				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_accountName);
+				OIdentifiable user = (OIdentifiable) accountNameIdx.get( simpleNetworkQuery.getAccountName()  ); // account to traverse by
+				adminUserRID = user.getIdentity();
+		}
+		
+		
+		// search network first.
 		OIndex<?> networkIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_network_name_desc);
 		
-		String searchStr = Helper.escapeOrientDBSQL(simpleNetworkQuery.getSearchString());
+		String searchStr = simpleNetworkQuery.getSearchString();
 
 		Collection<OIdentifiable> networkIds =  (Collection<OIdentifiable>) networkIdx.get( searchStr); 
 
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
 			VisibilityType visibility = doc.field(NdexClasses.Network_P_visibility);
-			if ( visibility != VisibilityType.PRIVATE)
-			   resultList .add(NetworkDAO.getNetworkSummary(doc));
-			else { //private network
-				
-			/*	boolean  hasPrivilege = networkDao.checkPrivilege(
-							   ,
-							   networkId, Permissions.READ); */
-				
+			if ( visibility != VisibilityType.PRIVATE || networkIsSearchableByAccount(doc,userRID) ) {
+				if ( adminUserRID == null || 
+						networkHasPermissionOnAccount(doc, simpleNetworkQuery.getPermission(),adminUserRID)) {
+					NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+					resultUUIDSet.add(network.getExternalId());
+					resultList .add(network);
+				}
 			}
 		}
 		
+		// now search baseterms
+		OIndex<?> basetermIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_BTerm_name);
+		
+		Collection<OIdentifiable> bTermIds =  (Collection<OIdentifiable>) networkIdx.get( searchStr); 
+
+		for ( OIdentifiable dId : networkIds) {
+			ODocument doc = dId.getRecord();
+			VisibilityType visibility = doc.field(NdexClasses.Network_P_visibility);
+			if ( visibility != VisibilityType.PRIVATE || networkIsSearchableByAccount(doc,userRID) ) {
+				if ( adminUserRID == null || 
+						networkHasPermissionOnAccount(doc, simpleNetworkQuery.getPermission(),adminUserRID)) {
+					NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+					resultUUIDSet.add(network.getExternalId());
+					resultList .add(network);
+				}
+			}
+		}
+		
+		
 		return resultList;
-		
-		
-		
 	}
 	
-	  public static boolean checkPermissionOnNetworkByAccountName(ODatabaseDocumentTx db, String networkUUID, 
-				String accountName, Permissions expectedPermission) {
-	    	String query = "select $path from (traverse out_admin,out_member,out_groupadmin,out_write,out_read from (select * from " + NdexClasses.Account + 
-	    			" where accountName='"+ accountName + "') while $depth < 3 ) where UUID = '"+ networkUUID + "'";
-
-	    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
-
-	    	for ( ODocument d : result ) { 
-	    		String s = d.field("$path");
-	    		Pattern pattern = Pattern.compile("(out_admin|out_write|out_read)");
-	    		Matcher matcher = pattern.matcher(s);
-	    		if (matcher.find())
-	    		{
-	    			Permissions p = Permissions.valueOf(matcher.group(1).substring(4).toUpperCase());
-//	    			if ( permissionSatisfied( expectedPermission, p))
-	    				return true;
-	    		}  
-	    	}
-
-	    	return false;
-	    }
+	  private static boolean networkIsSearchableByAccount(ODocument networkDoc, 
+				ORID userORID) {
 	
+		  for (OIdentifiable reifiedTRec : new OTraverse()
+					.fields(	"in_" + NdexClasses.account_E_canEdit,
+							"in_" + NdexClasses.account_E_canRead,
+							"in_" + NdexClasses.E_admin,
+							"in_" + NdexClasses.GRP_E_admin, 
+							"in_" + NdexClasses.GRP_E_member)
+					.target(networkDoc)
+					.predicate( new OSQLPredicate("$depth <= 2"))) {
+
+			  if ( reifiedTRec.getIdentity().equals(userORID)) 
+				  return true;
+		  }
+		  return false;
+		  
+	    }
+
+
+	  private static boolean networkHasPermissionOnAccount(ODocument networkDoc, Permissions p, 
+				ORID userORID) {
+	
+		  //if ( userORID == null) return true;
+		  
+		  for (OIdentifiable reifiedTRec : new OTraverse()
+					.field(	"in_" + p.name().toLowerCase())
+					.target(networkDoc)
+					.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+			  if ( reifiedTRec.getIdentity().equals(userORID)) 
+				  return true;
+		  }
+		  return false;
+		  
+	    }
+
+	  
 /*	private List<NetworkSummary> getNetworkSummaryByOwnerAccount(String accountName) throws NdexException {
 		try {
 			ODocument accountDoc = this.getRecordByAccountName(accountName, NdexClasses.Account);

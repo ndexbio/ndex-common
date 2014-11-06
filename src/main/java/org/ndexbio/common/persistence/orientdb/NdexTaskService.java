@@ -116,7 +116,7 @@ public class NdexTaskService
 			this.ndexService._ndexDatabase.commit();
 			return task;
 		} catch (Exception e) {
-			logger.error("Failed to search tasks", e);
+			logger.error("Failed to search tasks: " + e.getMessage(), e);
 			throw new NdexException("Failed to search tasks.");
 			
 		}finally {
