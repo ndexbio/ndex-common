@@ -164,11 +164,13 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	}
 
 	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userRID) 
-			throws NdexException, IllegalArgumentException {
+			throws IllegalArgumentException {
 		
 		Collection<NetworkSummary> resultList =  new ArrayList<>(top);
 		
 		TreeSet<ORID> resultIDSet = new TreeSet<> ();
+		
+		int counter = 0;
 		
 		ORID adminUserRID = null;
 		if( simpleNetworkQuery.getAccountName() != null ) {
@@ -188,9 +190,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
             if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
-					NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
 					resultIDSet.add(dId.getIdentity());
-					resultList .add(network);
+					if ( counter >= skip) {
+						NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+						resultList .add(network);
+					}
+					counter ++;
+					if ( resultList.size()>= top)
+						return resultList;
 			}
 		}
 		
@@ -212,9 +219,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
 		            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
-							NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
 							resultIDSet.add(id);
-							resultList.add(network);
+							if ( counter >= skip) {
+								NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+								resultList .add(network);
+							}
+							counter ++;
+							if ( resultList.size()>= top)
+								return resultList;
 					}
 				   }
 			   }
@@ -237,9 +249,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
 			            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
-								NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
 								resultIDSet.add(id);
-								resultList.add(network);
+								if ( counter >= skip) {
+									NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+									resultList .add(network);
+								}
+								counter ++;
+								if ( resultList.size()>= top)
+									return resultList;
 						}
 				   }
 			   }
