@@ -132,7 +132,7 @@ public abstract class OrientdbDAO {
 	
 	public boolean checkPermission(ORID source, ORID destination, Direction dir, Integer depth, Permissions... permissions) {
 		
-		Collection<Object> fields = new ArrayList<Object>();
+		Collection<Object> fields = new ArrayList<>();
 		
 		for(Permissions permission : permissions) {
 			fields.add( dir.name().toLowerCase() + "_" + permission.name().toLowerCase() );
