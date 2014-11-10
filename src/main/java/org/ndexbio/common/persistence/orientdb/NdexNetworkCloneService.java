@@ -42,7 +42,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 	private ODocument networkDoc;
 	
-    private ODocument ownerDoc;
+//    private ODocument ownerDoc;
+    private String ownerAccount;
     
     // all these mapping are for mapping from source Id to Ids in the newly persisted graph.
     private Map<Long, Long>  baseTermIdMap;
@@ -70,10 +71,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.srcNetwork = sourceNetwork;
 		this.network = new NetworkSummary();
 
-		// find the network owner in the database
-		UserDAO userdao = new UserDAO(localConnection, graph);
-		ownerDoc = userdao.getRecordByAccountName(ownerAccountName, null) ;
-		
+		this.ownerAccount = ownerAccountName;
 		this.baseTermIdMap    = new HashMap <>(1000);
 		this.namespaceIdMap   = new HashMap <>(1000);
 		this.citationIdMap    = new HashMap <> (1000);
@@ -191,9 +189,17 @@ public class NdexNetworkCloneService extends PersistenceService {
 			cloneNetworkNode ();
 
 			cloneNetworkElements();
+			this.localConnection.commit();
+			
+			// find the network owner in the database
+			UserDAO userdao = new UserDAO(localConnection, graph);
+			ODocument ownerDoc = userdao.getRecordByAccountName(this.ownerAccount, null) ;
+			OrientVertex ownerV = graph.getVertex(ownerDoc);
+			ownerV.addEdge(NdexClasses.E_admin, networkVertex);
+			this.localConnection.commit();
+	
 			return this.network;
 		} finally {
-			this.localConnection.commit();
 			logger.info("Network "+ network.getName() + " with UUID:"+ network.getExternalId() +" has been saved. ");
 		}
 	}
@@ -238,8 +244,6 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
 		
-		OrientVertex ownerV = graph.getVertex(ownerDoc);
-		ownerV.addEdge(NdexClasses.E_admin, networkVertex);
 		
 		logger.info("A new NDex network titled: " +srcNetwork.getName() +" has been created");
 	}

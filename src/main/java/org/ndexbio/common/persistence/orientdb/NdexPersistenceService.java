@@ -77,8 +77,10 @@ public class NdexPersistenceService extends PersistenceService {
 
     private ODocument networkDoc;
 //	protected OrientVertex networkVertex;
+
+    private String ownerAccount;
     
-    private ODocument ownerDoc;
+//    private ODocument ownerDoc;
     
 
     private Map<RawCitation, Long>           rawCitationMap;
@@ -110,7 +112,7 @@ public class NdexPersistenceService extends PersistenceService {
 		super(db);
 
 		this.network = null;
-		this.ownerDoc = null;
+		this.ownerAccount = null;
 		
 		this.rawCitationMap  = new TreeMap <> ();
         this.baseTermNodeIdMap = new TreeMap <> ();
@@ -559,9 +561,6 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		this.networkVertex = this.graph.getVertex(getNetworkDoc());
 		
-		OrientVertex ownerV = this.graph.getVertex(this.ownerDoc);
-		ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
-		
 		return this.network;
 	}
 
@@ -571,28 +570,31 @@ public class NdexPersistenceService extends PersistenceService {
 	 * transaction and close the database connection if they encounter an error
 	 * situation
 	 */
-
+/*
 	public void createNewNetwork(String ownerName, String networkTitle, String version) throws Exception {
 		createNewNetwork(ownerName, networkTitle, version,NdexUUIDFactory.INSTANCE.getNDExUUID() );
 	}
-
+*/
 	/*
 	 * public method to persist INetwork to the orientdb database using cache
 	 * contents.
 	 */
 
-	public void createNewNetwork(String ownerName, String networkTitle, String version, UUID uuid) throws NdexException  {
+	public void createNewNetwork(String ownerName, String networkTitle, String version) throws NdexException  {
 		Preconditions.checkNotNull(ownerName,"A network owner name is required");
 		Preconditions.checkNotNull(networkTitle,"A network title is required");
 		
 
+		UUID uuid = NdexUUIDFactory.INSTANCE.getNDExUUID() ;
 		// find the network owner in the database
-		ownerDoc =  findUserByAccountName(ownerName);
+		this.ownerAccount = ownerName;
+
+/*		ownerDoc =  findUserByAccountName(ownerName);
 		if( null == ownerDoc){
 			String message = "Account " +ownerName +" is not registered in the database"; 
 			logger.severe(message);
 			throw new NdexException(message);
-		}
+		} */
 				
 		createNetwork(networkTitle,version, uuid);
 
@@ -1012,17 +1014,22 @@ public class NdexPersistenceService extends PersistenceService {
 			  .field(NdexClasses.Network_P_nodeCount, network.getNodeCount())
 			  .save();
 			
+			this.localConnection.commit();
 			
-			System.out.println("The new network " + network.getName()
-					+ " is complete");
+			ODocument ownerDoc =  findUserByAccountName(this.ownerAccount);		
+			OrientVertex ownerV = this.graph.getVertex(ownerDoc);
+			ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+			
+			this.localConnection.commit();
+
+			System.out.println("The new network " + network.getName() + " is complete");
 		} catch (Exception e) {
 			e.printStackTrace();
 			
 			System.out.println("unexpected error in persist network...");
 			throw new NdexException ("unexpected error in persist network...");
 		} finally {
-			this.localConnection.commit();
-			localConnection.close();
+			graph.shutdown();
 			this.database.close();
 			System.out
 					.println("Connection to orientdb database has been closed");

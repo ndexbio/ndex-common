@@ -54,7 +54,10 @@ public class TaskDAO extends OrientdbDAO implements AutoCloseable {
 		UserDAO udao = new UserDAO (db);
 		ODocument userDoc = udao.getRecordByAccountName(accountName, NdexClasses.User);
 		
-		UUID taskUUID = NdexUUIDFactory.INSTANCE.getNDExUUID();
+		 
+		UUID taskUUID = newTask.getExternalId() == null ? 
+				NdexUUIDFactory.INSTANCE.getNDExUUID() : newTask.getExternalId();
+		
 		ODocument taskDoc = new ODocument(NdexClasses.Task)
 				.fields(NdexClasses.ExternalObj_ID, taskUUID.toString(),
 					NdexClasses.ExternalObj_cTime, newTask.getCreationTime(),

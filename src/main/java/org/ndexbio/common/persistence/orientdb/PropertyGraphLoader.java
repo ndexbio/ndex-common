@@ -91,8 +91,6 @@ public class PropertyGraphLoader {
         String version = null;
         List<NdexPropertyValuePair> otherAttributes = new ArrayList<>();
         
-		UUID uuid = NdexUUIDFactory.INSTANCE.getNDExUUID();
-
 		//        Namespace[] namespaces = null;
         for ( NdexPropertyValuePair p : network.getProperties()) {
 			if ( p.getPredicateString().equals(PropertyGraphNetwork.name) ) {
@@ -112,7 +110,7 @@ public class PropertyGraphLoader {
 			} 
 		}
 		
-		persistenceService.createNewNetwork(accountName, title, version, uuid);
+		persistenceService.createNewNetwork(accountName, title, version);
 		persistenceService.setNetworkTitleAndDescription(title, description);
 
 		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());

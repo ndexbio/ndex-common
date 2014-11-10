@@ -55,7 +55,6 @@ public class UserDAO extends OrientdbDAO {
 	 * @param graph
 	 *            OrientGraph instance for Graph API operations
 	 **************************************************************************/
-	@Deprecated
 	public UserDAO(ODatabaseDocumentTx db, OrientGraph graph) {
 		super(db);
 		//this.db = graph.getRawGraph();
