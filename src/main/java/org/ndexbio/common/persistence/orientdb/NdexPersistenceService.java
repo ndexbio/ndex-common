@@ -992,7 +992,7 @@ public class NdexPersistenceService extends PersistenceService {
 	
 	public Long getSupportId(String literal, Long citationId) throws ExecutionException {
 		
-		RawSupport r = new RawSupport(literal, citationId);
+		RawSupport r = new RawSupport(literal, (citationId !=null ? citationId.longValue(): -1));
 
 		Long supportId = this.rawSupportMap.get(r);
 

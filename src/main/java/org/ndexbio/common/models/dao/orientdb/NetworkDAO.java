@@ -444,12 +444,12 @@ public class NetworkDAO extends OrientdbDAO {
 		getPropertiesFromDocument(e,doc);
 	}
 
-	private String getBaseTermStringFromDoc(ODocument doc, Map <ORID, String> termStringMap ) {
+	private static String getBaseTermStringFromDoc(ODocument doc, Map <ORID, String> termStringMap ) {
 		String name = termStringMap.get(doc.getIdentity());
 		if ( name != null) return name;
 		
 		name = doc.field(NdexClasses.BTerm_P_name);
-		ODocument ns = doc.field(NdexClasses.BTerm_E_Namespace); 
+		ODocument ns = doc.field("out_"+NdexClasses.BTerm_E_Namespace); 
 		if (  ns != null ) {
 			String prefix = ns.field(NdexClasses.ns_P_prefix);
 			if ( prefix !=null)
@@ -551,7 +551,7 @@ public class NetworkDAO extends OrientdbDAO {
     		
     			// populate objects in network
     			if ( termType.equals(NdexClasses.BaseTerm)) {
-    				repString = this.getBaseTermStringFromDoc(o, termStringMap);
+    				repString = getBaseTermStringFromDoc(o, termStringMap);
     			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm)) {
     				repString = getReifiedTermStringFromDoc(o, network, termStringMap);
     			} else if (termType.equals(NdexClasses.FunctionTerm)) {
@@ -715,7 +715,6 @@ public class NetworkDAO extends OrientdbDAO {
 		    	 return null;
              return getBaseTerm(terms.get(0), null);
              
-       //TODO: need to check the current transaction.      
 	}
 	
 	private BaseTerm getBaseTerm(ODocument o, Network network) {
@@ -1267,13 +1266,16 @@ public class NetworkDAO extends OrientdbDAO {
     	s.setText((String)doc.field(NdexClasses.Support_P_text));
     	s.setId((long)doc.field(NdexClasses.Element_ID));
     	ODocument citationDoc = doc.field("out_" + NdexClasses.Support_E_citation);
-    	Long citationId = citationDoc.field(NdexClasses.Element_ID);
-    	s.setCitationId(citationId);
-        if ( network != null && 
-        		! network.getCitations().containsKey(citationId)) {
-        	Citation citation = getCitationFromDoc(citationDoc);
-        	network.getCitations().put(citationId, citation);
-        }
+    	if ( citationDoc != null) {
+    		Long citationId = citationDoc.field(NdexClasses.Element_ID);
+    		s.setCitationId(citationId);
+    		if ( network != null && 
+            		! network.getCitations().containsKey(citationId)) {
+            	Citation citation = getCitationFromDoc(citationDoc);
+            	network.getCitations().put(citationId, citation);
+            }
+    	}
+        
     	return s;
     	
     }
