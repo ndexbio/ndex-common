@@ -203,11 +203,11 @@ public class PropertyGraphLoader {
 	private void updateNetwork (UUID uuid, PropertyGraphNetwork network,  NdexPersistenceService persistenceService) throws Exception {
 		
 			NetworkDAO dao = new NetworkDAO(persistenceService.localConnection);
-			ODocument networkDoc = persistenceService.networkVertex.getRecord();
 			
 			//TODO: remove the network from system first.
 			dao.deleteNetworkElements(uuid.toString());
 			dao.deleteNetworkProperties(persistenceService.networkVertex.getRecord());
+			
 			
 			//save the network info
 	        String title = null;
@@ -228,6 +228,8 @@ public class PropertyGraphLoader {
 				} 
 			}			
 			
+	        persistenceService.networkVertex.getRecord().reload();
+			ODocument networkDoc = persistenceService.networkVertex.getRecord();
 	        networkDoc = networkDoc.fields(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
 	        		NdexClasses.Network_P_name, title,
 	        		NdexClasses.Network_P_desc, description,
@@ -235,6 +237,7 @@ public class PropertyGraphLoader {
 	        
 			persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
 
+			persistenceService.networkVertex.getRecord().reload();
 			// redo populate the elements
 		    insertNetworkElements(network, persistenceService);
 		
