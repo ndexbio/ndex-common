@@ -2,6 +2,7 @@ package org.ndexbio.common.persistence.orientdb;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
@@ -49,7 +51,9 @@ public abstract class PersistenceService {
 	protected OrientVertex networkVertex;
 
 	protected NetworkDAO  networkDAO;
-	
+
+	protected ODocument networkDoc;
+
 	protected NetworkSummary network;
 	
     protected Logger logger ;
@@ -94,6 +98,7 @@ public abstract class PersistenceService {
 				OrientVertex pV = this.createNdexPropertyVertex(e);
                vertex.addEdge(NdexClasses.E_ndexProperties, pV);
 			}
+            this.network.getProperties().addAll(properties);
 		
 		}
 
@@ -103,6 +108,7 @@ public abstract class PersistenceService {
                OrientVertex pV = graph.getVertex(pDoc);
                vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
 			}
+			this.network.getPresentationProperties().addAll(presentationProperties);
 		}
 	}
 
@@ -476,6 +482,12 @@ public abstract class PersistenceService {
 			return findOrCreateNamespace(rns);
 		}
 		
+		
+	  public void setNetworkSourceFormat(NetworkSourceFormat fmt) {
+		  this.networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
+		  NdexPropertyValuePair p = new NdexPropertyValuePair (NdexClasses.Network_P_source_format, fmt.toString());
+		  this.network.getProperties().add(p);
+	  }
 		
 	  public void close () {
 		  this.localConnection.close();

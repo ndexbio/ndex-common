@@ -12,14 +12,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePathQuery;
 import org.ndexbio.model.object.User;
 
@@ -411,6 +414,11 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
             network.getEdges().put(e.getId(), e);
         }
         
+        // copy the source format
+        NetworkSourceFormat fmt = Helper.getSourceFormatFromNetworkDoc(networkDoc);
+        if ( fmt!=null)
+        	network.getProperties().add(new NdexPropertyValuePair(NdexClasses.Network_P_source_format, fmt.toString()));
+        
         network.setNodeCount(network.getNodes().size());
         network.setEdgeCount(network.getEdges().size());
 		 return network; 
@@ -420,7 +428,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		
 	    PropertyGraphNetwork network = new PropertyGraphNetwork();  //result holder
     
-	    TreeMap<ORID, String> termStringMap = new TreeMap<ORID,String> ();
+	    TreeMap<ORID, String> termStringMap = new TreeMap<> ();
 	    
 	    NetworkDAO dao = new NetworkDAO (this._ndexDatabase);
         for (ORID edgeId : edgeRids) {

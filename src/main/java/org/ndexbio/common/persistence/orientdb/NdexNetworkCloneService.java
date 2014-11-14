@@ -2,19 +2,21 @@ package org.ndexbio.common.persistence.orientdb;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -40,7 +42,7 @@ public class NdexNetworkCloneService extends PersistenceService {
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
 
 
-	private ODocument networkDoc;
+//	private ODocument networkDoc;
 	
 //    private ODocument ownerDoc;
     private String ownerAccount;
@@ -62,8 +64,7 @@ public class NdexNetworkCloneService extends PersistenceService {
      * 2. Create New network
      */
     
-	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName)
-			throws ObjectNotFoundException, NdexException {
+	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName) {
         super(db);
 		
 		Preconditions.checkNotNull(sourceNetwork.getName(),"A network title is required");
@@ -143,6 +144,11 @@ public class NdexNetworkCloneService extends PersistenceService {
 		          NdexClasses.Network_P_isLocked, false,
 		          NdexClasses.Network_P_isComplete, false);
 		
+		
+		NetworkSourceFormat fmt = removeNetworkSourceFormat(srcNetwork);
+		if ( fmt!=null)
+			networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
+	
 		networkDoc = networkDoc.save();
 
 		this.localConnection.commit();
@@ -154,7 +160,12 @@ public class NdexNetworkCloneService extends PersistenceService {
 		networkDAO.deleteNetworkElements(network.getExternalId().toString());
 		
 		networkVertex.getRecord().reload();
-		
+
+		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+
+		networkDoc.reload();
+		networkVertex.getRecord().reload();
+
 		logger.info("NDEx network titled: " +srcNetwork.getName() +" has been updated.");
 
 	}
@@ -242,6 +253,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 			networkDoc.field(NdexClasses.Network_P_version,srcNetwork.getVersion());
 			network.setDescription(srcNetwork.getVersion());
 		}
+		
+		NetworkSourceFormat fmt = removeNetworkSourceFormat(srcNetwork);
+		if ( fmt!=null)
+			networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
 		
 		networkDoc = networkDoc.save();
 		
@@ -553,15 +568,20 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 	
 	
-	/*
 	
-	private void cloneFunctionTerms() throws NdexException, ExecutionException {
-		if ( srcNetwork.getFunctionTerms()!= null) {
-			for ( FunctionTerm functionTerm : srcNetwork.getFunctionTerms().values() ) {
+	private static NetworkSourceFormat removeNetworkSourceFormat(NetworkSummary nsummary) {
+		List<NdexPropertyValuePair> props = nsummary.getProperties(); 
+		
+		for ( int i = 0 ; i < props.size(); i++) {
+			NdexPropertyValuePair p = props.get(i);
+			if ( p.getPredicateString().equals(NdexClasses.Network_P_source_format)) {
+				NetworkSourceFormat fmt = NetworkSourceFormat.valueOf(p.getValue());
+				props.remove(i);
+				return fmt;
 			}
 		}
+		return null;
 	}
-*/
 	
     /**
      * Find the matching term ID from an old term Id. This function is only used for cloning function parameters.

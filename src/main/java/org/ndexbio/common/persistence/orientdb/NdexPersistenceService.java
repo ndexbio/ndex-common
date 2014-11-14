@@ -72,8 +72,6 @@ public class NdexPersistenceService extends PersistenceService {
 
     private Map<RawEdge, Long> edgeMap;
     
-    private ODocument networkDoc;
-
     private String ownerAccount;
     
     private Map<RawCitation, Long>           rawCitationMap;

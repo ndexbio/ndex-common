@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
@@ -44,7 +45,10 @@ public class PropertyGraphLoader {
 		
 			persistenceService = new NdexPersistenceService(db);
 			insertNewNetwork(network, accountName,persistenceService );
-
+			
+			removeNetworkSourceFormat(network);
+			
+			persistenceService.setNetworkSourceFormat(NetworkSourceFormat.PROPERTYGRAPH);
 			persistenceService.persistNetwork();
 			NetworkSummary result = persistenceService.getCurrentNetwork();
 			persistenceService = null;
@@ -72,6 +76,10 @@ public class PropertyGraphLoader {
 			
 			persistenceService = new NdexPersistenceService(db,uuid);
 			updateNetwork(uuid, network, persistenceService );
+
+			removeNetworkSourceFormat(network);
+			
+			persistenceService.setNetworkSourceFormat(NetworkSourceFormat.PROPERTYGRAPH);
 
 			persistenceService.persistNetwork();
 			NetworkSummary result = persistenceService.getCurrentNetwork();
@@ -249,6 +257,20 @@ public class PropertyGraphLoader {
 			// redo populate the elements
 		    insertNetworkElements(network, persistenceService);
 		
+	}
+	
+	private static NetworkSourceFormat removeNetworkSourceFormat(PropertyGraphNetwork pg) {
+		List<NdexPropertyValuePair> props = pg.getProperties(); 
+		
+		for ( int i = 0 ; i < props.size(); i++) {
+			NdexPropertyValuePair p = props.get(i);
+			if ( p.getPredicateString().equals(NdexClasses.Network_P_source_format)) {
+				NetworkSourceFormat fmt = NetworkSourceFormat.valueOf(p.getValue());
+				props.remove(i);
+				return fmt;
+			}
+		}
+		return null;
 	}
 	
 	
