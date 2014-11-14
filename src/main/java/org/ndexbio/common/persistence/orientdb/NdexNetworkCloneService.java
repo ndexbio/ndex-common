@@ -100,6 +100,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 			cloneNetworkElements();
 
 			addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+		
+			this.networkDoc.reload();
+			this.networkDoc.field(NdexClasses.Network_P_isComplete , true);
 			
 			return this.network;
 		} finally {
@@ -141,6 +144,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 		          NdexClasses.Network_P_isComplete, false);
 		
 		networkDoc = networkDoc.save();
+
+		this.localConnection.commit();
 		
 		networkVertex = graph.getVertex(networkDoc);
 		

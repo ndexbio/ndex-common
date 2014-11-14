@@ -193,7 +193,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 					resultIDSet.add(dId.getIdentity());
 					if ( counter >= skip) {
 						NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
-						resultList .add(network);
+						if ( network.getIsComplete())
+							resultList .add(network);
 					}
 					counter ++;
 					if ( resultList.size()>= top)
@@ -222,7 +223,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 							resultIDSet.add(id);
 							if ( counter >= skip) {
 								NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
-								resultList .add(network);
+								if ( network.getIsComplete())
+									resultList .add(network);
 							}
 							counter ++;
 							if ( resultList.size()>= top)
@@ -252,7 +254,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 								resultIDSet.add(id);
 								if ( counter >= skip) {
 									NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
-									resultList .add(network);
+									if ( network.getIsComplete())
+										resultList .add(network);
 								}
 								counter ++;
 								if ( resultList.size()>= top)

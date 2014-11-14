@@ -163,5 +163,8 @@ public interface NdexClasses {
     public static final String Request_P_sourceUUID = "sourceUUID";
     public static final String Request_P_sourceName = "sourceName";
     
+    
+    //reserved NDEx property names
+    public static final String Prop_source_format = "SOURCE_FORMAT";
 }
 

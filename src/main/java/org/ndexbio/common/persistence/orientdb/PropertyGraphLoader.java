@@ -204,38 +204,46 @@ public class PropertyGraphLoader {
 		
 			NetworkDAO dao = new NetworkDAO(persistenceService.localConnection);
 			
+			persistenceService.networkVertex.getRecord().field(NdexClasses.Network_P_isComplete, "false").save();
+			persistenceService.commit();
+			
 			//TODO: remove the network from system first.
 			dao.deleteNetworkElements(uuid.toString());
 			dao.deleteNetworkProperties(persistenceService.networkVertex.getRecord());
 			
 			
 			//save the network info
-	        String title = null;
-	        String description = null;
-	        String version = null;
-	        List<NdexPropertyValuePair> otherAttributes = new ArrayList<>();
+//	        List<NdexPropertyValuePair> otherAttributes = new ArrayList<>();
+	        NetworkSummary currentNetwork = persistenceService.getCurrentNetwork();
+	        currentNetwork.getProperties().clear();
+	        currentNetwork.setName(null);
+	        currentNetwork.setDescription(null);
+	        currentNetwork.setVersion(null);
 	        
 	        for ( NdexPropertyValuePair p : network.getProperties()) {
 				if ( p.getPredicateString().equals(PropertyGraphNetwork.name) ) {
-					title = p.getValue();
+					currentNetwork.setName(p.getValue());
 				} else if ( p.getPredicateString().equals(PropertyGraphNetwork.version) ) {
-					version = p.getValue();
+					currentNetwork.setVersion(p.getValue());
 				} else if ( p.getPredicateString().equals(PropertyGraphNetwork.description) ) {
-					description = p.getValue();
-
+					currentNetwork.setDescription(p.getValue());
 				} else if ( !p.getPredicateString().equals(PropertyGraphNetwork.uuid) ) {
-					otherAttributes.add(p);
+					currentNetwork.getProperties().add(p);
 				} 
 			}			
 			
+	        currentNetwork.setNodeCount(network.getNodes().size());
+	        currentNetwork.setEdgeCount(network.getEdges().size());
 	        persistenceService.networkVertex.getRecord().reload();
 			ODocument networkDoc = persistenceService.networkVertex.getRecord();
 	        networkDoc = networkDoc.fields(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
-	        		NdexClasses.Network_P_name, title,
-	        		NdexClasses.Network_P_desc, description,
-	        		NdexClasses.Network_P_version, version).save();
+	        		NdexClasses.Network_P_name, currentNetwork.getName(),
+	        		NdexClasses.Network_P_desc, currentNetwork.getDescription(),
+	        		NdexClasses.Network_P_version, currentNetwork.getVersion(),
+	        		NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
 	        
-			persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
+	        
+			persistenceService.setNetworkProperties(currentNetwork.getProperties(), network.getPresentationProperties());
 
 			persistenceService.networkVertex.getRecord().reload();
 			// redo populate the elements

@@ -11,8 +11,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import javax.xml.namespace.QName;
-
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.NdexException;
@@ -144,7 +142,7 @@ public abstract class PersistenceService {
 		//	this.localConnection.begin();
 		//	database.commit();
 		}
-		
+/*		
 	private Long createNamespace ( String prefix, String URI) throws NdexException {
 			if ( prefix !=null && URI == null )
 			 throw new NdexException ("Prefix " + prefix + " is not defined." );
@@ -164,7 +162,7 @@ public abstract class PersistenceService {
 	    	elementIdCache.put(nsId, nsDoc);
 		    return nsId;
 		}
-		
+*/		
 	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
 		Namespace ns = namespaceMap.get(key);
 

@@ -72,17 +72,10 @@ public class NdexPersistenceService extends PersistenceService {
 
     private Map<RawEdge, Long> edgeMap;
     
-	// key is the full URI or other fully qualified baseTerm as a string.
-  //	private LoadingCache<String, BaseTerm> baseTermStrCache;
-
     private ODocument networkDoc;
-//	protected OrientVertex networkVertex;
 
     private String ownerAccount;
     
-//    private ODocument ownerDoc;
-    
-
     private Map<RawCitation, Long>           rawCitationMap;
     
     
@@ -801,7 +794,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 	
 	
-	private ODocument getNetworkDoc() {
+	public ODocument getNetworkDoc() {
 		return networkDoc;
 	}
 	
@@ -1016,11 +1009,13 @@ public class NdexPersistenceService extends PersistenceService {
 			
 			this.localConnection.commit();
 			
-			ODocument ownerDoc =  findUserByAccountName(this.ownerAccount);		
-			OrientVertex ownerV = this.graph.getVertex(ownerDoc);
-			ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+			if ( this.ownerAccount != null) {
+				ODocument ownerDoc =  findUserByAccountName(this.ownerAccount);		
+				OrientVertex ownerV = this.graph.getVertex(ownerDoc);
+				ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
 			
-			this.localConnection.commit();
+				this.localConnection.commit();
+			}
 
 			System.out.println("The new network " + network.getName() + " is complete");
 		} catch (Exception e) {
