@@ -264,8 +264,8 @@ public class NdexSchemaManager
             
             networkClass.createProperty(NdexClasses.Network_E_Namespace, OType.LINKSET, nsClass);
 
-            networkClass.createIndex(NdexClasses.Index_network_name_desc, "FULLTEXT",
-        			null, null, "LUCENE", new String[] { NdexClasses.Network_P_name, NdexClasses.Network_P_desc});
+            networkClass.createIndex(NdexClasses.Index_network_name_desc, "FULLTEXT", 
+        			null, null, "LUCENE", new String[] { NdexClasses.ExternalObj_ID, NdexClasses.Network_P_name, NdexClasses.Network_P_desc});
 
         }
 

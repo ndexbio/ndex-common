@@ -100,7 +100,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			
 			cloneNetworkElements();
 
-			addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+//			addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
 		
 			this.networkDoc.reload();
 			this.networkDoc.field(NdexClasses.Network_P_isComplete , true);
@@ -163,6 +163,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
 
+        this.network.getProperties().addAll(srcNetwork.getProperties());
+		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
+		
 		networkDoc.reload();
 		networkVertex.getRecord().reload();
 
@@ -264,6 +267,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
 		
+        this.network.getProperties().addAll(srcNetwork.getProperties());
+		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
+
 		
 		logger.info("A new NDex network titled: " +srcNetwork.getName() +" has been created");
 	}

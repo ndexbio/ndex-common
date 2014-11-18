@@ -98,7 +98,7 @@ public abstract class PersistenceService {
 				OrientVertex pV = this.createNdexPropertyVertex(e);
                vertex.addEdge(NdexClasses.E_ndexProperties, pV);
 			}
-            this.network.getProperties().addAll(properties);
+//            this.network.getProperties().addAll(properties);
 		
 		}
 
@@ -108,7 +108,7 @@ public abstract class PersistenceService {
                OrientVertex pV = graph.getVertex(pDoc);
                vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
 			}
-			this.network.getPresentationProperties().addAll(presentationProperties);
+//			this.network.getPresentationProperties().addAll(presentationProperties);
 		}
 	}
 

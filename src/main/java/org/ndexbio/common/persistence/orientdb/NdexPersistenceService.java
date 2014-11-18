@@ -1032,6 +1032,9 @@ public class NdexPersistenceService extends PersistenceService {
 	public void setNetworkProperties(Collection<NdexPropertyValuePair> properties, 
 			Collection<SimplePropertyValuePair> presentationProperties) throws NdexException, ExecutionException {
 		addPropertiesToVertex ( networkVertex, properties, presentationProperties);
+        this.network.getProperties().addAll(properties);
+		this.network.getPresentationProperties().addAll(presentationProperties);
+
 	}
 	
 	public void setNetworkProvenance(ProvenanceEntity e) throws JsonProcessingException {
