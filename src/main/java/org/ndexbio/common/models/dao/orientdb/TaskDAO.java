@@ -178,7 +178,7 @@ public class TaskDAO extends OrientdbDAO implements AutoCloseable {
     	task.setStatus(status);
     	return task;
     }
-    
+    //TODO: make it thread safe
     public int deleteTask (UUID taskID) throws ObjectNotFoundException, NdexException {
         ODocument d = this.getRecordByExternalId(taskID);
         String status = d.field(NdexClasses.Task_P_status);
