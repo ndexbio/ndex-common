@@ -1720,12 +1720,15 @@ public class NetworkDAO extends OrientdbDAO {
     		}
     	}
 
+    	networkV.getRecord().reload();
 		int counter = 0 ;
 		for (NdexPropertyValuePair e : properties) {
-			ODocument pDoc = createNdexPropertyDoc(e);
-            OrientVertex pV = graph.getVertex(pDoc);
-			networkV.addEdge(NdexClasses.E_ndexProperties, pV);
-       		counter ++;
+			if ( !e.getPredicateString().equals(NdexClasses.Network_P_source_format)) {
+				ODocument pDoc = createNdexPropertyDoc(e);
+				OrientVertex pV = graph.getVertex(pDoc);
+				networkV.addEdge(NdexClasses.E_ndexProperties, pV);
+				counter ++;
+			}
 		}
 		return counter;
 	}
