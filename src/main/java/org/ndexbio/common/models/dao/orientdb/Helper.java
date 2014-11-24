@@ -216,8 +216,8 @@ public class Helper {
 			if ( prefix != null)
 				return prefix + ":" + localName;
 			return nsDoc.field(NdexClasses.ns_P_uri) + localName;
-		} else 
-			return localName;
+		}
+		return localName;
 	}
 	
 	public static SimplePropertyValuePair getSimplePropertyFromDoc(ODocument doc) {
