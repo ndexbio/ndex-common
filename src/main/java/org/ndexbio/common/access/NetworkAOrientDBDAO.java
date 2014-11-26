@@ -403,7 +403,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	    NetworkDAO dao = new NetworkDAO (this._ndexDatabase);
 
 	    // get namespaces from network
-        for ( Namespace ns : dao.getNamespacesFromNetworkDoc(networkDoc)) {
+        for ( Namespace ns : NetworkDAO.getNamespacesFromNetworkDoc(networkDoc, network)) {
         	network.getNamespaces().put(ns.getId(),ns);
         }
 

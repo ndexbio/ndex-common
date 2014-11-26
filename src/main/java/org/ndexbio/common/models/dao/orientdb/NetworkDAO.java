@@ -235,9 +235,25 @@ public class NetworkDAO extends OrientdbDAO {
 
         NetworkDAO.setNetworkSummary(nDoc, network);
         
-        for ( Namespace ns : NetworkDAO.getNamespacesFromNetworkDoc(nDoc)) {
+        for ( Namespace ns : NetworkDAO.getNamespacesFromNetworkDoc(nDoc, network)) {
         	network.getNamespaces().put(ns.getId(),ns);
         }
+
+        // get all baseTerms
+        for (OIdentifiable bTermDoc : new OTraverse()
+    			.field("out_"+ NdexClasses.Network_E_BaseTerms )
+    			.target(nDoc)
+    			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+        	ODocument doc = (ODocument) bTermDoc;
+
+        	if ( doc.getClassName().equals(NdexClasses.BaseTerm) ) {
+        		BaseTerm term = getBaseTerm(doc,network);
+        		network.getBaseTerms().put(term.getId(), term);
+
+        	}
+        }
+
         
         for (OIdentifiable nodeDoc : new OTraverse()
         	.field("out_"+ NdexClasses.Network_E_Nodes )
@@ -917,11 +933,11 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	public Collection<Namespace> getNetworkNamespaces(String networkUUID) {
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
-		return getNamespacesFromNetworkDoc(networkDoc);
+		return getNamespacesFromNetworkDoc(networkDoc, null);
 	}
 	
 	
-	public static Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc) {
+	public static Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc,Network network) {
 		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
 		for (OIdentifiable reifiedTRec : new OTraverse()
@@ -932,7 +948,7 @@ public class NetworkDAO extends OrientdbDAO {
     		ODocument doc = (ODocument) reifiedTRec;
 
     		if ( doc.getClassName().equals(NdexClasses.Namespace)) {
-    			namespaces.add(getNamespace(doc,null));
+    			namespaces.add(getNamespace(doc,network));
     		}
     	}
     	return namespaces;
