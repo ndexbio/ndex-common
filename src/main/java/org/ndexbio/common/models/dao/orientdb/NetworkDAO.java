@@ -1608,6 +1608,66 @@ public class NetworkDAO extends OrientdbDAO {
     	return result;
     }
     
+    // returns a subnetwork that contains all the orphan supports (supports that have no citation links).
+    public Network getOrphanSupportsNetwork(String networkUUID) throws NdexException {
+//    	ODocument networkDoc = this.getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
+    	Network result = new Network();
+    	
+    	ODocument netDoc = getNetworkDocByUUIDString(networkUUID);
+    	
+    	if ( netDoc == null)
+    		return null;
+    	
+    	for (OIdentifiable supportRec : new OTraverse()
+ 			.field("out_"+ NdexClasses.Network_E_Supports)
+ 			.target(netDoc)
+ 			.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+    		ODocument doc = (ODocument) supportRec;
+
+    		if ( doc.getClassName().equals(NdexClasses.Support) && 
+    			  doc.field("out_" + NdexClasses.Support_E_citation) != null) {
+    			Support s = getSupportFromDoc(doc, result);
+    			result.getSupports().put(s.getId(), s);
+    			
+    			// get all the nodes
+    	    	for (OIdentifiable nodeRec : new OTraverse()
+    	    		.field("in_"+ NdexClasses.Node_E_supports)
+    	    		.target(doc)
+    	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
+    			
+    	    		ODocument nodeDoc = (ODocument) nodeRec;
+    	    		if ( nodeDoc.getClassName().equals(NdexClasses.Node)) {
+    	    			Node n = getNode ( nodeDoc, result);
+    	    			result.getNodes().put(n.getId(), n);
+    	    		}
+    	    		
+    	    	}
+    		
+    	    	// get all the edges
+    	    	for (OIdentifiable edgeRec : new OTraverse()
+	    			.field("in_"+ NdexClasses.Edge_E_supports)
+	    			.target(doc)
+	    			.predicate( new OSQLPredicate("$depth <= 1"))) {
+			
+    	    		ODocument edgeDoc = (ODocument) edgeRec;
+    	    		if ( edgeDoc.getClassName().equals(NdexClasses.Edge)) {
+    	    			Edge e = getEdgeFromDocument ( edgeDoc, result);
+    	    			result.getEdges().put(e.getId(), e);
+    	    		}
+	    		
+    	    	}
+    	    	
+    		}
+    	}
+    	
+    	result.setEdgeCount(result.getEdges().size());
+    	result.setNodeCount(result.getNodes().size());
+    	
+    	return result;
+    }
+    
+    
 	/**************************************************************************
 	    * getNetworkUserMemberships
 	    *
@@ -1889,20 +1949,20 @@ public class NetworkDAO extends OrientdbDAO {
 	}
 
 	/**
-	 * Get all the node and edges that has no citations as a subnetwork. This is a 
+	 * Get all the node and edges that has neither citations nor supports as a subnetwork. This is a 
 	 * utitlity function for xbel export.
 	 * @param networkUUID
 	 * @param citationId
 	 * @return
 	 * @throws NdexException
 	 */
-    public Network getNoCitationSubnetwork(String networkUUID) throws NdexException {
+    public Network getOrphanStatementsSubnetwork(String networkUUID) throws NdexException {
     	
     	ODocument networkDoc = getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
     	
     	Network result = new Network();
     	
-    	// get all edges that have no citations.
+    	// get all edges that have neither citations nor supports.
     	for (OIdentifiable edgeRec : new OTraverse()
  			.field("out_"+ NdexClasses.Network_E_Edges)
  			.target(networkDoc)
@@ -1911,14 +1971,15 @@ public class NetworkDAO extends OrientdbDAO {
     		ODocument edgeDoc = (ODocument) edgeRec;
 
     		if ( edgeDoc.getClassName().equals(NdexClasses.Edge)) {
-    			if ( edgeDoc.field("out_"+NdexClasses.Edge_E_citations) == null) {
+    			if ( edgeDoc.field("out_"+NdexClasses.Edge_E_citations) == null && 
+    					edgeDoc.field("out_"+NdexClasses.Edge_E_supports) == null) {
     				Edge e = getEdgeFromDocument(edgeDoc, result);
     				result.getEdges().put(e.getId(), e);
     			}
     		}
     	}
     	
-    	// get orphan nodes that has no citations
+    	// get orphan nodes that has neither citations nor supports
     	for (OIdentifiable nodeRec : new OTraverse()
  			.field("out_"+ NdexClasses.Network_E_Nodes)
  			.target(networkDoc)
@@ -1931,7 +1992,8 @@ public class NetworkDAO extends OrientdbDAO {
                 if ( nodeDoc.field("out_" + NdexClasses.Edge_E_subject) == null &&
                 	 nodeDoc.field("in_" + NdexClasses.Edge_E_object) == null && 
                 	 !result.getNodes().containsKey(nodeId)) {
-                    if ( nodeDoc.field("out_"+ NdexClasses.Node_E_citations) == null) {
+                    if ( nodeDoc.field("out_"+ NdexClasses.Node_E_citations) == null && 
+        					nodeDoc.field("out_"+NdexClasses.Node_E_supports) == null) {
             			Node n = this.getNode(nodeDoc,result);
             		    result.getNodes().put(n.getId(), n);	
                     }
