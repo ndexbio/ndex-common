@@ -1839,6 +1839,10 @@ public class NetworkDAO extends OrientdbDAO {
 		graph.commit();
 		
 	}
+	
+	public void close() {
+		graph.shutdown();
+	}
     
 	
 	public void updateNetworkProfile(UUID networkId, NetworkSummary newSummary) {
