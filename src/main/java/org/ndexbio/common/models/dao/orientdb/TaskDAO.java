@@ -4,9 +4,9 @@ import java.util.List;
 import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Priority;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;

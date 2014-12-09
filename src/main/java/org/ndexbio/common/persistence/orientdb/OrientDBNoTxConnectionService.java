@@ -1,7 +1,7 @@
 package org.ndexbio.common.persistence.orientdb;
 
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

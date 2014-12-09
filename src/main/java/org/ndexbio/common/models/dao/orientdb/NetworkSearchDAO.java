@@ -12,8 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.object.Permissions;
@@ -66,12 +66,12 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		
 		if ( simpleNetworkQuery.getSearchString().equals(""))
-			return findNetworksV1 (simpleNetworkQuery,skip, top, userRID);
+			return findAllNetworks (simpleNetworkQuery,skip, top, userRID, simpleNetworkQuery.getCanRead());
 		
-		return findNetworksV2 (simpleNetworkQuery,skip, top, userRID);
+		return findNetworksV2 (simpleNetworkQuery,skip, top, userRID, simpleNetworkQuery.getCanRead());
 	}
 	
-	private List<NetworkSummary> findNetworksV1(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID) 
+	private List<NetworkSummary> findAllNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID, boolean canRead) 
 			throws NdexException, IllegalArgumentException {
 		
 		// get RID for logged in user if any
@@ -95,8 +95,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		else
 			traverseDepth = 1;
 		
-		String searchStr = Helper.escapeOrientDBSQL(simpleNetworkQuery.getSearchString().toLowerCase());
-		
+		String visibilityCriteria = canRead ? "visibility = 'PUBLIC'" : "visibility <> 'PRIVATE'";
+
 		try {
 			
 			// search across a traversal of an accounts networks if accountName is specified
@@ -108,15 +108,13 @@ public class NetworkSearchDAO extends OrientdbDAO{
 					throw new NdexException("Invalid accountName to filter by");
 				
 				String traverseRID = nAccount.getIdentity().toString();
+				
 				query = new OSQLSynchQuery<>(
-			  			"SELECT  FROM"
-			  			+ " (TRAVERSE out_groupadmin, out_member, "+traversePermission+" FROM"
-			  				+ " " + traverseRID
-			  				+ "  WHILE $depth <= "+traverseDepth+" )"
-			  			+ " WHERE name.toLowerCase() LIKE '%" + searchStr +"%'"
-			  			+ " AND @class = '"+ NdexClasses.Network +"'"
+			  			"SELECT  FROM (TRAVERSE out_groupadmin, out_member, "+traversePermission +
+			  			" FROM " + traverseRID + "  WHILE $depth <= "+traverseDepth+" )"
+			  			+ " WHERE @class = '"+ NdexClasses.Network +"'"
 			  			+ " AND isComplete = true"
-			 			+ " AND ( visibility <> 'PRIVATE'"
+			 			+ " AND ( " + visibilityCriteria
 						+ " OR in() contains "+userRID
 						+ " OR in().in() contains "+userRID+" )"
 			 			+ " ORDER BY "+ NdexClasses.ExternalObj_cTime +" DESC " + " SKIP " + startIndex
@@ -135,11 +133,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			query = new OSQLSynchQuery<>(
 			  			"SELECT FROM " + NdexClasses.Network
 			  			+ " WHERE isComplete = true "
-			  			
-			  			+ (searchStr.equals("") ? " " : 
-			  			  "AND name.toLowerCase() LIKE '%"+ searchStr +"%'")
-			  			  
-			 			+ " AND ( visibility <> 'PRIVATE'"
+			 			+ " AND ( " + visibilityCriteria 
 						+ " OR in() contains "+userRID
 						+ " OR in().in() contains "+userRID+" )"
 			 			+ " ORDER BY "+ NdexClasses.ExternalObj_cTime +" DESC " + " SKIP " + startIndex
@@ -163,7 +157,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		} 
 	}
 
-	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userRID) 
+	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userRID, boolean canRead) 
 			throws IllegalArgumentException {
 		
 		Collection<NetworkSummary> resultList =  new ArrayList<>(top);
@@ -189,7 +183,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
-            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
+            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID, canRead)) {
 					resultIDSet.add(dId.getIdentity());
 					if ( counter >= skip) {
 						NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
@@ -219,7 +213,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				  ODocument doc = (ODocument) networkRec;
 			    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-		            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
+		            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID,canRead)) {
 							resultIDSet.add(id);
 							if ( counter >= skip) {
 								NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
@@ -250,7 +244,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			  ODocument doc = (ODocument) networkRec;
 				    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-			            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID)) {
+			            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID,canRead)) {
 								resultIDSet.add(id);
 								if ( counter >= skip) {
 									NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
@@ -270,10 +264,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	}
 	
 	
-	private static boolean isSearchable(ODocument networkDoc, ORID userRID, Permissions permission, ORID adminUserRID) {
+	private static boolean isSearchable(ODocument networkDoc, ORID userRID, Permissions permission, ORID adminUserRID, boolean canRead) {
 		
 		VisibilityType visibility = VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
-		if ( visibility != VisibilityType.PRIVATE || networkIsSearchableByAccount(networkDoc,userRID) ) {
+		
+		boolean baseCriteria = canRead ? 
+				(visibility == VisibilityType.PUBLIC) : (visibility != VisibilityType.PRIVATE);
+		
+		if ( baseCriteria || networkIsReadableByAccount(networkDoc,userRID) ) {
 			if ( adminUserRID == null || 
 					networkHasPermissionOnAccount(networkDoc, permission,adminUserRID)) {
 				return true;
@@ -284,7 +282,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 	 }
 	
-	  private static boolean networkIsSearchableByAccount(ODocument networkDoc, 
+	  private static boolean networkIsReadableByAccount(ODocument networkDoc, 
 				ORID userORID) {
 	
 		  for (OIdentifiable reifiedTRec : new OTraverse()

@@ -1,5 +1,7 @@
 package org.ndexbio.common.exceptions;
 
+import org.ndexbio.model.exceptions.NdexException;
+
 public class ObjectNotFoundException extends NdexException
 {
     private static final long serialVersionUID = 1L;

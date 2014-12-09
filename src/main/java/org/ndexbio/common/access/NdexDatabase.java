@@ -1,7 +1,7 @@
 package org.ndexbio.common.access;
 
 
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

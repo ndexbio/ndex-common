@@ -2,7 +2,7 @@ package org.ndexbio.common.models.object.network;
 
 import java.util.List;
 
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 
 public class RawCitation implements Comparable <RawCitation>{
 	

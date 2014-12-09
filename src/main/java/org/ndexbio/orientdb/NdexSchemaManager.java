@@ -2,7 +2,7 @@ package org.ndexbio.orientdb;
 
 import org.apache.log4j.spi.LoggerFactory;
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;

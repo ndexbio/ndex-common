@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.Helper;
@@ -21,6 +20,7 @@ import org.ndexbio.common.models.object.network.RawEdge;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.RawSupport;
 import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;

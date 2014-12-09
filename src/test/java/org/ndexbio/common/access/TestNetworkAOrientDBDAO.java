@@ -6,8 +6,8 @@ import java.util.List;
 import junit.framework.Assert;
 
 import org.junit.Test;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.SimplePathQuery;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.Edge;

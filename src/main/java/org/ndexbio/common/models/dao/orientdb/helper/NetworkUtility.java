@@ -9,8 +9,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.object.MetaParameter;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
