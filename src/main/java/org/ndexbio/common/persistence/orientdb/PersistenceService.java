@@ -275,17 +275,19 @@ public abstract class PersistenceService {
 			           NdexClasses.Support_P_text, literal)	
 			   .save();
 
+			OrientVertex supportV = graph.getVertex(supportDoc);
+
+			networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
+
 			if ( citationId != null && citationId >= 0 ) {
 				ODocument citationDoc = elementIdCache.get(citationId);
 	        
-				OrientVertex supportV = graph.getVertex(supportDoc);
 				OrientVertex citationV = graph.getVertex(citationDoc);
 				supportV.addEdge(NdexClasses.Support_E_citation, citationV);
-				networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
 				elementIdCache.put(citationId, citationV.getRecord());
-				supportDoc = supportV.getRecord();
 			}
-			
+
+			supportDoc = supportV.getRecord();
 			elementIdCache.put(supportId, supportDoc);
 			return supportId; 
 			

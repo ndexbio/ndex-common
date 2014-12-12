@@ -746,7 +746,9 @@ public class NetworkDAO extends OrientdbDAO {
 		}
 		
 		p.setValue((String)propDoc.field(NdexClasses.ndexProp_P_value)) ;
-    	p.setDataType((String)propDoc.field(NdexClasses.ndexProp_P_datatype));
+		String dType = (String)propDoc.field(NdexClasses.ndexProp_P_datatype);
+		if ( dType !=null)
+			p.setDataType(dType);
 		return p;
     	
     }
@@ -1374,6 +1376,8 @@ public class NetworkDAO extends OrientdbDAO {
             }
     	}
         
+		getPropertiesFromDocument(s,doc,network);
+
     	return s;
     	
     }
@@ -1626,7 +1630,7 @@ public class NetworkDAO extends OrientdbDAO {
     		ODocument doc = (ODocument) supportRec;
 
     		if ( doc.getClassName().equals(NdexClasses.Support) && 
-    			  doc.field("out_" + NdexClasses.Support_E_citation) != null) {
+    			  doc.field("out_" + NdexClasses.Support_E_citation) == null) {
     			Support s = getSupportFromDoc(doc, result);
     			result.getSupports().put(s.getId(), s);
     			

@@ -1078,7 +1078,7 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 
-	public void setElementProperty(Long elementId, String key, String value, String type) throws ExecutionException, NdexException {
+	public void addElementProperty(Long elementId, String key, String value, String type) throws ExecutionException, NdexException {
 		ODocument elementDoc = this.elementIdCache.get(elementId);
 		OrientVertex v = graph.getVertex(elementDoc);
 		
@@ -1089,7 +1089,7 @@ public class NdexPersistenceService extends PersistenceService {
         this.elementIdCache.put(elementId, elementDoc);
 	}
 	
-	public void setElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
+	public void addElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
 		ODocument elementDoc = this.elementIdCache.get(elementId);
 		OrientVertex v = graph.getVertex(elementDoc);
 		
