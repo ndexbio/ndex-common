@@ -66,26 +66,25 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		
 		if ( simpleNetworkQuery.getSearchString().equals(""))
-			return findAllNetworks (simpleNetworkQuery,skip, top, userRID, simpleNetworkQuery.getCanRead());
+			return findAllNetworks (simpleNetworkQuery,skip, top, userRID);
 		
-		return findNetworksV2 (simpleNetworkQuery,skip, top, userRID, simpleNetworkQuery.getCanRead());
+		return findNetworksV2 (simpleNetworkQuery,skip, top, userRID);
 	}
 	
-	private List<NetworkSummary> findAllNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID, boolean canRead) 
+	private List<NetworkSummary> findAllNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID) 
 			throws NdexException, IllegalArgumentException {
 		
 		// get RID for logged in user if any
-		String userRID = userORID == null ? "#0:0" : userORID.toString();
+//		String userRID = userORID == null ? "#0:0" : userORID.toString();
 		
-		String traversePermission;
+/*		String traversePermission;
 		int traverseDepth;
-		OSQLSynchQuery<ODocument> query;
-		Iterable<ODocument> networks;
+		OSQLSynchQuery<ODocument> query; */
+//		Iterable<ODocument> networks;
 		final List<NetworkSummary> foundNetworks = new ArrayList<>();
-		final int startIndex = skip * top;
-		
+//		final int startIndex = skip ;
 
-		if( simpleNetworkQuery.getPermission() == null ) 
+/*		if( simpleNetworkQuery.getPermission() == null ) 
 			traversePermission = "out_admin, out_write, out_read";
 		else 
 			traversePermission = "out_"+simpleNetworkQuery.getPermission().name().toLowerCase();
@@ -93,72 +92,105 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		if( simpleNetworkQuery.getIncludeGroups())
 			traverseDepth = 2;
 		else
-			traverseDepth = 1;
+			traverseDepth = 1; */
+		int counter = 0;
 		
-		String visibilityCriteria = canRead ? "visibility = 'PUBLIC'" : "visibility <> 'PRIVATE'";
+		// search across a traversal of an accounts networks if accountName is specified
+		if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
 
-		try {
+			OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
+			OIdentifiable nAccount = (OIdentifiable) accountNameIdx.get(simpleNetworkQuery.getAccountName()); // account to traverse by
+				
+			if(nAccount == null) 
+				throw new NdexException("Invalid accountName "+ simpleNetworkQuery.getAccountName() + " to filter by");
+				
 			
-			// search across a traversal of an accounts networks if accountName is specified
-			if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
-				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
-				OIdentifiable nAccount = (OIdentifiable) accountNameIdx.get(simpleNetworkQuery.getAccountName()); // account to traverse by
-				
-				if(nAccount == null) 
-					throw new NdexException("Invalid accountName to filter by");
-				
-				String traverseRID = nAccount.getIdentity().toString();
-				
-				query = new OSQLSynchQuery<>(
-			  			"SELECT  FROM (TRAVERSE out_groupadmin, out_member, "+traversePermission +
-			  			" FROM " + traverseRID + "  WHILE $depth <= "+traverseDepth+" )"
-			  			+ " WHERE @class = '"+ NdexClasses.Network +"'"
-			  			+ " AND isComplete = true"
-			 			+ " AND ( " + visibilityCriteria
-						+ " OR in() contains "+userRID
-						+ " OR in().in() contains "+userRID+" )"
-			 			+ " ORDER BY "+ NdexClasses.ExternalObj_cTime +" DESC " + " SKIP " + startIndex
-			 			+ " LIMIT " + top);
-				
-				networks = this.db.command(query).execute();
-				
-				for (final ODocument network : networks) {
-					foundNetworks.add(NetworkDAO.getNetworkSummary(network));
-				}
+			OTraverse traverser = new OTraverse().target(nAccount).
+					field ( "out_" + NdexClasses.E_admin);
+
+			Permissions permission = simpleNetworkQuery.getPermission();
+			if ( permission== null ) permission = Permissions.READ; 
 					
+			if ( permission == Permissions.WRITE) {
+				  traverser = traverser.field("out_" + NdexClasses.account_E_canEdit);
+			} else if ( permission == Permissions.READ) {
+				  traverser = traverser.field("out_" + NdexClasses.account_E_canEdit)
+						      .field("out_" + NdexClasses.account_E_canRead);
+			} else if ( permission == Permissions.GROUPADMIN || 
+					      permission == Permissions.MEMBER)
+				  throw new NdexException ( "Unsupported perimission type in Network search: " + permission.toString() );
+			  
+			if ( simpleNetworkQuery.getIncludeGroups()) {
+				  traverser = traverser.field("out_" + NdexClasses.GRP_E_admin)
+						  .field("out_" + NdexClasses.GRP_E_member)
+						  .predicate( new OSQLPredicate("$depth <= 2"));
+						  
+			} else 
+				  traverser = traverser.predicate( new OSQLPredicate("$depth <= 1"));
+			  
+			if ( userORID != null && userORID.equals(nAccount)) {   // same account
+		   		for (OIdentifiable reifiedTRec : traverser) {
+			    	  ODocument networkDoc = (ODocument)reifiedTRec;
+			    	  if ( networkDoc.getClassName().equals(NdexClasses.Network)) {
+						  if ( counter >= skip) {
+								NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
+								if ( network.getIsComplete())
+									foundNetworks .add(network);
+						  }
+					      counter ++;
+					      if ( foundNetworks.size()>= top)
+								return foundNetworks;
+			    	  }
+			    }
 				return foundNetworks;
-			    
 			} 
-			
-			query = new OSQLSynchQuery<>(
-			  			"SELECT FROM " + NdexClasses.Network
-			  			+ " WHERE isComplete = true "
-			 			+ " AND ( " + visibilityCriteria 
-						+ " OR in() contains "+userRID
-						+ " OR in().in() contains "+userRID+" )"
-			 			+ " ORDER BY "+ NdexClasses.ExternalObj_cTime +" DESC " + " SKIP " + startIndex
-			 			+ " LIMIT " + top);
-				
-			networks = this.db.command(query).execute();
-			    
-				
-			for (final ODocument network : networks) {
-					foundNetworks.add(NetworkDAO.getNetworkSummary(network));
-			}
-					
+
+		    // different account
+	   		for (OIdentifiable reifiedTRec : traverser) {
+		    	  ODocument networkDoc = (ODocument)reifiedTRec;
+		    	  if ( networkDoc.getClassName().equals(NdexClasses.Network) &&
+		    			  (  (simpleNetworkQuery.getCanRead() ? 
+		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))== VisibilityType.PUBLIC :
+		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))!= VisibilityType.PRIVATE)
+    					   || networkIsReadableByAccount(networkDoc, userORID))) {
+					  if ( counter >= skip) {
+							NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
+							if ( network.getIsComplete())
+								foundNetworks .add(network);
+					  }
+				      counter ++;
+				      if ( foundNetworks.size()>= top)
+							return foundNetworks;
+		    	  }
+		    }
 			return foundNetworks;
-			
-			
-		} catch (Exception e) {
-			
-			logger.severe("An error occured while attempting to query the database for networks");
-			throw new NdexException("Failed to search for networks.\n" + e.getMessage());
-			
+
 		} 
+		
+		for (final ODocument networkDoc : db.browseClass(NdexClasses.Network)) {
+			if ( (boolean)networkDoc.field(NdexClasses.Network_P_isComplete)) {
+				VisibilityType visibility = 
+							  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
+				if ((simpleNetworkQuery.getCanRead()? 
+						visibility == VisibilityType.PUBLIC: 
+						visibility != VisibilityType.PRIVATE )
+					|| networkIsReadableByAccount(networkDoc, userORID) )	{	
+						if ( counter >= skip) {
+							foundNetworks.add(NetworkDAO.getNetworkSummary(networkDoc));
+						}
+  				        counter ++;
+					    if ( foundNetworks.size()>= top)
+								return foundNetworks;
+				}
+			}
+		} 
+					
+		return foundNetworks;
+			
 	}
 
-	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userRID, boolean canRead) 
-			throws IllegalArgumentException {
+	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userRID) 
+			throws IllegalArgumentException, NdexException {
 		
 		Collection<NetworkSummary> resultList =  new ArrayList<>(top);
 		
@@ -173,6 +205,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				adminUserRID = user.getIdentity();
 		}
 		
+//	    Permissions p = simpleNetworkQuery.getPermission();
 		
 		// search network first.
 		OIndex<?> networkIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_network_name_desc);
@@ -183,7 +216,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
-            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID, canRead)) {
+			if ( (boolean)doc.field(NdexClasses.Network_P_isComplete)) {
+				if (isSearchable(doc, userRID, adminUserRID, simpleNetworkQuery.getCanRead(), 
+						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 					resultIDSet.add(dId.getIdentity());
 					if ( counter >= skip) {
 						NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
@@ -193,6 +228,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 					counter ++;
 					if ( resultList.size()>= top)
 						return resultList;
+				}
 			}
 		}
 		
@@ -213,7 +249,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				  ODocument doc = (ODocument) networkRec;
 			    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-		            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID,canRead)) {
+		            if ( (boolean)doc.field(NdexClasses.Network_P_isComplete) && 
+		            	  isSearchable(doc, userRID, adminUserRID,simpleNetworkQuery.getCanRead(), 
+		  						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 							resultIDSet.add(id);
 							if ( counter >= skip) {
 								NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
@@ -244,7 +282,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			  ODocument doc = (ODocument) networkRec;
 				    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-			            if (isSearchable(doc, userRID, simpleNetworkQuery.getPermission(), adminUserRID,canRead)) {
+			            if( (boolean)doc.field(NdexClasses.Network_P_isComplete) &&
+			               (isSearchable(doc, userRID,adminUserRID,simpleNetworkQuery.getCanRead(), 
+									simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) ) {
 								resultIDSet.add(id);
 								if ( counter >= skip) {
 									NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
@@ -264,21 +304,21 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	}
 	
 	
-	private static boolean isSearchable(ODocument networkDoc, ORID userRID, Permissions permission, ORID adminUserRID, boolean canRead) {
+	private static boolean isSearchable(ODocument networkDoc, ORID userRID, ORID adminUserRID, boolean canRead, boolean includeGroups, Permissions permission)
+			throws NdexException {
+		
+		if ( adminUserRID != null) {  // we only want networks administrated by that user.
+			Permissions p = (permission == null? Permissions.READ: permission) ;
+			return networkAdminedByAccount(networkDoc, userRID, adminUserRID, includeGroups, p, canRead);
+		}
+			
 		
 		VisibilityType visibility = VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
 		
 		boolean baseCriteria = canRead ? 
 				(visibility == VisibilityType.PUBLIC) : (visibility != VisibilityType.PRIVATE);
 		
-		if ( baseCriteria || networkIsReadableByAccount(networkDoc,userRID) ) {
-			if ( adminUserRID == null || 
-					networkHasPermissionOnAccount(networkDoc, permission,adminUserRID)) {
-				return true;
-			}
-		}
-		
-		return false;
+		return  baseCriteria || ( userRID !=null && networkIsReadableByAccount(networkDoc,userRID)) ;
 
 	 }
 	
@@ -299,25 +339,69 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		  }
 		  return false;
 		  
-	    }
+	   }
 
 
-	  private static boolean networkHasPermissionOnAccount(ODocument networkDoc, Permissions p, 
-				ORID userORID) {
+	  private static boolean networkAdminedByAccount(ODocument networkDoc,ORID userORID, ORID adminUserRID, boolean includeGroups,
+			      Permissions permission, boolean canRead ) throws NdexException {
 	
-		  //if ( userORID == null) return true;
-		  
-		  for (OIdentifiable reifiedTRec : new OTraverse()
-					.field(	"in_" + p.name().toLowerCase())
-					.target(networkDoc)
-					.predicate( new OSQLPredicate("$depth <= 1"))) {
+		  OTraverse traverser = new OTraverse()
+			.field(	"in_" + NdexClasses.E_admin)
+			.target(networkDoc);
 
-			  if ( reifiedTRec.getIdentity().equals(userORID)) 
-				  return true;
-		  }
-		  return false;
+		  if ( permission == Permissions.WRITE) {
+			  traverser = traverser.field("in_" + NdexClasses.account_E_canEdit);
+		  } else if ( permission == Permissions.READ) {
+			  traverser = traverser.field("in_" + NdexClasses.account_E_canEdit)
+					      .field("in_" + NdexClasses.account_E_canRead);
+		  } else if ( permission == Permissions.GROUPADMIN || 
+				      permission == Permissions.MEMBER)
+			  throw new NdexException ( "Unsupported perimission type in Network search: " + permission.toString() );
 		  
-	    }
+		  if ( includeGroups) {
+			  traverser = traverser.field("in_" + NdexClasses.GRP_E_admin)
+					  .field("in_" + NdexClasses.GRP_E_member)
+					  .predicate( new OSQLPredicate("$depth <= 2"));
+					  
+		  } else 
+			  traverser = traverser.predicate( new OSQLPredicate("$depth <= 1"));
+		  
+		  
+		  if ( userORID != null && userORID.equals(adminUserRID)) {   // same account
+			  for (OIdentifiable reifiedTRec : traverser) {
+				  if ( reifiedTRec.getIdentity().equals(adminUserRID)) {
+					  return true;
+				  }
+				  
+			  }
+			  return false;
+		  } 
+		  
+		  boolean satisfiedAdminUser = false;
+		  boolean satisfiedUser  = false;
+		  for (OIdentifiable reifiedTRec : traverser) {
+				  ORID id = reifiedTRec.getIdentity(); 
+				  if ( id.equals(adminUserRID)) {
+					  satisfiedAdminUser = true;
+				  } else if (userORID!=null && id.equals(userORID))
+					  satisfiedUser  = true;
+		  }
+
+		  if ( !satisfiedAdminUser)
+				  return false;
+			  
+		  if ( satisfiedUser) return true;
+			  
+		  // check if the network attribute
+		  VisibilityType visibility = VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
+		  if ( visibility == VisibilityType.PUBLIC)
+ 				  return true;
+		  if ( !canRead &&  visibility == VisibilityType.DISCOVERABLE) 
+ 				  return true;
+ 			  
+		  return networkIsReadableByAccount(networkDoc,userORID);
+		  		  
+	   }
 
 
 }
