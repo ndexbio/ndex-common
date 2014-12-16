@@ -186,9 +186,13 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		int counter = 0;
 		
 		ORID adminUserRID = null;
-		if( simpleNetworkQuery.getAccountName() != null ) {
+		if( !Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName()) ) {
 				OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_accountName);
 				OIdentifiable user = (OIdentifiable) accountNameIdx.get( simpleNetworkQuery.getAccountName()  ); // account to traverse by
+
+				if(user == null) 
+					throw new NdexException("Invalid accountName "+ simpleNetworkQuery.getAccountName() + " to filter by");
+				
 				adminUserRID = user.getIdentity();
 		}
 		
