@@ -1,7 +1,9 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -74,28 +76,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	private List<NetworkSummary> findAllNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID) 
 			throws NdexException, IllegalArgumentException {
 		
-		// get RID for logged in user if any
-//		String userRID = userORID == null ? "#0:0" : userORID.toString();
-		
-/*		String traversePermission;
-		int traverseDepth;
-		OSQLSynchQuery<ODocument> query; */
-//		Iterable<ODocument> networks;
-		final List<NetworkSummary> foundNetworks = new ArrayList<>();
-//		final int startIndex = skip ;
+		List<NetworkSummary> finalResult = new ArrayList<>(top);
 
-/*		if( simpleNetworkQuery.getPermission() == null ) 
-			traversePermission = "out_admin, out_write, out_read";
-		else 
-			traversePermission = "out_"+simpleNetworkQuery.getPermission().name().toLowerCase();
-		
-		if( simpleNetworkQuery.getIncludeGroups())
-			traverseDepth = 2;
-		else
-			traverseDepth = 1; */
-		int counter = 0;
-		
-		// search across a traversal of an accounts networks if accountName is specified
+		// has account name
 		if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
 
 			OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
@@ -127,45 +110,48 @@ public class NetworkSearchDAO extends OrientdbDAO{
 						  
 			} else 
 				  traverser = traverser.predicate( new OSQLPredicate("$depth <= 1"));
-			  
+
+			
+			final TreeSet<NetworkSummary> foundNetworks = new TreeSet<>(new NetworkResultComparator());
+			
 			if ( userORID != null && userORID.equals(nAccount)) {   // same account
 		   		for (OIdentifiable reifiedTRec : traverser) {
 			    	  ODocument networkDoc = (ODocument)reifiedTRec;
 			    	  if ( networkDoc.getClassName().equals(NdexClasses.Network)) {
-						  if ( counter >= skip) {
-								NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
-								if ( network.getIsComplete())
-									foundNetworks .add(network);
-						  }
-					      counter ++;
-					      if ( foundNetworks.size()>= top)
-								return foundNetworks;
+						NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
+						if ( network.getIsComplete())
+							foundNetworks .add(network);
 			    	  }
 			    }
-				return foundNetworks;
-			} 
-
-		    // different account
-	   		for (OIdentifiable reifiedTRec : traverser) {
-		    	  ODocument networkDoc = (ODocument)reifiedTRec;
-		    	  if ( networkDoc.getClassName().equals(NdexClasses.Network) &&
+			} else {     // different account 
+		    
+				for (OIdentifiable reifiedTRec : traverser) {
+					ODocument networkDoc = (ODocument)reifiedTRec;
+					if ( networkDoc.getClassName().equals(NdexClasses.Network) &&
 		    			  (  (simpleNetworkQuery.getCanRead() ? 
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))== VisibilityType.PUBLIC :
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))!= VisibilityType.PRIVATE)
     					   || networkIsReadableByAccount(networkDoc, userORID))) {
-					  if ( counter >= skip) {
 							NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
 							if ( network.getIsComplete())
 								foundNetworks .add(network);
-					  }
-				      counter ++;
-				      if ( foundNetworks.size()>= top)
-							return foundNetworks;
-		    	  }
-		    }
-			return foundNetworks;
+					}
+				}
+			}   
 
+			int i = 0; 
+			for( NetworkSummary s: foundNetworks ) {
+				if ( i >= skip) 
+					finalResult.add(s);
+				i++;
+				if( finalResult.size()>=top)
+					break;
+			}
+			return finalResult;
 		} 
+
+		// doesn't have accountName
+		LinkedList<NetworkSummary> resultHolder = new LinkedList<>(); 
 		
 		for (final ODocument networkDoc : db.browseClass(NdexClasses.Network)) {
 			if ( (boolean)networkDoc.field(NdexClasses.Network_P_isComplete)) {
@@ -175,17 +161,18 @@ public class NetworkSearchDAO extends OrientdbDAO{
 						visibility == VisibilityType.PUBLIC: 
 						visibility != VisibilityType.PRIVATE )
 					|| networkIsReadableByAccount(networkDoc, userORID) )	{	
-						if ( counter >= skip) {
-							foundNetworks.add(NetworkDAO.getNetworkSummary(networkDoc));
-						}
-  				        counter ++;
-					    if ( foundNetworks.size()>= top)
-								return foundNetworks;
+						resultHolder.addFirst(NetworkDAO.getNetworkSummary(networkDoc));
 				}
 			}
 		} 
-					
-		return foundNetworks;
+		
+		for( int i = 0 ; i <top+skip && !resultHolder.isEmpty() ; i++ ) {
+			NetworkSummary s = resultHolder.remove();
+			if ( i >= skip) 
+				finalResult.add(s);
+			
+		}
+		return finalResult;
 			
 	}
 
@@ -404,4 +391,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	   }
 
 
+	  public class NetworkResultComparator implements Comparator<NetworkSummary> {
+
+		@Override
+		public int compare(NetworkSummary o1, NetworkSummary o2) {
+			return  o1.getModificationTime().compareTo(o2.getModificationTime()) * -1;
+			 
+		}
+		  
+	  }
+	  
 }

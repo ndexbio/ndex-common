@@ -304,14 +304,14 @@ public class NetworkDAO extends OrientdbDAO {
     }
 
     
-	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) throws JsonProcessingException, NdexException {
+	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) throws NdexException {
 		ODocument nDoc = getNetworkDocByUUID(networkID);
 		
 	    if (nDoc == null) return null;
 	    
 	    PropertyGraphNetwork network = new PropertyGraphNetwork();
 	    
-		this.populatePropetyGraphNetworkFromDoc(network, nDoc);
+		populatePropetyGraphNetworkFromDoc(network, nDoc);
 	    
 	    int startPosition = skipBlocks * blockSize;
 	    int counter = 0;
