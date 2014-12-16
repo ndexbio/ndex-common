@@ -107,13 +107,12 @@ public class PropertyGraphLoader {
 				version = p.getValue();
 			} else if ( p.getPredicateString().equals(PropertyGraphNetwork.description) ) {
 				description = p.getValue();
-/*			} else if (p.getPredicateString().equals(PropertyGraphNetwork.namspaces)) {
-				namespaces = mapper.readValue(p.getValue(), Namespace[].class);
-			} else if (p.getPredicateString().equals(PropertyGraphNetwork.supports)) {
+/*			} else if (p.getPredicateString().equals(PropertyGraphNetwork.supports)) {
 				Support[] supports = mapper.readValue(p.getValue(), Support[].class);
 			} else if (p.getPredicateString().equals(PropertyGraphNetwork.citations)) {
 */				
-			} else if ( !p.getPredicateString().equals(PropertyGraphNetwork.uuid) ) {
+			} else if ( !p.getPredicateString().equals(PropertyGraphNetwork.uuid) &&
+					    !p.getPredicateString().equals(NdexClasses.Network_P_source_format)) {
 				otherAttributes.add(p);
 			} 
 		}

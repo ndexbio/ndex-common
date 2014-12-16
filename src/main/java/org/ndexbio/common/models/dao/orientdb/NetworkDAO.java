@@ -346,15 +346,13 @@ public class NetworkDAO extends OrientdbDAO {
     
 	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException, JsonProcessingException {
 		
-		//TODO: populate citations and support
-		
 		ODocument networkDoc = getNetworkDocByUUID(id);
 		
 		if (networkDoc == null) return null;
 
 		PropertyGraphNetwork network = new PropertyGraphNetwork();
 
-		this.populatePropetyGraphNetworkFromDoc(network, networkDoc);
+		NetworkDAO.populatePropetyGraphNetworkFromDoc(network, networkDoc);
 		
 		TreeMap<ORID, String> termStringMap = new TreeMap<>();
 		
@@ -392,8 +390,7 @@ public class NetworkDAO extends OrientdbDAO {
 		 return network; 
 	}
 	
-	private void populatePropetyGraphNetworkFromDoc(PropertyGraphNetwork network, ODocument doc)
-			throws JsonProcessingException {
+	private static void populatePropetyGraphNetworkFromDoc(PropertyGraphNetwork network, ODocument doc) {
         network.getProperties().add(new NdexPropertyValuePair(
         		PropertyGraphNetwork.uuid, doc.field(NdexClasses.Network_P_UUID).toString()));
         
@@ -413,8 +410,8 @@ public class NetworkDAO extends OrientdbDAO {
             		NdexClasses.Network_P_source_format, fmt.toString()));
         	
         
-        //namespace
-        List<Namespace> nsList = new ArrayList<>();
+        //namespace // this is not populated any more.
+/*        List<Namespace> nsList = new ArrayList<>();
         for (OIdentifiable nodeDoc : new OTraverse()
    	    	.field("out_"+ NdexClasses.Network_E_Namespace )
    	    	.target(doc)
@@ -430,7 +427,7 @@ public class NetworkDAO extends OrientdbDAO {
         	  network.getProperties().add(new NdexPropertyValuePair(
             		PropertyGraphNetwork.namspaces, 
             		mapper.writeValueAsString(nsList)));
-       }
+       }  */
 
         getPropertiesFromDocumentForPropertyGraph(network,doc);
 	}
