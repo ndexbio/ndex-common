@@ -324,7 +324,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 	private void cloneSupports() throws NdexException, ExecutionException {
 		if ( srcNetwork.getSupports()!= null) {
 			for ( Support support : srcNetwork.getSupports().values() ) {
-				Long citationId = citationIdMap.get(support.getCitationId());
+				Long citationId = -1l;
+				long srcCitationId = support.getCitationId();
+				if ( srcCitationId != -1)
+				    citationId = citationIdMap.get(srcCitationId);
 				if ( citationId == null )
 					throw new NdexException ("Citation Id " + support.getCitationId() + " is not found in citation list.");
 				Long supportId = createSupport(support.getText(),citationId);
