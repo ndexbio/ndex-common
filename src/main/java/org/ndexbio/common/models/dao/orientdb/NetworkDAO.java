@@ -344,7 +344,7 @@ public class NetworkDAO extends OrientdbDAO {
     
     
     
-	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException, JsonProcessingException {
+	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
 		
 		ODocument networkDoc = getNetworkDocByUUID(id);
 		
@@ -398,7 +398,7 @@ public class NetworkDAO extends OrientdbDAO {
         		PropertyGraphNetwork.name, (String)doc.field(NdexClasses.Network_P_name)));
         
         String desc = doc.field(NdexClasses.Network_P_desc);
-        if ( desc != null) 
+        if ( desc != null && !desc.equals("")) 
         	network.getProperties().add(new NdexPropertyValuePair(PropertyGraphNetwork.description, desc));
         String version = doc.field(NdexClasses.Network_P_version);
         if ( version != null) 
@@ -592,7 +592,6 @@ public class NetworkDAO extends OrientdbDAO {
     	//Populate properties
     	getPropertiesFromDocumentForPropertyGraph(n, doc);
     	
-		//TODO: populate citations etc.
    		
     	return n;
     }
@@ -673,8 +672,16 @@ public class NetworkDAO extends OrientdbDAO {
     		ODocument propDoc = (ODocument) ndexPropertyDoc;
   
     		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
-				
-    			obj.getProperties().add( Helper.getNdexPropertyFromDoc(propDoc));
+    			NdexPropertyValuePair p = Helper.getNdexPropertyFromDoc(propDoc);
+    			String predicate= p.getPredicateString();
+				if ((predicate.equals(PropertyGraphNetwork.uuid) ||
+						predicate.equals(PropertyGraphNetwork.name) || 
+						predicate.equals(PropertyGraphNetwork.description) ||
+						predicate.equals(PropertyGraphNetwork.version))
+					&& ! containsProerty(obj.getProperties(), predicate)) {
+					obj.getProperties().add( Helper.getNdexPropertyFromDoc(propDoc));	
+				}
+    			
     		}
     	}
 
@@ -694,6 +701,13 @@ public class NetworkDAO extends OrientdbDAO {
     	}
     }
     
+    private static boolean containsProerty(Collection<NdexPropertyValuePair> properties, String predicate) {
+    	for ( NdexPropertyValuePair p : properties) {
+    		if ( p.getPredicateString().equals(predicate))
+    			return true;
+    	}
+    	return false;
+    }
     
     // set properties in the passed in object by the information stored in a db document. 
     public static void getPropertiesFromDocument(PropertiedObject obj, ODocument doc, Network n) {
