@@ -674,13 +674,22 @@ public class NetworkDAO extends OrientdbDAO {
     		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
     			NdexPropertyValuePair p = Helper.getNdexPropertyFromDoc(propDoc);
     			String predicate= p.getPredicateString();
-				if ((predicate.equals(PropertyGraphNetwork.uuid) ||
-						predicate.equals(PropertyGraphNetwork.name) || 
-						predicate.equals(PropertyGraphNetwork.description) ||
-						predicate.equals(PropertyGraphNetwork.version))
-					&& ! containsProerty(obj.getProperties(), predicate)) {
+    			if ( obj instanceof Network) {
+    				if ( ! ((predicate.equals(PropertyGraphNetwork.uuid) ||
+    						predicate.equals(PropertyGraphNetwork.name) || 
+    						predicate.equals(PropertyGraphNetwork.description) ||
+    						predicate.equals(PropertyGraphNetwork.version)) 
+    					&& containsProperty(obj.getProperties(), predicate)) )
+       					  obj.getProperties().add( Helper.getNdexPropertyFromDoc(propDoc));	
+    			} else if ( obj instanceof Node) {
+    				if ( ! ((predicate.equals(PropertyGraphNode.name) ||
+    						predicate.equals(PropertyGraphNode.represents) || 
+    						predicate.equals(PropertyGraphNode.aliases) ||
+    						predicate.equals(PropertyGraphNode.relatedTerms)) 
+    					&& containsProperty(obj.getProperties(), predicate)) )
+       					  obj.getProperties().add( Helper.getNdexPropertyFromDoc(propDoc));	
+    			} else 
 					obj.getProperties().add( Helper.getNdexPropertyFromDoc(propDoc));	
-				}
     			
     		}
     	}
@@ -701,7 +710,7 @@ public class NetworkDAO extends OrientdbDAO {
     	}
     }
     
-    private static boolean containsProerty(Collection<NdexPropertyValuePair> properties, String predicate) {
+    private static boolean containsProperty(Collection<NdexPropertyValuePair> properties, String predicate) {
     	for ( NdexPropertyValuePair p : properties) {
     		if ( p.getPredicateString().equals(predicate))
     			return true;
