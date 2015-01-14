@@ -97,7 +97,7 @@ public class UserDAO extends OrientdbDAO {
 		try {
 			final ODocument OAuthUser = this.getRecordByAccountName(
 					accountName, NdexClasses.User);
-			if (!Security.authenticateUser(password, OAuthUser)) {
+			if (!Security.authenticateUser(password, (String)OAuthUser.field("password"))) {
 				throw new SecurityException("Invalid accountName or password.");
 			}
 			return UserDAO.getUserFromDocument(OAuthUser);

@@ -116,7 +116,7 @@ public abstract class OrientdbDAO {
 			
 			if( orientClass != null && 
 					!( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
-				throw new NdexException("UUID is not for class " + orientClass);
+				throw new NdexException("accountName "+ accountName +" is not for class " + orientClass);
 			
 			return (ODocument) user.getRecord();
 			

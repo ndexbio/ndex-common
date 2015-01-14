@@ -121,6 +121,7 @@ public class GroupDAO extends OrientdbDAO {
 			} 
 			catch(Exception e) {
 				logger.severe("Could not save new group to the database:" + e.getMessage());
+				e.printStackTrace();
 				throw new NdexException("Unable to create new group with accountName " + newGroup.getAccountName());
 			}
 		}
@@ -732,9 +733,9 @@ public class GroupDAO extends OrientdbDAO {
 		return membership;
 	}
 	
-	public void begin() {
+/*	public void begin() {
 		this.graph.getRawGraph().begin();
-	}
+	} */
 
 	public void commit() {
 		this.graph.commit();
