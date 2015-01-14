@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -281,7 +282,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			ORID networkRid,
 			SimplePathQuery parameters
 		//	,int skipBlocks,int blockSize
-			) {
+			) throws NdexException {
 		
 		// Select query handler depending on parameters
 		// TODO validate parameters
@@ -338,11 +339,12 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	}
 
 
-	private Collection<ORID> getNodeRidsFromTermNames(ORID networkRid,String searchString, boolean includeAliases ) {
+	private Collection<ORID> getNodeRidsFromTermNames(ORID networkRid,String searchString, boolean includeAliases ) throws NdexException {
 		
 		
 		Set<ORID> result = new TreeSet<>();
-
+		
+	  try {	
 		OTraverse traverser = new OTraverse()
   			.fields("in_" + NdexClasses.FunctionTerm_E_paramter, "in_" + NdexClasses.Node_E_represents)
   			.target(getBaseTermRidsFromNames(networkRid, searchString));
@@ -368,6 +370,9 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		}
 
 		return result;
+	  } catch (OIndexException e1) {
+		  throw new NdexException ("Invalid search string. " + e1.getCause().getMessage());
+	  }
 	}
 
 	/*

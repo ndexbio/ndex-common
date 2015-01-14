@@ -1060,7 +1060,7 @@ public class NdexPersistenceService extends PersistenceService {
 	public void setNetworkTitleAndDescription(String title, String description) {
 
 	   this.network.setDescription( description != null ? description: "");
-	   this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_desc, description).save();
+	   this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_desc, this.network.getDescription()).save();
 	   
 	   if ( title != null) {
 		   this.network.setName(title);

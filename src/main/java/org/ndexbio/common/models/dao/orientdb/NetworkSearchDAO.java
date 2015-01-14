@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -197,12 +198,15 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		}
 		
 //	    Permissions p = simpleNetworkQuery.getPermission();
+
+	  try {
+	
 		
 		// search network first.
 		OIndex<?> networkIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_network_name_desc);
 		
 		String searchStr = simpleNetworkQuery.getSearchString();
-
+        
 		Collection<OIdentifiable> networkIds =  (Collection<OIdentifiable>) networkIdx.get( searchStr); 
 
 		for ( OIdentifiable dId : networkIds) {
@@ -222,6 +226,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				}
 			}
 		}
+		
 		
 		// search baseterms
 		OIndex<?> basetermIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_BTerm_name);
@@ -292,6 +297,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
   
 		
 		return resultList;
+	  } catch (OIndexException e1) {
+		  throw new NdexException ("Invalid search string. " + e1.getCause().getMessage());
+	  }
 	}
 	
 	
