@@ -121,10 +121,11 @@ public abstract class OrientdbDAO {
 			return (ODocument) user.getRecord();
 			
 		} catch (ObjectNotFoundException e) {
-			logger.info("Account " + accountName + " does not exist for class: " + orientClass);
+			logger.info("Account " + accountName + " does not exist for class: " + orientClass + ". detail: " + e.getMessage());
 			throw e;
 		} catch (Exception e) {
-			logger.info("Unexpected error on user retrieval by accountName: " + e.getMessage());
+			logger.severe("Unexpected error on user retrieval by accountName: " + e.getMessage());
+			e.printStackTrace();
 			throw new NdexException(e.getMessage());
 		}
 		
