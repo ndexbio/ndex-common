@@ -1018,9 +1018,9 @@ public class NdexPersistenceService extends PersistenceService {
 			System.out.println("The new network " + network.getName() + " is complete");
 		} catch (Exception e) {
 			e.printStackTrace();
-			
-			System.out.println("unexpected error in persist network...");
-			throw new NdexException ("unexpected error in persist network...");
+			String msg = "unexpected error in persist network. Cause: " + e.getMessage();
+			logger.severe(msg);
+			throw new NdexException (msg);
 		} finally {
 			graph.shutdown();
 			this.database.close();
