@@ -1,7 +1,5 @@
 package org.ndexbio.common.persistence.orientdb;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +11,6 @@ import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.Helper;
@@ -22,23 +19,22 @@ import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawEdge;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.RawSupport;
-import org.ndexbio.model.object.network.Citation;
-import org.ndexbio.model.object.network.Edge;
-import org.ndexbio.model.object.network.FunctionTerm;
-import org.ndexbio.model.object.network.Network;
-import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.model.object.network.Support;
-import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
-import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.object.network.Citation;
+import org.ndexbio.model.object.network.Edge;
+import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
+import org.ndexbio.model.object.network.NetworkSummary;
+import org.ndexbio.model.object.network.Support;
+import org.ndexbio.model.object.network.VisibilityType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -76,15 +72,8 @@ public class NdexPersistenceService extends PersistenceService {
 
     private Map<RawEdge, Long> edgeMap;
     
-	// key is the full URI or other fully qualified baseTerm as a string.
-  //	private LoadingCache<String, BaseTerm> baseTermStrCache;
-
-    private ODocument networkDoc;
-//	protected OrientVertex networkVertex;
+    private String ownerAccount;
     
-    private ODocument ownerDoc;
-    
-
     private Map<RawCitation, Long>           rawCitationMap;
     
     
@@ -114,7 +103,7 @@ public class NdexPersistenceService extends PersistenceService {
 		super(db);
 
 		this.network = null;
-		this.ownerDoc = null;
+		this.ownerAccount = null;
 		
 		this.rawCitationMap  = new TreeMap <> ();
         this.baseTermNodeIdMap = new TreeMap <> ();
@@ -214,7 +203,7 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		ODocument bTermDoc = elementIdCache.get(baseTermId);
 		if(!bTermDoc.getClassName().equals(NdexClasses.BaseTerm))
-			throw new NdexException ("Element "+ baseTermId +" is not a base term. It is " + 
+			throw new NdexException ("Element " + baseTermId + " is not an instance of  baseTerm. It is " + 
 							bTermDoc.getClassName() );
     	OrientVertex bV = graph.getVertex(bTermDoc);
 		nodeV.addEdge(NdexClasses.Node_E_alias, bV);
@@ -316,7 +305,7 @@ public class NdexPersistenceService extends PersistenceService {
        	return v;
 	}
 
-	// alias is treated as a baseTerm
+	// related term is assumed to be a base term
 	public void addRelatedTermToNode(long nodeId, String[] relatedTerms) throws ExecutionException, NdexException {
 		ODocument nodeDoc = elementIdCache.get(nodeId);
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
@@ -330,7 +319,7 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
 
-	// alias is treated as a baseTerm
+	// related term is assumed to be a base term
 	public void addRelatedTermToNode(long nodeId, long baseTermId ) throws ExecutionException {
 		ODocument nodeDoc = elementIdCache.get(nodeId);
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
@@ -340,7 +329,8 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeV.getRecord());
 	}
 	
-	// alias is treated as a baseTerm
+	// related term is assumed to be a base term but its not clear that 
+	// we actually constrain the type of the related term
 	private void addRelatedTermToNode(OrientVertex nodeV, long baseTermId ) throws ExecutionException {
 		ODocument bDoc = elementIdCache.get(baseTermId);
 		OrientVertex bV = graph.getVertex(bDoc);
@@ -548,6 +538,7 @@ public class NdexPersistenceService extends PersistenceService {
 		  	NdexClasses.ExternalObj_cTime, this.network.getCreationTime(),
 		  	NdexClasses.ExternalObj_mTime, this.network.getModificationTime(),
 		  	NdexClasses.Network_P_name, this.network.getName(),
+		  	NdexClasses.Network_P_desc, "",
 		  	NdexClasses.Network_P_isLocked, this.network.getIsLocked(),
 		  	NdexClasses.Network_P_isComplete, this.network.getIsComplete(),
 		  	NdexClasses.Network_P_visibility, this.network.getVisibility().toString());
@@ -561,9 +552,6 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		this.networkVertex = this.graph.getVertex(getNetworkDoc());
 		
-		OrientVertex ownerV = this.graph.getVertex(this.ownerDoc);
-		ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
-		
 		return this.network;
 	}
 
@@ -573,28 +561,31 @@ public class NdexPersistenceService extends PersistenceService {
 	 * transaction and close the database connection if they encounter an error
 	 * situation
 	 */
-
+/*
 	public void createNewNetwork(String ownerName, String networkTitle, String version) throws Exception {
 		createNewNetwork(ownerName, networkTitle, version,NdexUUIDFactory.INSTANCE.getNDExUUID() );
 	}
-
+*/
 	/*
 	 * public method to persist INetwork to the orientdb database using cache
 	 * contents.
 	 */
 
-	public void createNewNetwork(String ownerName, String networkTitle, String version, UUID uuid) throws NdexException  {
+	public void createNewNetwork(String ownerName, String networkTitle, String version) throws NdexException  {
 		Preconditions.checkNotNull(ownerName,"A network owner name is required");
 		Preconditions.checkNotNull(networkTitle,"A network title is required");
 		
 
+		UUID uuid = NdexUUIDFactory.INSTANCE.getNDExUUID() ;
 		// find the network owner in the database
-		ownerDoc =  findUserByAccountName(ownerName);
+		this.ownerAccount = ownerName;
+
+/*		ownerDoc =  findUserByAccountName(ownerName);
 		if( null == ownerDoc){
 			String message = "Account " +ownerName +" is not registered in the database"; 
 			logger.severe(message);
 			throw new NdexException(message);
-		}
+		} */
 				
 		createNetwork(networkTitle,version, uuid);
 
@@ -801,7 +792,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 	
 	
-	private ODocument getNetworkDoc() {
+	public ODocument getNetworkDoc() {
 		return networkDoc;
 	}
 	
@@ -992,7 +983,7 @@ public class NdexPersistenceService extends PersistenceService {
 	
 	public Long getSupportId(String literal, Long citationId) throws ExecutionException {
 		
-		RawSupport r = new RawSupport(literal, citationId);
+		RawSupport r = new RawSupport(literal, (citationId !=null ? citationId.longValue(): -1));
 
 		Long supportId = this.rawSupportMap.get(r);
 
@@ -1014,17 +1005,24 @@ public class NdexPersistenceService extends PersistenceService {
 			  .field(NdexClasses.Network_P_nodeCount, network.getNodeCount())
 			  .save();
 			
+			this.localConnection.commit();
 			
-			System.out.println("The new network " + network.getName()
-					+ " is complete");
+			if ( this.ownerAccount != null) {
+				ODocument ownerDoc =  findUserByAccountName(this.ownerAccount);		
+				OrientVertex ownerV = this.graph.getVertex(ownerDoc);
+				ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+			
+				this.localConnection.commit();
+			}
+
+			System.out.println("The new network " + network.getName() + " is complete");
 		} catch (Exception e) {
 			e.printStackTrace();
-			
-			System.out.println("unexpected error in persist network...");
-			throw new NdexException ("unexpected error in persist network...");
+			String msg = "unexpected error in persist network. Cause: " + e.getMessage();
+			logger.severe(msg);
+			throw new NdexException (msg);
 		} finally {
-			this.localConnection.commit();
-			localConnection.close();
+			graph.shutdown();
 			this.database.close();
 			System.out
 					.println("Connection to orientdb database has been closed");
@@ -1034,6 +1032,12 @@ public class NdexPersistenceService extends PersistenceService {
 	public void setNetworkProperties(Collection<NdexPropertyValuePair> properties, 
 			Collection<SimplePropertyValuePair> presentationProperties) throws NdexException, ExecutionException {
 		addPropertiesToVertex ( networkVertex, properties, presentationProperties);
+        
+		if ( properties != null )
+			this.network.getProperties().addAll(properties);
+		if ( presentationProperties != null ) 
+			this.network.getPresentationProperties().addAll(presentationProperties);
+
 	}
 	
 	public void setNetworkProvenance(ProvenanceEntity e) throws JsonProcessingException {
@@ -1046,11 +1050,17 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 	
+	public void setNetworkVisibility(VisibilityType visibility) {
+
+		this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_visibility, visibility)
+				.save();
+
+	}
+	
 	public void setNetworkTitleAndDescription(String title, String description) {
-	   if ( description != null ) {
-		   this.network.setDescription(description);
-		   this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_desc, description).save();
-	   }
+
+	   this.network.setDescription( description != null ? description: "");
+	   this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_desc, this.network.getDescription()).save();
 	   
 	   if ( title != null) {
 		   this.network.setName(title);
@@ -1067,7 +1077,7 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 
-	public void setElementProperty(Long elementId, String key, String value, String type) throws ExecutionException, NdexException {
+	public void addElementProperty(Long elementId, String key, String value, String type) throws ExecutionException, NdexException {
 		ODocument elementDoc = this.elementIdCache.get(elementId);
 		OrientVertex v = graph.getVertex(elementDoc);
 		
@@ -1078,7 +1088,7 @@ public class NdexPersistenceService extends PersistenceService {
         this.elementIdCache.put(elementId, elementDoc);
 	}
 	
-	public void setElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
+	public void addElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
 		ODocument elementDoc = this.elementIdCache.get(elementId);
 		OrientVertex v = graph.getVertex(elementDoc);
 		
@@ -1096,6 +1106,14 @@ public class NdexPersistenceService extends PersistenceService {
 		OrientVertex v = graph.getVertex(nodeDoc);
 		addPropertiesToVertex ( v, properties, presentationProperties);
 		this.elementIdCache.put(nodeId, v.getRecord());
+	}
+	
+	public void setCitationProperties(Long citationId, Collection<NdexPropertyValuePair> properties, 
+			Collection<SimplePropertyValuePair> presentationProperties) throws ExecutionException, NdexException {
+		ODocument nodeDoc = this.elementIdCache.get(citationId);
+		OrientVertex v = graph.getVertex(nodeDoc);
+		addPropertiesToVertex ( v, properties, presentationProperties);
+		this.elementIdCache.put(citationId, v.getRecord());
 	}
 	
 	/**

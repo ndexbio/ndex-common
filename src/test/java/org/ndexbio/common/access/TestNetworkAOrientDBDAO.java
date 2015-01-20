@@ -6,8 +6,8 @@ import java.util.List;
 import junit.framework.Assert;
 
 import org.junit.Test;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.object.NetworkQueryParameters;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.SimplePathQuery;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.Edge;
@@ -56,7 +56,7 @@ public class TestNetworkAOrientDBDAO {
 	@Test 
 	public void StringToRIDTest() {
 	}
-	
+/*	
 	@Test 
 	public void queryForEdges(){
 
@@ -71,11 +71,6 @@ public class TestNetworkAOrientDBDAO {
 		parameters.setSearchString("YGR218W");
 		int skipBlocks = 0;
 		int blockSize = 80;
-/*		List<String> termNames = new ArrayList<String>();
-		
-		
-		termNames.add("MAF");
-		termNames.add("JUN"); */
 		try {
 			
 			PropertyGraphNetwork n = noi.queryForSubPropertyGraphNetwork("d750c790-199e-11e4-86bd-90b11c72aefa",parameters);
@@ -95,8 +90,8 @@ public class TestNetworkAOrientDBDAO {
 			e.printStackTrace();
 		} 
 	}
-	
-	
+*/	
+/*	
 	@Test
 	public void mytest() throws NdexException {
 	   	
@@ -116,7 +111,7 @@ public class TestNetworkAOrientDBDAO {
 		
 		
 	}
-	
+*/	
 	
 /*	@Test 
  *   comment out for now. --cj

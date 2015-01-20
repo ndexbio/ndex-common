@@ -2,7 +2,7 @@ package org.ndexbio.common.access;
 
 import java.util.logging.Logger;
 
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -24,11 +24,11 @@ public class NdexAOrientDBConnectionPool {
 
 	private NdexAOrientDBConnectionPool(String dbURL, String dbUserName, String dbPassword, int size) {
 
-		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(true);
+		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
 		OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
 		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue( true );
-		OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue( "nothing" );
-		OGlobalConfiguration.STORAGE_USE_CRC32_FOR_EACH_RECORD.setValue(true);
+//		OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue( "nothing" );
+//		OGlobalConfiguration.STORAGE_USE_CRC32_FOR_EACH_RECORD.setValue(true);
 		
 		
 		pool = new ODatabaseDocumentPool(dbURL, dbUserName, dbPassword);

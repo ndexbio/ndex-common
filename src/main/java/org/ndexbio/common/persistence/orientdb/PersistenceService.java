@@ -2,6 +2,7 @@ package org.ndexbio.common.persistence.orientdb;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -11,14 +12,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import javax.xml.namespace.QName;
-
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.TermUtilities;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.network.Namespace;
@@ -51,7 +51,9 @@ public abstract class PersistenceService {
 	protected OrientVertex networkVertex;
 
 	protected NetworkDAO  networkDAO;
-	
+
+	protected ODocument networkDoc;
+
 	protected NetworkSummary network;
 	
     protected Logger logger ;
@@ -96,6 +98,7 @@ public abstract class PersistenceService {
 				OrientVertex pV = this.createNdexPropertyVertex(e);
                vertex.addEdge(NdexClasses.E_ndexProperties, pV);
 			}
+//            this.network.getProperties().addAll(properties);
 		
 		}
 
@@ -105,6 +108,7 @@ public abstract class PersistenceService {
                OrientVertex pV = graph.getVertex(pDoc);
                vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
 			}
+//			this.network.getPresentationProperties().addAll(presentationProperties);
 		}
 	}
 
@@ -144,7 +148,7 @@ public abstract class PersistenceService {
 		//	this.localConnection.begin();
 		//	database.commit();
 		}
-		
+/*		
 	private Long createNamespace ( String prefix, String URI) throws NdexException {
 			if ( prefix !=null && URI == null )
 			 throw new NdexException ("Prefix " + prefix + " is not defined." );
@@ -164,7 +168,7 @@ public abstract class PersistenceService {
 	    	elementIdCache.put(nsId, nsDoc);
 		    return nsId;
 		}
-		
+*/		
 	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
 		Namespace ns = namespaceMap.get(key);
 
@@ -271,15 +275,20 @@ public abstract class PersistenceService {
 			           NdexClasses.Support_P_text, literal)	
 			   .save();
 
-			ODocument citationDoc = elementIdCache.get(citationId);
-	        
 			OrientVertex supportV = graph.getVertex(supportDoc);
-			OrientVertex citationV = graph.getVertex(citationDoc);
-			supportV.addEdge(NdexClasses.Support_E_citation, citationV);
+
 			networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
 
-			elementIdCache.put(supportId, supportV.getRecord());
-			elementIdCache.put(citationId, citationV.getRecord());
+			if ( citationId != null && citationId >= 0 ) {
+				ODocument citationDoc = elementIdCache.get(citationId);
+	        
+				OrientVertex citationV = graph.getVertex(citationDoc);
+				supportV.addEdge(NdexClasses.Support_E_citation, citationV);
+				elementIdCache.put(citationId, citationV.getRecord());
+			}
+
+			supportDoc = supportV.getRecord();
+			elementIdCache.put(supportId, supportDoc);
 			return supportId; 
 			
 		}
@@ -478,6 +487,12 @@ public abstract class PersistenceService {
 			return findOrCreateNamespace(rns);
 		}
 		
+		
+	  public void setNetworkSourceFormat(NetworkSourceFormat fmt) {
+		  this.networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
+		  NdexPropertyValuePair p = new NdexPropertyValuePair (NdexClasses.Network_P_source_format, fmt.toString());
+		  this.network.getProperties().add(p);
+	  }
 		
 	  public void close () {
 		  this.localConnection.close();

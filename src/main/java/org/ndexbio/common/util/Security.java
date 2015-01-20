@@ -15,7 +15,7 @@ public class Security
 	    *            Accessing the database failed.
 	    * @returns True if the user is authenticated, false otherwise.
 	    **************************************************************************/
-	    public static Boolean authenticateUser(String password, ODocument OUserDoc) 
+	    public static Boolean authenticateUser(String password, String OUserPasswd) 
 	    		throws Exception {
 	    	
 	        try {
@@ -31,7 +31,7 @@ public class Security
 	            ODocument OUserDoc = usersFound.get(0);*/
 	            String hashedPassword = Security.hashText(password);
 	            
-	            if ( ((String)OUserDoc.field("password")).equals(hashedPassword)) {
+	            if ( OUserPasswd.equals(hashedPassword)) {
 	            	return true;
 	            }
 	            

@@ -9,10 +9,10 @@ import java.util.Date;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.Permissions;
@@ -55,7 +55,6 @@ public class UserDAO extends OrientdbDAO {
 	 * @param graph
 	 *            OrientGraph instance for Graph API operations
 	 **************************************************************************/
-	@Deprecated
 	public UserDAO(ODatabaseDocumentTx db, OrientGraph graph) {
 		super(db);
 		//this.db = graph.getRawGraph();
@@ -98,7 +97,7 @@ public class UserDAO extends OrientdbDAO {
 		try {
 			final ODocument OAuthUser = this.getRecordByAccountName(
 					accountName, NdexClasses.User);
-			if (!Security.authenticateUser(password, OAuthUser)) {
+			if (!Security.authenticateUser(password, (String)OAuthUser.field("password"))) {
 				throw new SecurityException("Invalid accountName or password.");
 			}
 			return UserDAO.getUserFromDocument(OAuthUser);

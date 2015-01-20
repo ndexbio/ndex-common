@@ -2,9 +2,11 @@ package org.ndexbio.common.persistence.orientdb;
 
 import java.util.List;
 
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.TaskDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.slf4j.Logger;
@@ -61,8 +63,8 @@ public class NdexTaskService
     	
     }
     
-    public Task getTask(String taskUUID) {
-    	TaskDAO dao = new TaskDAO(ndexService._ndexDatabase);
+    public Task getTask(String taskUUID) throws ObjectNotFoundException, NdexException {
+    	TaskDAO dao = new TaskDAO(NdexAOrientDBConnectionPool.getInstance().acquire());
     	return dao.getTaskByUUID(taskUUID);
     }
 
@@ -112,11 +114,13 @@ public class NdexTaskService
     		
 			this.ndexService.setupDatabase();
 			TaskDAO dao = new TaskDAO(this.ndexService._ndexDatabase);
+			logger.info("Updating status of tasks " + task.getExternalId() + " from " +
+			   task.getStatus() + " to " + status);
 			dao.updateTaskStatus(status, task);
 			this.ndexService._ndexDatabase.commit();
 			return task;
 		} catch (Exception e) {
-			logger.error("Failed to search tasks", e);
+			logger.error("Failed to search tasks: " + e.getMessage(), e);
 			throw new NdexException("Failed to search tasks.");
 			
 		}finally {

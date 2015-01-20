@@ -2,49 +2,44 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Priority;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
-import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.FileFormat;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class TaskDAO extends OrientdbDAO {
+public class TaskDAO extends OrientdbDAO implements AutoCloseable {
 
 
 	private OrientBaseGraph graph;
-	private static final Logger logger = Logger.getLogger(TaskDAO.class.getName());
+//	private static final Logger logger = Logger.getLogger(TaskDAO.class.getName());
 	
 	public TaskDAO (ODatabaseDocumentTx dbConn) {
 		super(dbConn);
 		this.graph = new OrientGraph(this.db,false);
 	}
 
-	public Task getTaskByUUID(String UUID) {
+	public Task getTaskByUUID(String UUIDStr) throws ObjectNotFoundException, NdexException {
         
-        return getTaskFromDocument(getTaskDocByUUID(UUID));
+        return getTaskFromDocument(getRecordByExternalId(UUID.fromString(UUIDStr)));
 		
 	}
 	
-	private ODocument getTaskDocByUUID(String uuid) {
+/*	private ODocument getTaskDocByUUID(String uuid) {
 		String query = "select * from " + NdexClasses.Task + " where " + NdexClasses.ExternalObj_ID
 				 + " ='" + uuid + "'";
        final List<ODocument> tasks = db.query(new OSQLSynchQuery<ODocument>(query));
@@ -53,13 +48,16 @@ public class TaskDAO extends OrientdbDAO {
 	        return null;
        
 	   return tasks.get(0);	
-	}
+	} */
 	
 	public UUID createTask(String accountName, Task newTask) throws ObjectNotFoundException, NdexException {
 		UserDAO udao = new UserDAO (db);
 		ODocument userDoc = udao.getRecordByAccountName(accountName, NdexClasses.User);
 		
-		UUID taskUUID = NdexUUIDFactory.INSTANCE.getNDExUUID();
+		 
+		UUID taskUUID = newTask.getExternalId() == null ? 
+				NdexUUIDFactory.INSTANCE.getNDExUUID() : newTask.getExternalId();
+		
 		ODocument taskDoc = new ODocument(NdexClasses.Task)
 				.fields(NdexClasses.ExternalObj_ID, taskUUID.toString(),
 					NdexClasses.ExternalObj_cTime, newTask.getCreationTime(),
@@ -137,12 +135,12 @@ public class TaskDAO extends OrientdbDAO {
     // This is the method called by the Task REST Service
     // The User account is passed in so that we can check to be
     // sure that the user requesting the update owns the task
-    public Task updateTaskStatus(Status status, String UUIDString, User account) throws NdexException{
+/*    public Task updateTaskStatus(Status status, String UUIDString, User account) throws NdexException{
     	Preconditions.checkArgument(account != null, "Must be logged in to update a task");
     	Preconditions.checkArgument(null != UUIDString, "A Task UUID is required");
     
     	try {
-    		ODocument taskDocument = this.getTaskDocByUUID(UUIDString);
+    		ODocument taskDocument = this.getRecordByExternalId(UUID.fromString(UUIDString));
     		OrientVertex vTask = this.graph.getVertex(taskDocument);
     		ODocument userAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
     	
@@ -164,22 +162,28 @@ public class TaskDAO extends OrientdbDAO {
 		return null; 
 	
     }
-
+*/
 
     // This is the method called by trusted applications
     // such as the task runner, where we also update
     // status in the Task object passed in.
-    public Task updateTaskStatus(Status status, Task task) {
-    	String UUIDString = task.getExternalId().toString();
-    	ODocument doc = this.getTaskDocByUUID(UUIDString);
-    	doc.field(NdexClasses.Task_P_status, status).save();
+    
+    //TODO: looks like we are having racing conditions here. Need to review the usage and make it thread safe.
+    public Task updateTaskStatus(Status status, Task task) throws ObjectNotFoundException, NdexException {
+    	ODocument doc = this.getRecordByExternalId(task.getExternalId());
+//    	doc.reload();
+    	Status s = Status.valueOf((String)doc.field(NdexClasses.Task_P_status));
+    	if ( s != status )
+    		doc.field(NdexClasses.Task_P_status, status).save();
     	task.setStatus(status);
     	return task;
     }
-    
+    //TODO: make it thread safe
     public int deleteTask (UUID taskID) throws ObjectNotFoundException, NdexException {
-        ODocument d = this.getRecordById(taskID,NdexClasses.Task);
-        
+        ODocument d = this.getRecordByExternalId(taskID);
+        String status = d.field(NdexClasses.Task_P_status);
+        if ( status.equals(Status.PROCESSING.toString()) || status.equals(Status.STAGED.toString()))
+        	throw new NdexException ("Can't delete a task when it is running.");
         OrientVertex v = graph.getVertex(d);
    		v.remove();
     			           
@@ -191,4 +195,11 @@ public class TaskDAO extends OrientdbDAO {
     	  NdexClasses.Task_P_status + " = '"+ Status.COMPLETED_WITH_ERRORS + "' where " +
     	  NdexClasses.Task_P_status + " = '"+ Status.STAGED.toString() + "'")).execute();
     }
+
+	@Override
+	public void close() throws Exception {
+		this.graph.shutdown();
+	}
+	
+	public void commit() { this.graph.commit();}
 }

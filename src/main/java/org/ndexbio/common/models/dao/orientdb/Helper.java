@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.model.object.NdexExternalObject;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
@@ -15,8 +16,11 @@ import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
@@ -212,8 +216,8 @@ public class Helper {
 			if ( prefix != null)
 				return prefix + ":" + localName;
 			return nsDoc.field(NdexClasses.ns_P_uri) + localName;
-		} else 
-			return localName;
+		}
+		return localName;
 	}
 	
 	public static SimplePropertyValuePair getSimplePropertyFromDoc(ODocument doc) {
@@ -237,16 +241,16 @@ public class Helper {
 	public static ODocument updateNetworkProfile(ODocument doc, NetworkSummary newSummary){
 	
 	   if ( newSummary.getName() != null)
-		doc = doc.field( NdexClasses.Network_P_name, newSummary.getName());
+		doc.field( NdexClasses.Network_P_name, newSummary.getName());
 		
 	  if ( newSummary.getDescription() != null)
-		doc = doc.field( NdexClasses.Network_P_desc, newSummary.getDescription());
+		doc.field( NdexClasses.Network_P_desc, newSummary.getDescription());
 	
 	  if ( newSummary.getVersion()!=null )
-		doc = doc.field( NdexClasses.Network_P_version, newSummary.getVersion());
+		doc.field( NdexClasses.Network_P_version, newSummary.getVersion());
 	
 	  if ( newSummary.getVisibility()!=null )
-		doc = doc.field( NdexClasses.Network_P_visibility, newSummary.getVisibility());
+		doc.field( NdexClasses.Network_P_visibility, newSummary.getVisibility());
 	
 	  doc.field(NdexClasses.ExternalObj_mTime, new Date())
 	     .save();
@@ -254,6 +258,14 @@ public class Helper {
 	  return doc;
 	}
 	
+	
+	public static NetworkSourceFormat getSourceFormatFromNetworkDoc(ODocument networkDoc) {
+		String s = networkDoc.field(NdexClasses.Network_P_source_format);
+		if ( s == null)
+			return null;
+		return NetworkSourceFormat.valueOf(s);
+	}
+
 
 	//TODO: this is a quick fix. Need to review Orientdb string escape rules to properly implement it.
 	public static String escapeOrientDBSQL(String str) {

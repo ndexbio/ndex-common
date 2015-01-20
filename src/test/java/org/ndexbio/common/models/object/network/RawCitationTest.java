@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import java.util.List;
 
 import org.junit.Test;
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 
 public class RawCitationTest {
 

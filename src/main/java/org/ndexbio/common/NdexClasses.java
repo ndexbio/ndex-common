@@ -64,6 +64,7 @@ public interface NdexClasses {
     public static final String Network_P_nodeCount  = "nodeCount";
     public static final String Network_P_edgeCount = "edgeCount";
     public static final String Network_P_provenance = "provenance";
+    public static final String Network_P_source_format = "sourceFormat";  // Used internally. Will be convert to properties in the network model.
     
     public static final String Network_E_Namespace = "networkNS";
     public static final String Network_E_BaseTerms = "BaseTerms";
@@ -75,6 +76,8 @@ public interface NdexClasses {
     public static final String Network_E_ReifiedEdgeTerms = "reifiedETerms";    
     // element 
     public static final String Element_ID  = "id";
+    
+    public static final String Index_network_name_desc = "idx_network-name-desc";
     
     // propertiedObject
     public static final String E_ndexProperties        = "ndexProps";
@@ -97,6 +100,8 @@ public interface NdexClasses {
     //BaseTerm
     public static final String BTerm_P_name        = "name";
     public static final String BTerm_E_Namespace   = "baseTermNS";
+    
+    public static final String Index_BTerm_name    = "idx_baseterm_name";
 
     //ReifiedEdgeTerm
     public static final String ReifiedEdge_E_edge  ="reify";
@@ -132,10 +137,15 @@ public interface NdexClasses {
     public static final String ndexProp_P_valueId	    = "valueId";
     public static final String ndexProp_E_predicate     = "prop";
     
+    //Group
+    
+    public static final String GRP_E_admin = Permissions.GROUPADMIN.toString().toLowerCase();
+    public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
+
     //user
 
-    public static final String user_E_memberOf        ="member";
-    public static final String user_E_grp_admin	      = "grpAdmin";
+//    public static final String user_E_memberOf        ="member";
+//    public static final String user_E_grp_admin	      = "grpAdmin";
     
     
     // task
@@ -149,14 +159,12 @@ public interface NdexClasses {
     
     public static final String Task_E_owner   = "ownedBy";
     
-    //Group
-    
-    public static final String GRP_E_admin = Permissions.GROUPADMIN.toString().toLowerCase();
-    public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
     
     //request
     public static final String Request_P_sourceUUID = "sourceUUID";
     public static final String Request_P_sourceName = "sourceName";
     
+    
+    //reserved NDEx property names
 }
 

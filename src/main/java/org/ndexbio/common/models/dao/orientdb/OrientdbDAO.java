@@ -7,8 +7,8 @@ import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.orientdb.NdexSchemaManager;
@@ -77,27 +77,55 @@ public abstract class OrientdbDAO {
 		}
 		
 	}
+
+	
+	protected ODocument getRecordByExternalId(UUID id) 
+			throws ObjectNotFoundException, NdexException {
+		
+		try {
+			OIndex<?> Idx;
+			OIdentifiable record = null;
+			
+					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
+					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
+					if((temp != null) )
+						record = temp;
+				
+			if(record == null) 
+				throw new ObjectNotFoundException("Object", id.toString());
+			
+			return (ODocument) record.getRecord();
+			
+		}  catch (Exception e) {
+			logger.severe("Unexpected error on external object retrieval by UUID : " + e.getMessage());
+			e.printStackTrace();
+			throw new NdexException(e.getMessage());
+		}
+		
+	}
+	
 	
 	public ODocument getRecordByAccountName(String accountName, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
 		
 		try {
-			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
+			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex( NdexClasses.Index_accountName );
 			OIdentifiable user = (OIdentifiable) Idx.get(accountName); // account to traverse by
 			if(user == null) 
 				throw new ObjectNotFoundException("Account ", accountName);
 			
 			if( orientClass != null && 
 					!( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
-				throw new NdexException("UUID is not for class " + orientClass);
+				throw new NdexException("accountName "+ accountName +" is not for class " + orientClass);
 			
 			return (ODocument) user.getRecord();
 			
 		} catch (ObjectNotFoundException e) {
-			logger.info("Account " + accountName + " does not exist for class: " + orientClass);
+			logger.info("Account " + accountName + " does not exist for class: " + orientClass + ". detail: " + e.getMessage());
 			throw e;
 		} catch (Exception e) {
-			logger.info("Unexpected error on user retrieval by accountName");
+			logger.severe("Unexpected error on user retrieval by accountName: " + e.getMessage());
+			e.printStackTrace();
 			throw new NdexException(e.getMessage());
 		}
 		
@@ -105,7 +133,7 @@ public abstract class OrientdbDAO {
 	
 	public boolean checkPermission(ORID source, ORID destination, Direction dir, Integer depth, Permissions... permissions) {
 		
-		Collection<Object> fields = new ArrayList<Object>();
+		Collection<Object> fields = new ArrayList<>();
 		
 		for(Permissions permission : permissions) {
 			fields.add( dir.name().toLowerCase() + "_" + permission.name().toLowerCase() );

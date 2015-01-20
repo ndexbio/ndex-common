@@ -2,7 +2,7 @@ package org.ndexbio.orientdb;
 
 import org.apache.log4j.spi.LoggerFactory;
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -72,7 +72,7 @@ public class NdexSchemaManager
         	clsAccount.createProperty("backgroundImage", OType.STRING);
         	clsAccount.createProperty("description", OType.STRING);
         	clsAccount.createProperty("foregroundImage", OType.STRING);
-        	clsAccount.createProperty("accountName", OType.STRING);
+        	clsAccount.createProperty(NdexClasses.account_P_accountName, OType.STRING);
         	clsAccount.createProperty("password", OType.STRING);
         	clsAccount.createProperty("website", OType.STRING);
 
@@ -160,7 +160,7 @@ public class NdexSchemaManager
         OClass nsClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Namespace);
         if (nsClass == null)
         {
-            nsClass = orientDbGraph.createVertexType("namespace");
+            nsClass = orientDbGraph.createVertexType(NdexClasses.Namespace);
             nsClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             nsClass.createProperty(NdexClasses.ns_P_prefix, OType.STRING);
             nsClass.createProperty(NdexClasses.ns_P_uri, OType.STRING);
@@ -178,7 +178,8 @@ public class NdexSchemaManager
 
             bTermClass.createProperty(NdexClasses.BTerm_E_Namespace, OType.LINK, nsClass);
             
-            bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+            bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});
+//            bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
             bTermClass.createIndex("index-baseterm-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
             
         }
@@ -248,21 +249,24 @@ public class NdexSchemaManager
         if (orientDbGraph.getVertexType(NdexClasses.Network) == null)
         {
             OClass networkClass = orientDbGraph.createVertexType(NdexClasses.Network,clsNdxExternalObj);
-       //     networkClass.createProperty("copyright", OType.STRING);
-            networkClass.createProperty("description", OType.STRING);
+       
+            networkClass.createProperty(NdexClasses.Network_P_desc, OType.STRING);
             networkClass.createProperty("edgeCount", OType.INTEGER);
-       //     networkClass.createProperty("format", OType.STRING);
+       
             networkClass.createProperty("properties", OType.EMBEDDEDLIST);
             networkClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
 
             networkClass.createProperty("nodeCount", OType.INTEGER);
-      //      networkClass.createProperty("source", OType.STRING);
+      
             networkClass.createProperty(NdexClasses.Network_P_name,    OType.STRING);
             networkClass.createProperty(NdexClasses.Network_P_version, OType.STRING);
             networkClass.createProperty("highestElementId", OType.INTEGER);
             
             networkClass.createProperty(NdexClasses.Network_E_Namespace, OType.LINKSET, nsClass);
-            
+
+            networkClass.createIndex(NdexClasses.Index_network_name_desc, "FULLTEXT", 
+        			null, null, "LUCENE", new String[] { NdexClasses.ExternalObj_ID, NdexClasses.Network_P_name, NdexClasses.Network_P_desc});
+
         }
 
         if (orientDbGraph.getVertexType(NdexClasses.Node) == null)
@@ -283,8 +287,9 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_E_supports, OType.LINKSET, supportClass);
             
             nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            nodeClass.createIndex(NdexClasses.Index_node_name, OClass.INDEX_TYPE.NOTUNIQUE, 
-            		NdexClasses.Node_P_name);
+            nodeClass.createIndex(NdexClasses.Index_node_name, "FULLTEXT",null, null, "LUCENE", new String[] { NdexClasses.Node_P_name});
+
+         //   nodeClass.createIndex(NdexClasses.Index_node_name, OClass.INDEX_TYPE.NOTUNIQUE, 		NdexClasses.Node_P_name);
         }
         
         if (orientDbGraph.getVertexType(NdexClasses.Provenance) == null)

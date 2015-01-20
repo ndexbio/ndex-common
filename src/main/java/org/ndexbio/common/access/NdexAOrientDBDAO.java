@@ -1,6 +1,6 @@
 package org.ndexbio.common.access;
 
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 

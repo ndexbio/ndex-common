@@ -2,7 +2,7 @@ package org.ndexbio.common.models.dao;
 
 import java.util.Date;
 
-import org.ndexbio.common.exceptions.NdexException;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;

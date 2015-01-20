@@ -2,19 +2,21 @@ package org.ndexbio.common.persistence.orientdb;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.NdexException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -40,9 +42,10 @@ public class NdexNetworkCloneService extends PersistenceService {
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
 
 
-	private ODocument networkDoc;
+//	private ODocument networkDoc;
 	
-    private ODocument ownerDoc;
+//    private ODocument ownerDoc;
+    private String ownerAccount;
     
     // all these mapping are for mapping from source Id to Ids in the newly persisted graph.
     private Map<Long, Long>  baseTermIdMap;
@@ -61,8 +64,7 @@ public class NdexNetworkCloneService extends PersistenceService {
      * 2. Create New network
      */
     
-	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName)
-			throws ObjectNotFoundException, NdexException {
+	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName) {
         super(db);
 		
 		Preconditions.checkNotNull(sourceNetwork.getName(),"A network title is required");
@@ -70,10 +72,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.srcNetwork = sourceNetwork;
 		this.network = new NetworkSummary();
 
-		// find the network owner in the database
-		UserDAO userdao = new UserDAO(localConnection, graph);
-		ownerDoc = userdao.getRecordByAccountName(ownerAccountName, null) ;
-		
+		this.ownerAccount = ownerAccountName;
 		this.baseTermIdMap    = new HashMap <>(1000);
 		this.namespaceIdMap   = new HashMap <>(1000);
 		this.citationIdMap    = new HashMap <> (1000);
@@ -101,7 +100,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 			
 			cloneNetworkElements();
 
-			addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+//			addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+		
+			this.networkDoc.reload();
+			this.networkDoc.field(NdexClasses.Network_P_isComplete , true);
 			
 			return this.network;
 		} finally {
@@ -128,6 +130,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.network.setDescription(srcNetwork.getDescription());
 		this.network.setVersion(srcNetwork.getVersion());
 		
+		// make description is not null so that the Lucene index will index this field.
+		if ( this.network.getDescription() == null)
+			this.network.setDescription("");
+		
 		networkDoc = networkDoc.fields(
 		          NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
 		          NdexClasses.Network_P_name, srcNetwork.getName(),
@@ -138,7 +144,14 @@ public class NdexNetworkCloneService extends PersistenceService {
 		          NdexClasses.Network_P_isLocked, false,
 		          NdexClasses.Network_P_isComplete, false);
 		
+		
+		NetworkSourceFormat fmt = removeNetworkSourceFormat(srcNetwork);
+		if ( fmt!=null)
+			networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
+	
 		networkDoc = networkDoc.save();
+
+		this.localConnection.commit();
 		
 		networkVertex = graph.getVertex(networkDoc);
 		
@@ -147,7 +160,15 @@ public class NdexNetworkCloneService extends PersistenceService {
 		networkDAO.deleteNetworkElements(network.getExternalId().toString());
 		
 		networkVertex.getRecord().reload();
+
+		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
+
+        this.network.getProperties().addAll(srcNetwork.getProperties());
+		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
 		
+		networkDoc.reload();
+		networkVertex.getRecord().reload();
+
 		logger.info("NDEx network titled: " +srcNetwork.getName() +" has been updated.");
 
 	}
@@ -174,7 +195,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			networkDoc.field(NdexClasses.Network_P_isComplete,true)
 				.save();
 
-			logger.info("The new network " + network.getName() + " is complete.");
+			logger.info("Updating network " + network.getName() + " is complete.");
 		} finally {
 			this.localConnection.commit();
 		}
@@ -187,9 +208,18 @@ public class NdexNetworkCloneService extends PersistenceService {
 			cloneNetworkNode ();
 
 			cloneNetworkElements();
+			this.localConnection.commit();
+			
+			// find the network owner in the database
+			UserDAO userdao = new UserDAO(localConnection, graph);
+			ODocument ownerDoc = userdao.getRecordByAccountName(this.ownerAccount, null) ;
+			OrientVertex ownerV = graph.getVertex(ownerDoc);
+			ownerV.addEdge(NdexClasses.E_admin, networkVertex);
+			this.localConnection.commit();
+	
 			return this.network;
 		} finally {
-			this.localConnection.commit();
+			logger.info("Network "+ network.getName() + " with UUID:"+ network.getExternalId() +" has been saved. ");
 		}
 	}
 	
@@ -227,14 +257,19 @@ public class NdexNetworkCloneService extends PersistenceService {
 			network.setDescription(srcNetwork.getVersion());
 		}
 		
+		NetworkSourceFormat fmt = removeNetworkSourceFormat(srcNetwork);
+		if ( fmt!=null)
+			networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
+		
 		networkDoc = networkDoc.save();
 		
 		networkVertex = graph.getVertex(networkDoc);
 		
 		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
 		
-		OrientVertex ownerV = graph.getVertex(ownerDoc);
-		ownerV.addEdge(NdexClasses.E_admin, networkVertex);
+        this.network.getProperties().addAll(srcNetwork.getProperties());
+		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
+
 		
 		logger.info("A new NDex network titled: " +srcNetwork.getName() +" has been created");
 	}
@@ -289,7 +324,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 	private void cloneSupports() throws NdexException, ExecutionException {
 		if ( srcNetwork.getSupports()!= null) {
 			for ( Support support : srcNetwork.getSupports().values() ) {
-				Long citationId = citationIdMap.get(support.getCitationId());
+				Long citationId = -1l;
+				long srcCitationId = support.getCitationId();
+				if ( srcCitationId != -1)
+				    citationId = citationIdMap.get(srcCitationId);
 				if ( citationId == null )
 					throw new NdexException ("Citation Id " + support.getCitationId() + " is not found in citation list.");
 				Long supportId = createSupport(support.getText(),citationId);
@@ -539,15 +577,20 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 	
 	
-	/*
 	
-	private void cloneFunctionTerms() throws NdexException, ExecutionException {
-		if ( srcNetwork.getFunctionTerms()!= null) {
-			for ( FunctionTerm functionTerm : srcNetwork.getFunctionTerms().values() ) {
+	private static NetworkSourceFormat removeNetworkSourceFormat(NetworkSummary nsummary) {
+		List<NdexPropertyValuePair> props = nsummary.getProperties(); 
+		
+		for ( int i = 0 ; i < props.size(); i++) {
+			NdexPropertyValuePair p = props.get(i);
+			if ( p.getPredicateString().equals(NdexClasses.Network_P_source_format)) {
+				NetworkSourceFormat fmt = NetworkSourceFormat.valueOf(p.getValue());
+				props.remove(i);
+				return fmt;
 			}
 		}
+		return null;
 	}
-*/
 	
     /**
      * Find the matching term ID from an old term Id. This function is only used for cloning function parameters.

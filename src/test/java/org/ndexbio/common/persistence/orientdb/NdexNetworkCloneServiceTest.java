@@ -7,8 +7,8 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.NdexException;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Network;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
