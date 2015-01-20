@@ -49,7 +49,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	}
 	
 	
-	public Collection<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, User loggedInUser) 
+	public Collection<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skipBlocks, int top, User loggedInUser) 
 			throws NdexException, IllegalArgumentException {
 		
 		Preconditions.checkArgument(null != simpleNetworkQuery, 
@@ -69,16 +69,18 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		
 		if ( simpleNetworkQuery.getSearchString().equals(""))
-			return findAllNetworks (simpleNetworkQuery,skip, top, userRID);
+			return findAllNetworks (simpleNetworkQuery,skipBlocks, top, userRID);
 		
-		return findNetworksV2 (simpleNetworkQuery,skip, top, userRID);
+		return findNetworksV2 (simpleNetworkQuery,skipBlocks, top, userRID);
 	}
 	
-	private List<NetworkSummary> findAllNetworks(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userORID) 
+	private List<NetworkSummary> findAllNetworks(SimpleNetworkQuery simpleNetworkQuery, int skipBlocks, int top, ORID userORID) 
 			throws NdexException, IllegalArgumentException {
 		
 		List<NetworkSummary> finalResult = new ArrayList<>(top);
 
+		int offset = skipBlocks * top;
+		
 		// has account name
 		if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
 
@@ -142,7 +144,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 			int i = 0; 
 			for( NetworkSummary s: foundNetworks ) {
-				if ( i >= skip) 
+				if ( i >= offset) 
 					finalResult.add(s);
 				i++;
 				if( finalResult.size()>=top)
@@ -167,9 +169,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			}
 		} 
 		
-		for( int i = 0 ; i <top+skip && !resultHolder.isEmpty() ; i++ ) {
+		for( int i = 0 ; i <top+offset && !resultHolder.isEmpty() ; i++ ) {
 			NetworkSummary s = resultHolder.remove();
-			if ( i >= skip) 
+			if ( i >= offset) 
 				finalResult.add(s);
 			
 		}
@@ -177,7 +179,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			
 	}
 
-	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skip, int top, ORID userRID) 
+	private Collection<NetworkSummary> findNetworksV2(SimpleNetworkQuery simpleNetworkQuery, int skipBlocks, int top, ORID userRID) 
 			throws IllegalArgumentException, NdexException {
 		
 		Collection<NetworkSummary> resultList =  new ArrayList<>(top);
@@ -185,6 +187,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		TreeSet<ORID> resultIDSet = new TreeSet<> ();
 		
 		int counter = 0;
+		int offset = skipBlocks * top;
 		
 		ORID adminUserRID = null;
 		if( !Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName()) ) {
@@ -215,7 +218,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				if (isSearchable(doc, userRID, adminUserRID, simpleNetworkQuery.getCanRead(), 
 						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 					resultIDSet.add(dId.getIdentity());
-					if ( counter >= skip) {
+					if ( counter >= offset) {
 						NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
 						if ( network.getIsComplete())
 							resultList .add(network);
@@ -249,7 +252,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		            	  isSearchable(doc, userRID, adminUserRID,simpleNetworkQuery.getCanRead(), 
 		  						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 							resultIDSet.add(id);
-							if ( counter >= skip) {
+							if ( counter >= offset) {
 								NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
 								if ( network.getIsComplete())
 									resultList .add(network);
@@ -282,7 +285,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			               (isSearchable(doc, userRID,adminUserRID,simpleNetworkQuery.getCanRead(), 
 									simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) ) {
 								resultIDSet.add(id);
-								if ( counter >= skip) {
+								if ( counter >= offset) {
 									NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
 									if ( network.getIsComplete())
 										resultList .add(network);
