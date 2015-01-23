@@ -47,11 +47,19 @@ public class GroupDAO extends OrientdbDAO {
 		super(db);
 		//this.db = graph.getRawGraph();
 		this.graph = graph;
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
+
 	}
 	
 	public GroupDAO(ODatabaseDocumentTx db, boolean autoStartTx) {
 		super(db);
 		this.graph = new OrientGraph(db, autoStartTx);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
+
 		//this.db = this.graph.getRawGraph();
 	}
 	

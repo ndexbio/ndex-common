@@ -31,6 +31,11 @@ public class TaskDAO extends OrientdbDAO implements AutoCloseable {
 	public TaskDAO (ODatabaseDocumentTx dbConn) {
 		super(dbConn);
 		this.graph = new OrientGraph(this.db,false);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
+
+
 	}
 
 	public Task getTaskByUUID(String UUIDStr) throws ObjectNotFoundException, NdexException {

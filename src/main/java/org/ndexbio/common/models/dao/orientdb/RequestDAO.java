@@ -39,6 +39,10 @@ public class RequestDAO extends OrientdbDAO  {
 		super(db);
 		//this.db = graph.getRawGraph();
 		this.graph = new OrientGraph(db);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
+
 	}
 	
 /*	public RequestDAO(ODatabaseDocumentTx db, boolean autoStartTx) {

@@ -43,6 +43,9 @@ public class NdexSchemaManager
 //        orientDb.commit();
         
         OrientBaseGraph orientDbGraph = new OrientGraph(orientDb);
+        orientDbGraph.setAutoScaleEdgeType(true);
+        orientDbGraph.setEdgeContainerEmbedded2TreeThreshold(40);
+        orientDbGraph.setUseLightweightEdges(true);
 
         /**********************************************************************
         * Create base types first. 

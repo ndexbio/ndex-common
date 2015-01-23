@@ -57,6 +57,9 @@ public class OrientDBNoTxConnectionService {
 		_ndexDatabase = NdexAOrientDBConnectionPool.getInstance().acquire(); 
 
 		graph = new OrientGraph(_ndexDatabase,false);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
 		NdexSchemaManager.INSTANCE.init(_ndexDatabase);
 		this.setSetup(true);
 		logger.info("Connection to OrientDB established");

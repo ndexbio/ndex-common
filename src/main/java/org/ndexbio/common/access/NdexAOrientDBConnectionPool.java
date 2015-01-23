@@ -4,8 +4,6 @@ import java.util.logging.Logger;
 
 import org.ndexbio.model.exceptions.NdexException;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
@@ -23,6 +21,9 @@ public class NdexAOrientDBConnectionPool {
 	private NdexAOrientDBConnectionPool(String dbURL, String dbUserName, String dbPassword, int size) {
 
 		pool = new OrientGraphFactory(dbURL, dbUserName, dbPassword).setupPool(1,size);
+		pool.setAutoScaleEdgeType(true);
+		pool.setEdgeContainerEmbedded2TreeThreshold(40);
+		pool.setUseLightweightEdges(true);
 	    
 	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " created.");
 	}

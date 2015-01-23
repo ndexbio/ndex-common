@@ -1,0 +1,109 @@
+PARTICIPANT_A	INTERACTION_TYPE	PARTICIPANT_B	INTERACTION_DATA_SOURCE	INTERACTION_PUBMED_ID
+http://biopax.org/generated/group/-39643216	COMPONENT_OF	http://biopax.org/generated/group/99702488	pid	
+http://biopax.org/generated/group/15588717	METABOLIC_CATALYSIS	http://purl.org/pc2/4/SmallMoleculeReference_5ce4a42f850cb38117a1161cee99a54d	pid	
+http://biopax.org/generated/group/15588717	METABOLIC_CATALYSIS	http://purl.org/pc2/4/SmallMoleculeReference_96e6894e403faf80b37bffb2d3db1100	pid	
+http://biopax.org/generated/group/15588717	STATE_CHANGE	http://identifiers.org/uniprot/P01112	pid	
+http://biopax.org/generated/group/94977150	STATE_CHANGE	http://identifiers.org/uniprot/P29353	pid	
+http://biopax.org/generated/group/94977150	STATE_CHANGE	http://identifiers.org/uniprot/P62993	pid	
+http://biopax.org/generated/group/94977150	STATE_CHANGE	http://identifiers.org/uniprot/Q07889	pid	
+http://biopax.org/generated/group/99702488	REACTS_WITH	http://biopax.org/generated/group/-39643216	pid	
+http://biopax.org/generated/group/99702488	STATE_CHANGE	http://identifiers.org/uniprot/P12931	pid	
+http://biopax.org/generated/group/99702488	STATE_CHANGE	http://identifiers.org/uniprot/Q14289	pid	
+http://identifiers.org/uniprot/O43504	STATE_CHANGE	http://purl.org/pc2/4/ProteinReference_4cadb3a09d8b06ff85cd55f1abf9e7ad	pid	
+http://identifiers.org/uniprot/O43504	STATE_CHANGE	http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	pid	
+http://identifiers.org/uniprot/P01100	COMPONENT_OF	http://biopax.org/generated/group/93184075	pid	
+http://identifiers.org/uniprot/P01100	IN_SAME_COMPONENT	http://identifiers.org/uniprot/P05412	pid	
+http://identifiers.org/uniprot/P01100	REACTS_WITH	http://biopax.org/generated/group/93184075	pid	
+http://identifiers.org/uniprot/P01112	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_5ce4a42f850cb38117a1161cee99a54d	pid	
+http://identifiers.org/uniprot/P01112	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_96e6894e403faf80b37bffb2d3db1100	pid	
+http://identifiers.org/uniprot/P01112	STATE_CHANGE	http://identifiers.org/uniprot/P04049	pid	
+http://identifiers.org/uniprot/P04049	STATE_CHANGE	http://identifiers.org/uniprot/Q02750	pid	
+http://identifiers.org/uniprot/P05412	COMPONENT_OF	http://biopax.org/generated/group/93184075	pid	
+http://identifiers.org/uniprot/P05412	REACTS_WITH	http://biopax.org/generated/group/93184075	pid	
+http://identifiers.org/uniprot/P05412	REACTS_WITH	http://identifiers.org/uniprot/P01100	pid	
+http://identifiers.org/uniprot/P12931	COMPONENT_OF	http://biopax.org/generated/group/94977150	pid	
+http://identifiers.org/uniprot/P12931	IN_SAME_COMPONENT	http://identifiers.org/uniprot/Q14289	pid	
+http://identifiers.org/uniprot/P16220	COMPONENT_OF	http://biopax.org/generated/group/-79670964	pid	
+http://identifiers.org/uniprot/P27361	STATE_CHANGE	http://identifiers.org/uniprot/P05412	pid	
+http://identifiers.org/uniprot/P29353	COMPONENT_OF	http://biopax.org/generated/group/15588717	pid	
+http://identifiers.org/uniprot/P62993	COMPONENT_OF	http://biopax.org/generated/group/15588717	pid	
+http://identifiers.org/uniprot/P62993	IN_SAME_COMPONENT	http://identifiers.org/uniprot/P29353	pid	
+http://identifiers.org/uniprot/P62993	IN_SAME_COMPONENT	http://identifiers.org/uniprot/Q07889	pid	
+http://identifiers.org/uniprot/P68400	CO_CONTROL	http://identifiers.org/uniprot/P27361	not applicable	not applicable
+http://identifiers.org/uniprot/P68400	STATE_CHANGE	http://identifiers.org/uniprot/P05412	pid	
+http://identifiers.org/uniprot/Q02750	STATE_CHANGE	http://identifiers.org/uniprot/P27361	pid	
+http://identifiers.org/uniprot/Q07889	COMPONENT_OF	http://biopax.org/generated/group/15588717	pid	
+http://identifiers.org/uniprot/Q07889	IN_SAME_COMPONENT	http://identifiers.org/uniprot/P29353	pid	
+http://identifiers.org/uniprot/Q13554	GENERIC_OF	http://biopax.org/generated/group/-39643216	not applicable	
+http://identifiers.org/uniprot/Q14289	COMPONENT_OF	http://biopax.org/generated/group/94977150	pid	
+http://purl.org/pc2/4/ProteinReference_1e85ffbf45fd13d4f91fb388f0bf4263	GENERIC_OF	http://biopax.org/generated/group/-39643216	not applicable	
+http://purl.org/pc2/4/ProteinReference_2d8845760e91de2fa4b7698d27b07b39	GENERIC_OF	http://biopax.org/generated/group/-39643216	not applicable	
+http://purl.org/pc2/4/ProteinReference_4cadb3a09d8b06ff85cd55f1abf9e7ad	CO_CONTROL	http://identifiers.org/uniprot/O43504	not applicable	not applicable
+http://purl.org/pc2/4/ProteinReference_4cadb3a09d8b06ff85cd55f1abf9e7ad	STATE_CHANGE	http://identifiers.org/uniprot/P16220	pid	
+http://purl.org/pc2/4/ProteinReference_4cadb3a09d8b06ff85cd55f1abf9e7ad	STATE_CHANGE	http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	pid	
+http://purl.org/pc2/4/ProteinReference_98d898b2d466ffbcee991a08a9b3c6ab	GENERIC_OF	http://biopax.org/generated/group/-39643216	not applicable	
+http://purl.org/pc2/4/ProteinReference_b5bbcbe840863beede8c62f8fc64523d	GENERIC_OF	http://biopax.org/generated/group/-39643216	not applicable	
+http://purl.org/pc2/4/ProteinReference_f951b9a8fa2165950ba5079ca3d7dc5e	GENERIC_OF	http://biopax.org/generated/group/-39643216	not applicable	
+http://purl.org/pc2/4/SmallMoleculeReference_411e0a4ba3e87960c3c8402ca70d045d	COMPONENT_OF	http://biopax.org/generated/group/-98841566	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_411e0a4ba3e87960c3c8402ca70d045d	REACTS_WITH	http://biopax.org/generated/group/-98841566	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_411e0a4ba3e87960c3c8402ca70d045d	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_5ce4a42f850cb38117a1161cee99a54d	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_96e6894e403faf80b37bffb2d3db1100	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_a0f8dab5b902b6ccec78ac921d1f21b0	CO_CONTROL	http://purl.org/pc2/4/SmallMoleculeReference_fd4f44bad48f33e55fb539b79626685c	not applicable	not applicable
+http://purl.org/pc2/4/SmallMoleculeReference_a0f8dab5b902b6ccec78ac921d1f21b0	STATE_CHANGE	http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	COMPONENT_OF	http://biopax.org/generated/group/-98841566	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	COMPONENT_OF	http://biopax.org/generated/group/99702488	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	IN_SAME_COMPONENT	http://biopax.org/generated/group/-39643216	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	IN_SAME_COMPONENT	http://purl.org/pc2/4/SmallMoleculeReference_411e0a4ba3e87960c3c8402ca70d045d	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	REACTS_WITH	http://biopax.org/generated/group/-39643216	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	REACTS_WITH	http://biopax.org/generated/group/-98841566	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	REACTS_WITH	http://biopax.org/generated/group/99702488	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_e8c5dad708cc562a34cd4a5836504c0f	CO_CONTROL	http://purl.org/pc2/4/SmallMoleculeReference_a0f8dab5b902b6ccec78ac921d1f21b0	not applicable	not applicable
+http://purl.org/pc2/4/SmallMoleculeReference_e8c5dad708cc562a34cd4a5836504c0f	CO_CONTROL	http://purl.org/pc2/4/SmallMoleculeReference_ebda0d0d549399c622a31e1653e75857	not applicable	not applicable
+http://purl.org/pc2/4/SmallMoleculeReference_e8c5dad708cc562a34cd4a5836504c0f	CO_CONTROL	http://purl.org/pc2/4/SmallMoleculeReference_fd4f44bad48f33e55fb539b79626685c	not applicable	not applicable
+http://purl.org/pc2/4/SmallMoleculeReference_e8c5dad708cc562a34cd4a5836504c0f	STATE_CHANGE	http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_ebda0d0d549399c622a31e1653e75857	CO_CONTROL	http://purl.org/pc2/4/SmallMoleculeReference_a0f8dab5b902b6ccec78ac921d1f21b0	not applicable	not applicable
+http://purl.org/pc2/4/SmallMoleculeReference_ebda0d0d549399c622a31e1653e75857	CO_CONTROL	http://purl.org/pc2/4/SmallMoleculeReference_fd4f44bad48f33e55fb539b79626685c	not applicable	not applicable
+http://purl.org/pc2/4/SmallMoleculeReference_ebda0d0d549399c622a31e1653e75857	STATE_CHANGE	http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_fd4f44bad48f33e55fb539b79626685c	STATE_CHANGE	http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	pid	
+
+PARTICIPANT	PARTICIPANT_TYPE	PARTICIPANT_NAME	UNIFICATION_XREF	RELATIONSHIP_XREF
+http://purl.org/pc2/4/SmallMoleculeReference_d6ebe73fa69f2cd679b6fbd2f9877cb4	SmallMoleculeReference	ca2+	CAS:7440-70-2	
+http://identifiers.org/uniprot/Q13554	ProteinReference	KCC2B_HUMAN	UniProt:O95438;UniProt:A4D2K1;UniProt:Q9UNX7;UniProt:A4D2K4;UniProt:Q9UGH7;UniProt:Q9UGH8;UniProt:Q9UGH9;UniProt:Q9UNX0;UniProt:Q9UP00;UniProt:A4D2K6;UniProt:A4D2K0;UniProt:O95437;UniProt:Q13554;UniProt:A4D2K5;UniProt:O95599;UniProt:Q9Y5N4;UniProt:A4D2K3;UniProt:A4D2K2;UniProt:Q9Y6F4	RefSeq:NM_172078;Ensembl:ENST00000457475;Ensembl:ENSP00000326518;Ensembl:ENSP00000379096;Ensembl:ENST00000395749;Ensembl:ENSP00000379098;PROTEIN DATA BANK:3BHH;RefSeq:NM_172083;Ensembl:ENSP00000326427;Ensembl:ENSP00000390292;RefSeq:NP_742075;RefSeq:NM_172081;Ensembl:ENST00000353625;Ensembl:ENST00000395747;RefSeq:NM_172080;NCBI Gene:816;RefSeq:NM_172082;RefSeq:NP_742080;HGNC:CAMK2B;RefSeq:NP_742076;Ensembl:ENSP00000326375;RefSeq:NP_742078;omim:607707;Ensembl:ENST00000258682;Ensembl:ENSG00000058404;RefSeq:NM_172079;Ensembl:ENST00000440254;RefSeq:NM_172084;PANTHER Family:PTHR24347:SF107;Ensembl:ENSP00000258682;RefSeq:NP_742077;RefSeq:NP_742081;RefSeq:NP_742079;RefSeq:NM_001220;RefSeq:NP_001211;Ensembl:ENST00000347193;HGNC:HGNC:1461;Ensembl:ENST00000358707;Ensembl:ENST00000350811;Ensembl:ENST00000346990;Ensembl:ENSP00000326544;HGNC Symbol:CAMK2B;Ensembl:ENSP00000351542;Ensembl:ENSP00000397937
+http://identifiers.org/uniprot/Q02750	ProteinReference	MP2K1_HUMAN	UniProt:Q02750	HGNC:MAP2K1;Ensembl:ENSP00000302486;RefSeq:NM_002755;NCBI Gene:5604;omim:176872;HGNC Symbol:MAP2K1;RefSeq:NP_002746;PANTHER Family:PTHR24360:SF36;PROTEIN DATA BANK:1S9J;Ensembl:ENST00000307102;Ensembl:ENSG00000169032;HGNC:HGNC:6840
+http://purl.org/pc2/4/ProteinReference_2d8845760e91de2fa4b7698d27b07b39	ProteinReference	CaM3		
+http://biopax.org/generated/group/-79670964	ComplexGroup	CREB/CREB		
+http://purl.org/pc2/4/SmallMoleculeReference_96e6894e403faf80b37bffb2d3db1100	SmallMoleculeReference	gtp	CAS:86-01-1	
+http://purl.org/pc2/4/ProteinReference_1e85ffbf45fd13d4f91fb388f0bf4263	ProteinReference	Similar to CaM2		
+http://identifiers.org/uniprot/P27361	ProteinReference	MK03_HUMAN	UniProt:Q8NHX1;UniProt:P27361;UniProt:B0LPG3;UniProt:A8CZ58	Ensembl:ENSP00000263025;RefSeq:NP_002737;RefSeq:NP_001103361;HGNC:HGNC:6877;PANTHER Family:PTHR24055:SF111;Ensembl:ENST00000403394;HGNC Symbol:MAPK3;RefSeq:NM_001040056;NCBI Gene:5595;Ensembl:ENST00000395199;Ensembl:ENST00000322266;Ensembl:ENSP00000378628;omim:601795;Ensembl:ENSP00000378625;RefSeq:NM_002746;RefSeq:NP_001035145;PROTEIN DATA BANK:2ZOQ;RefSeq:NM_001109891;Ensembl:ENST00000395202;Ensembl:ENSG00000102882;Ensembl:ENSP00000384895;Ensembl:ENSP00000327293;Ensembl:ENST00000263025;HGNC:MAPK3
+http://identifiers.org/uniprot/P68400	ProteinReference	CSK21_HUMAN	UniProt:Q5U065;UniProt:P20426;UniProt:Q14013;UniProt:P19138;UniProt:D3DVV8;UniProt:B4DYS6;UniProt:P68400	PANTHER Family:PTHR24054:SF16;HGNC:HGNC:2457;omim:115440;Ensembl:ENSP00000339247;RefSeq:NM_177560;HGNC Symbol:CSNK2A1;RefSeq:NM_001895;Ensembl:ENST00000400217;Ensembl:ENST00000217244;RefSeq:NP_808227;HGNC:CSNK2A1;RefSeq:NM_177559;Ensembl:ENSP00000217244;Ensembl:ENSG00000101266;PROTEIN DATA BANK:1JWH;Ensembl:ENSP00000383076;Ensembl:ENST00000349736;NCBI Gene:1457;RefSeq:NP_001886;RefSeq:NP_808228
+http://identifiers.org/uniprot/Q14289	ProteinReference	FAK2_HUMAN	UniProt:Q13475;UniProt:Q6PID4;UniProt:Q14289;UniProt:Q14290;UniProt:Q16709;UniProt:D3DST0	RefSeq:NM_173174;RefSeq:NM_173176;Ensembl:ENSP00000380638;RefSeq:NP_775266;HGNC:HGNC:9612;Ensembl:ENST00000338238;Ensembl:ENSP00000332816;Ensembl:ENSP00000427931;NCBI Gene:2185;PANTHER Family:PTHR24418:SF94;Ensembl:ENST00000517339;Ensembl:ENST00000420218;Ensembl:ENSG00000120899;Ensembl:ENST00000346049;HGNC Symbol:PTK2B;RefSeq:NP_775267;RefSeq:NP_004094;RefSeq:NM_173175;PROTEIN DATA BANK:2FO6;omim:601212;Ensembl:ENST00000397501;Ensembl:ENSP00000440926;HGNC:PTK2B;RefSeq:NP_775268;Ensembl:ENST00000544172;Ensembl:ENSP00000342242;RefSeq:NM_004103;Ensembl:ENSP00000391995
+http://purl.org/pc2/4/ProteinReference_f951b9a8fa2165950ba5079ca3d7dc5e	ProteinReference	Similar to CaM1		
+http://identifiers.org/uniprot/P62993	ProteinReference	GRB2_HUMAN	UniProt:P29354;UniProt:Q63057;UniProt:Q14450;UniProt:P62993;UniProt:Q63059	Ensembl:ENST00000392564;Ensembl:ENST00000392563;HGNC:GRB2;HGNC:HGNC:4566;Ensembl:ENST00000392562;Ensembl:ENSP00000376346;Ensembl:ENSG00000177885;Ensembl:ENSP00000339007;RefSeq:NP_002077;omim:108355;PROTEIN DATA BANK:1AZE;RefSeq:NP_987102;RefSeq:NM_002086;Ensembl:ENSP00000376347;Ensembl:ENST00000316804;RefSeq:NM_203506;Ensembl:ENST00000316615;HGNC Symbol:GRB2;Ensembl:ENSP00000317360;Ensembl:ENSP00000376345;PANTHER Family:PTHR22820:SF13;NCBI Gene:2885
+http://biopax.org/generated/group/94977150	ComplexGroup	PYK2/SRC		
+http://purl.org/pc2/4/ProteinReference_b5bbcbe840863beede8c62f8fc64523d	ProteinReference	CaM1		
+http://identifiers.org/uniprot/P01100	ProteinReference	FOS_HUMAN	UniProt:P01100;UniProt:P18849	omim:164810;HGNC:HGNC:3796;HGNC Symbol:FOS;PANTHER Family:PTHR23351:SF4;NCBI Gene:2353;RefSeq:NM_005252;Ensembl:ENSG00000170345;PROTEIN DATA BANK:1A02;HGNC:FOS;Ensembl:ENSP00000306245;Ensembl:ENST00000303562;RefSeq:NP_005243
+http://purl.org/pc2/4/SmallMoleculeReference_5ce4a42f850cb38117a1161cee99a54d	SmallMoleculeReference	gdp	CAS:146-91-8	
+http://biopax.org/generated/group/-98841566	ComplexGroup	BAPTA-AM/Ca ++		
+http://biopax.org/generated/group/99702488	ComplexGroup	CaM/Ca ++		
+http://identifiers.org/uniprot/P29353	ProteinReference	SHC1_HUMAN	UniProt:O15290;UniProt:Q5T183;UniProt:Q5T185;UniProt:Q5T180;UniProt:Q5T184;UniProt:Q96CL1;UniProt:B5BU19;UniProt:Q8N4K5;UniProt:Q5T186;UniProt:D3DV78;UniProt:P29353	RefSeq:NM_003029;RefSeq:NP_892113;HGNC:HGNC:10840;Ensembl:ENST00000368445;Ensembl:ENSP00000357435;Ensembl:ENSG00000160691;RefSeq:NM_001202859;Ensembl:ENST00000448116;HGNC:SHC1;PROTEIN DATA BANK:1MIL;HGNC Symbol:SHC1;Ensembl:ENSP00000357430;Ensembl:ENST00000368449;RefSeq:NP_001123512;Ensembl:ENST00000368450;Ensembl:ENSP00000357434;RefSeq:NP_003020;RefSeq:NM_001130041;RefSeq:NM_001130040;RefSeq:NP_001189788;RefSeq:NP_001123513;omim:600560;NCBI Gene:6464;PANTHER Family:PTHR10337:SF2;Ensembl:ENSP00000357438;Ensembl:ENST00000368453;RefSeq:NM_183001;Ensembl:ENSP00000401303
+http://identifiers.org/uniprot/P04049	ProteinReference	RAF1_HUMAN	UniProt:Q9UC20;UniProt:Q15278;UniProt:B2R5N3;UniProt:P04049;UniProt:B0LPH8	Ensembl:ENSG00000132155;PANTHER Family:PTHR23257:SF42;PROTEIN DATA BANK:1C1Y;Ensembl:ENSP00000401888;Ensembl:ENST00000442415;NCBI Gene:5894;Ensembl:ENST00000251849;RefSeq:NP_002871;HGNC:RAF1;omim:164760;HGNC Symbol:RAF1;Ensembl:ENSP00000251849;HGNC:HGNC:9829;RefSeq:NM_002880
+http://biopax.org/generated/group/15588717	ComplexGroup	SHC/GRB2/SOS-1		
+http://identifiers.org/uniprot/Q07889	ProteinReference	SOS1_HUMAN	UniProt:Q07889;UniProt:A8K2G3	Ensembl:ENSG00000115904;HGNC:HGNC:11187;Ensembl:ENSP00000387784;omim:182530;HGNC:SOS1;PANTHER Family:PTHR23113:SF47;RefSeq:NM_005633;HGNC Symbol:SOS1;RefSeq:NP_005624;Ensembl:ENST00000402219;PROTEIN DATA BANK:1AWE;Ensembl:ENSP00000384675;Ensembl:ENST00000426016;NCBI Gene:6654
+http://purl.org/pc2/4/SmallMoleculeReference_ebda0d0d549399c622a31e1653e75857	SmallMoleculeReference	neoral (tn)	CAS:59865-13-3	
+http://purl.org/pc2/4/SmallMoleculeReference_a0f8dab5b902b6ccec78ac921d1f21b0	SmallMoleculeReference	CGP37157		
+http://purl.org/pc2/4/SmallMoleculeReference_fd4f44bad48f33e55fb539b79626685c	SmallMoleculeReference	thapsigargin	CAS:67526-95-8	
+http://identifiers.org/uniprot/O43504	ProteinReference	LTOR5_HUMAN	UniProt:O43504;UniProt:Q6IBD8	RefSeq:NP_006393;HGNC Symbol:LAMTOR5;omim:608521;HGNC:HGNC:17955;NCBI Gene:10542;Ensembl:ENSP00000256644;RefSeq:NM_006402;HGNC:LAMTOR5;Ensembl:ENSG00000134248;Ensembl:ENST00000256644
+http://purl.org/pc2/4/ProteinReference_98d898b2d466ffbcee991a08a9b3c6ab	ProteinReference	Similar to CaM3		
+http://identifiers.org/uniprot/P12931	ProteinReference	SRC_HUMAN	UniProt:Q9H5A8;UniProt:P12931;UniProt:Q76P87;UniProt:E1P5V4;UniProt:Q86VB9	Ensembl:ENST00000358208;RefSeq:NM_005417;Ensembl:ENST00000360723;Ensembl:ENSP00000362659;HGNC Symbol:SRC;PANTHER Family:PTHR24418:SF53;RefSeq:NM_198291;Ensembl:ENSP00000350941;Ensembl:ENSP00000362668;HGNC:SRC;RefSeq:NP_005408;PROTEIN DATA BANK:1A07;Ensembl:ENST00000445403;Ensembl:ENST00000373567;Ensembl:ENST00000373558;Ensembl:ENSP00000408503;Ensembl:ENST00000373578;Ensembl:ENSP00000353950;RefSeq:NP_938033;Ensembl:ENSG00000197122;Ensembl:ENSP00000362680;omim:190090;HGNC:HGNC:11283;NCBI Gene:6714
+http://purl.org/pc2/4/SmallMoleculeReference_411e0a4ba3e87960c3c8402ca70d045d	SmallMoleculeReference	BAPTA-AM	CAS:126150-97-8	
+http://purl.org/pc2/4/ProteinReference_4cadb3a09d8b06ff85cd55f1abf9e7ad	ProteinReference	HBX		
+http://biopax.org/generated/group/93184075	ComplexGroup	AP-1		
+http://identifiers.org/uniprot/P16220	ProteinReference	CREB1_HUMAN	UniProt:Q9UMA7;UniProt:P21934;UniProt:P16220;UniProt:Q6V963	omim:123810;RefSeq:NM_134442;PANTHER Family:PTHR22952:SF15;HGNC:CREB1;Ensembl:ENST00000374397;RefSeq:NP_004370;Ensembl:ENSP00000387699;HGNC Symbol:CREB1;Ensembl:ENSP00000236995;NCBI Gene:1385;Ensembl:ENSG00000118260;Ensembl:ENST00000353267;Ensembl:ENSP00000405539;RefSeq:NP_604391;Ensembl:ENST00000430624;RefSeq:NM_004379;HGNC:HGNC:2345;Ensembl:ENST00000432329;Ensembl:ENSP00000363518
+http://identifiers.org/uniprot/P01112	ProteinReference	RASH_HUMAN	UniProt:B5BUA0;UniProt:Q9UCE2;UniProt:Q9BR65;UniProt:Q6FHV9;UniProt:P01112;UniProt:Q14080	Ensembl:ENSP00000434023;Ensembl:ENSP00000407586;RefSeq:NM_005343;Ensembl:ENST00000451590;Ensembl:ENSP00000309845;omim:190020;Ensembl:ENST00000397594;HGNC:HGNC:5173;PROTEIN DATA BANK:121P;HGNC Symbol:HRAS;HGNC:HRAS;Ensembl:ENSG00000174775;PANTHER Family:PTHR24070:SF54;Ensembl:ENST00000311189;RefSeq:NM_176795;RefSeq:NP_005334;Ensembl:ENSP00000380722;Ensembl:ENST00000417302;Ensembl:ENSP00000380723;NCBI Gene:3265;Ensembl:ENSP00000388246;RefSeq:NP_789765;RefSeq:NM_001130442;Ensembl:ENST00000397596;Ensembl:ENST00000493230;RefSeq:NP_001123914
+http://biopax.org/generated/group/-39643216	GenericProteinReference	CaM		
+http://purl.org/pc2/4/SmallMoleculeReference_e8c5dad708cc562a34cd4a5836504c0f	SmallMoleculeReference	valinomycin	CAS:2001-95-8	
+http://identifiers.org/uniprot/P05412	ProteinReference	JUN_HUMAN	UniProt:P05412;UniProt:Q96G93	RefSeq:NP_002219;Ensembl:ENST00000371222;HGNC:HGNC:6204;omim:165160;NCBI Gene:3725;Ensembl:ENSP00000360266;PROTEIN DATA BANK:1A02;HGNC:JUN;PANTHER Family:PTHR11462:SF8;RefSeq:NM_002228;Ensembl:ENSG00000177606;HGNC Symbol:JUN
+
+
+NAME	ORGANISM	URI	DATASOURCE	
+calcium signaling by hbx of hepatitis b virus	http://identifiers.org/taxonomy/9606	http://purl.org/pc2/4/Pathway_d6c95696a9624995b81f45f732b85daf	http://purl.org/pc2/4/pid

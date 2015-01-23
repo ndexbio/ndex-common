@@ -59,12 +59,19 @@ public class UserDAO extends OrientdbDAO {
 		super(db);
 		//this.db = graph.getRawGraph();
 		this.graph = graph;
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+
 	}
 
 	public UserDAO(ODatabaseDocumentTx db) {
 		super(db);
 		//this.db = db;
 		this.graph = new OrientGraph(db, false);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
+
 	}
 	
 	/*

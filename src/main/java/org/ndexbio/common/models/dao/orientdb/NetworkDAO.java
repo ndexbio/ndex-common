@@ -74,6 +74,10 @@ public class NetworkDAO extends OrientdbDAO {
 		this.searchCurrentTx = false;
 		mapper = new ObjectMapper();
 		graph = new OrientGraph(this.db,false);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
+
 	}
 
 	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {

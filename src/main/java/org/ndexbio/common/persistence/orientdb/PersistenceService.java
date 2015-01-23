@@ -65,6 +65,9 @@ public abstract class PersistenceService {
 		this.database = db;
 		this.localConnection = this.database.getAConnection();
 		this.graph = new OrientGraph(this.localConnection,false);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
 		
 		this.networkDAO = new NetworkDAO(localConnection,true);
 

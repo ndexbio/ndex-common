@@ -1023,7 +1023,7 @@ public class NdexPersistenceService extends PersistenceService {
 			throw new NdexException (msg);
 		} finally {
 			graph.shutdown();
-			this.database.close();
+	//		this.database.close();
 			System.out
 					.println("Connection to orientdb database has been closed");
 		}
