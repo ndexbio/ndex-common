@@ -28,7 +28,6 @@ import org.ndexbio.model.object.User;
 
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -568,12 +567,11 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	}
 
 	private static ORID stringToRid(String ridString) {
-		final Matcher m = Pattern.compile("^.*#(\\d+):(\\d+).*$").matcher(
+		final Matcher m = Pattern.compile("^.*(#\\d+:\\d+).*$").matcher(
 				ridString.trim());
 
 		if (m.matches())
-			return new ORecordId(Integer.valueOf(m.group(1)),
-					OClusterPositionFactory.INSTANCE.valueOf(m.group(2)));
+			return new ORecordId(m.group(1));
 		
 		throw new IllegalArgumentException(ridString
 				+ " is not a valid RID.");

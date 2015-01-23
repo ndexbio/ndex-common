@@ -1074,29 +1074,6 @@ public class NetworkDAO extends OrientdbDAO {
    			return t;
    		}
 
-   		if ( this.searchCurrentTx ) {
-	         List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClasses.Edge);
-	         for (ORecordOperation op : txOperations) {
-	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
-	            if (id == edgeId) {
-	            	for (OIdentifiable reifiedTRec : new OTraverse()
-      	       	    			.field("in_"+ NdexClasses.ReifiedEdge_E_edge )
-      	       	    			.target((ODocument) op.getRecord())
-      	       	    			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	       				ODocument doc = (ODocument) reifiedTRec;
-       	          
-	       				if ( doc.getClassName().equals(NdexClasses.ReifiedEdgeTerm)) {
-	       		   				ReifiedEdgeTerm t = new ReifiedEdgeTerm();
-	       		   				t.setId((long)doc.field(NdexClasses.Element_ID));
-	       		   				t.setEdgeId(edgeId);
-	       						return t;
-	       					
-	       				}
-	       			}
-	            }
-	         }
-   		}
        	return null;
     }
     /*
@@ -1356,28 +1333,6 @@ public class NetworkDAO extends OrientdbDAO {
         	}
 	    }
         
-    	if ( this.searchCurrentTx) {
-	         List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClasses.Citation);
-	         for (ORecordOperation op : txOperations) {
-	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
-	            if (id == citationId) {
-	            	for (OIdentifiable supportRec : new OTraverse()
-       	       	    			.field("in_"+ NdexClasses.Support_E_citation )
-       	       	    			.target((ODocument) op.getRecord())
-       	       	    			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	       				ODocument doc = (ODocument) supportRec;
-        	          
-	       				if ( doc.getClassName().equals(NdexClasses.Support)) {
-	       					if ( doc.field(NdexClasses.Support_P_text).equals(text) ) {
-	       						return getSupportFromDoc(doc,null);
-	       					}
-	       				}
-	       			}
-	        	    
-	            }
-	         }
-    	}
     	return null;
     }
     
