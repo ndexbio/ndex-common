@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
@@ -80,7 +81,7 @@ public class XbelExporterTask extends NdexTask {
 	
 		ODatabaseDocumentTx db = null; 
 		try {
-			db = NdexAOrientDBConnectionPool.getInstance().acquire();
+			db = NdexDatabase.getInstance().getAConnection();
 			NdexTaskModelService modelService = new NdexJVMDataModelService(db);
 			XbelNetworkExporter exporter = new XbelNetworkExporter(this.getTask().getTaskOwnerId().toString(),
 				this.networkId,

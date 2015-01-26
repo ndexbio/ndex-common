@@ -15,6 +15,7 @@ import org.ndexbio.task.parsingengines.XgmmlParser;
 
 public class NetworkFileLoader {
 
+	/*
 	public static void main(String[] args) throws NdexException {
 
 		if ( args.length != 3) {
@@ -66,5 +67,5 @@ public class NetworkFileLoader {
 		db.close();
 		NdexAOrientDBConnectionPool.close();
 	}
-
+*/
 }

@@ -50,16 +50,16 @@ public class xbelParserTest {
     	configuration = Configuration.getInstance();
     	
     	//and initialize the db connections
-    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-    			configuration.getDBURL(),
+    	NdexDatabase.createNdexDatabase(configuration.getHostURI(),
+				configuration.getDBURL(),
     			configuration.getDBUser(),
-    			configuration.getDBPasswd(),1);
+    			configuration.getDBPasswd(), 1);
 		
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() {
-		NdexAOrientDBConnectionPool.close();
+		NdexDatabase.close();
 		System.out.println("Connection pool closed.");
 	}
 
@@ -67,8 +67,8 @@ public class xbelParserTest {
 //	@Test
 	public void test0() throws Exception {
 		
-		NdexDatabase db = new NdexDatabase(Configuration.getInstance().getHostURI());
-		ODatabaseDocumentTx conn = db.getAConnection();
+		
+		ODatabaseDocumentTx conn = NdexDatabase.getInstance().getAConnection();
 		NetworkDAO dao = new NetworkDAO(conn);
 		
 		PropertyGraphNetwork pg = dao.getProperytGraphNetworkById(UUID.fromString("40127714-6b8d-11e4-87d2-90b11c72aefa"));
@@ -78,7 +78,7 @@ public class xbelParserTest {
 		pg.setName(pg.getName() + " - new name");
 		
 		
-		PropertyGraphLoader pgl = new PropertyGraphLoader(db);
+		PropertyGraphLoader pgl = new PropertyGraphLoader(NdexDatabase.getInstance());
         NetworkSummary s = pgl.insertNetwork( pg, "cjtest");
 		//NetworkSummary s = pgl.updateNetwork(pg);
 
@@ -119,11 +119,11 @@ public class xbelParserTest {
 	public void test2() throws NdexException, JAXBException, URISyntaxException {
     	
     	
-		NdexDatabase db = new NdexDatabase(configuration.getHostURI());
+		NdexDatabase db = NdexDatabase.getInstance();
 		
     	ODatabaseDocumentTx conn = db.getAConnection();
 
-    	UserDAO dao = new UserDAO(conn);
+//    	UserDAO dao = new UserDAO(conn);
     	
  //   	DatabaseInitializer.createUserIfnotExist(dao, configuration.getSystmUserName(), "support@ndexbio.org", 
  //   				configuration.getSystemUserPassword());
@@ -140,7 +140,7 @@ public class xbelParserTest {
 		
 		conn.commit();
 		conn.close();
-		db.close();
+		NdexDatabase.close();
 	}
 
 	

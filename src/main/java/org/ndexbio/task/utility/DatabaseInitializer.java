@@ -11,7 +11,7 @@ import org.ndexbio.task.Configuration;
 
 public class DatabaseInitializer {
 
-	
+/*	
 	public static void main(String[] args) {
 		
 		try {
@@ -37,7 +37,7 @@ public class DatabaseInitializer {
 			NdexAOrientDBConnectionPool.close();
 		}
 	}
-
+*/
 	public static void createUserIfnotExist(UserDAO dao, String accountName, String email, String password) throws NdexException {
 		try {
 			User u = dao.getUserByAccountName(accountName);

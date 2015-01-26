@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
@@ -78,7 +79,7 @@ public class XGMMLExporterTask extends NdexTask {
 		FileOutputStream out = new FileOutputStream (exportFilename);
 		ODatabaseDocumentTx db = null; 
 		try {
-			db = NdexAOrientDBConnectionPool.getInstance().acquire();
+			db = NdexDatabase.getInstance().getAConnection();
 			XGMMLNetworkExporter exporter = new XGMMLNetworkExporter(db);
 			exporter.exportNetwork( UUID.fromString(getTask().getResource()), out );
 			this.taskStatus = Status.COMPLETED;

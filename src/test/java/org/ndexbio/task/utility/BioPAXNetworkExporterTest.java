@@ -34,13 +34,10 @@ public class BioPAXNetworkExporterTest {
     	Configuration configuration = Configuration.getInstance();
     	
     	//and initialize the db connections
-    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-    			configuration.getDBURL(),
+    	NdexDatabase db = NdexDatabase.createNdexDatabase(configuration.getHostURI(),
+				configuration.getDBURL(),
     			configuration.getDBUser(),
-    			configuration.getDBPasswd(),1);
-    	
-    	
-		NdexDatabase db = new NdexDatabase(configuration.getHostURI());
+    			configuration.getDBPasswd(), 10);
 		
 		String user = "cjtest";
 		
@@ -49,8 +46,9 @@ public class BioPAXNetworkExporterTest {
 		
 		exporter.exportNetwork(UUID.fromString("fd279035-62ad-11e4-901d-15b0c2670dee"), System.out);
 		
+		connection.close();
 		db.close();
-		NdexAOrientDBConnectionPool.close();
+		
 	}
 
 	@AfterClass

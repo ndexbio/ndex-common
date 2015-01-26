@@ -1,16 +1,22 @@
 package org.ndexbio.common.access;
 
 
+import java.util.logging.Logger;
+
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 public class NdexDatabase {
 	
-	private NdexAOrientDBConnectionPool pool;
+	private static NdexDatabase INSTANCE = null;
+	
+	private OrientGraphFactory pool;
 	
 	private ODatabaseDocumentTx ndexDatabase;  // this connection is used for transactions in this database object.
 	
@@ -24,16 +30,29 @@ public class NdexDatabase {
 	
 	private long internalCounterBase;
 
-	private static final int blockSize = 60;  
+	private static final int blockSize = 80;  
 	
 	private ODocument vdoc;
 	
 	static private String URIPrefix = null;
 	
-	public NdexDatabase(String HostURI) throws NdexException {
-		pool = NdexAOrientDBConnectionPool.getInstance();
-		ndexDatabase = pool.acquire();
+	private static final Logger logger = Logger
+			.getLogger(NdexAOrientDBConnectionPool.class.getName());
+	
+	private NdexDatabase(String HostURI, String dbURL, String dbUserName,
+			String dbPassword, int size) throws NdexException {
+		
+		pool = new OrientGraphFactory(dbURL, dbUserName, dbPassword).setupPool(1,size);
+		pool.setAutoScaleEdgeType(true);
+		pool.setEdgeContainerEmbedded2TreeThreshold(40);
+		pool.setUseLightweightEdges(true);
+	    
+	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " ("+ size + ") created.");
+
+	    ndexDatabase = pool.getDatabase();
+	    
 		dictionary = ndexDatabase.getDictionary();
+		
 		NdexSchemaManager.INSTANCE.init(ndexDatabase);
 		vdoc = (ODocument) dictionary.get(sequenceKey);
 		if (vdoc == null ) {
@@ -49,6 +68,27 @@ public class NdexDatabase {
 		URIPrefix = HostURI;
 		
 	}
+	
+	public static synchronized NdexDatabase createNdexDatabase (String HostURI, String dbURL, String dbUserName,
+			String dbPassword, int size) throws NdexException {
+		if(INSTANCE == null) {
+	         INSTANCE = new NdexDatabase(HostURI, dbURL, dbUserName, dbPassword, size);
+	         return INSTANCE;
+		} 
+		
+		throw new NdexException("Database has arlready been  opened.");
+		
+	}
+
+	
+	
+	public static synchronized NdexDatabase getInstance() throws NdexException {
+	      if(INSTANCE == null) {
+	         throw new NdexException ("Connection pool is not created yet.");
+	      }
+	      return INSTANCE;
+	}
+
 	
 	static public String getURIPrefix ()  {
 		return URIPrefix;
@@ -76,20 +116,39 @@ public class NdexDatabase {
     	vdoc.field(seqField,0);
     }
     
-    public void close () {
-    //	vdoc.save();
-    	ndexDatabase.commit();
-    	ndexDatabase.close();
+    public static synchronized void close () {
+    	if ( INSTANCE != null ) {
+    		INSTANCE.ndexDatabase.commit();
+    		INSTANCE.ndexDatabase.close();
+    		INSTANCE.pool.close();
+    		INSTANCE.pool = null;
+    		INSTANCE = null;
+    	} 
     }
     
+    /**
+     * This function commit the metadata changes in the data. It doesn't comment any connections in the pool.
+     */
     public void commit() {
     	ndexDatabase.commit();
 //    	ndexDatabase.begin();
     }
     
     public ODatabaseDocumentTx getAConnection() {
-    	return pool.acquire();
+    	return pool.getDatabase();
     }
-    
- //   public ODatabaseDocumentTx getTransactionConnection() {return ndexDatabase;}
+
+  /*  
+    public OrientGraph getGraph() {
+    	OrientGraph graph = pool.getTx();
+    	 
+ 		graph.setAutoScaleEdgeType(true);
+ 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+ 		graph.setUseLightweightEdges(true);
+
+    	return graph;
+    	 
+    }  */
+
+ 
 }

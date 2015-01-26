@@ -28,27 +28,27 @@ public class NdexAOrientDBConnectionPool {
 	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " created.");
 	}
 	
-	public static synchronized void createOrientDBConnectionPool (String dbURL, String dbUserName,
+	private static synchronized void createOrientDBConnectionPool (String dbURL, String dbUserName,
 				String dbPassword, int size) {
 	      if(INSTANCE == null) {
 		         INSTANCE = new NdexAOrientDBConnectionPool(dbURL, dbUserName, dbPassword, size);
 	      }
 	}
 	
-	public static synchronized NdexAOrientDBConnectionPool getInstance() throws NdexException {
+	private static synchronized NdexAOrientDBConnectionPool getInstance() throws NdexException {
 	      if(INSTANCE == null) {
 	         throw new NdexException ("Connection pool is not created yet.");
 	      }
 	      return INSTANCE;
 	}
 
-	public ODatabaseDocumentTx acquire() {
+	private ODatabaseDocumentTx acquire() {
 		ODatabaseDocumentTx conn = pool.getDatabase();
 		
 	    return conn;
 	}
    	
-   public static synchronized void close() { 	
+   private static synchronized void close() { 	
 	 
        if ( INSTANCE != null) {	   
 	     INSTANCE.pool.close();

@@ -27,13 +27,10 @@ public class XgmmlParserSingleTest {
     	Configuration configuration = Configuration.getInstance();
     	
     	//and initialize the db connections
-    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-    			configuration.getDBURL(),
+		NdexDatabase db = NdexDatabase.createNdexDatabase(configuration.getHostURI(),
+				configuration.getDBURL(),
     			configuration.getDBUser(),
-    			configuration.getDBPasswd(),1);
-    	
-    	
-		NdexDatabase db = new NdexDatabase(configuration.getHostURI());
+    			configuration.getDBPasswd(), 10);
 		
 		String user = "cjtest";
 		XgmmlParser parser = new XgmmlParser("/home/chenjing/Dropbox/Network_test_files/pdmap130712.xgmml", user, 
@@ -44,7 +41,6 @@ public class XgmmlParserSingleTest {
 //		parser.parseFile();
 
 		db.close();
-		NdexAOrientDBConnectionPool.close();
 	}
 
 	@AfterClass

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.task.event.NdexNetworkState;
 import org.ndexbio.task.event.NdexTaskEventHandler;
@@ -23,10 +24,7 @@ public class TestXbelExporterApp {
 		Configuration configuration = Configuration.getInstance();
     	
     	//and initialize the db connections
-    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-    			configuration.getDBURL(),
-    			configuration.getDBUser(),
-    			configuration.getDBPasswd(),1);
+		NdexDatabase.createNdexDatabase("http://localhost", configuration.getDBURL(), configuration.getDBUser(), configuration.getDBPasswd(), 10);
 		
 		
 //		String networkId = "5c5fa4a7-6376-11e4-98cb-90b11c72aefa"; // is for small corpus
@@ -42,7 +40,7 @@ public class TestXbelExporterApp {
 		ODatabaseDocumentTx db = null;
 		try {
 			
-			db = NdexAOrientDBConnectionPool.getInstance().acquire();
+			db = NdexDatabase.getInstance().getAConnection();
 			NdexTaskModelService  modelService = new NdexJVMDataModelService(db);
 			// initiate the network state
 			initiateStateForMonitoring(modelService, userId, networkId);

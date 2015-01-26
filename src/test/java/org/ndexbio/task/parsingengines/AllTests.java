@@ -52,13 +52,11 @@ public class AllTests {
 	    	configuration = Configuration.getInstance();
 	    	
 	    	//and initialize the db connections
-	    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-	    			configuration.getDBURL(),
+			db = NdexDatabase.createNdexDatabase(configuration.getHostURI(),
+					configuration.getDBURL(),
 	    			configuration.getDBUser(),
-	    			configuration.getDBPasswd(),1);
-	    	
-	    	db = new NdexDatabase(configuration.getHostURI());
-	    	
+	    			configuration.getDBPasswd(), 10);
+			
 	    	testList = new ArrayList<> (100);
 
 	    	try (Reader in = new FileReader(testFileDirectory + "network_test_file_list.csv")) {
@@ -98,7 +96,6 @@ public class AllTests {
 	  @AfterClass 
 	  public static void tearDownClass() { 
 			db.close();
-			NdexAOrientDBConnectionPool.close();
       }
 
 	  

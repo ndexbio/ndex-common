@@ -32,13 +32,10 @@ public class BioPAXRoundTripTest {
     	Configuration configuration = Configuration.getInstance();
     	
     	//and initialize the db connections
-    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-    			configuration.getDBURL(),
+		NdexDatabase.createNdexDatabase(configuration.getHostURI(),
+				configuration.getDBURL(),
     			configuration.getDBUser(),
-    			configuration.getDBPasswd(),1);
-    	
-    	
-		NdexDatabase db = new NdexDatabase(configuration.getHostURI());
+    			configuration.getDBPasswd(), 10);
 		
 		// Parse and import the original file
 		String user = "cjtest";
@@ -46,13 +43,13 @@ public class BioPAXRoundTripTest {
 		BioPAXParser parser = new BioPAXParser(
 				"/opt/biopax/L3/" + originalFileName + ".owl", 
 				user, 
-				db);
+				NdexDatabase.getInstance());
 		
 		parser.parseFile();
 		String networkUUIDString = parser.getNetworkUUID();
 		
 		// Export the NDEx network
-		ODatabaseDocumentTx connection = db.getAConnection();
+		ODatabaseDocumentTx connection = NdexDatabase.getInstance().getAConnection();
 		BioPAXNetworkExporter exporter = new BioPAXNetworkExporter(connection);
 		String exportedFilePath = "/opt/biopax/L3/" + originalFileName + "_export" + ".owl";
 		FileOutputStream out = new FileOutputStream (exportedFilePath);
@@ -63,7 +60,7 @@ public class BioPAXRoundTripTest {
 		BioPAXParser parser2 = new BioPAXParser(
 				exportedFilePath, 
 				user, 
-				db);
+				NdexDatabase.getInstance());
 		
 		parser2.parseFile();
 		
@@ -76,9 +73,10 @@ public class BioPAXRoundTripTest {
 		System.out.println("referenceProps: " + parser.getReferencePropertyCount() + " -> " + parser2.getReferencePropertyCount());
 		
 		
-
-		db.close();
-		NdexAOrientDBConnectionPool.close();
+        connection.close();
+        out.close();
+		NdexDatabase.close();
+		
 	}
 
 	@AfterClass

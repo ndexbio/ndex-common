@@ -27,6 +27,7 @@ import org.biopax.paxtools.model.level3.UnificationXref;
 import org.biopax.paxtools.model.level3.XReferrable;
 import org.biopax.paxtools.model.level3.Xref;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
@@ -330,7 +331,7 @@ public class BioPAXNetworkExporter {
 	// 4b91eadb-5c84-11e4-9ec0-040ccee25000
 
 	public static  void main (String[] args) throws NdexException, ParserConfigurationException, TransformerException, ClassCastException, SAXException, IOException {
-		ODatabaseDocumentTx db = NdexAOrientDBConnectionPool.getInstance().acquire();
+		ODatabaseDocumentTx db = NdexDatabase.getInstance().getAConnection();
 
 		BioPAXNetworkExporter exporter = new BioPAXNetworkExporter(db);
 		/*

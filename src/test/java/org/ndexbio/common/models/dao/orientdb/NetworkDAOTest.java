@@ -10,6 +10,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
@@ -29,8 +30,9 @@ public class NetworkDAOTest {
 	@BeforeClass
     public static void initializeTests() throws NdexException 
     {
-    	NdexAOrientDBConnectionPool p = NdexAOrientDBConnectionPool.getInstance();
-    	db = p.acquire();
+		db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10)
+				.getAConnection();
+    	
     }
 	
 	@AfterClass

@@ -62,12 +62,13 @@ public class NdexTaskService
 		}
     	
     }
-    
+  
+    /*
     public Task getTask(String taskUUID) throws ObjectNotFoundException, NdexException {
     	TaskDAO dao = new TaskDAO(NdexAOrientDBConnectionPool.getInstance().acquire());
     	return dao.getTaskByUUID(taskUUID);
     }
-
+*/
     
     
     public List<Task> stageQueuedTasks() throws NdexException

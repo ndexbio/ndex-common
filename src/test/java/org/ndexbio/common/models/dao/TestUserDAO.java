@@ -38,7 +38,7 @@ public class TestUserDAO {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		// For acquiring connections from the pool
-		database = new NdexDatabase("http://localhost");
+		database = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10);
 		
 		// For use with the Orient Document API
 		localConnection = database.getAConnection();

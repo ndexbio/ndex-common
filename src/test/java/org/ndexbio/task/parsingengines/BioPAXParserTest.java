@@ -27,22 +27,18 @@ public class BioPAXParserTest {
     	Configuration configuration = Configuration.getInstance();
     	
     	//and initialize the db connections
-    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-    			configuration.getDBURL(),
+    	NdexDatabase db = NdexDatabase.createNdexDatabase(configuration.getHostURI(),
+				configuration.getDBURL(),
     			configuration.getDBUser(),
-    			configuration.getDBPasswd(),1);
+    			configuration.getDBPasswd(), 1);
     	
     	
-		NdexDatabase db = new NdexDatabase(configuration.getHostURI());
-		
 		String user = "cjtest";
 		BioPAXParser parser = new BioPAXParser("/opt/biopax/L3/testnfkb.owl", user, 
 				db);
 		parser.parseFile();
-		
 
 		db.close();
-		NdexAOrientDBConnectionPool.close();
 	}
 
 	@AfterClass

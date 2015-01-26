@@ -60,13 +60,10 @@ public class SifParserTest {
     	Configuration configuration = Configuration.getInstance();
     	
     	//and initialize the db connections
-    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-    			configuration.getDBURL(),
+    	NdexDatabase db = NdexDatabase.createNdexDatabase(configuration.getHostURI(),
+				configuration.getDBURL(),
     			configuration.getDBUser(),
-    			configuration.getDBPasswd(),1);
-    	
-    	
-		NdexDatabase db = new NdexDatabase(configuration.getHostURI());
+    			configuration.getDBPasswd(), 1);
 		
 		String userAccount = "reactomeadmin";
 		SifParser parser = new SifParser("ca-calmodulin-dependent_protein_kinase_activation.SIF", userAccount,
@@ -104,7 +101,6 @@ public class SifParserTest {
 		
 		db.close();
 		
-		NdexAOrientDBConnectionPool.close();
 	} 
 
 }

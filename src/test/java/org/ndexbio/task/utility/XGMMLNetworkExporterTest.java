@@ -15,6 +15,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.User;
@@ -39,11 +40,11 @@ public class XGMMLNetworkExporterTest {
     	configuration = Configuration.getInstance();
     	
     	//and initialize the db connections
-    	NdexAOrientDBConnectionPool.createOrientDBConnectionPool(
-    			configuration.getDBURL(),
+		NdexDatabase.createNdexDatabase(configuration.getHostURI(),
+				configuration.getDBURL(),
     			configuration.getDBUser(),
-    			configuration.getDBPasswd(),1);
-    	
+    			configuration.getDBPasswd(), 10);
+
 
 	}
 
@@ -53,11 +54,11 @@ public class XGMMLNetworkExporterTest {
 	
 	@Test 
 	public void testConcurrency() throws NdexException {
-		ODatabaseDocumentTx conn1 = NdexAOrientDBConnectionPool.getInstance().acquire();
+		ODatabaseDocumentTx conn1 = NdexDatabase.getInstance().getAConnection();
 		UserDAO dao1 = new UserDAO(conn1);
 		
 		User u1 = dao1.getUserByAccountName("cjtest");
-		ODatabaseDocumentTx conn2 = NdexAOrientDBConnectionPool.getInstance().acquire();
+		ODatabaseDocumentTx conn2 = NdexDatabase.getInstance().getAConnection();
 		UserDAO dao2 = new UserDAO(conn2);
 		
 		User u2 = dao2.getUserByAccountName("cjtest");

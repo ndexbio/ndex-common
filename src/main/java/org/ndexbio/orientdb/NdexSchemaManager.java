@@ -36,11 +36,10 @@ public class NdexSchemaManager
     	ODocument  versionDoc = orientDb.getDictionary().get(NdexDbVersionKey); 
     	if( versionDoc != null ) {
     	   if ( versionDoc.field(NdexVField).equals(NdexDbVersion))	
-    		return;
-		throw new NdexException("Another version ("+versionDoc.field(NdexVField)+ 
+    		  return;
+		   throw new NdexException("Another version ("+versionDoc.field(NdexVField)+ 
 				") of Ndex database found in the database. Please drop it before creating a new one.");
     	}
-//        orientDb.commit();
         
         OrientBaseGraph orientDbGraph = new OrientGraph(orientDb);
         orientDbGraph.setAutoScaleEdgeType(true);
