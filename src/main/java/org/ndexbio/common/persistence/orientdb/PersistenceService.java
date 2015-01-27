@@ -61,7 +61,7 @@ public abstract class PersistenceService {
     protected OrientGraph graph;
 	protected ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 
-    public PersistenceService(NdexDatabase db) {
+    public PersistenceService(NdexDatabase db) throws NdexException {
 		this.database = db;
 		this.localConnection = this.database.getAConnection();
 		this.graph = new OrientGraph(this.localConnection,false);

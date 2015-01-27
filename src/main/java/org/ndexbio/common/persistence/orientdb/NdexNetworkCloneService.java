@@ -64,7 +64,7 @@ public class NdexNetworkCloneService extends PersistenceService {
      * 2. Create New network
      */
     
-	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName) {
+	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName) throws NdexException {
         super(db);
 		
 		Preconditions.checkNotNull(sourceNetwork.getName(),"A network title is required");

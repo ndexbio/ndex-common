@@ -99,7 +99,7 @@ public class NdexPersistenceService extends PersistenceService {
      * 2. Create New network
      */
     
-	public NdexPersistenceService(NdexDatabase db) {
+	public NdexPersistenceService(NdexDatabase db) throws NdexException {
 		super(db);
 
 		this.network = null;
@@ -123,7 +123,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 
 	
-	public NdexPersistenceService(NdexDatabase db, UUID networkID)  {
+	public NdexPersistenceService(NdexDatabase db, UUID networkID) throws NdexException  {
 		super(db);
 		
 		this.networkDoc = this.networkDAO.getNetworkDocByUUID(networkID);

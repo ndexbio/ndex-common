@@ -6,17 +6,16 @@ import java.util.logging.Logger;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 public class NdexDatabase {
 	
 	private static NdexDatabase INSTANCE = null;
 	
-	private OrientGraphFactory pool;
+	private OPartitionedDatabasePool pool;
 	
 	private ODatabaseDocumentTx ndexDatabase;  // this connection is used for transactions in this database object.
 	
@@ -42,14 +41,11 @@ public class NdexDatabase {
 	private NdexDatabase(String HostURI, String dbURL, String dbUserName,
 			String dbPassword, int size) throws NdexException {
 		
-		pool = new OrientGraphFactory(dbURL, dbUserName, dbPassword).setupPool(1,size);
-		pool.setAutoScaleEdgeType(true);
-		pool.setEdgeContainerEmbedded2TreeThreshold(40);
-		pool.setUseLightweightEdges(true);
+		pool = new OPartitionedDatabasePool(dbURL, dbUserName, dbPassword,size);
 	    
 	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " ("+ size + ") created.");
 
-	    ndexDatabase = pool.getDatabase();
+	    ndexDatabase = pool.acquire();
 	    
 		dictionary = ndexDatabase.getDictionary();
 		
@@ -118,12 +114,15 @@ public class NdexDatabase {
     
     public static synchronized void close () {
     	if ( INSTANCE != null ) {
+    		logger.info("Closing database.");
     		INSTANCE.ndexDatabase.commit();
     		INSTANCE.ndexDatabase.close();
     		INSTANCE.pool.close();
     		INSTANCE.pool = null;
     		INSTANCE = null;
-    	} 
+    		logger.info("Database closed.");
+    	} else 
+    		logger.info("Database is already closed.");
     }
     
     /**
@@ -131,11 +130,27 @@ public class NdexDatabase {
      */
     public void commit() {
     	ndexDatabase.commit();
-//    	ndexDatabase.begin();
     }
     
-    public ODatabaseDocumentTx getAConnection() {
-    	return pool.getDatabase();
+    public ODatabaseDocumentTx getAConnection() throws NdexException {
+//    	logger.info("available conn: " + pool.getAvailableConnections());
+  
+    	for ( int i = 0 ; i < 3000; i ++) {
+    		try { 
+    			return pool.acquire();
+    		} catch (java.lang.IllegalStateException e) {
+    			if ( e.getMessage().equals("You have reached maximum pool size for given partition")) {
+					logger.warning("DB connection pool is full, wait and retry " + i);
+    				try {
+						Thread.sleep(150);
+					} catch (InterruptedException e1) {
+						throw new NdexException ("Interrupted in getAConnection.");
+					}
+    			} else 
+    				throw e;
+    		}
+    	}
+    	throw new NdexException ("Timeout in getting db connection from pool.");
     }
 
   /*  
