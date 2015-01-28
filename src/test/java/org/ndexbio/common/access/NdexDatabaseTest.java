@@ -29,7 +29,7 @@ public class NdexDatabaseTest {
 		foo = TermUtilities.getNdexQName("ab(c:3fg)");
 		System.out.println(foo);
 
-		NdexDatabase.createNdexDatabase("http://localhost/", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 2);
+		NdexDatabase.createNdexDatabase("http://localhost/", "plocal:/opt/ndex/orientdb/databases/ndextest", "admin", "admin", 2);
 		db = NdexDatabase.getInstance();
 	}
 
@@ -38,7 +38,7 @@ public class NdexDatabaseTest {
 		db.close();
 	}
 
-/*	
+	
 	@Test
 	public void test() {
 		System.out.println("testing get id function.");
@@ -62,7 +62,7 @@ public class NdexDatabaseTest {
 		}
 
 	}
-*/	
+	
 	
 	@Test
 	public void testleaks1() throws NdexException {

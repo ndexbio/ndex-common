@@ -1,10 +1,8 @@
 package org.ndexbio.task;
 
 import java.io.FileReader;
-import java.util.Hashtable;
 import java.util.Properties;
 
-import javax.naming.Context;
 import javax.naming.InitialContext;
 
 import org.ndexbio.model.exceptions.NdexException;

@@ -182,6 +182,16 @@ public class NetworkDAO extends OrientdbDAO {
         
  		return counter;
 	}
+
+	public int logicalDeleteNetwork (String uuid) throws ObjectNotFoundException, NdexException {
+		ODocument networkDoc = getRecordById(UUID.fromString(uuid), NdexClasses.Network);
+
+		if ( networkDoc != null) {
+		   networkDoc.field(NdexClasses.Network_P_isComplete , (Object) null).save();
+		}
+ 		return 0;
+	}
+	
 	
 	public int deleteNetworkElements(String UUID) {
 		int counter = 0;
@@ -194,6 +204,10 @@ public class NetworkDAO extends OrientdbDAO {
         	element.reload();
         	graph.removeVertex(graph.getVertex(element));
         	counter ++;
+        	if ( counter % 20000 == 0 ) {
+        		logger.info("Deleted " + counter + " vertexes from network " + UUID);
+        		graph.commit();
+        	}
         }
         return counter;
 	}
