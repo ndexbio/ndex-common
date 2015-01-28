@@ -1297,7 +1297,11 @@ public class NetworkDAO extends OrientdbDAO {
     	nSummary.setNodeCount((int)doc.field(NdexClasses.Network_P_nodeCount));
     	nSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
         nSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
-        nSummary.setIsComplete((boolean)doc.field(NdexClasses.Network_P_isComplete));
+        Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
+        if ( isComplete != null)
+        	nSummary.setIsComplete(isComplete.booleanValue());
+        else 
+        	nSummary.setIsComplete(false);
         nSummary.setIsLocked((boolean)doc.field(NdexClasses.Network_P_isLocked));
         nSummary.setURI(NdexDatabase.getURIPrefix()+ "/network/" + nSummary.getExternalId().toString());
 
