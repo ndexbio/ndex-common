@@ -157,7 +157,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		LinkedList<NetworkSummary> resultHolder = new LinkedList<>(); 
 		
 		for (final ODocument networkDoc : db.browseClass(NdexClasses.Network)) {
-			if ( (boolean)networkDoc.field(NdexClasses.Network_P_isComplete)) {
+			Boolean isComplete = networkDoc.field(NdexClasses.Network_P_isComplete);
+			if ( isComplete !=null && isComplete.booleanValue()) {
 				VisibilityType visibility = 
 							  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
 				if ((simpleNetworkQuery.getCanRead()? 
@@ -214,7 +215,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
-			if ( (boolean)doc.field(NdexClasses.Network_P_isComplete)) {
+			Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
+			if ( isComplete != null && isComplete.booleanValue()) {
 				if (isSearchable(doc, userRID, adminUserRID, simpleNetworkQuery.getCanRead(), 
 						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 					resultIDSet.add(dId.getIdentity());
@@ -248,7 +250,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				  ODocument doc = (ODocument) networkRec;
 			    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-		            if ( (boolean)doc.field(NdexClasses.Network_P_isComplete) && 
+					Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);   
+		            if ( isComplete !=null && isComplete.booleanValue() && 
 		            	  isSearchable(doc, userRID, adminUserRID,simpleNetworkQuery.getCanRead(), 
 		  						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 							resultIDSet.add(id);
@@ -281,7 +284,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			  ODocument doc = (ODocument) networkRec;
 				    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-			            if( (boolean)doc.field(NdexClasses.Network_P_isComplete) &&
+					    Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
+			            if( isComplete !=null && isComplete.booleanValue() &&
 			               (isSearchable(doc, userRID,adminUserRID,simpleNetworkQuery.getCanRead(), 
 									simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) ) {
 								resultIDSet.add(id);
