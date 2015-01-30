@@ -87,7 +87,7 @@ public class BioPAXNetworkExporter {
 			Long elementId = entry.getKey();
 			Citation citation = entry.getValue();
 			String rdfId = PropertyHelpers.getCitationPropertyValueString(network, citation, "rdfId");
-			System.out.println("Citation: " + elementId + " rdfId: " + rdfId);
+//			System.out.println("Citation: " + elementId + " rdfId: " + rdfId);
 			PublicationXref px = bioPAXModel.addNew(PublicationXref.class, rdfId);
 
 			String idType = citation.getIdType();
@@ -191,7 +191,7 @@ public class BioPAXNetworkExporter {
 		UnificationXref bpe = bioPAXModel.addNew(UnificationXref.class, rdfId);
 		processProperties(bpe, node.getProperties(), UnificationXref.class);
 		Long termId = node.getRepresents();
-		System.out.println("UnificationXref: " + termId + " rdfId: " + rdfId);
+//		System.out.println("UnificationXref: " + termId + " rdfId: " + rdfId);
 		this.termIdToUnificationXrefMap.put(termId, bpe);
 	}
 
@@ -201,7 +201,7 @@ public class BioPAXNetworkExporter {
 		RelationshipXref bpe = bioPAXModel.addNew(RelationshipXref.class, rdfId);
 		processProperties(bpe, node.getProperties(),RelationshipXref.class);
 		Long termId = node.getRepresents();
-		System.out.println("RelationshipXref: " + termId + " rdfId: " + rdfId);
+//		System.out.println("RelationshipXref: " + termId + " rdfId: " + rdfId);
 		this.termIdToRelationshipXrefMap.put(termId, bpe);
 	}
 
@@ -217,7 +217,7 @@ public class BioPAXNetworkExporter {
 				String value = pvp.getValue();
 				PropertyEditor editor = editorMap.getEditorForProperty(propertyString, bioPAXClass);
 				if (editor != null){
-					System.out.println("    Property: " + propertyString + " value: " + value);
+//					System.out.println("    Property: " + propertyString + " value: " + value);
 					editor.setValueToBean(value, bpe);
 				} else {
 					throw new NdexException("Can't export property " + propertyString + " to element class " + bioPAXClass);

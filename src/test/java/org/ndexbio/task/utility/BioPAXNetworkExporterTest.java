@@ -44,7 +44,7 @@ public class BioPAXNetworkExporterTest {
 		ODatabaseDocumentTx connection = db.getAConnection();
 		BioPAXNetworkExporter exporter = new BioPAXNetworkExporter(connection);
 		
-		exporter.exportNetwork(UUID.fromString("fd279035-62ad-11e4-901d-15b0c2670dee"), System.out);
+		exporter.exportNetwork(UUID.fromString("08d5bbbb-a8d6-11e4-9c18-90b11c72aefa"), System.out);
 		
 		connection.close();
 		db.close();
