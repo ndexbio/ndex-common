@@ -3,8 +3,6 @@ package org.ndexbio.task.parsingengines;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -34,8 +32,6 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
-import org.ndexbio.common.util.TermStringType;
-import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
@@ -46,11 +42,9 @@ import org.ndexbio.model.tools.PropertyHelpers;
 import org.ndexbio.model.tools.ProvenanceHelpers;
 import org.ndexbio.task.parsingengines.IParsingEngine;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 
 public class BioPAXParser implements IParsingEngine {
 	private final File bioPAXFile;
@@ -144,7 +138,7 @@ public class BioPAXParser implements IParsingEngine {
 
 			this.persistenceService.setNetworkProvenance(provEntity);
 			
-			this.persistenceService.setNetworkVisibility(VisibilityType.PUBLIC);
+			this.persistenceService.setNetworkVisibility(VisibilityType.PRIVATE);
 
 			// close database connection
 			this.persistenceService.persistNetwork();
@@ -199,6 +193,10 @@ public class BioPAXParser implements IParsingEngine {
 				// Process all Other Elements to create Node objects
 				this.processElementToNode(bpe);
 			}
+			if ( entityCount % 2000 == 0 ) {
+				logger.info("Commiting " + entityCount + " entities in BioPAX loader.");
+				this.persistenceService.commit();
+			}
 		}
 		//
 		// Iterate over all BioPAX elements to
@@ -233,7 +231,7 @@ public class BioPAXParser implements IParsingEngine {
 		String rdfId = bpe.getRDFId();
 		// Get the elementId for the Node corresponding to this rdfId
 		Long nodeId = this.getElementIdByRdfId(rdfId);
-		System.out.println("_____________" + nodeId + "________________");
+//		System.out.println("_____________" + nodeId + "________________");
 		
 		List<NdexPropertyValuePair> literalProperties = new ArrayList<NdexPropertyValuePair>();
 
@@ -297,9 +295,9 @@ public class BioPAXParser implements IParsingEngine {
 			}
 
 		}
-		for (NdexPropertyValuePair pvp : literalProperties){
+/*		for (NdexPropertyValuePair pvp : literalProperties){
 			System.out.println("        Property: " + nodeId + " | " + pvp.getPredicateString() + " " + pvp.getValue());
-		}
+		} */
 		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", bpe.getModelInterface().getSimpleName()));
 		this.persistenceService.setNodeProperties(nodeId, literalProperties, null);
 
@@ -315,7 +313,7 @@ public class BioPAXParser implements IParsingEngine {
 		Long supportId = null;
 		Long citationId = null;
 		Map<String,String> annotation = null;
-		System.out.println("       Edge: " + subjectNodeId + " | " + predicateId + " (" + editor.getProperty() + ") | " + objectNodeId);
+//		System.out.println("       Edge: " + subjectNodeId + " | " + predicateId + " (" + editor.getProperty() + ") | " + objectNodeId);
 		this.persistenceService.createEdge(subjectNodeId, objectNodeId, predicateId, supportId, citationId, annotation);		
 	}
 	
@@ -330,7 +328,7 @@ public class BioPAXParser implements IParsingEngine {
 			UnificationXref xref, 
 			Long nodeId) throws ExecutionException, NdexException {
 		Long termId = getElementIdByRdfId(xref.getRDFId());
-		System.out.println("       Alias: " + nodeId + " -> " + termId);
+//		System.out.println("       Alias: " + nodeId + " -> " + termId);
 		this.persistenceService.addAliasToNode(nodeId,termId);	
 	}
 
@@ -339,7 +337,7 @@ public class BioPAXParser implements IParsingEngine {
 			RelationshipXref xref, 
 			Long nodeId) throws ExecutionException {
 		Long termId = getElementIdByRdfId(xref.getRDFId());
-		System.out.println("       Related: " + nodeId + " -> " + termId);
+//		System.out.println("       Related: " + nodeId + " -> " + termId);
 		this.persistenceService.addRelatedTermToNode(nodeId, termId);
 	}
 
@@ -348,7 +346,7 @@ public class BioPAXParser implements IParsingEngine {
 			PublicationXref xref, 
 			Long nodeId) throws ExecutionException, NdexException {
 		Long citationId = getElementIdByRdfId(xref.getRDFId());
-		System.out.println("       citation: " + nodeId + " -> " + citationId);
+//		System.out.println("       citation: " + nodeId + " -> " + citationId);
 		this.persistenceService.addCitationToElement(nodeId, citationId, NdexClasses.Node);
 	}
 
@@ -407,12 +405,12 @@ public class BioPAXParser implements IParsingEngine {
 			// bad xref with no id!
 			throw new NdexException("no id for xref " + rdfId);
 		}
-		System.out.println("BaseTerm (" + className + "): " + rdfId + " -> " + termId);
+//		System.out.println("BaseTerm (" + className + "): " + rdfId + " -> " + termId);
 		// make the node represent the term
 		// This will allow reconstruction of the links to xrefs when outputting bioPAX
 		this.persistenceService.setNodeRepresentTerm(nodeId, termId);
 		this.persistenceService.setNodeProperties(nodeId, literalProperties, null);
-		System.out.println("XREF Node: " + nodeId + " -> " + rdfId + ": " + simpleName);
+//		System.out.println("XREF Node: " + nodeId + " -> " + rdfId + ": " + simpleName);
 		this.mapRdfIdToElementId(rdfId, termId);
 		
 	}
@@ -540,8 +538,8 @@ public class BioPAXParser implements IParsingEngine {
 		
 		// Add properties to the citation
 		
-		this.persistenceService.setCitationProperties(citationId, citationProperties, null);		System.out.println("Citation: " + rdfId + " -> " + citationId);
-
+		this.persistenceService.setCitationProperties(citationId, citationProperties, null);		
+//		System.out.println("Citation: " + rdfId + " -> " + citationId);
 		this.mapRdfIdToElementId(rdfId, citationId);
 
 	}

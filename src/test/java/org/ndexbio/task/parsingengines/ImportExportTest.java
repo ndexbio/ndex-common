@@ -20,6 +20,7 @@ import org.ndexbio.model.object.network.Node;
 import org.ndexbio.task.event.NdexNetworkState;
 import org.ndexbio.task.service.NdexJVMDataModelService;
 import org.ndexbio.task.service.NdexTaskModelService;
+import org.ndexbio.task.utility.BioPAXNetworkExporter;
 import org.ndexbio.task.utility.XGMMLNetworkExporter;
 import org.ndexbio.xbel.exporter.XbelNetworkExporter;
 import org.xml.sax.SAXException;
@@ -121,7 +122,13 @@ public class ImportExportTest {
 			  exporter.exportNetwork(networkID,out);
 			  out.close();
               
-		  } else if ( m.srcFormat == NetworkSourceFormat.BEL) {
+		  }	else if ( m.srcFormat == NetworkSourceFormat.BIOPAX) {
+			  BioPAXNetworkExporter exporter = new BioPAXNetworkExporter(conn);
+			  try (FileOutputStream out = new FileOutputStream (networkID.toString())) {
+				  exporter.exportNetwork(networkID,out);
+			  }	  
+		  }
+		  else if ( m.srcFormat == NetworkSourceFormat.BEL) {
 				NdexTaskModelService  modelService = new NdexJVMDataModelService(conn);
 
 				// initiate the network state
@@ -147,7 +154,9 @@ public class ImportExportTest {
 			  parser = new XbelParser(testFile,AllTests.testUser, AllTests.db);
 		  } else if (m.srcFormat == NetworkSourceFormat.SIF) {
 			  parser = new SifParser(testFile,AllTests.testUser, AllTests.db, FilenameUtils.getBaseName( m.fileName) );
-		  } else
+		  } else if ( m.srcFormat == NetworkSourceFormat.BIOPAX) {
+			  parser = new BioPAXParser ( testFile, AllTests.testUser, AllTests.db, FilenameUtils.getBaseName( m.fileName));
+		  } else 
 			  throw new Exception ("unsupported source format " + m.srcFormat);
 		  
 		  parser.parseFile();

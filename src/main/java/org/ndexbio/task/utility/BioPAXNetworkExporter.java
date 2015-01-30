@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 import java.util.UUID;
 
@@ -24,9 +23,6 @@ import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.PublicationXref;
 import org.biopax.paxtools.model.level3.RelationshipXref;
 import org.biopax.paxtools.model.level3.UnificationXref;
-import org.biopax.paxtools.model.level3.XReferrable;
-import org.biopax.paxtools.model.level3.Xref;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.exceptions.NdexException;
@@ -50,23 +46,23 @@ public class BioPAXNetworkExporter {
 	private Map<Long, UnificationXref> termIdToUnificationXrefMap;
 	private Map<Long, RelationshipXref> termIdToRelationshipXrefMap;
 
-	public BioPAXNetworkExporter (ODatabaseDocumentTx db) throws ParserConfigurationException {
+	public BioPAXNetworkExporter (ODatabaseDocumentTx db) {
 		dao = new NetworkDAO (db);
 		bioPAXFactory = BioPAXLevel.L3.getDefaultFactory();
 		bioPAXIOHandler = new SimpleIOHandler();
 
 	}
 
-	public void exportNetwork(UUID networkId, OutputStream output) throws NdexException, ClassCastException, IOException {
+	public void exportNetwork(UUID networkId, OutputStream output) throws NdexException, ClassCastException {
 		System.out.println("Finding network to export by " + networkId);
 		Network network = dao.getNetworkById(networkId);
 		if (null == network){
 			throw new NdexException("No Network found by: " + networkId);
 		}
 		Model bioPAXModel = bioPAXFactory.createModel();
-		elementIdToBioPAXElementMap = new HashMap<Long, BioPAXElement>();
-		termIdToUnificationXrefMap = new HashMap<Long, UnificationXref>();
-		termIdToRelationshipXrefMap = new HashMap<Long, RelationshipXref>();
+		elementIdToBioPAXElementMap = new HashMap<>();
+		termIdToUnificationXrefMap = new HashMap<>();
+		termIdToRelationshipXrefMap = new HashMap<>();
 		setUpModel(bioPAXModel, network);
 		processCitations(bioPAXModel, network);
 		processXREFNodes(bioPAXModel, network);
