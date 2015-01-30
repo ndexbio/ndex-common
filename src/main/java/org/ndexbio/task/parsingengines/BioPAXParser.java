@@ -70,7 +70,7 @@ public class BioPAXParser implements IParsingEngine {
 
 	private NdexPersistenceService persistenceService;
 
-	public BioPAXParser(String fn, String ownerName, NdexDatabase db)
+	public BioPAXParser(String fn, String ownerName, NdexDatabase db, String networkName)
 			throws Exception {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(fn),
 				"A filename is required");
@@ -84,11 +84,11 @@ public class BioPAXParser implements IParsingEngine {
 					.getResource(fn).toURI());
 		this.bioPAXURI = bioPAXFile.toURI().toString();
 		this.persistenceService = new NdexPersistenceService(db);
-		this.rdfIdToElementIdMap = new HashMap<String, Long>();
+		this.rdfIdToElementIdMap = new HashMap<>();
 
-		String title = Files.getNameWithoutExtension(this.bioPAXFile.getName());
+        //String title = Files.getNameWithoutExtension(this.bioPAXFile.getName());
 
-		persistenceService.createNewNetwork(ownerName, title, null);
+		persistenceService.createNewNetwork(ownerName, networkName, null);
 
 	}
 
@@ -168,10 +168,12 @@ public class BioPAXParser implements IParsingEngine {
 	}
 
 	private void processBioPAX(File f) throws Exception {
-		FileInputStream fin = new FileInputStream(f);
-		BioPAXIOHandler handler = new SimpleIOHandler();
-		Model model = handler.convertFromOWL(fin);
-		this.loadBioPAXModel(model);
+		try ( FileInputStream fin = new FileInputStream(f) ) 
+		{
+			BioPAXIOHandler handler = new SimpleIOHandler();
+			Model model = handler.convertFromOWL(fin);
+			loadBioPAXModel(model);
+		}
 	}
 
 	private void loadBioPAXModel(Model model) throws Exception {

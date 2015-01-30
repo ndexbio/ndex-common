@@ -2,6 +2,7 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
@@ -14,6 +15,7 @@ import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.FileFormat;
 
 import com.google.common.collect.Lists;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -26,7 +28,7 @@ public class TaskDAO extends OrientdbDAO implements AutoCloseable {
 
 
 	private OrientBaseGraph graph;
-//	private static final Logger logger = Logger.getLogger(TaskDAO.class.getName());
+	private static final Logger logger = Logger.getLogger(TaskDAO.class.getName());
 	
 	public TaskDAO (ODatabaseDocumentTx dbConn) {
 		super(dbConn);
@@ -183,15 +185,27 @@ public class TaskDAO extends OrientdbDAO implements AutoCloseable {
     	task.setStatus(status);
     	return task;
     }
-    //TODO: make it thread safe
+
     public int deleteTask (UUID taskID) throws ObjectNotFoundException, NdexException {
         ODocument d = this.getRecordByExternalId(taskID);
         String status = d.field(NdexClasses.Task_P_status);
         if ( status.equals(Status.PROCESSING.toString()) || status.equals(Status.STAGED.toString()))
         	throw new NdexException ("Can't delete a task when it is running.");
+        
+        
         OrientVertex v = graph.getVertex(d);
-   		v.remove();
-    			           
+    			   
+   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+   			try	{
+   		   		v.remove();
+  				break;
+   			} catch(ONeedRetryException	e)	{
+   				logger.warning("Write conflict when deleting task. Error: " + e.getMessage() +
+   						"\nRetry ("+ retry + ") deleting task " + taskID.toString() );
+   				v.reload();
+   			}
+   		}
+   		
     	return 1;		           
     }
     

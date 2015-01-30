@@ -31,7 +31,7 @@ public class FileUploadTask extends NdexTask {
     private NdexDatabase db;
 	
 	
-	public FileUploadTask(Task itask, NdexDatabase db) throws IllegalArgumentException,
+	public FileUploadTask(Task itask, NdexDatabase ndexDb) throws IllegalArgumentException,
 			SecurityException, NdexException {
 		super(itask);
 		this.filename = this.getTask().getResource();
@@ -39,7 +39,7 @@ public class FileUploadTask extends NdexTask {
 		if (!(new File(this.filename).isFile())) {
 			throw new NdexException("File " + this.filename + " does not exist");
 		}
-		this.db = db;
+		this.db = ndexDb;
 	}
 
 	@Override
@@ -78,6 +78,7 @@ public class FileUploadTask extends NdexTask {
 			} catch (Exception e) {
 				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
 				logger.error(e.getMessage());
+				e.printStackTrace();
 			}
 			break;
 		case ("XGMML"):
@@ -89,6 +90,19 @@ public class FileUploadTask extends NdexTask {
 			} catch (Exception e) {
 				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
 				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+			break;
+		case ("OWL"):
+			try {
+				final IParsingEngine fileParser = new BioPAXParser(
+						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName);
+				fileParser.parseFile();
+				this.taskStatus = Status.COMPLETED;
+			} catch (Exception e) {
+				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
+				logger.error(e.getMessage());
+				e.printStackTrace();
 			}
 			break;
 		case ("XBEL"):
@@ -109,6 +123,7 @@ public class FileUploadTask extends NdexTask {
 			} catch (Exception e) {
 				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
 				logger.error(e.getMessage());
+				e.printStackTrace();
 			}
 			break;
 		case ("XLSX"):
@@ -121,6 +136,7 @@ public class FileUploadTask extends NdexTask {
 			} catch (Exception e) {
 				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
 				logger.error(e.getMessage());
+				e.printStackTrace();
 			}
 			break;
 		default:		

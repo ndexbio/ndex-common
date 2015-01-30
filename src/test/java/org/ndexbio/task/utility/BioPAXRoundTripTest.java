@@ -11,7 +11,6 @@ import java.util.UUID;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.task.Configuration;
 import org.ndexbio.task.parsingengines.BioPAXParser;
@@ -43,7 +42,7 @@ public class BioPAXRoundTripTest {
 		BioPAXParser parser = new BioPAXParser(
 				"/opt/biopax/L3/" + originalFileName + ".owl", 
 				user, 
-				NdexDatabase.getInstance());
+				NdexDatabase.getInstance(), originalFileName);
 		
 		parser.parseFile();
 		String networkUUIDString = parser.getNetworkUUID();
@@ -60,7 +59,7 @@ public class BioPAXRoundTripTest {
 		BioPAXParser parser2 = new BioPAXParser(
 				exportedFilePath, 
 				user, 
-				NdexDatabase.getInstance());
+				NdexDatabase.getInstance(), originalFileName);
 		
 		parser2.parseFile();
 		

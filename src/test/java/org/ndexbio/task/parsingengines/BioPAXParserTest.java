@@ -35,7 +35,7 @@ public class BioPAXParserTest {
     	
 		String user = "cjtest";
 		BioPAXParser parser = new BioPAXParser("/opt/biopax/L3/testnfkb.owl", user, 
-				db);
+				db, "testnfkb.owl");
 		parser.parseFile();
 
 		db.close();
