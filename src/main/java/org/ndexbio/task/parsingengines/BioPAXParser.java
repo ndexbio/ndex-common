@@ -22,6 +22,7 @@ import org.biopax.paxtools.controller.SimpleEditorMap;
 import org.biopax.paxtools.io.BioPAXIOHandler;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.BioPAXElement;
+import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.PublicationXref;
 import org.biopax.paxtools.model.level3.RelationshipXref;
@@ -57,6 +58,8 @@ public class BioPAXParser implements IParsingEngine {
 	public int rXrefCount;
 	public int literalPropertyCount;
 	public int referencePropertyCount;
+	
+	EditorMap editorMap ;
 
 	private static Logger logger = Logger.getLogger("BioPAXParser");
 	
@@ -82,6 +85,8 @@ public class BioPAXParser implements IParsingEngine {
 
         //String title = Files.getNameWithoutExtension(this.bioPAXFile.getName());
 
+		editorMap =  SimpleEditorMap.L3;
+		
 		persistenceService.createNewNetwork(ownerName, networkName, null);
 
 	}
@@ -166,6 +171,7 @@ public class BioPAXParser implements IParsingEngine {
 		{
 			BioPAXIOHandler handler = new SimpleIOHandler();
 			Model model = handler.convertFromOWL(fin);
+			
 			loadBioPAXModel(model);
 		}
 	}
@@ -178,7 +184,7 @@ public class BioPAXParser implements IParsingEngine {
 		networkProperties.add(xmlBaseProp);	
 		this.persistenceService.setNetworkProperties(networkProperties, null);
 		addBioPAXNamespaces(model);
-
+		
 		Set<BioPAXElement> elementSet = model.getObjects();
 		//
 		// Iterate over all elements to create Node, Citation and BaseTerm
@@ -193,7 +199,7 @@ public class BioPAXParser implements IParsingEngine {
 				// Process all Other Elements to create Node objects
 				this.processElementToNode(bpe);
 			}
-			if ( entityCount % 2000 == 0 ) {
+			if ( entityCount % 3000 == 0 ) {
 				logger.info("Commiting " + entityCount + " entities in BioPAX loader.");
 				this.persistenceService.commit();
 			}
@@ -242,7 +248,8 @@ public class BioPAXParser implements IParsingEngine {
 		// To access properties requires an EditorMap
 		// to get all editors for the BioPAX element
 		//
-		EditorMap editorMap = SimpleEditorMap.L3;
+		
+//		EditorMap editorMap =  SimpleEditorMap.L2;
 		Set<PropertyEditor> editors = editorMap.getEditorsOf(bpe);
 		//
 		// iterate over the property editors

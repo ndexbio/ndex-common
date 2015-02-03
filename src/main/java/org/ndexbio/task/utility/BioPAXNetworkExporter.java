@@ -280,6 +280,12 @@ public class BioPAXNetworkExporter {
 						if (null == xref) throw new NdexException("Expected to find RelationshipXREF corresponding to termId " + termId);
 						xrefPropertyEditor.setValueToBean(xref, bpe);
 					}
+					
+					// write out citations
+					for (Long citationId: node.getCitationIds()) {
+						BioPAXElement citation = this.elementIdToBioPAXElementMap.get(citationId);
+						xrefPropertyEditor.setValueToBean(citation, bpe);
+					}
 				}
 			}
 		}

@@ -69,7 +69,7 @@ public class ImportExportTest {
 		 String oldNetworkID = networkID.toString();
 		  
 		  logger.info("Started importing exported network.");
-		  parser = importFile ( networkID.toString(), m);
+		  parser = importFile ( System.getProperty("user.dir") + "/"+ networkID.toString(), m);
 		  
   		  
 
@@ -177,7 +177,7 @@ public class ImportExportTest {
 			 assertEquals(n.getEdgeCount(), m.edgeCnt);
 			 assertEquals(n.getEdges().size(), m.edgeCnt);
 			 if (m.basetermCnt >=0 ) {
-				 TreeSet<String> s = new TreeSet<>();
+/*				 TreeSet<String> s = new TreeSet<>();
 
 				 for ( BaseTerm ss : n.getBaseTerms().values()) {
 					 s.add(ss.getName());
@@ -187,7 +187,7 @@ public class ImportExportTest {
 				 for(String si : s) { 
 				   System.out.println(i + "\t" + si);
 				   i++;
-				 }  
+				 } */  
 				 assertEquals(n.getBaseTerms().size(), m.basetermCnt);
 			 } 
 			 if ( m.citationCnt >= 0 )

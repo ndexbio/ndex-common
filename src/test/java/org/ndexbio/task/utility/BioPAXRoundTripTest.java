@@ -38,9 +38,9 @@ public class BioPAXRoundTripTest {
 		
 		// Parse and import the original file
 		String user = "cjtest";
-		String originalFileName = "testnfkb";
+		String originalFileName = "Pathway_1def4b54a5c92d56a6cbad1e0c81dc57";
 		BioPAXParser parser = new BioPAXParser(
-				"/opt/biopax/L3/" + originalFileName + ".owl", 
+				"/home/chenjing/Dropbox/Network_test_files/" + originalFileName + ".owl", 
 				user, 
 				NdexDatabase.getInstance(), originalFileName);
 		
@@ -50,7 +50,7 @@ public class BioPAXRoundTripTest {
 		// Export the NDEx network
 		ODatabaseDocumentTx connection = NdexDatabase.getInstance().getAConnection();
 		BioPAXNetworkExporter exporter = new BioPAXNetworkExporter(connection);
-		String exportedFilePath = "/opt/biopax/L3/" + originalFileName + "_export" + ".owl";
+		String exportedFilePath = "/home/chenjing/Dropbox/Network_test_files/" + originalFileName + "_export" + ".owl";
 		FileOutputStream out = new FileOutputStream (exportedFilePath);
 		
 		exporter.exportNetwork(UUID.fromString(networkUUIDString), out);
