@@ -112,8 +112,7 @@ public class BioPAXParser implements IParsingEngine {
 		this.literalPropertyCount = 0;
 		this.referencePropertyCount = 0;
 		
-		BufferedReader bufferedReader = null;
-		try {
+		try  {
 
 			this.getMsgBuffer()
 					.add("Parsing lines from " + this.getBioPAXURI());
@@ -157,13 +156,7 @@ public class BioPAXParser implements IParsingEngine {
 			this.persistenceService.abortTransaction();
 			throw new NdexException("Error occurred when loading file "
 					+ this.bioPAXFile.getName() + ". " + e.getMessage());
-		} finally {
-			if (bufferedReader != null)
-				try {
-					bufferedReader.close();
-				} catch (IOException e) {
-				}
-		}
+		} 
 	}
 
 	private void processBioPAX(File f) throws Exception {
@@ -209,12 +202,18 @@ public class BioPAXParser implements IParsingEngine {
 		// process all Properties in each Element
 		// to create NDExPropertyValuePair and Edge objects
 		//
+		int counter = 0; 
 		for (BioPAXElement bpe : elementSet) {
 			if (bpe instanceof Xref) {
 				// Skip Xrefs
 			} else {
 				// Process all other Elements
 				this.processElementProperties(bpe);
+				counter ++;
+				if ( counter % 2000 == 0 ) {
+					logger.info("Commiting " + counter + " properities in BioPAX loader.");
+					this.persistenceService.commit();
+				}
 			}
 		}
 		
@@ -222,8 +221,8 @@ public class BioPAXParser implements IParsingEngine {
 
 	private void processElementToNode(BioPAXElement bpe) throws NdexException {
 		String rdfId = bpe.getRDFId();
-		String className = bpe.getClass().getName();
-		String simpleName = bpe.getModelInterface().getSimpleName();
+//		String className = bpe.getClass().getName();
+//		String simpleName = bpe.getModelInterface().getSimpleName();
 		//System.out.println("Element To Node: " + rdfId + ": " + simpleName);
 		// this.persistenceService.
 		// create the node, map the id to the rdfId
@@ -239,10 +238,10 @@ public class BioPAXParser implements IParsingEngine {
 		Long nodeId = this.getElementIdByRdfId(rdfId);
 //		System.out.println("_____________" + nodeId + "________________");
 		
-		List<NdexPropertyValuePair> literalProperties = new ArrayList<NdexPropertyValuePair>();
+		List<NdexPropertyValuePair> literalProperties = new ArrayList<>();
 
-		String className = bpe.getClass().getName();
-		String simpleName = bpe.getModelInterface().getSimpleName();
+//		String className = bpe.getClass().getName();
+//		String simpleName = bpe.getModelInterface().getSimpleName();
 		// System.out.println("Properties for: " + rdfId + ": " + simpleName);
 		//
 		// To access properties requires an EditorMap
@@ -317,11 +316,11 @@ public class BioPAXParser implements IParsingEngine {
 		Long objectNodeId = getElementIdByRdfId(bpe.getRDFId());
 		// Determine the predicate Id from the editor
 		Long predicateId = getPropertyEditorPredicateId(editor);
-		Long supportId = null;
-		Long citationId = null;
-		Map<String,String> annotation = null;
+//		Long supportId = null;
+//		Long citationId = null;
+//		Map<String,String> annotation = null;
 //		System.out.println("       Edge: " + subjectNodeId + " | " + predicateId + " (" + editor.getProperty() + ") | " + objectNodeId);
-		this.persistenceService.createEdge(subjectNodeId, objectNodeId, predicateId, supportId, citationId, annotation);		
+		this.persistenceService.createEdge(subjectNodeId, objectNodeId, predicateId, null, null, null);		
 	}
 	
 	private Long getPropertyEditorPredicateId(PropertyEditor editor) throws ExecutionException{
@@ -377,12 +376,12 @@ public class BioPAXParser implements IParsingEngine {
 	
 	private void processXref(Xref xref) throws NdexException, ExecutionException {
 		String rdfId = xref.getRDFId();
-		String className = xref.getClass().getName();
+//		String className = xref.getClass().getName();
 		String simpleName = xref.getModelInterface().getSimpleName();
 		
 		// Create a node to hold the mapping of the rdfId to a biopax type
 		Long nodeId = this.persistenceService.getNodeIdByName(rdfId);
-		List<NdexPropertyValuePair> literalProperties = new ArrayList<NdexPropertyValuePair>();
+		List<NdexPropertyValuePair> literalProperties = new ArrayList<>();
 		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", simpleName));
 			
 		// These are the Xref properties
@@ -393,7 +392,7 @@ public class BioPAXParser implements IParsingEngine {
 		String xrefDbVersion = xref.getDbVersion();
 		String xrefId = xref.getId();
 		String xrefIdVersion = xref.getIdVersion();
-		Set<XReferrable> refersTo = xref.getXrefOf();
+//		Set<XReferrable> refersTo = xref.getXrefOf();
 		
 		if (null != xrefDb) PropertyHelpers.addNdexProperty("db", xrefDb, literalProperties);
 		if (null != xrefDbVersion) PropertyHelpers.addNdexProperty("dbVersion", xrefDbVersion, literalProperties);
@@ -426,17 +425,17 @@ public class BioPAXParser implements IParsingEngine {
 			throws NdexException, ExecutionException {
 		this.pubXrefCount++;
 		String rdfId = xref.getRDFId();
-		String name = xref.getClass().getName();
+//		String name = xref.getClass().getName();
 		
 		PublicationXref pubXref = (PublicationXref) xref;
 		
-		List<NdexPropertyValuePair> citationProperties = new ArrayList<NdexPropertyValuePair>();
+		List<NdexPropertyValuePair> citationProperties = new ArrayList<>();
 		
 		PropertyHelpers.addNdexProperty("rdfId", rdfId, citationProperties);
 
 		// These are the Xref properties
 		// that we can encode in the Citation
-		Map<String, Object> annotations = pubXref.getAnnotations();
+//		Map<String, Object> annotations = pubXref.getAnnotations();
 		Set<String> authors = pubXref.getAuthor();
 		Set<String> comments = pubXref.getComment();
 		String xrefDb = pubXref.getDb();
@@ -447,7 +446,7 @@ public class BioPAXParser implements IParsingEngine {
 		String xrefTitle = pubXref.getTitle();
 		Set<String> urls = pubXref.getUrl();
 		int year = pubXref.getYear();
-		Set<XReferrable> refersTo = pubXref.getXrefOf();
+//		Set<XReferrable> refersTo = pubXref.getXrefOf();
 
 		/*
 		 * 
@@ -508,7 +507,7 @@ public class BioPAXParser implements IParsingEngine {
 			PropertyHelpers.addNdexProperty("url", url, citationProperties);
 		}
 
-		List<String> contributors = new ArrayList<String>();
+		List<String> contributors = new ArrayList<>();
 		if (null != authors) {
 			for (String author : authors) {
 				contributors.add(author);
@@ -565,15 +564,13 @@ public class BioPAXParser implements IParsingEngine {
 	}
 	
 	private void mapRdfIdToElementId(String rdfId, Long elementId) throws NdexException {
-		Long currentId = this.getElementIdByRdfId(rdfId);
-		if (currentId != null && currentId != elementId){
+		Long previousId = rdfIdToElementIdMap.put(rdfId, elementId);
+		if ( previousId != null && !previousId.equals(elementId)){
 			throw new NdexException(
 					"Attempted to map rdfId = " + rdfId + 
 					" to elementId = " + elementId + 
-					" but it is already mapped to " + currentId);
+					" but it is already mapped to " + previousId);
 		}
-		this.rdfIdToElementIdMap.put(rdfId, elementId);
-
 	}
 
 	public String getNetworkUUID() {

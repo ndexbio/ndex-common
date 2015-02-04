@@ -77,7 +77,7 @@ public class NdexSchemaManager
         	clsAccount.createProperty(NdexClasses.account_P_accountName, OType.STRING);
         	clsAccount.createProperty("password", OType.STRING);
         	clsAccount.createProperty("website", OType.STRING);
-
+        	clsAccount.createProperty(NdexClasses.account_P_oldAcctName, OType.STRING);
         	clsAccount.createIndex(NdexClasses.Index_accountName, 
         			OClass.INDEX_TYPE.UNIQUE, 
         			NdexClasses.account_P_accountName);
@@ -141,6 +141,10 @@ public class NdexSchemaManager
             taskClass.createProperty(NdexClasses.Task_P_progress, OType.INTEGER);
             taskClass.createProperty(NdexClasses.Task_P_taskType, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_resource, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_isDeleted, OType.BOOLEAN);
+            taskClass.createProperty(NdexClasses.Task_P_startTime, OType.DATETIME);
+            taskClass.createProperty(NdexClasses.Task_P_endTime, OType.DATETIME);
+            taskClass.createProperty(NdexClasses.Task_P_message, OType.STRING);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.User);  

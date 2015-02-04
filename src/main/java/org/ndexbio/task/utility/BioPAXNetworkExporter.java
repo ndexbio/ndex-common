@@ -209,7 +209,7 @@ public class BioPAXNetworkExporter {
 			List<NdexPropertyValuePair> properties, 
 			Class<? extends BioPAXElement> bioPAXClass
 			) throws NdexException {
-		System.out.println("Properties for " + bpe.getRDFId());
+//		System.out.println("Properties for " + bpe.getRDFId());
 		EditorMap editorMap = SimpleEditorMap.L3;
 		for (NdexPropertyValuePair pvp : properties){
 			String propertyString = pvp.getPredicateString();
@@ -332,7 +332,7 @@ public class BioPAXNetworkExporter {
 
 	// 4b91eadb-5c84-11e4-9ec0-040ccee25000
 
-	public static  void main (String[] args) throws NdexException, ParserConfigurationException, TransformerException, ClassCastException, SAXException, IOException {
+	public static  void main (String[] args) throws NdexException, ClassCastException {
 		ODatabaseDocumentTx db = NdexDatabase.getInstance().getAConnection();
 
 		BioPAXNetworkExporter exporter = new BioPAXNetworkExporter(db);

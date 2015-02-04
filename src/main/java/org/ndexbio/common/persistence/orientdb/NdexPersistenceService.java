@@ -1,5 +1,6 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -1000,9 +1001,10 @@ public class NdexPersistenceService extends PersistenceService {
 		try {
 			
 			network.setIsComplete(true);
-			getNetworkDoc().field(NdexClasses.Network_P_isComplete,true)
-			  .field(NdexClasses.Network_P_edgeCount, network.getEdgeCount())
-			  .field(NdexClasses.Network_P_nodeCount, network.getNodeCount())
+			getNetworkDoc().fields(NdexClasses.Network_P_isComplete,true,
+					NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
+			        NdexClasses.Network_P_nodeCount, network.getNodeCount(),
+			        NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime() )
 			  .save();
 			
 			this.localConnection.commit();
@@ -1015,7 +1017,7 @@ public class NdexPersistenceService extends PersistenceService {
 				this.localConnection.commit();
 			}
 
-			System.out.println("The new network " + network.getName() + " is complete");
+			logger.info("Finished loading network " + network.getName());
 		} catch (Exception e) {
 			e.printStackTrace();
 			String msg = "unexpected error in persist network. Cause: " + e.getMessage();
@@ -1024,8 +1026,7 @@ public class NdexPersistenceService extends PersistenceService {
 		} finally {
 			graph.shutdown();
 	//		this.database.close();
-			System.out
-					.println("Connection to orientdb database has been closed");
+			logger.info("Connection to orientdb database closed");
 		}
 	}
 	

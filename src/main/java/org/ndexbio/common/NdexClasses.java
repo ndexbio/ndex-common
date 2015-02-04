@@ -43,6 +43,7 @@ public interface NdexClasses {
     public static final String account_E_canRead     = Permissions.READ.toString().toLowerCase();
     public static final String account_E_canEdit     = Permissions.WRITE.toString().toLowerCase();
 	public static final String account_P_accountName = "accountName";
+    public static final String account_P_oldAcctName = "oldAcctName"; 
 	
     public static final String Index_accountName = "index-user-username";
     
@@ -143,10 +144,10 @@ public interface NdexClasses {
     public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
 
     //user
+    
 
 //    public static final String user_E_memberOf        ="member";
 //    public static final String user_E_grp_admin	      = "grpAdmin";
-    
     
     // task
     public static final String Task_P_description = "description";
@@ -156,6 +157,10 @@ public interface NdexClasses {
     public static final String Task_P_taskType = "taskType";
     public static final String Task_P_resource = "resource";
     public static final String Task_P_fileFormat = "format";
+    public static final String Task_P_isDeleted = "isDeleted";
+    public static final String Task_P_startTime = "startTime";
+    public static final String Task_P_endTime   = "endTime";
+    public static final String Task_P_message   = "message";
     
     public static final String Task_E_owner   = "ownedBy";
     
