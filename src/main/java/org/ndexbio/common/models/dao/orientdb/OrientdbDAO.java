@@ -6,12 +6,9 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
-import org.ndexbio.orientdb.NdexSchemaManager;
 
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -21,17 +18,16 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public abstract class OrientdbDAO {
+public abstract class OrientdbDAO implements AutoCloseable {
 
 	public static final int maxRetries = 100; 
 	
 	protected ODatabaseDocumentTx db;
 	private static final Logger logger = Logger.getLogger(OrientdbDAO.class.getName());
 
-	public OrientdbDAO(ODatabaseDocumentTx db) {
-		this.db = db;
+	public OrientdbDAO(ODatabaseDocumentTx connection) {
+		this.db = connection;
 	}
 
 	/*
@@ -132,7 +128,7 @@ public abstract class OrientdbDAO {
 		
 	} 
 	
-	public boolean checkPermission(ORID source, ORID destination, Direction dir, Integer depth, Permissions... permissions) {
+	public static boolean checkPermission(ORID source, ORID destination, Direction dir, Integer depth, Permissions... permissions) {
 		
 		Collection<Object> fields = new ArrayList<>();
 		
@@ -150,6 +146,10 @@ public abstract class OrientdbDAO {
 		return false;
 	}
 	
+	@Override
+	public void close () {
+		db.close();
+	}
 
 
 }

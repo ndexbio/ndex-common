@@ -43,7 +43,8 @@ public interface NdexClasses {
     public static final String account_E_canRead     = Permissions.READ.toString().toLowerCase();
     public static final String account_E_canEdit     = Permissions.WRITE.toString().toLowerCase();
 	public static final String account_P_accountName = "accountName";
-    public static final String account_P_oldAcctName = "oldAcctName"; 
+    public static final String account_P_oldAcctName = "oldAcctName";
+    public static final String account_P_isDeleted   = "isDeleted";
 	
     public static final String Index_accountName = "index-user-username";
     
