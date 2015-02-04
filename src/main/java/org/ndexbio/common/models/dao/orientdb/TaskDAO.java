@@ -54,8 +54,7 @@ public class TaskDAO extends TaskDocDAO {
 		
 		taskDoc = taskDoc.save();
 		
-		UserDAO udao = new UserDAO (db);
-		OrientVertex userV = this.graph.getVertex(udao.getRecordByAccountName(accountName, NdexClasses.User));
+		OrientVertex userV = this.graph.getVertex(getRecordByAccountName(accountName, NdexClasses.User));
 		OrientVertex taskV = graph.getVertex(taskDoc);
 		
    		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
@@ -74,27 +73,29 @@ public class TaskDAO extends TaskDocDAO {
 	}
 
 	
-    public int deleteTask (UUID taskID) throws ObjectNotFoundException, NdexException {
+    public int purgeTask (UUID taskID) throws ObjectNotFoundException, NdexException {
         ODocument d = this.getRecordByExternalId(taskID);
-        String status = d.field(NdexClasses.Task_P_status);
-        if ( status.equals(Status.PROCESSING.toString()) || status.equals(Status.STAGED.toString()))
-        	throw new NdexException ("Can't delete a task when it is running.");
-        
-        
-        OrientVertex v = graph.getVertex(d);
+        boolean isDeleted = d.field(NdexClasses.Task_P_isDeleted);
+ 
+        if ( isDeleted ) {
+            OrientVertex v = graph.getVertex(d);
     			   
-   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
-   			try	{
-   		   		v.remove();
-  				break;
-   			} catch(ONeedRetryException	e)	{
-   				logger.warning("Write conflict when deleting task. Error: " + e.getMessage() +
+     		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+     			try	{
+   		   			v.remove();
+   		   			break;
+     			} catch(ONeedRetryException	e)	{
+     				logger.warning("Write conflict when deleting task. Error: " + e.getMessage() +
    						"\nRetry ("+ retry + ") deleting task " + taskID.toString() );
-   				v.reload();
-   			}
-   		}
+     				v.reload();
+     			}
+     		}
    		
-    	return 1;		           
+     		return 1;
+        } 
+        
+        throw new NdexException ("Only deleted tasks can be purged.");
+        
     }
     
 

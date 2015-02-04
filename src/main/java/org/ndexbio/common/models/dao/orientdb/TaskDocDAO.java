@@ -16,10 +16,12 @@ import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.FileFormat;
 
 import com.google.common.collect.Lists;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class TaskDocDAO extends OrientdbDAO {
 
@@ -150,6 +152,21 @@ public class TaskDocDAO extends OrientdbDAO {
     	  NdexClasses.Task_P_status + " = '"+ Status.STAGED.toString() + "'")).execute();
     }
 
-	
-	public void commit() { db.commit();}
+    public int deleteTask (UUID taskID) throws ObjectNotFoundException, NdexException {
+        ODocument d = this.getRecordByExternalId(taskID);
+       
+   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+   			try	{
+   		        d.fields(NdexClasses.Task_P_isDeleted,  true, 
+   	        		 NdexClasses.ExternalObj_mTime, new Date()).save();
+  				break;
+   			} catch(ONeedRetryException	e)	{
+   				d.reload();
+   			}
+   		}
+   		
+    	return 1;		           
+    }
+
+
 }

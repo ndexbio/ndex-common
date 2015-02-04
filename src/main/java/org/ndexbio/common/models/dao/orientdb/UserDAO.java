@@ -113,7 +113,7 @@ public class UserDAO extends UserDocDAO {
 			if (!safe)
 				throw new NdexException("Cannot orphan groups or networks");
 
-			user.delete();
+			user.field(NdexClasses.account_P_isDeleted, true).save();
 		} catch (Exception e) {
 			logger.severe("Could not delete user from the database");
 			throw new NdexException(e.getMessage());
@@ -122,6 +122,7 @@ public class UserDAO extends UserDocDAO {
 	}
 
 
+	@Override
 	public void commit() {
 		this.graph.commit();
 	}
