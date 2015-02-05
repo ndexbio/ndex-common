@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class TaskDocDAO extends OrientdbDAO {
 
@@ -34,7 +33,7 @@ public class TaskDocDAO extends OrientdbDAO {
 
 	public Task getTaskByUUID(String UUIDStr) throws ObjectNotFoundException, NdexException {
         
-        return getTaskFromDocument(getRecordByExternalId(UUID.fromString(UUIDStr)));
+        return getTaskFromDocument(getRecordByUUID(UUID.fromString(UUIDStr),NdexClasses.Task));
 		
 	}
 	
@@ -135,7 +134,7 @@ public class TaskDocDAO extends OrientdbDAO {
     
     //TODO: looks like we are having racing conditions here. Need to review the usage and make it thread safe.
     public Task updateTaskStatus(Status status, Task task) throws ObjectNotFoundException, NdexException {
-    	ODocument doc = this.getRecordByExternalId(task.getExternalId());
+    	ODocument doc = this.getRecordByUUID(task.getExternalId(), NdexClasses.Task);
 //    	doc.reload();
     	Status s = Status.valueOf((String)doc.field(NdexClasses.Task_P_status));
     	if ( s != status )
@@ -152,7 +151,7 @@ public class TaskDocDAO extends OrientdbDAO {
     }
 
     public int deleteTask (UUID taskID) throws ObjectNotFoundException, NdexException {
-        ODocument d = this.getRecordByExternalId(taskID);
+        ODocument d = this.getRecordByUUID(taskID, NdexClasses.Task);
        
    		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
    			try	{

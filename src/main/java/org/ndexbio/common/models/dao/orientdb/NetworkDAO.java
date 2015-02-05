@@ -155,7 +155,7 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	public boolean checkPrivilege(String accountName, String UUIDStr, Permissions permission) throws ObjectNotFoundException, NdexException {
 		
-		ODocument d = this.getRecordById(UUID.fromString(UUIDStr), NdexClasses.Network);
+		ODocument d = this.getRecordByUUID(UUID.fromString(UUIDStr), NdexClasses.Network);
 		
 		String vstr = d.field(NdexClasses.Network_P_visibility);
 		
@@ -184,7 +184,7 @@ public class NetworkDAO extends OrientdbDAO {
 	}
 
 	public int logicalDeleteNetwork (String uuid) throws ObjectNotFoundException, NdexException {
-		ODocument networkDoc = getRecordById(UUID.fromString(uuid), NdexClasses.Network);
+		ODocument networkDoc = getRecordByUUID(UUID.fromString(uuid), NdexClasses.Network);
 
 		if ( networkDoc != null) {
 		   networkDoc.field(NdexClasses.Network_P_isComplete , (Object) null).save();
@@ -1697,7 +1697,7 @@ public class NetworkDAO extends OrientdbDAO {
 				|| (permission.equals( Permissions.READ )),
 				"Valid permission required");
 		
-		ODocument network = this.getRecordById(networkId, NdexClasses.Network);
+		ODocument network = this.getRecordByUUID(networkId, NdexClasses.Network);
 		
 		final int startIndex = skipBlocks
 				* blockSize;
@@ -1759,7 +1759,7 @@ public class NetworkDAO extends OrientdbDAO {
         }
         
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
-        ODocument accountdoc = this.getRecordById(UUID.fromString(accountUUID), NdexClasses.Account);
+        ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), NdexClasses.Account);
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         
@@ -1793,7 +1793,7 @@ public class NetworkDAO extends OrientdbDAO {
         }
         
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
-        ODocument accountdoc = this.getRecordById(UUID.fromString(accountUUID), NdexClasses.Account);
+        ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), NdexClasses.Account);
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         
@@ -1866,7 +1866,7 @@ public class NetworkDAO extends OrientdbDAO {
 			 ) throws ObjectNotFoundException, NdexException {
 
 		
-		ODocument rec = this.getRecordById(networkId, null);
+		ODocument rec = this.getRecordByUUID(networkId, null);
 		OrientVertex networkV = graph.getVertex(rec);
 		String traverseField = "out_" + NdexClasses.E_ndexProperties; 
 		
@@ -1910,7 +1910,7 @@ public class NetworkDAO extends OrientdbDAO {
 			 ) throws ObjectNotFoundException, NdexException {
 
 		
-		ODocument rec = this.getRecordById(networkId, null);
+		ODocument rec = this.getRecordByUUID(networkId, null);
 		OrientVertex networkV = graph.getVertex(rec);
 		String traverseField = "out_" + NdexClasses.E_ndexPresentationProps; 
 		
@@ -1963,7 +1963,7 @@ public class NetworkDAO extends OrientdbDAO {
 	 */
     public Network getOrphanStatementsSubnetwork(String networkUUID) throws NdexException {
     	
-    	ODocument networkDoc = getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
+    	ODocument networkDoc = getRecordByUUID(UUID.fromString(networkUUID), NdexClasses.Network);
     	
     	Network result = new Network();
     	

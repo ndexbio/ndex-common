@@ -59,7 +59,7 @@ public class UserDAO extends UserDocDAO {
 			ObjectNotFoundException {
 		Preconditions.checkArgument(null != id, "UUID required");
 
-		ODocument user = this.getRecordById(id, NdexClasses.User);
+		ODocument user = this.getRecordByUUID(id, NdexClasses.User);
 
 		/*
 		 * if( !this.getUserGroupMemberships(id, Permissions.ADMIN, 0,

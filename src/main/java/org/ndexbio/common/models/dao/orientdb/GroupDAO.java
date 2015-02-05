@@ -1,6 +1,5 @@
 package org.ndexbio.common.models.dao.orientdb;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -9,7 +8,6 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.Group;
 import org.ndexbio.model.object.Membership;
@@ -78,7 +76,7 @@ public class GroupDAO extends GroupDocDAO {
 					"An admin id is required" );
 			
 			this.checkForExistingGroup(newGroup);
-			final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
+			final ODocument admin = this.getRecordByUUID(adminId, NdexClasses.User);
 				
 			try {
 				Group result = new Group();
@@ -146,8 +144,8 @@ public class GroupDAO extends GroupDocDAO {
 				"admin UUID required");
 		
 		// get records and validate admin permissions
-		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
-		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);	
+		final ODocument group = this.getRecordByUUID(groupId, NdexClasses.Group);
+		final ODocument admin = this.getRecordByUUID(adminId, NdexClasses.User);	
 		this.validatePermission(group, admin, Permissions.GROUPADMIN);
 		
 		try {
@@ -218,8 +216,8 @@ public class GroupDAO extends GroupDocDAO {
 			Preconditions.checkArgument(updatedGroup != null, 
 					"An updated group is required");
 		
-		ODocument group =  this.getRecordById(groupId, NdexClasses.Group);
-		ODocument member = this.getRecordById(memberId, NdexClasses.User);
+		ODocument group =  this.getRecordByUUID(groupId, NdexClasses.Group);
+		ODocument member = this.getRecordByUUID(memberId, NdexClasses.User);
 		this.validatePermission(group, member, Permissions.GROUPADMIN);
 		
 		try {
@@ -274,9 +272,9 @@ public class GroupDAO extends GroupDocDAO {
 				|| membership.getPermissions().equals( Permissions.MEMBER) ) ,
 				"Valid permissions required");
 		
-		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
-		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
-		final ODocument member = this.getRecordById(membership.getMemberUUID(), NdexClasses.User);
+		final ODocument group = this.getRecordByUUID(groupId, NdexClasses.Group);
+		final ODocument admin = this.getRecordByUUID(adminId, NdexClasses.User);
+		final ODocument member = this.getRecordByUUID(membership.getMemberUUID(), NdexClasses.User);
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
@@ -360,9 +358,9 @@ public class GroupDAO extends GroupDocDAO {
 				"admin UUID required");
 		
 		
-		final ODocument group = this.getRecordById(groupId, NdexClasses.Group);
-		final ODocument admin = this.getRecordById(adminId, NdexClasses.User);
-		final ODocument member = this.getRecordById(memberId, NdexClasses.User);
+		final ODocument group = this.getRecordByUUID(groupId, NdexClasses.Group);
+		final ODocument admin = this.getRecordByUUID(adminId, NdexClasses.User);
+		final ODocument member = this.getRecordByUUID(memberId, NdexClasses.User);
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
@@ -424,23 +422,18 @@ public class GroupDAO extends GroupDocDAO {
 	}
 	
 	
-	
-	private static String accountQuery = "SELECT FROM " + NdexClasses.Account + " WHERE accountName = ?";
-	
 	private void checkForExistingGroup(final Group group) 
-			throws DuplicateObjectException, IllegalArgumentException {
+			throws IllegalArgumentException, NdexException {
 		
 		Preconditions.checkArgument(null != group, 
 				"UUID required");
-		
-		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(accountQuery);
-		final List<ODocument> existingGroups = db.command(query).execute(group.getAccountName()); 
-		
-		
-		if (!existingGroups.isEmpty()) {
+
+		try {
+			getRecordByAccountName(group.getAccountName(), null);
 			logger.info("Group with accountName " + group.getAccountName() + " already exists");
 			throw new DuplicateObjectException(
 					CommonDAOValues.DUPLICATED_ACCOUNT_FLAG);
+		} catch ( ObjectNotFoundException e) {
 		}
 	}
 	

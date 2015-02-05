@@ -166,7 +166,7 @@ public class UserDocDAO extends OrientdbDAO {
 
 		Preconditions.checkArgument(null != id, "UUID required");
 
-		final ODocument user = this.getRecordById(id, NdexClasses.User);
+		final ODocument user = this.getRecordByUUID(id, NdexClasses.User);
 		return UserDAO.getUserFromDocument(user);
 
 	}
@@ -406,7 +406,7 @@ public class UserDocDAO extends OrientdbDAO {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(password),
 				"A password is required");
 
-		ODocument user = this.getRecordById(id, NdexClasses.User);
+		ODocument user = this.getRecordByUUID(id, NdexClasses.User);
 
 		try {
 			// Remove quotes around the password
@@ -541,7 +541,7 @@ public class UserDocDAO extends OrientdbDAO {
 		Preconditions.checkArgument(updatedUser != null,
 				"An updated user is required");
 
-		ODocument user = this.getRecordById(id, NdexClasses.User);
+		ODocument user = this.getRecordByUUID(id, NdexClasses.User);
 
 		try {
 			// updatedUser.getDescription().isEmpty();
@@ -601,7 +601,7 @@ public class UserDocDAO extends OrientdbDAO {
 				|| (permission == Permissions.WRITE),
 				"Valid permissions required");
 
-		ODocument user = this.getRecordById(userId, NdexClasses.User);
+		ODocument user = this.getRecordByUUID(userId, NdexClasses.User);
 
 		final int startIndex = skipBlocks * blockSize;
 
@@ -673,7 +673,7 @@ public class UserDocDAO extends OrientdbDAO {
 				|| (permission.equals(Permissions.MEMBER)),
 				"Valid permissions required");
 
-		ODocument user = this.getRecordById(userId, NdexClasses.User);
+		ODocument user = this.getRecordByUUID(userId, NdexClasses.User);
 
 		final int startIndex = skipBlocks * blockSize;
 
@@ -737,8 +737,8 @@ public class UserDocDAO extends OrientdbDAO {
 		Preconditions.checkArgument(resource != null, "Resource UUID required");
 		Preconditions.checkArgument(depth > 0 && depth < 3, "Depth range: [1,2]");
 
-		ODocument OAccount = this.getRecordById(account, NdexClasses.Account);
-		ODocument OResource = this.getRecordById(resource, null);
+		ODocument OAccount = this.getRecordByUUID(account, NdexClasses.Account);
+		ODocument OResource = this.getRecordByUUID(resource, null);
 
 		Permissions permission = null;
 		Membership membership = new Membership();
@@ -816,7 +816,7 @@ public class UserDocDAO extends OrientdbDAO {
 
 		final List<Request> requests = new ArrayList<>();
 
-		ODocument user = this.getRecordById(account.getExternalId(),
+		ODocument user = this.getRecordByUUID(account.getExternalId(),
 				NdexClasses.User);
 		final int startIndex = skipBlocks * blockSize;
 
@@ -865,7 +865,7 @@ public class UserDocDAO extends OrientdbDAO {
 
 		final List<Request> requests = new ArrayList<>();
 
-		ODocument user = this.getRecordById(account.getExternalId(),
+		ODocument user = this.getRecordByUUID(account.getExternalId(),
 				NdexClasses.User);
 		final int startIndex = skipBlocks * blockSize;
 
@@ -899,7 +899,7 @@ public class UserDocDAO extends OrientdbDAO {
 
 		final List<Task> tasks = new ArrayList<>();
 
-		ODocument user = this.getRecordById(account.getExternalId(),
+		ODocument user = this.getRecordByUUID(account.getExternalId(),
 				NdexClasses.User);
 		final int startIndex = skipBlocks * blockSize;
 		

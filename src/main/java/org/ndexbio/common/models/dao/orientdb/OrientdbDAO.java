@@ -35,24 +35,21 @@ public abstract class OrientdbDAO implements AutoCloseable {
 	 * 
 	 */
 
-	//TODO: review the needs for parameter orientClass
-	protected ODocument getRecordById(UUID id, String orientClass) 
+	protected ODocument getRecordByUUID(UUID id, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
 		
 		try {
 			OIndex<?> Idx;
 			OIdentifiable record = null;
 			
-//			for(String oclass : orientClass) {
-					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
-					if((temp != null) )
-						record = temp;
+			Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
+			OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
+			if((temp != null) )
+				record = temp;
 				
-//			}
-			
-			if(record == null) 
-				throw new ObjectNotFoundException("Object", id.toString());
+			if(record == null || (! record.getClass().getName().equals(orientClass))) 
+				throw new ObjectNotFoundException("[Class + "+ orientClass + "] Object", id.toString());
+
 			
 			return (ODocument) record.getRecord();
 			
@@ -64,7 +61,7 @@ public abstract class OrientdbDAO implements AutoCloseable {
 		
 	}
 
-	
+/*	
 	protected ODocument getRecordByExternalId(UUID id) 
 			throws ObjectNotFoundException, NdexException {
 		
@@ -72,10 +69,10 @@ public abstract class OrientdbDAO implements AutoCloseable {
 			OIndex<?> Idx;
 			OIdentifiable record = null;
 			
-					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
-					if((temp != null) )
-						record = temp;
+			Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
+			OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
+			if((temp != null) )
+					record = temp;
 				
 			if(record == null) 
 				throw new ObjectNotFoundException("Object", id.toString());
@@ -89,7 +86,7 @@ public abstract class OrientdbDAO implements AutoCloseable {
 		}
 		
 	}
-	
+*/	
 	
 	public ODocument getRecordByAccountName(String accountName, String orientClass) 
 			throws ObjectNotFoundException, NdexException {

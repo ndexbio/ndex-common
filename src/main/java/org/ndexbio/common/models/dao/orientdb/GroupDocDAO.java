@@ -57,7 +57,7 @@ public class GroupDocDAO extends OrientdbDAO {
 		Preconditions.checkArgument(null != id, 
 				"UUID required");
 		
-		final ODocument group = this.getRecordById(id, NdexClasses.Group);
+		final ODocument group = this.getRecordByUUID(id, NdexClasses.Group);
 	    return GroupDAO.getGroupFromDocument(group);
 	}
 	
@@ -206,7 +206,7 @@ public class GroupDocDAO extends OrientdbDAO {
 				|| (permission.equals( Permissions.WRITE )),
 				"Valid permissions required");
 		
-		ODocument group = this.getRecordById(groupId, NdexClasses.Group);
+		ODocument group = this.getRecordByUUID(groupId, NdexClasses.Group);
 		
 		final int startIndex = skipBlocks
 				* blockSize;
@@ -272,7 +272,7 @@ public class GroupDocDAO extends OrientdbDAO {
 				|| (permission.equals( Permissions.MEMBER )),
 				"Valid permissions required");
 		
-		ODocument group = this.getRecordById(groupId, NdexClasses.Group);
+		ODocument group = this.getRecordByUUID(groupId, NdexClasses.Group);
 		
 		final int startIndex = skipBlocks
 				* blockSize;
@@ -322,8 +322,8 @@ public class GroupDocDAO extends OrientdbDAO {
 		Permissions permission = null;
 		Membership membership = new Membership();
 		
-		ODocument OGroup = this.getRecordById(groupId, NdexClasses.Group);
-		ODocument ONetwork = this.getRecordById(networkId, NdexClasses.Network);
+		ODocument OGroup = this.getRecordByUUID(groupId, NdexClasses.Group);
+		ODocument ONetwork = this.getRecordByUUID(networkId, NdexClasses.Network);
 		
 		// order allows us to return most permissive permission
 		if (checkPermission(OGroup.getIdentity(), 

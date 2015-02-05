@@ -88,16 +88,16 @@ public class RequestDAO extends OrientdbDAO  {
 				"Must be logged in to make a request");
 		
 		// setup
-		ODocument sourceAccount = this.getRecordById(newRequest.getSourceUUID(), NdexClasses.Account);
-		ODocument userAccount = this.getRecordById(account.getExternalId(), NdexClasses.User);
+		ODocument sourceAccount = this.getRecordByUUID(newRequest.getSourceUUID(), NdexClasses.Account);
+		ODocument userAccount = this.getRecordByUUID(account.getExternalId(), NdexClasses.User);
 		
 		ODocument destinationResource;
 		if( newRequest.getPermission().equals(Permissions.GROUPADMIN) || newRequest.getPermission().equals(Permissions.MEMBER)) {
-			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Group);
+			destinationResource = this.getRecordByUUID(newRequest.getDestinationUUID(), NdexClasses.Group);
 			if(sourceAccount.getClassName().equals(NdexClasses.Group))
 				throw new IllegalArgumentException("Group cannot request access to group");
 		} else
-			destinationResource = this.getRecordById(newRequest.getDestinationUUID(), NdexClasses.Network);
+			destinationResource = this.getRecordByUUID(newRequest.getDestinationUUID(), NdexClasses.Network);
 	
 		if(sourceAccount.getClassName().equals(NdexClasses.Group))
 			if(!this.checkPermission(userAccount.getIdentity(), sourceAccount.getIdentity(), Direction.OUT, 1, Permissions.GROUPADMIN))
@@ -184,8 +184,8 @@ public class RequestDAO extends OrientdbDAO  {
 		Preconditions.checkArgument( account != null,
 				"A user must be logged in");
 		
-		ODocument request = this.getRecordById(requestId, NdexClasses.Request);
-		ODocument user = this.getRecordById(account.getExternalId(), NdexClasses.User);
+		ODocument request = this.getRecordByUUID(requestId, NdexClasses.Request);
+		ODocument user = this.getRecordByUUID(account.getExternalId(), NdexClasses.User);
 		try {
 			OrientVertex vRequest = graph.getVertex(request);
 			
@@ -229,7 +229,7 @@ public class RequestDAO extends OrientdbDAO  {
 				"Must be logged in to get a request");
 		// TODO check if source UUID and account UUID match up
 		
-		ODocument request = this.getRecordById(requestId, NdexClasses.Request);
+		ODocument request = this.getRecordByUUID(requestId, NdexClasses.Request);
 		return RequestDAO.getRequestFromDocument(request);
 		
 	}
@@ -258,8 +258,8 @@ public class RequestDAO extends OrientdbDAO  {
 		Preconditions.checkArgument(account != null,
 				"Must be logged in to update a request");
 
-		ODocument request = this.getRecordById(requestId, NdexClasses.Request);
-		ODocument responder = this.getRecordById(account.getExternalId(), NdexClasses.User);
+		ODocument request = this.getRecordByUUID(requestId, NdexClasses.Request);
+		ODocument responder = this.getRecordByUUID(account.getExternalId(), NdexClasses.User);
 
 		try {
 			

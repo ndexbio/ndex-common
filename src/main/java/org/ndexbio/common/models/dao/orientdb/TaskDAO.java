@@ -7,7 +7,6 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
@@ -74,7 +73,7 @@ public class TaskDAO extends TaskDocDAO {
 
 	
     public int purgeTask (UUID taskID) throws ObjectNotFoundException, NdexException {
-        ODocument d = this.getRecordByExternalId(taskID);
+        ODocument d = this.getRecordByUUID(taskID, NdexClasses.Task);
         boolean isDeleted = d.field(NdexClasses.ExternalObj_isDeleted);
  
         if ( isDeleted ) {
