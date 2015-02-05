@@ -16,24 +16,27 @@ import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 public class Helper {
-	
+
+	/**
+	 * Populate a NdexExternalObject using data from an ODocument object.
+	 * @param obj The NdexExternaObject to be populated.
+	 * @param doc
+	 * @return the Pouplated NdexExernalObject.
+	 */
 	public static NdexExternalObject populateExternalObjectFromDoc(NdexExternalObject obj, ODocument doc) {
 		obj.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
 		
 		Date d = doc.field(NdexClasses.ExternalObj_cTime);
 		obj.setCreationTime(new Timestamp(d.getTime()));
-		d = doc.field(NdexClasses.ExternalObj_cTime);
+		d = doc.field(NdexClasses.ExternalObj_mTime);
 		obj.setModificationTime(new Timestamp(d.getTime()));
-
+        Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+       	obj.setIsDeleted(isDeleted != null && isDeleted.booleanValue());
 		return obj;
 	}
 

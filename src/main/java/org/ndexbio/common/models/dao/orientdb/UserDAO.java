@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.util.Date;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -113,7 +114,13 @@ public class UserDAO extends UserDocDAO {
 			if (!safe)
 				throw new NdexException("Cannot orphan groups or networks");
 
-			user.field(NdexClasses.account_P_isDeleted, true).save();
+			String accName = user.field (NdexClasses.account_P_accountName);
+			
+			user.fields(NdexClasses.ExternalObj_isDeleted, true,
+					NdexClasses.ExternalObj_mTime, new Date(),
+					NdexClasses.account_P_accountName , null,
+					NdexClasses.account_P_oldAcctName, accName).save();
+			
 		} catch (Exception e) {
 			logger.severe("Could not delete user from the database");
 			throw new NdexException(e.getMessage());

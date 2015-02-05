@@ -44,7 +44,6 @@ public interface NdexClasses {
     public static final String account_E_canEdit     = Permissions.WRITE.toString().toLowerCase();
 	public static final String account_P_accountName = "accountName";
     public static final String account_P_oldAcctName = "oldAcctName";
-    public static final String account_P_isDeleted   = "isDeleted";
 	
     public static final String Index_accountName = "index-user-username";
     
@@ -52,6 +51,8 @@ public interface NdexClasses {
     public static final String ExternalObj_ID    = "UUID";
     public static final String ExternalObj_cTime = "createdTime";
     public static final String ExternalObj_mTime = "modificationTime";
+    public static final String ExternalObj_isDeleted = "isDeleted";
+
 
     public static final String Index_externalID = "index-external-id";
     
@@ -146,7 +147,6 @@ public interface NdexClasses {
 
     //user
     
-
 //    public static final String user_E_memberOf        ="member";
 //    public static final String user_E_grp_admin	      = "grpAdmin";
     
@@ -158,18 +158,15 @@ public interface NdexClasses {
     public static final String Task_P_taskType = "taskType";
     public static final String Task_P_resource = "resource";
     public static final String Task_P_fileFormat = "format";
-    public static final String Task_P_isDeleted = "isDeleted";
     public static final String Task_P_startTime = "startTime";
     public static final String Task_P_endTime   = "endTime";
     public static final String Task_P_message   = "message";
     
     public static final String Task_E_owner   = "ownedBy";
     
-    
     //request
     public static final String Request_P_sourceUUID = "sourceUUID";
     public static final String Request_P_sourceName = "sourceName";
-    
     
     //reserved NDEx property names
 }

@@ -47,7 +47,7 @@ public class TaskDAO extends TaskDocDAO {
 					NdexClasses.Task_P_progress, newTask.getProgress(),
 					NdexClasses.Task_P_taskType, newTask.getTaskType(),
 					NdexClasses.Task_P_resource, newTask.getResource(),
-					NdexClasses.Task_P_isDeleted, false);
+					NdexClasses.ExternalObj_isDeleted, false);
 	
 		if ( newTask.getFormat() != null) 
 			taskDoc = taskDoc.field(NdexClasses.Task_P_fileFormat, newTask.getFormat());
@@ -75,7 +75,7 @@ public class TaskDAO extends TaskDocDAO {
 	
     public int purgeTask (UUID taskID) throws ObjectNotFoundException, NdexException {
         ODocument d = this.getRecordByExternalId(taskID);
-        boolean isDeleted = d.field(NdexClasses.Task_P_isDeleted);
+        boolean isDeleted = d.field(NdexClasses.ExternalObj_isDeleted);
  
         if ( isDeleted ) {
             OrientVertex v = graph.getVertex(d);

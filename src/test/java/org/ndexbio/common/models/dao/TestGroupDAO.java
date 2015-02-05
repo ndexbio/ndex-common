@@ -47,7 +47,7 @@ public class TestGroupDAO
 		localConnection = database.getAConnection();
 		graph = new OrientGraph(localConnection);
 		userDAO = new UserDAO(localConnection, graph);
-		dao = new GroupDAO(localConnection, graph);
+		dao = new GroupDAO(localConnection);
 		
 		//localConnection.begin();
 		final NewUser newUser = new NewUser();

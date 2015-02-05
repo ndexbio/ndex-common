@@ -38,7 +38,7 @@ public class BioPAXRoundTripTest {
 		
 		// Parse and import the original file
 		String user = "cjtest";
-		String originalFileName = "Pathway_1def4b54a5c92d56a6cbad1e0c81dc57";
+		String originalFileName = "exported_biopax";
 		BioPAXParser parser = new BioPAXParser(
 				"/home/chenjing/Dropbox/Network_test_files/" + originalFileName + ".owl", 
 				user, 

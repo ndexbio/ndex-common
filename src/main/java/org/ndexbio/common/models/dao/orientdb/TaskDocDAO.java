@@ -49,7 +49,6 @@ public class TaskDocDAO extends OrientdbDAO {
 		result.setResource((String)doc.field(NdexClasses.Task_P_resource));
 		result.setStatus(Status.valueOf((String)doc.field(NdexClasses.Task_P_status)));
 		result.setTaskType(TaskType.valueOf((String)doc.field(NdexClasses.Task_P_taskType)));
-		result.setIsDeleted((boolean) doc.field(NdexClasses.Task_P_isDeleted));
 		
 		Date d = doc.field(NdexClasses.Task_P_startTime);
 		result.setStartTime(new Timestamp(d.getTime()));
@@ -157,7 +156,7 @@ public class TaskDocDAO extends OrientdbDAO {
        
    		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
    			try	{
-   		        d.fields(NdexClasses.Task_P_isDeleted,  true, 
+   		        d.fields(NdexClasses.ExternalObj_isDeleted,  true, 
    	        		 NdexClasses.ExternalObj_mTime, new Date()).save();
   				break;
    			} catch(ONeedRetryException	e)	{

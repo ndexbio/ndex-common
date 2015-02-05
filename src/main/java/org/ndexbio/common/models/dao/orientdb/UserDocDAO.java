@@ -6,7 +6,6 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.Date;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.exceptions.DuplicateObjectException;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
@@ -32,9 +31,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class UserDocDAO extends OrientdbDAO {
 
@@ -135,12 +131,12 @@ public class UserDocDAO extends OrientdbDAO {
 			               "emailAddress", newUser.getEmailAddress(),
 			               "firstName", newUser.getFirstName(),
 			               "lastName", newUser.getLastName(),
-			               "accountName", newUser.getAccountName(),
+			               NdexClasses.account_P_accountName, newUser.getAccountName(),
 			               "password", Security.hashText(newUser.getPassword()),
 			               NdexClasses.ExternalObj_ID, NdexUUIDFactory.INSTANCE.getNDExUUID(),
 			               NdexClasses.ExternalObj_cTime, new Date(),
 			               NdexClasses.ExternalObj_mTime, new Date(),
-			               NdexClasses.account_P_isDeleted, false);
+			               NdexClasses.ExternalObj_isDeleted, false);
 
 			user = user.save();
 
@@ -954,14 +950,13 @@ public class UserDocDAO extends OrientdbDAO {
 		result.setWebsite((String) n.field("websiteURL"));
 		result.setDescription((String) n.field("description"));
 		result.setImage((String) n.field("imageURL"));
-		boolean isDeleted = n.field(NdexClasses.account_P_isDeleted);
-		result.setIsDeleted(isDeleted);
-
-		if ( isDeleted )
-			result.setAccountName((String) n.field(NdexClasses.account_P_accountName));
-		else
-			result.setAccountName((String) n.field(NdexClasses.account_P_oldAcctName));
 		
+		if ( result.getIsDeleted() ) {
+			result.setAccountName((String) n.field(NdexClasses.account_P_oldAcctName));
+		} else {
+			result.setAccountName((String) n.field(NdexClasses.account_P_accountName));
+		}
+
 		return result;
 	}
 

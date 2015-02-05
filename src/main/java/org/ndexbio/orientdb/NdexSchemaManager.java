@@ -61,6 +61,7 @@ public class NdexSchemaManager
             clsNdxExternalObj.createProperty(NdexClasses.Network_P_UUID, OType.STRING);
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_cTime, OType.DATETIME);
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_mTime, OType.DATETIME);
+            clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_isDeleted, OType.BOOLEAN);
             
             clsNdxExternalObj.createIndex(NdexClasses.Index_externalID, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
         }
@@ -141,7 +142,6 @@ public class NdexSchemaManager
             taskClass.createProperty(NdexClasses.Task_P_progress, OType.INTEGER);
             taskClass.createProperty(NdexClasses.Task_P_taskType, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_resource, OType.STRING);
-            taskClass.createProperty(NdexClasses.Task_P_isDeleted, OType.BOOLEAN);
             taskClass.createProperty(NdexClasses.Task_P_startTime, OType.DATETIME);
             taskClass.createProperty(NdexClasses.Task_P_endTime, OType.DATETIME);
             taskClass.createProperty(NdexClasses.Task_P_message, OType.STRING);
