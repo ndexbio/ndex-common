@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -153,7 +154,7 @@ public class GroupDAO extends GroupDocDAO {
 		// get records and validate admin permissions
 		final ODocument group = this.getRecordByUUID(groupId, NdexClasses.Group);
 		final ODocument admin = this.getRecordByUUID(adminId, NdexClasses.User);	
-		if (!hasPermission(group, admin, Permissions.GROUPADMIN) )
+		if (!isGroupAdmin(group, admin) )
 			throw new NdexException ("User " + adminId + " doesn't have permission to delete group "
 		            + groupId);
 		
@@ -191,9 +192,16 @@ public class GroupDAO extends GroupDocDAO {
 			
 				
             			
-			
-			group.fields(NdexClasses.ExternalObj_isDeleted, true,
-					NdexClasses.ExternalObj_mTime, new Date()).save();
+	   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+	   			try	{
+	   				group.fields(NdexClasses.ExternalObj_isDeleted, true,
+	   						NdexClasses.ExternalObj_mTime, new Date()).save();
+	  				break;
+	   			} catch(ONeedRetryException	e)	{
+	   				logger.warning("Retry update " + e.getMessage());
+	   				group.reload();
+	   			}
+	   		}
 			
 		}
 		catch (NdexException e) {
@@ -205,59 +213,6 @@ public class GroupDAO extends GroupDocDAO {
 			throw new NdexException("Unable to delete group");
 		}
 		
-	}
-	
-	/**************************************************************************
-	    * Update a group
-	    * 
-	    * @param updatedGroup
-	    * 			group object with update fields
-	    * @param groupId
-	    *            UUID for Group
-	    * @param memberId
-	    * 			UUID for valid member to edit group
-	    * @throws NdexException
-	    *            Attempting to access and delete an ODocument from the database
-	    * @throws ObjectNotFoundException
-	    * 			Specified group does not exist
-	    * @throws IllegalArgumentException
-	    * 			Group object cannot be null
-	    **************************************************************************/
-	public Group updateGroup(Group updatedGroup, UUID groupId, UUID memberId) 
-		throws IllegalArgumentException, NdexException, ObjectNotFoundException {
-			
-			Preconditions.checkArgument(groupId != null, 
-					"A group id is required");
-			Preconditions.checkArgument(groupId != null, 
-					"A member id is required");
-			Preconditions.checkArgument(updatedGroup != null, 
-					"An updated group is required");
-		
-		ODocument group =  this.getRecordByUUID(groupId, NdexClasses.Group);
-		ODocument member = this.getRecordByUUID(memberId, NdexClasses.User);
-		if (!hasPermission(group, member, Permissions.GROUPADMIN) )
-			throw new NdexException ("User " + memberId + " doesn't have permission to delete group "
-		            + groupId);
-		
-		try {
-			//updatedGroup.getDescription().isEmpty();
-			if(!Strings.isNullOrEmpty(updatedGroup.getDescription())) group.field("description", updatedGroup.getDescription());
-			if(!Strings.isNullOrEmpty(updatedGroup.getWebsite())) group.field("websiteURL", updatedGroup.getWebsite());
-			if(!Strings.isNullOrEmpty(updatedGroup.getImage())) group.field("imageURL", updatedGroup.getImage());
-			if(!Strings.isNullOrEmpty(updatedGroup.getOrganizationName())) group.field("organizationName", updatedGroup.getOrganizationName()); 
-			group.field(NdexClasses.ExternalObj_mTime, updatedGroup.getModificationTime());
-
-			group = group.save();
-			logger.info("Updated group profile with UUID " + groupId);
-			
-			return GroupDAO.getGroupFromDocument(group);
-			
-		} catch (Exception e) {
-			
-			logger.severe("An error occured while updating group profile with UUID " + groupId + e.getMessage());
-			throw new NdexException("Unable to update group");
-			
-		} 
 	}
 	
 	
@@ -298,7 +253,6 @@ public class GroupDAO extends GroupDocDAO {
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
 			OrientVertex vAdmin = graph.getVertex(admin);
-			OrientVertex vMember = graph.getVertex(member);
 			
 			boolean isAdmin = false;
 			boolean isOnlyAdmin = true;
@@ -310,22 +264,37 @@ public class GroupDAO extends GroupDocDAO {
 					isOnlyAdmin = false;
 			}
 			
+			OrientVertex vMember = graph.getVertex(member);
 			if(isOnlyAdmin && ( vAdmin.getIdentity().equals( vMember.getIdentity() ) ) ) {
 				logger.severe("Action will orphan group");
 				throw new NdexException("Cannot orphan group to have no admin");
 			}
 			
 			if(isAdmin) {
-				
+				OrientEdge edge = null; 
 				for(Edge e : vGroup.getEdges(Direction.IN)) {
-					if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vMember.getIdentity() ) ) 
-						graph.removeEdge(e);
+					if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vMember.getIdentity() ) ) { 
+						edge = (OrientEdge)e;
+						break;
+					}
 				}
-				//do we need to update our current records?
-				vGroup.getRecord().reload();
-				vMember.getRecord().reload();
+
+				if ( edge == null) {
+					throw new NdexException ("Membership not found in group.");
+				}
 				
-				graph.addEdge(null, vMember, vGroup, membership.getPermissions().toString().toLowerCase());
+		   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+		   			try	{
+						graph.removeEdge(edge);
+						graph.addEdge(null, vMember, vGroup, membership.getPermissions().toString().toLowerCase());
+		  				break;
+		   			} catch(ONeedRetryException	e)	{
+		   				logger.warning("Retry update " + e.getMessage());
+						vGroup.getRecord().reload();
+						vMember.getRecord().reload();
+		   			}
+		   		}
+
 				logger.info("Added membership edge between group "
 				+ (String) group.field("accountName")
 				 + " and member " 
@@ -336,9 +305,6 @@ public class GroupDAO extends GroupDocDAO {
 				throw new NdexException("Specified user is not an admin for the group");
 			}
 			
-		} catch (NdexException e) {
-			logger.severe(e.getMessage());
-			throw e;
 		} catch (Exception e) {
 			logger.severe("Unable to update membership permissions for "
 					+ "group with UUID "+ groupId
@@ -431,10 +397,6 @@ public class GroupDAO extends GroupDocDAO {
 		this.graph.commit();
 	}
 	
-/*	public void rollback() {
-		this.graph.rollback();
-	}  */
-	
 	@Override
 	public void close() {
 		this.graph.shutdown();
@@ -456,7 +418,68 @@ public class GroupDAO extends GroupDocDAO {
 		}
 	}
 	
-	private boolean hasPermission(ODocument group, ODocument member, Permissions permission) 
+	/**************************************************************************
+	    * Update a group
+	    * 
+	    * @param updatedGroup
+	    * 			group object with update fields
+	    * @param groupId
+	    *            UUID for Group
+	    * @param memberId
+	    * 			UUID for valid member to edit group
+	    * @throws NdexException
+	    *            Attempting to access and delete an ODocument from the database
+	    * @throws ObjectNotFoundException
+	    * 			Specified group does not exist
+	    * @throws IllegalArgumentException
+	    * 			Group object cannot be null
+	    **************************************************************************/
+	public Group updateGroup(Group updatedGroup, UUID groupId, UUID memberId) 
+		throws IllegalArgumentException, NdexException, ObjectNotFoundException {
+			
+			Preconditions.checkArgument(groupId != null, 
+					"A group id is required");
+			Preconditions.checkArgument(groupId != null, 
+					"A member id is required");
+			Preconditions.checkArgument(updatedGroup != null, 
+					"An updated group is required");
+		
+		ODocument group =  this.getRecordByUUID(groupId, NdexClasses.Group);
+		ODocument member = this.getRecordByUUID(memberId, NdexClasses.User);
+		if (!isGroupAdmin(group, member) )
+			throw new NdexException ("User " + memberId + " doesn't have permission to update group "
+		            + groupId);
+		
+		try {
+			//updatedGroup.getDescription().isEmpty();
+			if(!Strings.isNullOrEmpty(updatedGroup.getDescription())) group.field("description", updatedGroup.getDescription());
+			if(!Strings.isNullOrEmpty(updatedGroup.getWebsite())) group.field("websiteURL", updatedGroup.getWebsite());
+			if(!Strings.isNullOrEmpty(updatedGroup.getImage())) group.field("imageURL", updatedGroup.getImage());
+			if(!Strings.isNullOrEmpty(updatedGroup.getOrganizationName())) group.field("organizationName", updatedGroup.getOrganizationName()); 
+			group.field(NdexClasses.ExternalObj_mTime, new Date());
+
+			group = group.save();
+			logger.info("Updated group profile with UUID " + groupId);
+			
+			return GroupDAO.getGroupFromDocument(group);
+			
+		} catch (Exception e) {
+			
+			logger.severe("An error occured while updating group profile with UUID " + groupId + e.getMessage());
+			throw new NdexException("Unable to update group");
+			
+		} 
+	}
+	
+	/**
+	 * Check if the member has given permission in a group.
+	 * @param group the group to check this member in
+	 * @param member the member to be checked.
+	 * @return
+	 * @throws ObjectNotFoundException
+	 * @throws NdexException
+	 */
+	private boolean isGroupAdmin(ODocument group, ODocument member) 
 			throws ObjectNotFoundException, NdexException {
 
 		boolean isMember = false;
@@ -464,7 +487,7 @@ public class GroupDAO extends GroupDocDAO {
 			OrientVertex vGroup = graph.getVertex(group);
 			OrientVertex vmember = graph.getVertex(member);
 			
-			for(Edge e : vGroup.getEdges(Direction.BOTH, permission.toString().toLowerCase())) {
+			for(Edge e : vGroup.getEdges(Direction.IN, Permissions.GROUPADMIN.toString().toLowerCase())) {
 				if( ( (OrientVertex) e.getVertex(Direction.OUT) ).getIdentity().equals( vmember.getIdentity() ) ) 
 					isMember = true;
 			}
@@ -475,11 +498,10 @@ public class GroupDAO extends GroupDocDAO {
 			throw new NdexException(message);
 		}
 		
-//		if(!isMember) 
-//			throw new NdexException("Invalid permission to group for member UUID");
 		
 		return isMember;
 		
 	}
+
 	
 }

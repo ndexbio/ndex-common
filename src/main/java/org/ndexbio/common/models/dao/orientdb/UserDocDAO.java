@@ -248,8 +248,8 @@ public class UserDocDAO extends OrientdbDAO {
 						+ " WHILE $depth <=1)"
 						+ " WHERE @class = '"
 						+ NdexClasses.User
-						+ "'"
-						+ " AND accountName.toLowerCase() LIKE '%"
+						+ "' and (not " + NdexClasses.ExternalObj_isDeleted + ")"
+						+ " AND (accountName.toLowerCase() LIKE '%"
 						+ searchStr
 						+ "%'"
 						+ "  OR lastName.toLowerCase() LIKE '%"
@@ -257,7 +257,7 @@ public class UserDocDAO extends OrientdbDAO {
 						+ "%'"
 						+ "  OR firstName.toLowerCase() LIKE '%"
 						+ searchStr
-						+ "%'"
+						+ "%' )"
 						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC "
 						+ " SKIP "
 						+ startIndex + " LIMIT " + top);
@@ -286,7 +286,8 @@ public class UserDocDAO extends OrientdbDAO {
 				
 			query = new OSQLSynchQuery<>("SELECT FROM "
 						+ NdexClasses.User + " "
-						+ "WHERE accountName.toLowerCase() LIKE '%"
+						+ "WHERE (not "+ NdexClasses.ExternalObj_isDeleted 
+						+ ") accountName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
 						+ "  OR lastName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
@@ -339,37 +340,11 @@ public class UserDocDAO extends OrientdbDAO {
 	//		final User authUser = UserDAO.getUserFromDocument(userToSave);
 			final String newPassword = Security.generatePassword();
 			final String password = Security.hashText(newPassword);
-			userToSave.field("password", password).save();
+			userToSave.fields("password", password,
+					NdexClasses.ExternalObj_mTime, new Date()).save();
             
 			return newPassword;
 			
-/*			final File forgotPasswordFile = new File(Configuration
-					.getInstance().getProperty("Forgot-Password-File"));
-
-			if (!forgotPasswordFile.exists()) {
-				logger.severe("Could not retrieve forgot password file");
-				throw new java.io.FileNotFoundException(
-						"File containing forgot password email content doesn't exist.");
-			}
-
-			final BufferedReader fileReader = Files.newBufferedReader(
-					forgotPasswordFile.toPath(), Charset.forName("US-ASCII"));
-
-			final StringBuilder forgotPasswordText = new StringBuilder();
-
-			String lineOfText = null;
-			while ((lineOfText = fileReader.readLine()) != null)
-				forgotPasswordText.append(lineOfText.replace("{password}",
-						newPassword));
-
-			Email.sendEmail(
-					Configuration.getInstance().getProperty(
-							"Forgot-Password-Email"),
-					authUser.getEmailAddress(), "Password Recovery",
-					forgotPasswordText.toString());
-
-			logger.info("Sent password recovery email to user " + accountName);
-			return Response.ok().build(); */
 
 		} catch (ObjectNotFoundException onfe) {
 
@@ -415,7 +390,8 @@ public class UserDocDAO extends OrientdbDAO {
 			if (password.endsWith("\""))
 				password = password.substring(0, password.length() - 1);
 
-			user.field("password", Security.hashText(password.trim()));
+			user.fields("password", Security.hashText(password.trim()),
+					    NdexClasses.ExternalObj_mTime, new Date());
 
 			user.save();
 
@@ -616,7 +592,7 @@ public class UserDocDAO extends OrientdbDAO {
 							+ ", out_"
 							+ permission.name().toString().toLowerCase()
 							+ " FROM" + " " + userRID + "  WHILE $depth <=2)"
-							+ " WHERE @class = '" + NdexClasses.Network + "'"
+							+ " WHERE @class = '" + NdexClasses.Network + "' and ( not " + NdexClasses.ExternalObj_isDeleted +") "
 							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + blockSize);
 
@@ -685,7 +661,7 @@ public class UserDocDAO extends OrientdbDAO {
 					"SELECT FROM" + " (TRAVERSE " + NdexClasses.User + ".out_"
 							+ permission.name().toString().toLowerCase()
 							+ " FROM" + " " + userRID + "  WHILE $depth <=1)"
-							+ " WHERE @class = '" + NdexClasses.Group + "'"
+							+ " WHERE @class = '" + NdexClasses.Group + "' and ( not " + NdexClasses.ExternalObj_isDeleted +") "
 							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + blockSize);
 
@@ -913,7 +889,7 @@ public class UserDocDAO extends OrientdbDAO {
 					"SELECT FROM" + " (TRAVERSE in_ownedBy FROM" + " "
 							+ user.getIdentity().toString()
 							+ "  WHILE $depth <=1)"
-							+ " WHERE @class = '" + NdexClasses.Task + "'" 
+							+ " WHERE @class = '" + NdexClasses.Task + "' and ( not " + NdexClasses.ExternalObj_isDeleted +") " 
 							+ statusFilter
 							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 							+ " SKIP " + startIndex 
