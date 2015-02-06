@@ -10,7 +10,10 @@ import org.ndexbio.model.exceptions.NdexException;
 
 import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -59,7 +62,7 @@ public class UserDAO extends UserDocDAO {
 			ObjectNotFoundException {
 		Preconditions.checkArgument(null != id, "UUID required");
 
-		ODocument user = this.getRecordByUUID(id, NdexClasses.User);
+		ODocument userDoc = this.getRecordByUUID(id, NdexClasses.User);
 
 		/*
 		 * if( !this.getUserGroupMemberships(id, Permissions.ADMIN, 0,
@@ -69,54 +72,110 @@ public class UserDAO extends UserDocDAO {
 		 */
 
 		try {
-			OrientVertex vUser = graph.getVertex(user);
 			boolean safe = true;
 
-			// TODO, simplfy by using actual edge directions and labels
-			for (Edge e : vUser.getEdges(Direction.BOTH)) {/*
-															 * ,
-															 * Permissions.ADMIN
-															 * .toString().
-															 * toLowerCase() +
-															 * " " +
-															 * Permissions.
-															 * GROUPADMIN
-															 * .toString
-															 * ().toLowerCase()
-															 * ) ) {
-															 */
+			// check if there is any network or group dependency
+	        for (OIdentifiable networkDoc : new OTraverse()
+	    		.field("out_"+ NdexClasses.E_admin )
+	    		.target(userDoc)
+	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
 
-				OrientVertex vResource = (OrientVertex) e
-						.getVertex(Direction.IN);
+	        	ODocument doc = (ODocument) networkDoc;
 
-				if (!(vResource.getRecord().getSchemaClass().getName()
-						.equals(NdexClasses.Group) || vResource.getRecord()
-						.getSchemaClass().getName().equals(NdexClasses.Network)))
-					continue;
-				safe = false;
+	        	if ( doc.getClassName().equals(NdexClasses.Network) ) {
+	        		Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+	        		if ( isDeleted == null || !isDeleted.booleanValue()) {
+	        			String networkUUID = doc.field(NdexClasses.ExternalObj_ID);
+	        			if ( !Helper.canRemoveAdmin(db, networkUUID, id.toString())) {
+	        				throw new NdexException("Cannot orphan networks");
+	        			}
+	        				
+	        		}
+	        		
+	        	}
+	        }
 
-				for (Edge ee : vResource.getEdges(Direction.BOTH/*
-																 * ,
-																 * Permissions.
-																 * ADMIN
-																 * .toString
-																 * ().toLowerCase
-																 * ()
-																 */)) {
-					if (!((OrientVertex) ee.getVertex(Direction.OUT))
-							.equals(vUser)) {
-						safe = true;
-					}
-				}
+	        for (OIdentifiable grpDoc : new OTraverse()
+	    		.field("out_"+ NdexClasses.GRP_E_admin )
+	    		.target(userDoc)
+	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
 
-			}
+	        	ODocument doc = (ODocument) grpDoc;
 
-			if (!safe)
-				throw new NdexException("Cannot orphan groups or networks");
+	        	if ( doc.getClassName().equals(NdexClasses.Group) ) {
+	        		Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+	        		if ( isDeleted == null || !isDeleted.booleanValue()) {
+	        			String grpUUID = doc.field(NdexClasses.ExternalObj_ID);
+	        			if ( !Helper.canRemoveAdminOnGrp(db, grpUUID, id.toString())) {
+	        				throw new NdexException("Cannot orphan groups");
+	        			}
+	        				
+	        		}
+	        		
+	        	}
+	        }
 
-			String accName = user.field (NdexClasses.account_P_accountName);
+	        OrientVertex userV = graph.getVertex(userDoc);
+
+	        //remove the group and network links
+	        for (OIdentifiable networkDoc : new OTraverse()
+	    		.field("out_"+ NdexClasses.E_admin )
+	    		.target(userDoc)
+	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+	        	ODocument doc = (ODocument) networkDoc;
+
+	        	if ( doc.getClassName().equals(NdexClasses.Network) ) {
+	        		Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+	        		if ( isDeleted == null || !isDeleted.booleanValue()) {
+	        			OrientVertex networkV = graph.getVertex(doc);
+	        			for ( Edge e : userV.getEdges(networkV, Direction.OUT, NdexClasses.E_admin)) {
+	        				e.remove();
+	        			}
+	        		}
+	        	}
+	        }
+
+	        for (OIdentifiable grpDoc : new OTraverse()
+	    		.field("out_"+ NdexClasses.GRP_E_admin )
+	    		.target(userDoc)
+	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+	        	ODocument doc = (ODocument) grpDoc;
+
+	        	if ( doc.getClassName().equals(NdexClasses.Group) ) {
+	        		Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+	        		if ( isDeleted == null || !isDeleted.booleanValue()) {
+	        			OrientVertex grpV = graph.getVertex(doc);
+	        			for ( Edge e : userV.getEdges(grpV, Direction.OUT, NdexClasses.E_admin)) {
+	        				e.remove();
+	        			}
+	        		}
+	        	}
+	        }
+	        
+	        // delete tasks an remove links
+	        for (OIdentifiable taskDoc : new OTraverse()
+	    		.field("in_"+ NdexClasses.Task_E_owner )
+	    		.target(userDoc)
+	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
+
+	        	ODocument doc = (ODocument) taskDoc;
+
+	        	if ( doc.getClassName().equals(NdexClasses.Task) ) {
+        			OrientVertex taskV = graph.getVertex(doc);
+	        		for ( Edge e : userV.getEdges(taskV, Direction.IN, NdexClasses.Task_E_owner)) {
+	        			e.remove();
+	        		}
+	        		taskV.reload();
+	        		taskV.getRecord().field(NdexClasses.ExternalObj_isDeleted);
+	        		taskV.save();
+	        	}
+	        }
+
+			String accName = userDoc.field (NdexClasses.account_P_accountName);
 			
-			user.fields(NdexClasses.ExternalObj_isDeleted, true,
+			userDoc.fields(NdexClasses.ExternalObj_isDeleted, true,
 					NdexClasses.ExternalObj_mTime, new Date(),
 					NdexClasses.account_P_accountName , null,
 					NdexClasses.account_P_oldAcctName, accName).save();

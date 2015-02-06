@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -187,7 +188,8 @@ public class NetworkDAO extends OrientdbDAO {
 		ODocument networkDoc = getRecordByUUID(UUID.fromString(uuid), NdexClasses.Network);
 
 		if ( networkDoc != null) {
-		   networkDoc.field(NdexClasses.Network_P_isComplete , (Object) null).save();
+		   networkDoc.fields(NdexClasses.ExternalObj_isDeleted,true,
+				   NdexClasses.ExternalObj_mTime, new Date()).save();
 		}
  		return 0;
 	}

@@ -183,6 +183,18 @@ public class Helper {
     	return false;
     }
 
+    public static boolean canRemoveAdminOnGrp(ODatabaseDocumentTx db, String grpUUID, 
+			String accountUUID) {
+
+    	String query = "select count(*) as c from (traverse in_" + NdexClasses.GRP_E_admin + " from (select from " +
+    	NdexClasses.Group +" where UUID = '"+ grpUUID + "')) where UUID <> '"+ accountUUID +"'";
+
+    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    	if ((long) result.get(0).field("c") > 1 ) return true;
+    	return false;
+    }
+
     public static boolean canRemoveAdminByAccount(ODatabaseDocumentTx db, String networkUUID, 
 			String accountName) {
 

@@ -36,6 +36,9 @@ public class TaskDAO extends TaskDocDAO {
 		UUID taskUUID = newTask.getExternalId() == null ? 
 				NdexUUIDFactory.INSTANCE.getNDExUUID() : newTask.getExternalId();
 		
+		OrientVertex userV = this.graph.getVertex(getRecordByAccountName(accountName, NdexClasses.User));
+		String userUUID = userV.getRecord().field(NdexClasses.ExternalObj_ID);
+		
 		ODocument taskDoc = new ODocument(NdexClasses.Task)
 				.fields(NdexClasses.ExternalObj_ID, taskUUID.toString(),
 					NdexClasses.ExternalObj_cTime, newTask.getCreationTime(),
@@ -46,14 +49,14 @@ public class TaskDAO extends TaskDocDAO {
 					NdexClasses.Task_P_progress, newTask.getProgress(),
 					NdexClasses.Task_P_taskType, newTask.getTaskType(),
 					NdexClasses.Task_P_resource, newTask.getResource(),
-					NdexClasses.ExternalObj_isDeleted, false);
+					NdexClasses.ExternalObj_isDeleted, false,
+					"ownerUUID", userUUID);
 	
 		if ( newTask.getFormat() != null) 
 			taskDoc = taskDoc.field(NdexClasses.Task_P_fileFormat, newTask.getFormat());
 		
 		taskDoc = taskDoc.save();
 		
-		OrientVertex userV = this.graph.getVertex(getRecordByAccountName(accountName, NdexClasses.User));
 		OrientVertex taskV = graph.getVertex(taskDoc);
 		
    		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
