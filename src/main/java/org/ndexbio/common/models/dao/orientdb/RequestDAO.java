@@ -1,5 +1,6 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.UUID;
 
@@ -35,10 +36,10 @@ public class RequestDAO extends OrientdbDAO  {
 	    * @param graph
 	    * 			OrientBaseGraph layer on top of db instance. 
 	    **************************************************************************/
-	public RequestDAO(ODatabaseDocumentTx db) {
-		super(db);
+	public RequestDAO(ODatabaseDocumentTx dbConnection) {
+		super(dbConnection);
 		//this.db = graph.getRawGraph();
-		this.graph = new OrientGraph(db);
+		this.graph = new OrientGraph(dbConnection, false);
 		graph.setAutoScaleEdgeType(true);
 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
 		graph.setUseLightweightEdges(true);
@@ -100,7 +101,7 @@ public class RequestDAO extends OrientdbDAO  {
 			destinationResource = this.getRecordByUUID(newRequest.getDestinationUUID(), NdexClasses.Network);
 	
 		if(sourceAccount.getClassName().equals(NdexClasses.Group))
-			if(!this.checkPermission(userAccount.getIdentity(), sourceAccount.getIdentity(), Direction.OUT, 1, Permissions.GROUPADMIN))
+			if(!checkPermission(userAccount.getIdentity(), sourceAccount.getIdentity(), Direction.OUT, 1, Permissions.GROUPADMIN))
 				throw new IllegalArgumentException("Not admin of specified group");
 		
 		// check for redundant requests
@@ -111,16 +112,17 @@ public class RequestDAO extends OrientdbDAO  {
 		try {
 			// create request object
 			ODocument request = new ODocument(NdexClasses.Request);
-			request.field("sourceUUID", newRequest.getSourceUUID().toString() );
-			request.field("sourceName", newRequest.getSourceName() );
-			request.field("destinationUUID", newRequest.getDestinationUUID().toString() );
-			request.field("destinationName", newRequest.getDestinationName() );
-			request.field("message", newRequest.getMessage() );
-			request.field("requestPermission", newRequest.getPermission().name() );
-			request.field("response", ResponseType.PENDING );
-			request.field(NdexClasses.ExternalObj_cTime, newRequest.getCreationTime() );
-			request.field(NdexClasses.ExternalObj_ID, newRequest.getExternalId().toString() )
-			.field(NdexClasses.ExternalObj_mTime, newRequest.getModificationTime());
+			request.fields("sourceUUID", newRequest.getSourceUUID().toString(),
+					"sourceName", newRequest.getSourceName(),
+					"destinationUUID", newRequest.getDestinationUUID().toString(),
+					"destinationName", newRequest.getDestinationName(),
+					"message", newRequest.getMessage(),
+					"requestPermission", newRequest.getPermission().name(),
+					"response", ResponseType.PENDING ,
+					NdexClasses.ExternalObj_cTime, newRequest.getCreationTime(),
+					NdexClasses.ExternalObj_ID, newRequest.getExternalId().toString(),
+					NdexClasses.ExternalObj_mTime, newRequest.getModificationTime(),
+					NdexClasses.ExternalObj_isDeleted,false);
 			
 			request = request.save();
 			
@@ -129,7 +131,7 @@ public class RequestDAO extends OrientdbDAO  {
 			OrientVertex vUser = this.graph.getVertex(userAccount);
 			OrientVertex vResource = this.graph.getVertex(destinationResource);
 			
-			this.graph.addEdge(null, vUser, vRequest, "requests");
+			this.graph.addEdge(null, vUser, vRequest, NdexClasses.Request_E_requests);
 			
 			//need to reload?
 			vUser.getRecord().reload();
@@ -137,13 +139,13 @@ public class RequestDAO extends OrientdbDAO  {
 			
 			for(Vertex v : vResource.getVertices(Direction.IN, Permissions.GROUPADMIN.name().toLowerCase(), Permissions.ADMIN.name().toLowerCase()) ) {
 				if( ((OrientVertex) v).getRecord().getClassName().equals(NdexClasses.User) ) {
-					graph.addEdge(null, vRequest, v, "requests");
 					vRequest.getRecord().reload();
+					graph.addEdge(null, vRequest, v, NdexClasses.Request_E_requests);
 				}
 				
 				for(Vertex vv : v.getVertices(Direction.IN, Permissions.GROUPADMIN.name().toLowerCase())) {
 					vRequest.getRecord().reload();
-					graph.addEdge(null, vRequest, vv, "requests");
+					graph.addEdge(null, vRequest, vv, NdexClasses.Request_E_requests);
 				}
 				
 			}
@@ -294,23 +296,14 @@ public class RequestDAO extends OrientdbDAO  {
 	}
 	
 
-	public void begin() {
-		this.graph.getRawGraph().begin();
-	}
-
+	@Override
 	public void commit() {
 		this.graph.commit();
 	}
 	
-	public void rollback() {
-		this.graph.rollback();
-	}
-	
+	@Override
 	public void close() {
-		//this.graph.getRawGraph().close(); // closing raw graph will prevent commit
 		this.graph.shutdown();
-		//if(!this.db.isClosed())  // needed to empty pool?
-			//this.db.close();
 	}
 	
 	
@@ -328,6 +321,9 @@ public class RequestDAO extends OrientdbDAO  {
 			result.setResponder((String) request.field("responder"));
 			result.setResponse( ResponseType.valueOf( (String) request.field("response") ) );
 			result.setResponseMessage((String) request.field("responseMessage"));
+			Date d = request.field(NdexClasses.Request_P_responseTime);
+			result.setResponseTime(new Timestamp(d.getTime()));
+
 			return result;
 		} catch (Exception e) {
 			logger.severe(e.getMessage());
@@ -346,7 +342,7 @@ public class RequestDAO extends OrientdbDAO  {
 				throw new DuplicateObjectException("Request has already been issued");
 		}
 		
-		if(this.checkPermission(source.getIdentity(), destination.getIdentity(), Direction.OUT, 1, permission))
+		if(checkPermission(source.getIdentity(), destination.getIdentity(), Direction.OUT, 1, permission))
 			throw new NdexException("Access has already been granted");
 		
 	}

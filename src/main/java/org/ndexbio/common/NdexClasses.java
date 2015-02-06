@@ -167,6 +167,8 @@ public interface NdexClasses {
     //request
     public static final String Request_P_sourceUUID = "sourceUUID";
     public static final String Request_P_sourceName = "sourceName";
+    public static final String Request_P_responseTime = "responseTime";
+    public static final String Request_E_requests   = "requests";
     
     //reserved NDEx property names
 }

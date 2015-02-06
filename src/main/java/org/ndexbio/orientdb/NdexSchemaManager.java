@@ -129,6 +129,7 @@ public class NdexSchemaManager
             cls.createProperty("response", OType.STRING);
             cls.createProperty("responder", OType.STRING);
             cls.createProperty("responseMessage", OType.STRING);
+            cls.createProperty(NdexClasses.Request_P_responseTime, OType.DATETIME);
         }
 
         

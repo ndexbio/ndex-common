@@ -1,6 +1,6 @@
 package org.ndexbio.common.models.dao.orientdb;
 
-import java.util.List;
+import java.util.Date;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -16,12 +16,11 @@ import org.ndexbio.model.object.Permissions;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -101,12 +100,20 @@ public class GroupDAO extends GroupDocDAO {
 			
 				group = group.save();
 				
-				Vertex vGroup = graph.getVertex(group);
-				Vertex vAdmin = graph.getVertex(admin);
-				
-				graph.addEdge(null, vAdmin, vGroup, Permissions.GROUPADMIN.toString().toLowerCase());
-				
-				logger.info("A new group with accountName "
+				OrientVertex vGroup = graph.getVertex(group);
+
+				OrientVertex vAdmin = graph.getVertex(admin);
+		   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+		   			try	{
+						graph.addEdge(null, vAdmin, vGroup, Permissions.GROUPADMIN.toString().toLowerCase());
+		  				break;
+		   			} catch(ONeedRetryException	e)	{
+		   				logger.warning("Retry creating task add edge.");
+		   				vAdmin.reload();
+		   			}
+		   		}
+
+		   		logger.info("A new group with accountName "
 							+ newGroup.getAccountName() 
 							+" and owner "+ (String)admin.field(NdexClasses.account_P_accountName) 
 							+" has been created");
@@ -146,38 +153,48 @@ public class GroupDAO extends GroupDocDAO {
 		// get records and validate admin permissions
 		final ODocument group = this.getRecordByUUID(groupId, NdexClasses.Group);
 		final ODocument admin = this.getRecordByUUID(adminId, NdexClasses.User);	
-		this.validatePermission(group, admin, Permissions.GROUPADMIN);
+		if (!hasPermission(group, admin, Permissions.GROUPADMIN) )
+			throw new NdexException ("User " + adminId + " doesn't have permission to delete group "
+		            + groupId);
 		
 		try {
 			OrientVertex vGroup = graph.getVertex(group);
 			boolean safe = true;
 			
-			//TODO using a direction instead of BOTH could be faster, easy, and more understandable
-			//iterate across all edges of type ADMIN connected to the group record, to find networks
-			for(Edge e : vGroup.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+			for(Edge e : vGroup.getEdges( Direction.OUT, Permissions.ADMIN.toString().toLowerCase() ) ) {
 				// get the resource the group edge points to
 				OrientVertex vResource = (OrientVertex) e.getVertex(Direction.IN);
 				
 				//not a network, continue 
-				if(!vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Network ))
+				if(!vResource.getRecord().getSchemaClass().getName().equals( NdexClasses.Network ) || 
+					(vResource.getRecord().field(NdexClasses.ExternalObj_isDeleted) != null &&
+					 ((Boolean)vResource.getRecord().field(NdexClasses.ExternalObj_isDeleted)).booleanValue()) )
 					continue;
 				// is a network, unsafe to delete if only admin
 				safe = false;	
 				
 				//iterate across all edges of type ADMIN, to find groups or users
-				for(Edge ee : vResource.getEdges( Direction.BOTH, Permissions.ADMIN.toString().toLowerCase() ) ) {
+				for(Edge ee : vResource.getEdges( Direction.IN, Permissions.ADMIN.toString().toLowerCase() ) ) {
 					
 					if( !( (OrientVertex) ee.getVertex(Direction.OUT) ).equals(vGroup) ) {
 						safe = true;
+						break;
 					}
 				}
 					
 			}
-				
+
 			if(!safe)
 				throw new NdexException("Cannot orphan networks");
+
+			//TODO: check if there are pending requests.
 			
-			group.delete();
+				
+            			
+			
+			group.fields(NdexClasses.ExternalObj_isDeleted, true,
+					NdexClasses.ExternalObj_mTime, new Date()).save();
+			
 		}
 		catch (NdexException e) {
 			logger.severe("Could not delete group from the database " + e.getMessage());
@@ -218,7 +235,9 @@ public class GroupDAO extends GroupDocDAO {
 		
 		ODocument group =  this.getRecordByUUID(groupId, NdexClasses.Group);
 		ODocument member = this.getRecordByUUID(memberId, NdexClasses.User);
-		this.validatePermission(group, member, Permissions.GROUPADMIN);
+		if (!hasPermission(group, member, Permissions.GROUPADMIN) )
+			throw new NdexException ("User " + memberId + " doesn't have permission to delete group "
+		            + groupId);
 		
 		try {
 			//updatedGroup.getDescription().isEmpty();
@@ -437,7 +456,7 @@ public class GroupDAO extends GroupDocDAO {
 		}
 	}
 	
-	private void validatePermission(ODocument group, ODocument member, Permissions permission) 
+	private boolean hasPermission(ODocument group, ODocument member, Permissions permission) 
 			throws ObjectNotFoundException, NdexException {
 
 		boolean isMember = false;
@@ -451,12 +470,15 @@ public class GroupDAO extends GroupDocDAO {
 			}
 			
 		} catch(Exception e) {
-			logger.severe("Unexpected error while validating group member for group");
-			throw new NdexException("Unexpected error while validating group member");
+			String message = "Unexpected error while validating group member for group: " + e.getMessage(); 
+			logger.severe(message);
+			throw new NdexException(message);
 		}
 		
-		if(!isMember) 
-			throw new NdexException("Invalid permission to group for member UUID");
+//		if(!isMember) 
+//			throw new NdexException("Invalid permission to group for member UUID");
+		
+		return isMember;
 		
 	}
 	
