@@ -1759,7 +1759,7 @@ public class NetworkDAO extends OrientdbDAO {
         }
         
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
-        ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), NdexClasses.Account);
+        ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), null);
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         
@@ -1793,7 +1793,7 @@ public class NetworkDAO extends OrientdbDAO {
         }
         
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
-        ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), NdexClasses.Account);
+        ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), null);
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         

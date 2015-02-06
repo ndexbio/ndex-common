@@ -47,8 +47,8 @@ public abstract class OrientdbDAO implements AutoCloseable {
 			if((temp != null) )
 				record = temp;
 				
-			if(record == null || (! record.getClass().getName().equals(orientClass))) 
-				throw new ObjectNotFoundException("[Class + "+ orientClass + "] Object", id.toString());
+			if(record == null || ( orientClass !=null && !((ODocument)record.getRecord()).getClassName().equals(orientClass))) 
+				throw new ObjectNotFoundException("[Class "+ orientClass + "] Object", id.toString());
 
 			
 			return (ODocument) record.getRecord();

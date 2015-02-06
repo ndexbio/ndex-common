@@ -287,7 +287,7 @@ public class UserDocDAO extends OrientdbDAO {
 			query = new OSQLSynchQuery<>("SELECT FROM "
 						+ NdexClasses.User + " "
 						+ "WHERE (not "+ NdexClasses.ExternalObj_isDeleted 
-						+ ") accountName.toLowerCase() LIKE '%"
+						+ ") and accountName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
 						+ "  OR lastName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
@@ -713,7 +713,7 @@ public class UserDocDAO extends OrientdbDAO {
 		Preconditions.checkArgument(resource != null, "Resource UUID required");
 		Preconditions.checkArgument(depth > 0 && depth < 3, "Depth range: [1,2]");
 
-		ODocument OAccount = this.getRecordByUUID(account, NdexClasses.Account);
+		ODocument OAccount = this.getRecordByUUID(account, null);
 		ODocument OResource = this.getRecordByUUID(resource, null);
 
 		Permissions permission = null;
@@ -881,7 +881,7 @@ public class UserDocDAO extends OrientdbDAO {
 		
 		String statusFilter = "";
 		if (status != Status.ALL){
-			statusFilter = " status = '" + status + "'";
+			statusFilter = " and status = '" + status + "'";
 		}
 
 		try {

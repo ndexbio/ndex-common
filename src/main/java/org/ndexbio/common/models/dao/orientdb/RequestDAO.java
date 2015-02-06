@@ -89,7 +89,7 @@ public class RequestDAO extends OrientdbDAO  {
 				"Must be logged in to make a request");
 		
 		// setup
-		ODocument sourceAccount = this.getRecordByUUID(newRequest.getSourceUUID(), NdexClasses.Account);
+		ODocument sourceAccount = this.getRecordByUUID(newRequest.getSourceUUID(), null);
 		ODocument userAccount = this.getRecordByUUID(account.getExternalId(), NdexClasses.User);
 		
 		ODocument destinationResource;

@@ -50,9 +50,11 @@ public class TaskDocDAO extends OrientdbDAO {
 		result.setTaskType(TaskType.valueOf((String)doc.field(NdexClasses.Task_P_taskType)));
 		
 		Date d = doc.field(NdexClasses.Task_P_startTime);
-		result.setStartTime(new Timestamp(d.getTime()));
+		if (d !=null)
+			result.setStartTime(new Timestamp(d.getTime()));
 		d = doc.field(NdexClasses.Task_P_endTime);
-		result.setFinishTime(new Timestamp(d.getTime()));
+		if ( d!=null)
+			result.setFinishTime(new Timestamp(d.getTime()));
 		result.setMessage(NdexClasses.Task_P_message);
 		
 		ODocument ownerDoc = doc.field("out_"+ NdexClasses.Task_E_owner);
@@ -138,7 +140,8 @@ public class TaskDocDAO extends OrientdbDAO {
 //    	doc.reload();
     	Status s = Status.valueOf((String)doc.field(NdexClasses.Task_P_status));
     	if ( s != status )
-    		doc.field(NdexClasses.Task_P_status, status).save();
+    		doc.fields(NdexClasses.Task_P_status, status,
+    				   NdexClasses.ExternalObj_mTime, new Date()).save();
     	task.setStatus(status);
     	return task;
     }
