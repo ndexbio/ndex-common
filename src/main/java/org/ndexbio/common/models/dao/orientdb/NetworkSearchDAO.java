@@ -1,17 +1,12 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
@@ -32,7 +27,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NetworkSearchDAO extends OrientdbDAO{
 	
@@ -44,8 +38,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	    * @param db
 	    *            Database instance from the Connection pool, should be opened
 	    **************************************************************************/
-	public NetworkSearchDAO (ODatabaseDocumentTx db) {
-		super( db);
+	public NetworkSearchDAO (ODatabaseDocumentTx dbConnection) {
+		super( dbConnection);
 	}
 	
 	
@@ -122,7 +116,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			    	  ODocument networkDoc = (ODocument)reifiedTRec;
 			    	  if ( networkDoc.getClassName().equals(NdexClasses.Network)) {
 						NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
-						if ( network.getIsComplete())
+						if ( network.getIsComplete() && !network.getIsDeleted())
 							foundNetworks .add(network);
 			    	  }
 			    }
@@ -136,7 +130,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))!= VisibilityType.PRIVATE)
     					   || networkIsReadableByAccount(networkDoc, userORID))) {
 							NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
-							if ( network.getIsComplete())
+							if ( network.getIsComplete() && !network.getIsDeleted())
 								foundNetworks .add(network);
 					}
 				}
@@ -216,13 +210,15 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
 			Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
-			if ( isComplete != null && isComplete.booleanValue()) {
+			Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+			if ( isComplete != null && isComplete.booleanValue() &&
+					 (	isDeleted == null || !isDeleted.booleanValue() )) {
 				if (isSearchable(doc, userRID, adminUserRID, simpleNetworkQuery.getCanRead(), 
 						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 					resultIDSet.add(dId.getIdentity());
 					if ( counter >= offset) {
 						NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
-						if ( network.getIsComplete())
+						if ( network.getIsComplete() && !network.getIsDeleted())
 							resultList .add(network);
 					}
 					counter ++;
@@ -250,8 +246,10 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				  ODocument doc = (ODocument) networkRec;
 			    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-					Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);   
+					Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
+					Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
 		            if ( isComplete !=null && isComplete.booleanValue() && 
+		            	 (	isDeleted == null || !isDeleted.booleanValue() ) && 
 		            	  isSearchable(doc, userRID, adminUserRID,simpleNetworkQuery.getCanRead(), 
 		  						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 							resultIDSet.add(id);
@@ -285,7 +283,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 				    
 				   if ( doc.getClassName().equals(NdexClasses.Network)) {
 					    Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
+						Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
 			            if( isComplete !=null && isComplete.booleanValue() &&
+			                (isDeleted == null || !isDeleted.booleanValue() ) &&		
 			               (isSearchable(doc, userRID,adminUserRID,simpleNetworkQuery.getCanRead(), 
 									simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) ) {
 								resultIDSet.add(id);
