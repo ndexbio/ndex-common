@@ -72,7 +72,7 @@ public class UserDAO extends UserDocDAO {
 		 */
 
 		try {
-			boolean safe = true;
+//			boolean safe = true;
 
 			// check if there is any network or group dependency
 	        for (OIdentifiable networkDoc : new OTraverse()
@@ -174,11 +174,14 @@ public class UserDAO extends UserDocDAO {
 	        }
 
 			String accName = userDoc.field (NdexClasses.account_P_accountName);
+			String email = userDoc.field(NdexClasses.User_P_emailAddress);
 			
 			userDoc.fields(NdexClasses.ExternalObj_isDeleted, true,
 					NdexClasses.ExternalObj_mTime, new Date(),
 					NdexClasses.account_P_accountName , null,
-					NdexClasses.account_P_oldAcctName, accName).save();
+					NdexClasses.account_P_oldAcctName, accName,
+					NdexClasses.User_P_emailAddress, null,
+					NdexClasses.User_P_oldEmailAddress, email).save();
 			
 		} catch (Exception e) {
 			logger.severe("Could not delete user from the database");

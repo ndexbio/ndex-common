@@ -1,13 +1,10 @@
 package org.ndexbio.task.utility;
 
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
-import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.models.dao.orientdb.UserDAO;
+import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NewUser;
 import org.ndexbio.model.object.User;
-import org.ndexbio.task.Configuration;
 
 public class DatabaseInitializer {
 
@@ -38,7 +35,7 @@ public class DatabaseInitializer {
 		}
 	}
 */
-	public static void createUserIfnotExist(UserDAO dao, String accountName, String email, String password) throws NdexException {
+	public static void createUserIfnotExist(UserDocDAO dao, String accountName, String email, String password) throws NdexException {
 		try {
 			User u = dao.getUserByAccountName(accountName);
 			if ( u!= null) return;

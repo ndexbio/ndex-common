@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.common.util.TermStringType;
 import org.ndexbio.common.util.TermUtilities;
@@ -68,9 +69,11 @@ public class ExcelParser implements IParsingEngine
     * 
     * If there is a second worksheet, it holds meta information
     * in a property-value format.
+     * @throws NdexException 
+     * @throws ObjectNotFoundException 
     **************************************************************************/
     @Override
-	public void parseFile()
+	public void parseFile() throws ObjectNotFoundException, NdexException
     {
 
         this.getMsgBuffer().add("Parsing lines from " + this.getExcelURI());
@@ -84,17 +87,12 @@ public class ExcelParser implements IParsingEngine
         }
         catch (FileNotFoundException e1)
         {
-            this.getMsgBuffer().add("Could not read " + this.getExcelURI());
-            this.networkService.abortTransaction();
-            // e1.printStackTrace();
+            this.getMsgBuffer().add("Can't find file " + this.getExcelURI());
             return;
         }
 
         try
         {
-           
-
-
             // Get the workbook instance for XLS file
             HSSFWorkbook workbook = new HSSFWorkbook(excelFileStream);
 
@@ -110,7 +108,7 @@ public class ExcelParser implements IParsingEngine
             // Get second sheet from the workbook
             // If it exists, it is the metaData
             HSSFSheet metaDataSheet = null;
-            ;
+            
             if (sheetCount > 1)
             {
                 metaDataSheet = workbook.getSheetAt(1);

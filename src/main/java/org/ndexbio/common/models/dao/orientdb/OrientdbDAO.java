@@ -37,13 +37,19 @@ public abstract class OrientdbDAO implements AutoCloseable {
 
 	protected ODocument getRecordByUUID(UUID id, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
+		return getRecordByUUIDStr(id.toString(), orientClass);
+		
+	}
+	
+	protected ODocument getRecordByUUIDStr(String id, String orientClass) 
+			throws ObjectNotFoundException, NdexException {
 		
 		try {
 			OIndex<?> Idx;
 			OIdentifiable record = null;
 			
 			Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-			OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
+			OIdentifiable temp = (OIdentifiable) Idx.get(id);
 			if((temp != null) )
 				record = temp;
 				
@@ -60,7 +66,7 @@ public abstract class OrientdbDAO implements AutoCloseable {
 		}
 		
 	}
-
+	
 /*	
 	protected ODocument getRecordByExternalId(UUID id) 
 			throws ObjectNotFoundException, NdexException {

@@ -43,6 +43,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -169,18 +170,23 @@ public class NetworkDAO extends OrientdbDAO {
 	}
 	
 	
-	public int deleteNetwork (String UUID) {
+	public int deleteNetwork (String UUID) throws ObjectNotFoundException, NdexException {
 		int counter = deleteNetworkElements(UUID);
 		
-		String query = "select from network where UUID='"+ UUID + "'";
-        final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
+		ODocument n = this.getRecordByUUIDStr(UUID, NdexClasses.Network);
         
-        for ( ODocument n: networks ) {
-        	OrientVertex v =  graph.getVertex(n);
-        	graph.removeVertex(v);
-        	counter ++;
-        }
-        
+       	OrientVertex v =  graph.getVertex(n);
+
+       	for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+			try	{
+		       	graph.removeVertex(v);
+		       	counter ++;
+				break;
+			} catch(ONeedRetryException	e)	{
+				logger.warning("Retry deleting network node.");
+				v.reload();
+			}
+		}
  		return counter;
 	}
 
@@ -191,7 +197,7 @@ public class NetworkDAO extends OrientdbDAO {
 		   networkDoc.fields(NdexClasses.ExternalObj_isDeleted,true,
 				   NdexClasses.ExternalObj_mTime, new Date()).save();
 		}
- 		return 0;
+ 		return 1;
 	}
 	
 	
@@ -206,8 +212,8 @@ public class NetworkDAO extends OrientdbDAO {
         	element.reload();
         	graph.removeVertex(graph.getVertex(element));
         	counter ++;
-        	if ( counter % 20000 == 0 ) {
-        		logger.info("Deleted " + counter + " vertexes from network " + UUID);
+        	if ( counter % 1000 == 0 ) {
+        		logger.info("Deleted " + counter + " vertexes from network during cleanup." + UUID);
         		graph.commit();
         	}
         }
@@ -1838,11 +1844,13 @@ public class NetworkDAO extends OrientdbDAO {
 		graph.rollback();		
 	}
 
+	@Override
 	public void commit() {
 		graph.commit();
 		
 	}
 	
+	@Override
 	public void close() {
 		graph.shutdown();
 	}

@@ -36,8 +36,6 @@ public class TaskDAO extends TaskDocDAO {
 		UUID taskUUID = newTask.getExternalId() == null ? 
 				NdexUUIDFactory.INSTANCE.getNDExUUID() : newTask.getExternalId();
 		
-		OrientVertex userV = this.graph.getVertex(getRecordByAccountName(accountName, NdexClasses.User));
-		String userUUID = userV.getRecord().field(NdexClasses.ExternalObj_ID);
 		
 		ODocument taskDoc = new ODocument(NdexClasses.Task)
 				.fields(NdexClasses.ExternalObj_ID, taskUUID.toString(),
@@ -50,25 +48,34 @@ public class TaskDAO extends TaskDocDAO {
 					NdexClasses.Task_P_taskType, newTask.getTaskType(),
 					NdexClasses.Task_P_resource, newTask.getResource(),
 					NdexClasses.ExternalObj_isDeleted, false,
-					"ownerUUID", userUUID);
+					NdexClasses.Task_P_startTime, newTask.getStartTime(),
+					NdexClasses.Task_P_endTime, newTask.getFinishTime(),
+					NdexClasses.Task_P_message, newTask.getMessage());
 	
 		if ( newTask.getFormat() != null) 
 			taskDoc = taskDoc.field(NdexClasses.Task_P_fileFormat, newTask.getFormat());
 		
 		taskDoc = taskDoc.save();
 		
-		OrientVertex taskV = graph.getVertex(taskDoc);
+		if ( accountName != null) {
+			OrientVertex userV = this.graph.getVertex(getRecordByAccountName(accountName, NdexClasses.User));
+			String userUUID = userV.getRecord().field(NdexClasses.ExternalObj_ID);
+
+			taskDoc = taskDoc.field("ownerUUID", userUUID).save();
+			
+			OrientVertex taskV = graph.getVertex(taskDoc);
 		
-   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
-   			try	{
-   				taskV.addEdge(NdexClasses.Task_E_owner, userV );
-  				break;
-   			} catch(ONeedRetryException	e)	{
-   				logger.warning("Retry creating task add edge.");
-   				userV.reload();
-   				taskV.reload();
-   			}
-   		}
+			for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+				try	{
+					taskV.addEdge(NdexClasses.Task_E_owner, userV );
+					break;
+				} catch(ONeedRetryException	e)	{
+					logger.warning("Retry creating task add edge.");
+					userV.reload();
+					taskV.reload();
+				}
+			}
+		}
 		
 		return taskUUID;
 		

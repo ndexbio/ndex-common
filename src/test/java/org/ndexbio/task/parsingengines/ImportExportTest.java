@@ -222,7 +222,7 @@ public class ImportExportTest {
 				 }
 				 assertEquals(i, m.edgePropCnt);
 			 }
-				 
+			 n = null;	 
 		 }
    
     }

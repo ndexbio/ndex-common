@@ -149,6 +149,8 @@ public interface NdexClasses {
     
 //    public static final String user_E_memberOf        ="member";
 //    public static final String user_E_grp_admin	      = "grpAdmin";
+    public static final String User_P_oldEmailAddress = "oldEmail";
+    public static final String User_P_emailAddress   = "emailAddress";
     
     // task
     public static final String Task_P_description = "description";

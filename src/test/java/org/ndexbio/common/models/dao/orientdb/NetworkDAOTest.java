@@ -77,7 +77,7 @@ public class NetworkDAOTest {
 
 	
 	@Test
-	public void testdelete() {
+	public void testdelete() throws ObjectNotFoundException, NdexException {
 		NetworkDAO dao = new NetworkDAO(db);
 		
 		int r = dao.deleteNetwork("4842a831-1e5c-11e4-9f34-90b11c72aefa");

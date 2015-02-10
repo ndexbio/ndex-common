@@ -920,7 +920,6 @@ public class UserDocDAO extends OrientdbDAO {
 
 		Helper.populateExternalObjectFromDoc (result, n);
 
-		result.setEmailAddress((String) n.field("emailAddress"));
 		result.setFirstName((String) n.field("firstName"));
 		result.setLastName((String) n.field("lastName"));
 		result.setWebsite((String) n.field("websiteURL"));
@@ -928,9 +927,11 @@ public class UserDocDAO extends OrientdbDAO {
 		result.setImage((String) n.field("imageURL"));
 		
 		if ( result.getIsDeleted() ) {
-			result.setAccountName((String) n.field(NdexClasses.account_P_oldAcctName));
+			result.setAccountName ((String) n.field(NdexClasses.account_P_oldAcctName));
+			result.setEmailAddress((String) n.field(NdexClasses.User_P_oldEmailAddress));
 		} else {
 			result.setAccountName((String) n.field(NdexClasses.account_P_accountName));
+			result.setEmailAddress((String) n.field("emailAddress"));
 		}
 
 		return result;

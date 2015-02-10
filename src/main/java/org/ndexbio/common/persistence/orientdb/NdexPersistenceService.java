@@ -149,7 +149,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 	
 	
-	public void abortTransaction() {
+	public void abortTransaction() throws ObjectNotFoundException, NdexException {
 		System.out.println(this.getClass().getName()
 				+ ".abortTransaction has been invoked.");
 

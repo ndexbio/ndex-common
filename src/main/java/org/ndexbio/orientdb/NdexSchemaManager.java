@@ -155,7 +155,7 @@ public class NdexSchemaManager
 
             userClass.createProperty("firstName", OType.STRING);
             userClass.createProperty("lastName", OType.STRING);
-            userClass.createProperty("emailAddress", OType.STRING);
+            userClass.createProperty(NdexClasses.User_P_emailAddress, OType.STRING);
 
             userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
 
