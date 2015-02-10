@@ -287,13 +287,13 @@ public class UserDocDAO extends OrientdbDAO {
 			query = new OSQLSynchQuery<>("SELECT FROM "
 						+ NdexClasses.User + " "
 						+ "WHERE (not "+ NdexClasses.ExternalObj_isDeleted 
-						+ ") and accountName.toLowerCase() LIKE '%"
+						+ ") and ( accountName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
 						+ "  OR lastName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
 						+ "  OR firstName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
-						+ "  ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
+						+ ")  ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 						+ startIndex + " LIMIT " + top);
 
 			users = this.db.command(query).execute();

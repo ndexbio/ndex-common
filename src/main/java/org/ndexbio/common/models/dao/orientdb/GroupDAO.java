@@ -187,6 +187,7 @@ public class GroupDAO extends GroupDocDAO {
 
 			if(!safe)
 				throw new NdexException("Cannot orphan networks");
+			String acctName = group.field(NdexClasses.account_P_accountName);
 
 			//TODO: check if there are pending requests.
 			
@@ -195,7 +196,9 @@ public class GroupDAO extends GroupDocDAO {
 	   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
 	   			try	{
 	   				group.fields(NdexClasses.ExternalObj_isDeleted, true,
-	   						NdexClasses.ExternalObj_mTime, new Date()).save();
+	   						NdexClasses.ExternalObj_mTime, new Date(),
+	   						NdexClasses.account_P_accountName, null,
+	   						NdexClasses.account_P_oldAcctName, acctName).save();
 	  				break;
 	   			} catch(ONeedRetryException	e)	{
 	   				logger.warning("Retry update " + e.getMessage());

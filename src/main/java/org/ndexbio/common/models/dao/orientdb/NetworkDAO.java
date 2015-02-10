@@ -212,10 +212,13 @@ public class NetworkDAO extends OrientdbDAO {
         	element.reload();
         	graph.removeVertex(graph.getVertex(element));
         	counter ++;
-        	if ( counter % 1000 == 0 ) {
-        		logger.info("Deleted " + counter + " vertexes from network during cleanup." + UUID);
+        	if ( counter % 1500 == 0 ) {
         		graph.commit();
+        		if (counter % 3000 == 0 ) {
+        			logger.info("Deleted " + counter + " vertexes from network during cleanup." + UUID);
+        		}
         	}
+
         }
         return counter;
 	}
