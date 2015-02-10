@@ -152,7 +152,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		for (final ODocument networkDoc : db.browseClass(NdexClasses.Network)) {
 			Boolean isComplete = networkDoc.field(NdexClasses.Network_P_isComplete);
-			if ( isComplete !=null && isComplete.booleanValue()) {
+			Boolean isDeleted = networkDoc.field(NdexClasses.ExternalObj_isDeleted);
+			if ( isComplete !=null && isComplete.booleanValue() && !isDeleted.booleanValue()) {
 				VisibilityType visibility = 
 							  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
 				if ((simpleNetworkQuery.getCanRead()? 

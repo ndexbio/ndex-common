@@ -282,13 +282,19 @@ public class GroupDAO extends GroupDocDAO {
 					}
 				}
 
-				if ( edge == null) {
-					throw new NdexException ("Membership not found in group.");
+				if ( edge != null) {
+			   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+			   			try	{
+							graph.removeEdge(edge);
+			  				break;
+			   			} catch(ONeedRetryException	e)	{
+			   				edge.reload();
+			   			}
+			   		}
 				}
 				
 		   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
 		   			try	{
-						graph.removeEdge(edge);
 						graph.addEdge(null, vMember, vGroup, membership.getPermissions().toString().toLowerCase());
 		  				break;
 		   			} catch(ONeedRetryException	e)	{
