@@ -48,8 +48,8 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 				PrintWriter pw = new PrintWriter(sw);
 				e.printStackTrace(pw);     
 				try {
-					saveTaskStatus(task.getExternalId().toString(), Status.FAILED, "Error when executing: " + e.getMessage() + "\n\n"
-							+ pw.toString());
+					saveTaskStatus(task.getExternalId().toString(), Status.FAILED, e.getMessage() + "\n\n"
+							+ sw.toString());
 				} catch (NdexException e1) {
 					logger.severe("Error occured when saving task " + e1);
 				}
