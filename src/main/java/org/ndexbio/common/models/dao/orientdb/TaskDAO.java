@@ -34,12 +34,11 @@ public class TaskDAO extends TaskDocDAO {
 	
 	public UUID createTask(String accountName, Task newTask) throws ObjectNotFoundException, NdexException {
 		
-		UUID taskUUID = newTask.getExternalId() == null ? 
-				NdexUUIDFactory.INSTANCE.getNDExUUID() : newTask.getExternalId();
-		
+		if (newTask.getExternalId() == null)
+			newTask.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
 		
 		ODocument taskDoc = new ODocument(NdexClasses.Task)
-				.fields(NdexClasses.ExternalObj_ID, taskUUID.toString(),
+				.fields(NdexClasses.ExternalObj_ID, newTask.getExternalId().toString(),
 					NdexClasses.ExternalObj_cTime, newTask.getCreationTime(),
 					NdexClasses.ExternalObj_mTime, newTask.getModificationTime(),
 					NdexClasses.Task_P_description, newTask.getDescription(),
@@ -77,16 +76,15 @@ public class TaskDAO extends TaskDocDAO {
 				}
 			}
 			newTask.setTaskOwnerId(UUID.fromString(userUUID));
+
+			try {
+				NdexServerQueue.INSTANCE.addUserTask(newTask);
+			} catch (InterruptedException e) {
+				throw new NdexException ("Interrupted when adding user task to queue.");
+			}
 		}
 		
-		if ( newTask.getExternalId() == null) 
-			newTask.setExternalId(taskUUID);
-		try {
-			NdexServerQueue.INSTANCE.addUserTask(newTask);
-		} catch (InterruptedException e) {
-			throw new NdexException ("Interrupted when adding user task to queue.");
-		}
-		return taskUUID;
+		return newTask.getExternalId();
 		
 	}
 
