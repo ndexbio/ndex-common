@@ -68,82 +68,44 @@ public class FileUploadTask extends NdexTask {
 				.getFileExtension(this.getFilename()).toUpperCase().trim();
 		logger.info("File extension = " + fileExtension);
 		String networkName = Files.getNameWithoutExtension(this.getTask().getDescription());
+		IParsingEngine parser = null;
 		switch (fileExtension) {
 		case ("SIF"):
-			try {
-				final SifParser sifParser = new SifParser(
+			parser = new SifParser(
 						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName);
-				sifParser.parseFile();
-				this.taskStatus = Status.COMPLETED;
-			} catch (Exception e) {
-				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
-				logger.error(e.getMessage());
-				e.printStackTrace();
-			}
 			break;
 		case ("XGMML"):
-			try {
-				final XgmmlParser xgmmlParser = new XgmmlParser(
+			parser = new XgmmlParser(
 						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName);
-				xgmmlParser.parseFile();
-				this.taskStatus = Status.COMPLETED;
-			} catch (Exception e) {
-				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
-				logger.error(e.getMessage());
-				e.printStackTrace();
-			}
 			break;
 		case ("OWL"):
-			try {
-				final IParsingEngine fileParser = new BioPAXParser(
+			parser = new BioPAXParser(
 						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName);
-				fileParser.parseFile();
-				this.taskStatus = Status.COMPLETED;
-			} catch (Exception e) {
-				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
-				logger.error(e.getMessage());
-				e.printStackTrace();
-			}
 			break;
 		case ("XBEL"):
-			try {
-				logger.info("Processing xbel file " + file.getAbsolutePath()
-						+ " for " + this.getTaskOwnerAccount());
-				final XbelParser xbelParser = new XbelParser(
+			parser = new XbelParser(
 						file.getAbsolutePath(), this.getTaskOwnerAccount(),db);
 
-				if (!xbelParser.getValidationState().isValid()) {
+			if (!((XbelParser)parser).getValidationState().isValid()) {
 					logger.info("XBel validation failed");
 					this.taskStatus = Status.COMPLETED_WITH_ERRORS;
 					throw new NdexException(
 							"XBEL file fails XML schema validation - one or more elements do not meet XBEL specification.");
-				}
-				xbelParser.parseFile();
-				this.taskStatus = Status.COMPLETED;
-			} catch (Exception e) {
-				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
-				logger.error(e.getMessage());
-				e.printStackTrace();
 			}
 			break;
 		case ("XLSX"):
 		case ("XLS"):
-			try {
-				final ExcelParser excelParser = new ExcelParser(
+			parser = new ExcelParser(
 						file.getAbsolutePath(), this.getTaskOwnerAccount(),db);
-				excelParser.parseFile();
-				this.taskStatus = Status.COMPLETED;
-			} catch (Exception e) {
-				this.taskStatus = Status.COMPLETED_WITH_ERRORS;
-				logger.error(e.getMessage());
-				e.printStackTrace();
-			}
 			break;
 		default:		
-			logger.error("The uploaded file type is not supported; must be SIF, XGMML, XBEL, XLS or XLSX.");
-			this.taskStatus = Status.COMPLETED_WITH_ERRORS;
+			String message = "The uploaded file type is not supported; must be SIF, XGMML, XBEL, XLS or XLSX."; 
+			logger.error(message);
+			throw new NdexException (message);
 
 		}
+		parser.parseFile();
+		this.taskStatus = Status.COMPLETED;
 		logger.info("Network upload file: " + file.getName() +" deleted from staging area");			
 		file.delete(); // delete the file from the staging area
 		this.updateTaskStatus(this.taskStatus);

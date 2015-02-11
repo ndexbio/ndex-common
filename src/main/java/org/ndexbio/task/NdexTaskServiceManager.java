@@ -20,6 +20,8 @@ import com.google.common.util.concurrent.ServiceManager;
  * Re: registerServices method for instructions on how to add a new Service
  * 
  */
+@Deprecated
+
 public class NdexTaskServiceManager {
 	
 	

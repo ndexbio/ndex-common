@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.tinkerpop.blueprints.Direction;
 
-public abstract class OrientdbDAO implements AutoCloseable {
+public class OrientdbDAO implements AutoCloseable {
 
 	public static final int maxRetries = 100; 
 	
@@ -41,7 +41,7 @@ public abstract class OrientdbDAO implements AutoCloseable {
 		
 	}
 	
-	protected ODocument getRecordByUUIDStr(String id, String orientClass) 
+	public ODocument getRecordByUUIDStr(String id, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
 		
 		try {

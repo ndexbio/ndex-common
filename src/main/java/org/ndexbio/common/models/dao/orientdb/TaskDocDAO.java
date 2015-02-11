@@ -1,12 +1,16 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Priority;
@@ -133,18 +137,46 @@ public class TaskDocDAO extends OrientdbDAO {
     // This is the method called by trusted applications
     // such as the task runner, where we also update
     // status in the Task object passed in.
-    
-    //TODO: looks like we are having racing conditions here. Need to review the usage and make it thread safe.
-    public Task updateTaskStatus(Status status, Task task) throws ObjectNotFoundException, NdexException {
+    /**
+     * Update the status of task.status to newStatus. Update will be applied to database and the task object. 
+     * @param newStatus
+     * @param task
+     * @return
+     * @throws ObjectNotFoundException
+     * @throws NdexException
+     */
+    public Task updateTaskStatus(Status newStatus, Task task) throws ObjectNotFoundException, NdexException {
     	ODocument doc = this.getRecordByUUID(task.getExternalId(), NdexClasses.Task);
-//    	doc.reload();
     	Status s = Status.valueOf((String)doc.field(NdexClasses.Task_P_status));
-    	if ( s != status )
-    		doc.fields(NdexClasses.Task_P_status, status,
-    				   NdexClasses.ExternalObj_mTime, new Date()).save();
-    	task.setStatus(status);
+    	if ( s != newStatus ) {
+       		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+       			try	{
+       	    		doc.fields(NdexClasses.Task_P_status, newStatus,
+         				   NdexClasses.ExternalObj_mTime, new Date()).save();
+      				break;
+       			} catch(ONeedRetryException	e)	{
+       				doc.reload();
+       			}
+       		}
+    	}
+    	task.setStatus(newStatus);
     	return task;
     }
+
+    
+	public void saveTaskStatus (String taskID, Status status, String message) throws NdexException {
+			ODocument taskdoc = getRecordByUUIDStr(taskID, NdexClasses.Task);
+			
+			if ( status == Status.PROCESSING) {
+				taskdoc.fields(NdexClasses.Task_P_startTime, new Timestamp(Calendar.getInstance().getTimeInMillis()),
+							NdexClasses.Task_P_status, status.toString()).save();
+			} else if ( status == Status.COMPLETED || status == Status.COMPLETED_WITH_ERRORS 
+						|| status == Status.COMPLETED_WITH_WARNINGS || status == Status.FAILED) {
+				taskdoc.fields(NdexClasses.Task_P_endTime, new Timestamp(Calendar.getInstance().getTimeInMillis()),
+						NdexClasses.Task_P_status, status.toString(),
+						NdexClasses.Task_P_message, message).save();
+			}
+	}
 
    
     public void flagStagedTaskAsErrors() {
@@ -169,5 +201,18 @@ public class TaskDocDAO extends OrientdbDAO {
     	return 1;		           
     }
 
-
+    /**
+     * Get all the tasks that have status as 'queued' or 'processing' in db. This is a helper function for system startup. 
+     * @return
+     */
+    public Collection<Task> getUnfinishedTasks() { 
+    	List<Task> result = new LinkedList<>();
+    	OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
+  			"SELECT FROM task where (not isDeleted) and ( status = 'QUEUED' or status = 'PROCESSING') ");
+    	List<ODocument> records = db.command(query).execute();
+    	for ( ODocument doc : records ) {
+    		result.add(getTaskFromDocument(doc));
+    	}
+    	return result;
+    }
 }

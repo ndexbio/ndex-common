@@ -8,6 +8,7 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
+import org.ndexbio.task.NdexServerQueue;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -75,8 +76,16 @@ public class TaskDAO extends TaskDocDAO {
 					taskV.reload();
 				}
 			}
+			newTask.setTaskOwnerId(UUID.fromString(userUUID));
 		}
 		
+		if ( newTask.getExternalId() == null) 
+			newTask.setExternalId(taskUUID);
+		try {
+			NdexServerQueue.INSTANCE.addUserTask(newTask);
+		} catch (InterruptedException e) {
+			throw new NdexException ("Interrupted when adding user task to queue.");
+		}
 		return taskUUID;
 		
 	}

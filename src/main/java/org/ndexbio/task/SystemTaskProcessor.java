@@ -12,42 +12,38 @@ import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
 
-public class SystemTaskProcessor implements Runnable {
+public class SystemTaskProcessor extends NdexTaskProcessor {
 
-	private boolean shutdown;
-	
     private Logger logger = Logger.getLogger("com.darwinsys");
 	
 	public SystemTaskProcessor () {
-		shutdown = false;
+		super();
 	}
 	
 	@Override
 	public void run() {
 		while ( !shutdown) {
+			Task task = null;
 			try {
-				Task task = NdexServerQueue.INSTANCE.takeNextSystemTask();
-				TaskType type = task.getTaskType();
-				if ( type == TaskType.SYSTEM_DELETE_NETWORK) {
-				    cleanupDeletedNetwork(task);
-				} else {
-					logger.severe("Unsupported system task type " + type + ". Task ignored.");
-				}
-				
+				task = NdexServerQueue.INSTANCE.takeNextSystemTask();
 			} catch (InterruptedException e) {
 				break;
-			} catch (NdexException e) {
-				logger.severe("Error when executing system task: " + e);
-				e.printStackTrace();
-			} 
+			}
+
+			TaskType type = task.getTaskType();
+			if ( type == TaskType.SYSTEM_DELETE_NETWORK) {
+				try {
+				    cleanupDeletedNetwork(task);
+				} catch (NdexException e) {
+					logger.severe("Error when executing system task: " + e);
+					e.printStackTrace();
+				} 
+			} else {
+					logger.severe("Unsupported system task type " + type + ". Task ignored.");
+			}
 		}
-		
 	}
 	
-	public void shutdown() {
-		shutdown = true;
-	}
-
 	
 	private void cleanupDeletedNetwork (Task task) throws NdexException  {
 		logger.info( "Cleanup deleted network " + task.getResource());

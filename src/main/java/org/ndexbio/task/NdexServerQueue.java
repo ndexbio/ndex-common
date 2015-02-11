@@ -24,7 +24,7 @@ public enum NdexServerQueue {
 	}
 
 	public Task takeNextUserTask () throws InterruptedException {
-		return systemTaskQueue.take();
+		return userTaskQueue.take();
 	}
 	
 	public void addSystemTask (Task task) throws InterruptedException {
