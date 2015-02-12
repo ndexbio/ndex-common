@@ -1,6 +1,8 @@
 package org.ndexbio.task;
 
+import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.logging.Logger;
 
@@ -11,6 +13,10 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
+
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 
 public class SystemTaskProcessor extends NdexTaskProcessor {
 
@@ -38,6 +44,14 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 					logger.severe("Error when executing system task: " + e);
 					e.printStackTrace();
 				} 
+			} else if ( type == TaskType.SYSTEM_DATABASE_BACKUP ) {
+				try {
+					backupDatabase(task);
+				} catch (NdexException e) {
+					// TODO Auto-generated catch block
+					logger.severe("Error when export backup system task: " + e);
+					e.printStackTrace();
+				}
 			} else {
 					logger.severe("Unsupported system task type " + type + ". Task ignored.");
 			}
@@ -56,12 +70,57 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 			logger.info("Network " + task.getResource() + " cleanup finished.");
 			task.setFinishTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			task.setStatus(Status.COMPLETED);
-			task.setMessage(cnt + " vertex deleted.");
+			task.setMessage(cnt + " vertices deleted.");
 			try (TaskDAO taskdao = new TaskDAO (NdexDatabase.getInstance().getAConnection())) {
 				taskdao.createTask(null, task);
 				taskdao.commit();
 				taskdao.close();
 			}
 		}	
+	}
+	
+	private void backupDatabase (Task task) throws NdexException {
+
+		task.setStartTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
+   		 String ndexRoot = Configuration.getInstance().getNdexRoot();
+   		 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+   		 String strDate = sdf.format(Calendar.getInstance().getTime());
+
+   		 try (ODatabaseDocumentTx db = NdexDatabase.getInstance().getAConnection()){
+		
+       		 String exportFile = ndexRoot + "/dbbackups/db_"+ strDate + ".export";
+
+       		 logger.info("Backing up database to " + exportFile);
+       		 
+       		 try{
+       			  OCommandOutputListener listener = new OCommandOutputListener() {
+       			    @Override
+       			    public void onMessage(String iText) {
+       			      logger.info(iText);
+       			    }
+       			  };
+
+       			  ODatabaseExport export = new ODatabaseExport(db, exportFile, listener);
+       			  export.setIncludeIndexDefinitions(false);
+       			  export.exportDatabase();
+       			  export.close();
+       			  task.setFinishTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
+       			  task.setStatus(Status.COMPLETED);
+       			  task.setMessage("Db exported to " + exportFile);
+           		 logger.info("Database back up fininished succefully.");
+       			} catch (Exception e) {
+       				task.setMessage(e.getMessage());
+       				task.setStatus(Status.FAILED);
+					logger.severe("IO exception when backing up database. " + e.getMessage());
+					e.printStackTrace();
+				} 
+
+ 			try (TaskDAO taskdao = new TaskDAO (NdexDatabase.getInstance().getAConnection())) {
+ 				taskdao.createTask(null, task);
+ 				taskdao.commit();
+ 				taskdao.close();
+ 			}
+
+       	 } 	
 	}
 }

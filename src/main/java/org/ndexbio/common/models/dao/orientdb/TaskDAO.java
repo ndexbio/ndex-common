@@ -77,11 +77,7 @@ public class TaskDAO extends TaskDocDAO {
 			}
 			newTask.setTaskOwnerId(UUID.fromString(userUUID));
 
-			try {
-				NdexServerQueue.INSTANCE.addUserTask(newTask);
-			} catch (InterruptedException e) {
-				throw new NdexException ("Interrupted when adding user task to queue.");
-			}
+			NdexServerQueue.INSTANCE.addUserTask(newTask);
 		}
 		
 		return newTask.getExternalId();

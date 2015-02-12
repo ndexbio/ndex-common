@@ -214,7 +214,7 @@ public class NetworkDAO extends OrientdbDAO {
         	counter ++;
         	if ( counter % 1500 == 0 ) {
         		graph.commit();
-        		if (counter % 3000 == 0 ) {
+        		if (counter % 6000 == 0 ) {
         			logger.info("Deleted " + counter + " vertexes from network during cleanup." + UUID);
         		}
         	}
