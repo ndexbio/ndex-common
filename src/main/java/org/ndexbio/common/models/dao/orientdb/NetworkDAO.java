@@ -189,6 +189,41 @@ public class NetworkDAO extends OrientdbDAO {
 		}
  		return counter;
 	}
+	
+	
+	public int cleanupDeleteNetwork(String UUID) {
+		return 0;
+	}
+	
+	/**
+	 * Delete up to 50000 vertices in a network. This function is for cleaning up a logically 
+	 * deleted network in the database. 
+	 * @param uuid
+	 * @return the number of vertices being deleted. If it is a negitive integer, it means
+	 * all vertices has been deleted.
+	 * @throws NdexException 
+	 * @throws ObjectNotFoundException 
+	 */
+	private int cleanupNetworkElement(String uuid) throws ObjectNotFoundException, NdexException {
+		ODocument networkDoc = getRecordByUUID(UUID.fromString(uuid), NdexClasses.Network);
+        int counter = 0;
+        
+        // traverse namespaces and delete them
+        for (OIdentifiable nsDoc : new OTraverse()
+    			.field("out_"+ NdexClasses.Network_E_Namespace )
+    			.target(networkDoc)
+    			.predicate( new OSQLPredicate("$depth <= 1"))) {
+        	ODocument doc = (ODocument) nsDoc;
+        	if ( doc.getClassName().equals(NdexClasses.Namespace) ) {
+            	graph.removeVertex(graph.getVertex(doc));
+     
+        	}
+        }
+
+        
+        
+        return counter;
+	}
 
 	public int logicalDeleteNetwork (String uuid) throws ObjectNotFoundException, NdexException {
 		ODocument networkDoc = getRecordByUUID(UUID.fromString(uuid), NdexClasses.Network);
