@@ -2,13 +2,9 @@ package org.ndexbio.task;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
-import org.ndexbio.common.models.dao.orientdb.TaskDAO;
 import org.ndexbio.common.models.dao.orientdb.TaskDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Status;
@@ -19,7 +15,7 @@ import org.ndexbio.model.object.network.FileFormat;
 
 public class ClientTaskProcessor extends NdexTaskProcessor {
 
-    private Logger logger = Logger.getLogger("com.darwinsys");
+    private Logger logger = Logger.getLogger(ClientTaskProcessor.class.getSimpleName());
 	
 	public ClientTaskProcessor () {
 		super();
@@ -32,6 +28,7 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 			try {
 				task = NdexServerQueue.INSTANCE.takeNextUserTask();
 			} catch (InterruptedException e) {
+				logger.info("takeNextUserTask Interrupted.");
 				break;
 			}
 			
@@ -91,23 +88,4 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 	}
 	
 	
-	private void cleanupDeletedNetwork (Task task) throws NdexException  {
-		logger.info( "Cleanup deleted network " + task.getResource());
-
-		task.setStartTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
-		try (NetworkDAO networkDao = new NetworkDAO(NdexDatabase.getInstance().getAConnection()); ) {
-			int cnt = networkDao.deleteNetwork(task.getResource());
-			networkDao.commit();
-			networkDao.close();
-			logger.info("Network " + task.getResource() + " cleanup finished.");
-			task.setFinishTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
-			task.setStatus(Status.COMPLETED);
-			task.setMessage(cnt + " vertex deleted.");
-			try (TaskDAO taskdao = new TaskDAO (NdexDatabase.getInstance().getAConnection())) {
-				taskdao.createTask(null, task);
-				taskdao.commit();
-				taskdao.close();
-			}
-		}	
-	}
 }

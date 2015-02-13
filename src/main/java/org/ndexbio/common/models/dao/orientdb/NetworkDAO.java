@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -62,10 +63,18 @@ public class NetworkDAO extends OrientdbDAO {
 	//flag to specify whether need to search in the current un-commited transaction. 
 	//This is used to work around the problem that sql query doesn't search the current 
 	// uncommited transaction in OriantDB.
-	private boolean searchCurrentTx;
+//	private boolean searchCurrentTx;
 	
 	private ObjectMapper mapper;
 	private OrientGraph graph;
+	
+	private static final int CLEANUP_BATCH_SIZE = 60000;
+	
+    private static final String[] networkElementType = {NdexClasses.Network_E_BaseTerms, NdexClasses.Network_E_Citations,
+    		NdexClasses.Network_E_Edges, NdexClasses.Network_E_FunctionTerms, NdexClasses.Network_E_Namespace,
+    		NdexClasses.Network_E_Nodes, NdexClasses.Network_E_ReifiedEdgeTerms, NdexClasses.Network_E_Supports,
+    		NdexClasses.E_ndexPresentationProps, NdexClasses.E_ndexProperties
+    		};
 	
 	static Logger logger = Logger.getLogger(NetworkDAO.class.getName());
 	
@@ -73,7 +82,7 @@ public class NetworkDAO extends OrientdbDAO {
 	public NetworkDAO (ODatabaseDocumentTx db) {
 	    super(db);
 //		this.db = db;
-		this.searchCurrentTx = false;
+//		this.searchCurrentTx = false;
 		mapper = new ObjectMapper();
 		graph = new OrientGraph(this.db,false);
 		graph.setAutoScaleEdgeType(true);
@@ -84,7 +93,7 @@ public class NetworkDAO extends OrientdbDAO {
 
 	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {
 	    this(db);
-		this.searchCurrentTx = searchCurrentTransaction;
+//		this.searchCurrentTx = searchCurrentTransaction;
 	}
 
 	
@@ -171,58 +180,118 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	
 	public int deleteNetwork (String UUID) throws ObjectNotFoundException, NdexException {
-		int counter = deleteNetworkElements(UUID);
+		int counter = 0, cnt = 0;
 		
-		ODocument n = this.getRecordByUUIDStr(UUID, NdexClasses.Network);
-        
-       	OrientVertex v =  graph.getVertex(n);
-
-       	for	(int retry = 0;	retry <	maxRetries;	++retry)	{
-			try	{
-		       	graph.removeVertex(v);
-		       	counter ++;
-				break;
-			} catch(ONeedRetryException	e)	{
-				logger.warning("Retry deleting network node.");
-				v.reload();
-			}
-		}
+		do {
+			cnt = cleanupDeleteNetwork(UUID);
+			if (cnt <0 ) 
+				counter += -1*cnt;
+			else 
+				counter += cnt;
+		} while ( cnt < 0 ); 
  		return counter;
 	}
 	
-	
-	public int cleanupDeleteNetwork(String UUID) {
-		return 0;
-	}
-	
-	/**
-	 * Delete up to 50000 vertices in a network. This function is for cleaning up a logically 
+	/** 
+	 * Delete up to CLEANUP_BATCH_SIZE vertices in a network. This function is for cleaning up a logically 
 	 * deleted network in the database. 
 	 * @param uuid
-	 * @return the number of vertices being deleted. If it is a negitive integer, it means
-	 * all vertices has been deleted.
+	 * @return Number of vertices being deleted. If the returned number is negative, it means the elements
+	 * of the network are not completely deleted yet, and the number of vertices deleted are abs(returned number).
+	 * @throws ObjectNotFoundException
+	 * @throws NdexException
+	 */
+	public int cleanupDeleteNetwork(String uuid) throws ObjectNotFoundException, NdexException {
+		ODocument networkDoc = getRecordByUUID(UUID.fromString(uuid), NdexClasses.Network);
+		
+		int count = cleanupNetworkElements(networkDoc);
+		if ( count >= CLEANUP_BATCH_SIZE) {
+			return (-1) * count;
+		}
+		
+		// remove the network node.
+		networkDoc.reload();
+		
+		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+			try	{
+				graph.removeVertex(graph.getVertex(networkDoc));
+				break;
+			} catch(ONeedRetryException	e)	{
+				logger.warning("Retry: "+ e.getMessage());
+				networkDoc.reload();
+			}
+		}
+		
+		return count++;
+	}
+	
+
+	/**
+	 * Delete up to CLEANUP_BATCH_SIZE vertices in a network. This function is for cleaning up a logically 
+	 * deleted network in the database. 
+	 * @param uuid
+	 * @return the number of vertices being deleted. 
 	 * @throws NdexException 
 	 * @throws ObjectNotFoundException 
 	 */
-	private int cleanupNetworkElement(String uuid) throws ObjectNotFoundException, NdexException {
-		ODocument networkDoc = getRecordByUUID(UUID.fromString(uuid), NdexClasses.Network);
+	private int cleanupNetworkElements(ODocument networkDoc) throws ObjectNotFoundException, NdexException {
         int counter = 0;
-        
-        // traverse namespaces and delete them
-        for (OIdentifiable nsDoc : new OTraverse()
-    			.field("out_"+ NdexClasses.Network_E_Namespace )
-    			.target(networkDoc)
-    			.predicate( new OSQLPredicate("$depth <= 1"))) {
-        	ODocument doc = (ODocument) nsDoc;
-        	if ( doc.getClassName().equals(NdexClasses.Namespace) ) {
-            	graph.removeVertex(graph.getVertex(doc));
-     
-        	}
-        }
 
         
+        for ( String fieldName : networkElementType) {
+        	counter = cleanupElementsByEdge(networkDoc, fieldName, counter);
+        	if ( counter >= CLEANUP_BATCH_SIZE) {
+        		return counter;
+        	}
+        }
         
         return counter;
+	}
+	
+	/**
+	 * Cleanup up to CLEANUP_BATCH_SIZE vertices in the out going edge of fieldName. 
+	 * @param doc The ODocument record to be clean up on.
+	 * @param fieldName
+	 * @param currentCounter
+	 * @return the number of vertices being deleted. 
+	 */
+	private int cleanupElementsByEdge(ODocument doc, String fieldName, int currentCounter) {
+		
+		Object f = doc.field("out_"+fieldName);
+		if ( f != null ) {
+			if ( f instanceof ORidBag ) {
+				ORidBag e = (ORidBag)f;
+				int counter = currentCounter;
+				for ( OIdentifiable rid : e) {
+					counter = cleanupElement((ODocument)rid, counter);
+					if ( counter >= CLEANUP_BATCH_SIZE) {
+						return counter;
+					}
+				}
+				return  counter;
+			} 
+			return cleanupElement((ODocument)f, currentCounter);
+		}
+		return currentCounter;
+	}
+	
+	private int cleanupElement(ODocument doc, int currentCount) {
+		int counter = currentCount;
+		if (!doc.getClassName().equals(NdexClasses.NdexProperty) && 
+				!doc.getClassName().equals(NdexClasses.SimpleProperty)) { // not NdexProperty or SimpleProperty Vertex
+			counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexProperties, counter);  // cleanup Properties
+			counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexPresentationProps, counter); 
+		}
+		doc.reload();
+		graph.removeVertex(graph.getVertex(doc));
+		counter ++;
+		if ( counter % 2000 == 0 ) {
+			graph.commit();
+			if (counter % 10000 == 0 ) {
+				logger.info("Deleted " + counter + " vertexes from network during cleanup.");
+			}
+		}
+		return counter;
 	}
 
 	public int logicalDeleteNetwork (String uuid) throws ObjectNotFoundException, NdexException {

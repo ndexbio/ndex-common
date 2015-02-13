@@ -1,6 +1,5 @@
 package org.ndexbio.task;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -9,6 +8,7 @@ import java.util.logging.Logger;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.TaskDAO;
+import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 
 public class SystemTaskProcessor extends NdexTaskProcessor {
 
-    private Logger logger = Logger.getLogger("com.darwinsys");
+    private Logger logger = Logger.getLogger(SystemTaskProcessor.class.getSimpleName());
 	
 	public SystemTaskProcessor () {
 		super();
@@ -33,6 +33,7 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 			try {
 				task = NdexServerQueue.INSTANCE.takeNextSystemTask();
 			} catch (InterruptedException e) {
+				logger.info("takeNextSystemTask Interrupted.");
 				break;
 			}
 
@@ -64,17 +65,25 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 
 		task.setStartTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		try (NetworkDAO networkDao = new NetworkDAO(NdexDatabase.getInstance().getAConnection()); ) {
-			int cnt = networkDao.deleteNetwork(task.getResource());
+			int cnt = networkDao.cleanupDeleteNetwork(task.getResource());
 			networkDao.commit();
-			networkDao.close();
-			logger.info("Network " + task.getResource() + " cleanup finished.");
 			task.setFinishTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			task.setStatus(Status.COMPLETED);
-			task.setMessage(cnt + " vertices deleted.");
+			if ( cnt >=0 ) {
+				logger.info("Network " + task.getResource() + " cleanup finished.");
+				task.setMessage(cnt + " vertices deleted.");
+			} else {  // only partially deleted.
+				String message ="cleanup stoppped after " +( -1 * cnt )+ " vertices deleted.";
+				logger.info("Network " + task.getResource() + message);
+				task.setMessage(message);
+			}
 			try (TaskDAO taskdao = new TaskDAO (NdexDatabase.getInstance().getAConnection())) {
 				taskdao.createTask(null, task);
 				taskdao.commit();
-				taskdao.close();
+			}
+			if ( cnt < 0 ) {
+				task.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
+				NdexServerQueue.INSTANCE.addSystemTask(task); // add the task back to the queue.
 			}
 		}	
 	}

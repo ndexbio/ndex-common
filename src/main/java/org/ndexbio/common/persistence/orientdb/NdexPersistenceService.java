@@ -25,6 +25,8 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.Task;
+import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.FunctionTerm;
@@ -32,6 +34,7 @@ import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.NdexServerQueue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -159,9 +162,13 @@ public class NdexPersistenceService extends PersistenceService {
 		// make sure everything relate to the network is deleted.
 		//localConnection.begin();
 		logger.info("Deleting partial network "+ network.getExternalId().toString() + " in order to rollback in response to error");
-		this.networkDAO.deleteNetwork(network.getExternalId().toString());
+		this.networkDAO.logicalDeleteNetwork(network.getExternalId().toString());
 		//localConnection.commit();
 		graph.commit();
+		Task task = new Task();
+		task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
+		task.setResource(network.getExternalId().toString());
+		NdexServerQueue.INSTANCE.addSystemTask(task);
 		logger.info("Partial network "+ network.getExternalId().toString() + " is deleted.");
 	}
 	

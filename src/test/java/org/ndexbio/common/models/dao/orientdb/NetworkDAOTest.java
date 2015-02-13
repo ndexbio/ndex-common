@@ -9,6 +9,7 @@ import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exceptions.ObjectNotFoundException;
@@ -18,6 +19,9 @@ import org.ndexbio.model.object.network.PropertyGraphNetwork;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
@@ -30,7 +34,7 @@ public class NetworkDAOTest {
 	@BeforeClass
     public static void initializeTests() throws NdexException 
     {
-		db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10)
+		db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/ndex", "admin", "admin", 10)
 				.getAConnection();
     	
     }
@@ -44,6 +48,21 @@ public class NetworkDAOTest {
 	public void test0() throws ObjectNotFoundException, NdexException {
 		NetworkDAO dao = new NetworkDAO(db);
 	
+		
+		ODocument networkDoc = dao.getRecordByUUIDStr("8c5b2180-b150-11e4-9d4c-90b11c72aefa", NdexClasses.Network);
+		
+		Object f = networkDoc.field("out_"+NdexClasses.Network_E_Namespace);
+		if ( f instanceof ORidBag ) {
+			ORidBag e = (ORidBag)f;
+			for ( OIdentifiable id : e) {
+				System.out.println(id);
+			}
+		} else {
+			System.out.println(f);
+		}
+		
+//		System.out.println(e.toString());
+		
 		List<NdexPropertyValuePair> properties = new ArrayList<NdexPropertyValuePair>();
 		
 		properties.add(new NdexPropertyValuePair ("something", "good"));
