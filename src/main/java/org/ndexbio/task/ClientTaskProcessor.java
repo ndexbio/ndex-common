@@ -27,9 +27,13 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 			Task task = null;
 			try {
 				task = NdexServerQueue.INSTANCE.takeNextUserTask();
+				if ( task == NdexServerQueue.endOfQueue) {
+					logger.info("End of queue signal received. Shutdown processor.");
+					return;
+				}
 			} catch (InterruptedException e) {
 				logger.info("takeNextUserTask Interrupted.");
-				break;
+				return;
 			}
 			
 			try {
@@ -80,7 +84,7 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 	}
 
 
-	private void saveTaskStatus (String taskID, Status status, String message) throws NdexException {
+	private static  void saveTaskStatus (String taskID, Status status, String message) throws NdexException {
 		try (TaskDocDAO dao = new TaskDocDAO (NdexDatabase.getInstance().getAConnection());) {
 			dao.saveTaskStatus(taskID, status, message);
 			dao.commit();

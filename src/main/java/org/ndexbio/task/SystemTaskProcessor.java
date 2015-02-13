@@ -32,9 +32,13 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 			Task task = null;
 			try {
 				task = NdexServerQueue.INSTANCE.takeNextSystemTask();
+				if ( task == NdexServerQueue.endOfQueue) {
+					logger.info("End of queue signal received. Shutdown processor.");
+					return;
+				}
 			} catch (InterruptedException e) {
 				logger.info("takeNextSystemTask Interrupted.");
-				break;
+				return;
 			}
 
 			TaskType type = task.getTaskType();

@@ -2,7 +2,6 @@ package org.ndexbio.task;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.ndexbio.model.object.Task;
 
@@ -11,12 +10,13 @@ public enum NdexServerQueue {
 	INSTANCE;
 	
 	private LinkedBlockingDeque<Task> systemTaskQueue;
-	private LinkedBlockingQueue<Task> userTaskQueue;
+	private LinkedBlockingDeque<Task> userTaskQueue;
 	
+	public static final Task endOfQueue = new Task();
 	
 	private NdexServerQueue () {
 		systemTaskQueue = new LinkedBlockingDeque<>();
-		userTaskQueue = new LinkedBlockingQueue<>();
+		userTaskQueue = new LinkedBlockingDeque<>();
     }
 	
 
@@ -48,4 +48,9 @@ public enum NdexServerQueue {
 		return userTaskQueue;
 	}
 	
-}
+	public void shutdown () {
+		systemTaskQueue.add(endOfQueue);
+		userTaskQueue.add(endOfQueue);
+		
+	}
+ }
