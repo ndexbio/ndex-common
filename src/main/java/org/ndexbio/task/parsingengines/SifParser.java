@@ -45,6 +45,7 @@ public class SifParser implements IParsingEngine {
 	private final String sifURI;
 	private final String extendedBinarySIFEdgeHeader = "PARTICIPANT_A	INTERACTION_TYPE	PARTICIPANT_B	INTERACTION_DATA_SOURCE	INTERACTION_PUBMED_ID";
 	private final String extendedBinarySIFAliasHeader = "PARTICIPANT	PARTICIPANT_TYPE	PARTICIPANT_NAME	UNIFICATION_XREF	RELATIONSHIP_XREF";
+														 
 	private final String extendedBinarySIFPropertiesHeader = "NAME	ORGANISM	URI	DATASOURCE";
 	private final List<String> msgBuffer;
 	
@@ -278,7 +279,14 @@ public class SifParser implements IParsingEngine {
 					/*			  logger.warning("Unsupported Pubmed id format: " + 
 							       pubMedId + " found in file.\n line:\n " + line +"\n Ignore this pubmedId.\n" ); */
 								}
-							}
+							} else if (pubmedIdTokens.length == 1 ) {
+								Long citationId = this.persistenceService.getCitationId(
+										"", NdexPersistenceService.defaultCitationType,
+										NdexPersistenceService.pmidPrefix + pubmedIdTokens[0], null);
+								this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
+							} else 
+								throw new NdexException("Invalid Pubmed format in line: " + line);
+							
 						}
 					}
 
