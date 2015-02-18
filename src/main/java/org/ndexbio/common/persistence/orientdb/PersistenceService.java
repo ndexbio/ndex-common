@@ -75,22 +75,41 @@ public abstract class PersistenceService {
 
 			aMap.put("CHEMBL",	"http://identifiers.org/chembl.compound/");
 			
+			aMap.put("DRUGBANK",	"http://www.drugbank.ca/drugs/");
+			
+			aMap.put("ENA",	"http://identifiers.org/ena.embl/");
+			
 			aMap.put("Ensembl", 	"http://identifiers.org/ensembl/");
 			aMap.put("ENSEMBL", 	"http://identifiers.org/ensembl/");
 			aMap.put("ensembl", 	"http://identifiers.org/ensembl/");
-			
+
+			aMap.put("GENE ONTOLOGY",					"http://identifiers.org/go/");
+			aMap.put("Gene Ontology",					"http://identifiers.org/go/");
+
+			aMap.put("GENPEPT",							"http://www.ncbi.nlm.nih.gov/protein/");
+
 			aMap.put("HGNC",		"http://identifiers.org/hgnc/");
 			aMap.put("hgnc",		"http://identifiers.org/hgnc/");
 
 			aMap.put("HGNC Symbol",	"http://identifiers.org/hgnc.symbol/");
 			aMap.put("HGNC SYMBOL",	"http://identifiers.org/hgnc.symbol/");
 
+			aMap.put("hprd",	"http://identifiers.org/hprd/");
+			
+			
 			aMap.put("InChIKey",	"http://identifiers.org/inchikey/");
 
 			aMap.put("intact",		"http://identifiers.org/intact/");
 			
 			aMap.put("interpro",		"http://identifiers.org/interpro/");
+			aMap.put("InterPro",		"http://identifiers.org/interpro/");
 
+			aMap.put("KEGG COMPOUND",		"http://identifiers.org/kegg.compound/");
+			aMap.put("KEGG GLYCAN",		"http://identifiers.org/kegg.glycan/");
+			aMap.put("KEGG DRUG",		"http://identifiers.org/kegg.drug/");
+			
+			aMap.put("MOLECULAR MODELING DATABASE",		"http://identifiers.org/mmdb/");
+			
 			aMap.put("NCBI Gene","http://identifiers.org/ncbigene/");
 			aMap.put("NCBI GENE","http://identifiers.org/ncbigene/");
 			
@@ -114,10 +133,15 @@ public abstract class PersistenceService {
 			
 			aMap.put("Panther Family", 		"http://identifiers.org/panther.family/");
 			aMap.put("PANTHER Family", 		"http://identifiers.org/panther.family/");
+			aMap.put("Panther", 			"http://identifiers.org/panther.family/");
 
 			aMap.put("Pfam", 		"http://identifiers.org/pfam/");
-
 			
+			aMap.put("PHARMGKB DRUG", 		"http://identifiers.org/pharmgkb.drug/");
+			
+			aMap.put("RAT GENOME DATABASE", 		"http://identifiers.org/rgd/");
+			
+			aMap.put("Smart", 		"http://identifiers.org/smart/");
 			
 			aMap.put("UniProt", 			"http://identifiers.org/uniprot/");
 			aMap.put("UNIPROT", 			"http://identifiers.org/uniprot/");
@@ -126,10 +150,8 @@ public abstract class PersistenceService {
 			aMap.put("UniProt Knowledgebase",		"http://identifiers.org/uniprot/");
 			aMap.put("UNIPROT KNOWLEDGEBASE",		"http://identifiers.org/uniprot/");
 			
-			aMap.put("GENE ONTOLOGY",					"http://identifiers.org/go/");
-			aMap.put("Gene Ontology",					"http://identifiers.org/go/");
+			aMap.put("WIKIPEDIA",		"http://identifiers.org/wikipedia.en/");
 			
-			aMap.put("GENPEPT",							"http://www.ncbi.nlm.nih.gov/protein/");
 			aMap.put("nucleotide genbank identifier",	"http://www.ncbi.nlm.nih.gov/nuccore/");
 			
 			defaultNSMap = Collections.unmodifiableMap(aMap);
