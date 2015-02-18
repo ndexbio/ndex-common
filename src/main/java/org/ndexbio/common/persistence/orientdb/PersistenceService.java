@@ -131,6 +131,9 @@ public abstract class PersistenceService {
 			aMap.put("PROTEIN DATA BANK", "http://identifiers.org/pdb/");
 			aMap.put("Protein Data Bank", "http://identifiers.org/pdb/");
 			
+			aMap.put("Protein Modification Ontology", "http://identifiers.org/psimod/");
+			
+			
 			aMap.put("Panther Family", 		"http://identifiers.org/panther.family/");
 			aMap.put("PANTHER Family", 		"http://identifiers.org/panther.family/");
 			aMap.put("Panther", 			"http://identifiers.org/panther.family/");
