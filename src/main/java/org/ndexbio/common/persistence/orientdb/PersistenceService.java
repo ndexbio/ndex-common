@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,79 @@ public abstract class PersistenceService {
 
     protected OrientGraph graph;
 	protected ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
+	
+	 private static final Map<String, String> defaultNSMap;
+	 static {
+	        Map<String, String> aMap = new TreeMap<>();
+
+			aMap.put("biogrid", 	"http://identifiers.org/biogrid/");
+		 	
+			aMap.put("CAS",		"http://identifiers.org/cas/");
+
+			aMap.put("CHEBI",	"http://identifiers.org/chebi/");
+			aMap.put("ChEBI",	"http://identifiers.org/chebi/");
+
+			aMap.put("CHEMBL",	"http://identifiers.org/chembl.compound/");
+			
+			aMap.put("Ensembl", 	"http://identifiers.org/ensembl/");
+			aMap.put("ENSEMBL", 	"http://identifiers.org/ensembl/");
+			aMap.put("ensembl", 	"http://identifiers.org/ensembl/");
+			
+			aMap.put("HGNC",		"http://identifiers.org/hgnc/");
+			aMap.put("hgnc",		"http://identifiers.org/hgnc/");
+
+			aMap.put("HGNC Symbol",	"http://identifiers.org/hgnc.symbol/");
+			aMap.put("HGNC SYMBOL",	"http://identifiers.org/hgnc.symbol/");
+
+			aMap.put("InChIKey",	"http://identifiers.org/inchikey/");
+
+			aMap.put("intact",		"http://identifiers.org/intact/");
+			
+			aMap.put("interpro",		"http://identifiers.org/interpro/");
+
+			aMap.put("NCBI Gene","http://identifiers.org/ncbigene/");
+			aMap.put("NCBI GENE","http://identifiers.org/ncbigene/");
+			
+			aMap.put("Pubmed",	"http://www.ncbi.nlm.nih.gov/pubmed/");
+			aMap.put("Reactome",	"http://identifiers.org/reactome/");
+			aMap.put("reactome",	"http://identifiers.org/reactome/");
+			
+			aMap.put("RefSeq",	"http://identifiers.org/refseq/");
+			aMap.put("REFSEQ",	"http://identifiers.org/refseq/");
+			aMap.put("refseq",	"http://identifiers.org/refseq/");
+			
+			aMap.put("pubchem-substance","http://identifiers.org/pubchem.substance/");
+			
+			aMap.put("pubchem",				"http://identifiers.org/pubchem.compound/");
+			aMap.put("PUBCHEM-COMPOUND",	"http://identifiers.org/pubchem.compound/");
+
+			aMap.put("omim",		"http://identifiers.org/omim/");
+
+			aMap.put("PROTEIN DATA BANK", "http://identifiers.org/pdb/");
+			aMap.put("Protein Data Bank", "http://identifiers.org/pdb/");
+			
+			aMap.put("Panther Family", 		"http://identifiers.org/panther.family/");
+			aMap.put("PANTHER Family", 		"http://identifiers.org/panther.family/");
+
+			aMap.put("Pfam", 		"http://identifiers.org/pfam/");
+
+			
+			
+			aMap.put("UniProt", 			"http://identifiers.org/uniprot/");
+			aMap.put("UNIPROT", 			"http://identifiers.org/uniprot/");
+			aMap.put("UniProt Isoform",		"http://identifiers.org/uniprot.isoform/");
+			
+			aMap.put("UniProt Knowledgebase",		"http://identifiers.org/uniprot/");
+			aMap.put("UNIPROT KNOWLEDGEBASE",		"http://identifiers.org/uniprot/");
+			
+			aMap.put("GENE ONTOLOGY",					"http://identifiers.org/go/");
+			aMap.put("Gene Ontology",					"http://identifiers.org/go/");
+			
+			aMap.put("GENPEPT",							"http://www.ncbi.nlm.nih.gov/protein/");
+			aMap.put("nucleotide genbank identifier",	"http://www.ncbi.nlm.nih.gov/nuccore/");
+			
+			defaultNSMap = Collections.unmodifiableMap(aMap);
+	    }
 
     public PersistenceService(NdexDatabase db) throws NdexException {
 		this.database = db;
@@ -426,9 +500,16 @@ public abstract class PersistenceService {
 				Namespace namespace = prefixMap.get(prefix);
 				
 				if ( namespace == null) {
-					namespace = createLocalNamespaceforPrefix(prefix);
-					logger.warning("Prefix '" + prefix + "' is not defined in the network. URI "+
-					namespace.getUri()	+ " has been created for it by Ndex." );
+					// check the Ndex namepace lookup table to see of we understand it
+					String uri = defaultNSMap.get(prefix);
+					
+					if ( uri != null) {
+						namespace = getNamespace( new RawNamespace(prefix, uri));
+					} else {
+						namespace = createLocalNamespaceforPrefix(prefix);
+						logger.warning("Prefix '" + prefix + "' is not defined in the network. URI "+
+								namespace.getUri()	+ " has been created for it by Ndex." );
+					}
 				}
 				
 				// create baseTerm in db

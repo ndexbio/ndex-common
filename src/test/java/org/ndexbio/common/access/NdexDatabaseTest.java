@@ -29,6 +29,10 @@ public class NdexDatabaseTest {
 		foo = TermUtilities.getNdexQName("ab(c:3fg)");
 		System.out.println(foo);
 
+		foo = TermUtilities.getNdexQName("something bad:3fg)");
+		System.out.println(foo);
+
+		
 		NdexDatabase.createNdexDatabase("http://localhost/", "plocal:/opt/ndex/orientdb/databases/ndextest", "admin", "admin", 2);
 		db = NdexDatabase.getInstance();
 	}

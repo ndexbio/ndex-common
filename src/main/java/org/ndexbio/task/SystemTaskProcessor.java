@@ -46,9 +46,12 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 				try {
 				    cleanupDeletedNetwork(task);
 				} catch (NdexException e) {
-					logger.severe("Error when executing system task: " + e);
+					logger.severe("Error when executing system task: " + e.getMessage());
 					e.printStackTrace();
-				} 
+				} catch ( Exception e2) {
+					logger.severe("Error when executing system task: " + e2.getMessage());
+					e2.printStackTrace();
+				}
 			} else if ( type == TaskType.SYSTEM_DATABASE_BACKUP ) {
 				try {
 					backupDatabase(task);

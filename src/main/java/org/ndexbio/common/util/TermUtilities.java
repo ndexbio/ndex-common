@@ -27,7 +27,7 @@ public class TermUtilities {
 		
 		for ( int i = 0 ; i < termStringComponents.length; i ++) {
 			if ( i == 0 ) {
-				if (!termStringComponents[i].matches("^[a-zA-Z_]([0-9a-zA-Z._-])*$"))
+				if (!termStringComponents[i].matches("^[a-zA-Z_]([0-9a-zA-Z\\s._-])*$"))
 					return null;
 			} else {
 				if (!termStringComponents[i].matches("^[0-9a-zA-Z_].*$"))

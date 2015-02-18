@@ -51,6 +51,7 @@ public class SifParser implements IParsingEngine {
 	
 	private static Logger logger = Logger.getLogger("SifParser");
 
+	
 	private NdexPersistenceService persistenceService;
 	
 //	private TreeSet<String> pubmedIdSet;
@@ -74,7 +75,7 @@ public class SifParser implements IParsingEngine {
 
 		persistenceService.createNewNetwork(ownerName, title, null);
 
-		addSystemDefaultNamespaces();
+//		addSystemDefaultNamespaces();
 		
 	}
 
@@ -419,6 +420,7 @@ public class SifParser implements IParsingEngine {
 
 	}
 	
+/*	
 	private void addSystemDefaultNamespaces() throws NdexException {
 		this.persistenceService.createNamespace2("UniProt", 	"http://identifiers.org/uniprot/");
 		this.persistenceService.createNamespace2("Ensembl", 	"http://ndex.org/Ensembl/");
@@ -437,11 +439,9 @@ public class SifParser implements IParsingEngine {
 		this.persistenceService.createNamespace2("PROTEIN DATA BANK","http://identifiers.org/pdb/");
 		this.persistenceService.createNamespace2("Panther Family","http://identifiers.org/panther.family/");
 		this.persistenceService.createNamespace2("CAS",		"http://identifiers.org/cas/");
-
-		
 		
 	}
-	
+*/	
 	@Override
 	public UUID getUUIDOfUploadedNetwork() {
 		try { 

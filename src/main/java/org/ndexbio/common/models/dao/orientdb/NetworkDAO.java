@@ -68,7 +68,7 @@ public class NetworkDAO extends OrientdbDAO {
 	private ObjectMapper mapper;
 	private OrientGraph graph;
 	
-	private static final int CLEANUP_BATCH_SIZE = 60000;
+	private static final int CLEANUP_BATCH_SIZE = 50000;
 	
     private static final String[] networkElementType = {NdexClasses.Network_E_BaseTerms, NdexClasses.Network_E_Citations,
     		NdexClasses.Network_E_Edges, NdexClasses.Network_E_FunctionTerms, NdexClasses.Network_E_Namespace,
@@ -283,7 +283,16 @@ public class NetworkDAO extends OrientdbDAO {
 			counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexPresentationProps, counter); 
 		}
 		doc.reload();
-		graph.removeVertex(graph.getVertex(doc));
+
+		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+			try	{
+				graph.removeVertex(graph.getVertex(doc));
+				break;
+			} catch(ONeedRetryException	e)	{
+				logger.warning("Retry: "+ e.getMessage());
+				doc.reload();
+			}
+		}
 		counter ++;
 		if ( counter % 2000 == 0 ) {
 			graph.commit();
