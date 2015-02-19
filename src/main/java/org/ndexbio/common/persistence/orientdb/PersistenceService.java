@@ -63,8 +63,14 @@ public abstract class PersistenceService {
 	protected ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 	
 	 private static final Map<String, String> defaultNSMap;
+
+	 private static final Map<String, String> reverseNSMap;
+
 	 static {
 	        Map<String, String> aMap = new TreeMap<>();
+	        
+	        // fore the repetitive prefix entries, the first record will be used as the default namespace in 
+	        // the reverse lookup.
 
 			aMap.put("biogrid", 	"http://identifiers.org/biogrid/");
 		 	
@@ -158,6 +164,17 @@ public abstract class PersistenceService {
 			aMap.put("nucleotide genbank identifier",	"http://www.ncbi.nlm.nih.gov/nuccore/");
 			
 			defaultNSMap = Collections.unmodifiableMap(aMap);
+
+			// construct the reverse map.
+			Map<String, String> bMap = new TreeMap<>();
+			for ( Map.Entry<String, String> e: aMap.entrySet()) {
+				if (!bMap.containsKey(e.getValue())) {
+					bMap.put(e.getValue(), e.getKey());
+				}
+			}
+			
+			reverseNSMap = Collections.unmodifiableMap(bMap);
+
 	    }
 
     public PersistenceService(NdexDatabase db) throws NdexException {
@@ -461,6 +478,22 @@ public abstract class PersistenceService {
 			if ( termId != null) {
 				return termId;
 			}
+			
+			//check its canonical form
+			String[] termStringComponents = TermUtilities.getNdexQName(termString);
+			if (termStringComponents != null && termStringComponents.length == 2) {
+				String identifier = termStringComponents[1];
+				String prefix = termStringComponents[0];
+				
+				
+			/*	Namespace ns = this.URINamespaceMap.get(URIStr);
+				if (ns.getPrefix() != null) {
+					termId = getBaseTermId(ns.getPrefix(), identifier);
+					
+				} */
+				
+			}	
+			
 		    return this.createBaseTerm(termString);	
 		}
 		
@@ -501,12 +534,17 @@ public abstract class PersistenceService {
 					    prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
 				    }
 	                 
-				    RawNamespace rns = new RawNamespace(null, prefix);
+				    RawNamespace rns = new RawNamespace(
+				    		(reverseNSMap.containsKey(prefix)? reverseNSMap.get(prefix):null),
+				    		prefix);  //prefix value is actually the URI of the namespace.
 				    Namespace namespace = getNamespace(rns);
 				
 				    // create baseTerm in db
 				    Long id = createBaseTerm(fragment, namespace.getId());
-			        this.baseTermStrMap.put(termString, id);
+				    if ( namespace.getPrefix() == null)
+				    	this.baseTermStrMap.put(termString, id);
+				    else 
+				    	this.baseTermStrMap.put(namespace.getPrefix()+ ":"+fragment, id);
 			        return id;
 			  } catch (URISyntaxException e) {
 				// ignore and move on to next case
@@ -555,8 +593,6 @@ public abstract class PersistenceService {
 			
 		}
 	
-		
-		
 		
 		private Long createBaseTerm (String prefix, String localName) throws ExecutionException {
 			Namespace namespace = this.prefixMap.get(prefix);

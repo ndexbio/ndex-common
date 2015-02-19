@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -13,7 +12,6 @@ import org.junit.Test;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
@@ -36,7 +34,7 @@ import org.apache.commons.io.FilenameUtils;
 
 public class ImportExportTest {
 
-	private static final boolean BaseTerm = false;
+//	private static final boolean BaseTerm = false;
 	static Logger logger = Logger.getLogger(ImportExportTest.class.getName());
 
 	@Test

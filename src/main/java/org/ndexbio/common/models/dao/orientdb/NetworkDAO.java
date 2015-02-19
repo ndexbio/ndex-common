@@ -70,9 +70,9 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	private static final int CLEANUP_BATCH_SIZE = 50000;
 	
-    private static final String[] networkElementType = {NdexClasses.Network_E_BaseTerms, NdexClasses.Network_E_Citations,
+    private static final String[] networkElementType = {NdexClasses.Network_E_BaseTerms, NdexClasses.Network_E_Nodes, NdexClasses.Network_E_Citations,
     		NdexClasses.Network_E_Edges, NdexClasses.Network_E_FunctionTerms, NdexClasses.Network_E_Namespace,
-    		NdexClasses.Network_E_Nodes, NdexClasses.Network_E_ReifiedEdgeTerms, NdexClasses.Network_E_Supports,
+    		NdexClasses.Network_E_ReifiedEdgeTerms, NdexClasses.Network_E_Supports,
     		NdexClasses.E_ndexPresentationProps, NdexClasses.E_ndexProperties
     		};
 	

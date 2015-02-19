@@ -210,8 +210,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
-			Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
 			Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+			Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
 			if ( isComplete != null && isComplete.booleanValue() &&
 					 (	isDeleted == null || !isDeleted.booleanValue() )) {
 				if (isSearchable(doc, userRID, adminUserRID, simpleNetworkQuery.getCanRead(), 
