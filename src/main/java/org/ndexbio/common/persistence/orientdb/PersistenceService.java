@@ -77,25 +77,27 @@ public abstract class PersistenceService {
 
 			aMap.put("biogrid", 	"http://identifiers.org/biogrid/");
 		 	
-			aMap.put("CAS",		"http://identifiers.org/cas/");
+			aMap.put("CAS",			"http://identifiers.org/cas/");
 
-			aMap.put("CHEBI",	"http://identifiers.org/chebi/");
-			aMap.put("ChEBI",	"http://identifiers.org/chebi/");
+			aMap.put("CAZY",		"http://identifiers.org/cazy/");
 
-			aMap.put("CHEMBL",	"http://identifiers.org/chembl.compound/");
+			aMap.put("CHEBI",		"http://identifiers.org/chebi/");
+			aMap.put("ChEBI",		"http://identifiers.org/chebi/");
+			
+			aMap.put("CHEMBL",		"http://identifiers.org/chembl.compound/");
 			
 			aMap.put("DRUGBANK",	"http://www.drugbank.ca/drugs/");
 			
-			aMap.put("ENA",	"http://identifiers.org/ena.embl/");
+			aMap.put("ENA",			"http://identifiers.org/ena.embl/");
 			
 			aMap.put("Ensembl", 	"http://identifiers.org/ensembl/");
 			aMap.put("ENSEMBL", 	"http://identifiers.org/ensembl/");
 			aMap.put("ensembl", 	"http://identifiers.org/ensembl/");
 
-			aMap.put("GENE ONTOLOGY",					"http://identifiers.org/go/");
-			aMap.put("Gene Ontology",					"http://identifiers.org/go/");
+			aMap.put("GENE ONTOLOGY",		"http://identifiers.org/go/");
+			aMap.put("Gene Ontology",		"http://identifiers.org/go/");
 
-			aMap.put("GENPEPT",							"http://www.ncbi.nlm.nih.gov/protein/");
+			aMap.put("GENPEPT",				"http://www.ncbi.nlm.nih.gov/protein/");
 
 			aMap.put("HGNC",		"http://identifiers.org/hgnc/");
 			aMap.put("hgnc",		"http://identifiers.org/hgnc/");
@@ -103,17 +105,17 @@ public abstract class PersistenceService {
 			aMap.put("HGNC Symbol",	"http://identifiers.org/hgnc.symbol/");
 			aMap.put("HGNC SYMBOL",	"http://identifiers.org/hgnc.symbol/");
 
-			aMap.put("hprd",	"http://identifiers.org/hprd/");
+			aMap.put("hprd",		"http://identifiers.org/hprd/");
 			
 			
 			aMap.put("InChIKey",	"http://identifiers.org/inchikey/");
 
 			aMap.put("intact",		"http://identifiers.org/intact/");
 			
-			aMap.put("interpro",		"http://identifiers.org/interpro/");
-			aMap.put("InterPro",		"http://identifiers.org/interpro/");
+			aMap.put("interpro",	"http://identifiers.org/interpro/");
+			aMap.put("InterPro",	"http://identifiers.org/interpro/");
 
-			aMap.put("KEGG COMPOUND",		"http://identifiers.org/kegg.compound/");
+			aMap.put("KEGG COMPOUND",	"http://identifiers.org/kegg.compound/");
 			aMap.put("KEGG GLYCAN",		"http://identifiers.org/kegg.glycan/");
 			aMap.put("KEGG DRUG",		"http://identifiers.org/kegg.drug/");
 			
@@ -155,6 +157,8 @@ public abstract class PersistenceService {
 			
 			aMap.put("Smart", 		"http://identifiers.org/smart/");
 			
+			aMap.put("Taxonomy", 		"http://identifiers.org/taxonomy/");
+
 			aMap.put("UniProt", 			"http://identifiers.org/uniprot/");
 			aMap.put("UNIPROT", 			"http://identifiers.org/uniprot/");
 			aMap.put("UniProt Isoform",		"http://identifiers.org/uniprot.isoform/");

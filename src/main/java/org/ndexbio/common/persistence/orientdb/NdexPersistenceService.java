@@ -16,6 +16,7 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawEdge;
 import org.ndexbio.common.models.object.network.RawNamespace;
@@ -39,6 +40,7 @@ import org.ndexbio.task.NdexServerQueue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -1015,12 +1017,22 @@ public class NdexPersistenceService extends PersistenceService {
 			        NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime() )
 			  .save();
 			
-			this.localConnection.commit();
+//			this.localConnection.commit();
 			
 			if ( this.ownerAccount != null) {
 				ODocument ownerDoc =  findUserByAccountName(this.ownerAccount);		
 				OrientVertex ownerV = this.graph.getVertex(ownerDoc);
-				ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+				
+				for	(int retry = 0;	retry <	OrientdbDAO.maxRetries;	++retry)	{
+					try	{
+						ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+						break;
+					} catch(ONeedRetryException	e)	{
+						logger.warning("Retry - " + e.getMessage());
+						ownerV.reload();
+						networkVertex.reload();
+					}
+				}
 			
 				this.localConnection.commit();
 			}
