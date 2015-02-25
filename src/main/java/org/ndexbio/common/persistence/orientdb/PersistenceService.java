@@ -43,6 +43,7 @@ public abstract class PersistenceService {
 
 	protected LoadingCache<Long, ODocument>  elementIdCache;
     
+	// prefix to namespace mapping
 	private Map<String, Namespace> prefixMap;
 	private Map<RawNamespace, Namespace> namespaceMap;
     private Map<String, Namespace> URINamespaceMap;
@@ -62,8 +63,10 @@ public abstract class PersistenceService {
     protected OrientGraph graph;
 	protected ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 	
+	 // prefix to URI mapping
 	 private static final Map<String, String> defaultNSMap;
 
+	 // URI to prefix mapping
 	 private static final Map<String, String> reverseNSMap;
 
 	 static {
@@ -452,22 +455,30 @@ public abstract class PersistenceService {
 					URI termStringURI = new URI(termStringRaw);
 					String fragment = termStringURI.getFragment();
 					
-				    String prefix;
+				    String uriPrefix;
 				    if ( fragment == null ) {
 						    String path = termStringURI.getPath();
 						    if (path != null && path.indexOf("/") != -1) {
 							   fragment = path.substring(path.lastIndexOf('/') + 1);
-							   prefix = termStringRaw.substring(0,
+							   uriPrefix = termStringRaw.substring(0,
 									termStringRaw.lastIndexOf('/') + 1);
 						    } else
 						       throw new NdexException ("Unsupported URI format in term: " + termStringRaw);
 				    } else {
-						    prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
+						    uriPrefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
 				    }
 		                 
-				    Namespace ns = this.URINamespaceMap.get(prefix);
-				    if ( ns != null && ns.getPrefix() != null) {
-				    	termString =  ns.getPrefix() + ":" + fragment;
+				    Namespace ns = this.URINamespaceMap.get(uriPrefix);
+				    if ( ns != null ) {
+				    	if (ns.getPrefix() != null ) 
+				    		termString =  ns.getPrefix() + ":" + fragment;
+				    } else { // check if it is a uri we know
+				    	String prefix = reverseNSMap.get(uriPrefix);
+				    	if ( prefix !=null ) {
+				    		// create the namespace and the term.
+				    		return createBaseTerm(termString);
+				    	}
+				    	
 				    }
 				  } catch (URISyntaxException e) {
 					// ignore and move on to next case
@@ -483,15 +494,30 @@ public abstract class PersistenceService {
 			String[] termStringComponents = TermUtilities.getNdexQName(termString);
 			if (termStringComponents != null && termStringComponents.length == 2) {
 				String identifier = termStringComponents[1];
-				String prefix = termStringComponents[0];
+				String orgPrefix = termStringComponents[0];
 				
+				Namespace ns2 = this.prefixMap.get(orgPrefix);  // exists in prefix mapping & map with a different prefix.
+				if ( ns2 !=null ) {
+					if ( ! orgPrefix.equals(ns2.getPrefix())) {   
+						termId = getBaseTermId(ns2.getPrefix() +":"+ identifier); // use the canonical form
+				        this.baseTermStrMap.put(termString, termId);
+				        return termId;
+					} 
+				} else {
 				
-			/*	Namespace ns = this.URINamespaceMap.get(URIStr);
-				if (ns.getPrefix() != null) {
-					termId = getBaseTermId(ns.getPrefix(), identifier);
+					// consult the default ns mapping
+					String newURI = defaultNSMap.get(orgPrefix);
 					
-				} */
-				
+				    if ( newURI !=null) {
+				    	Namespace ns = this.URINamespaceMap.get(newURI);
+				    	if (ns != null && ns.getPrefix() != null) {
+				    		this.prefixMap.put(orgPrefix, ns); // add this prefix to mapping
+				    		termId = getBaseTermId(ns.getPrefix() +":"+ identifier);
+				    		this.baseTermStrMap.put(termString, termId);
+				    		return termId;
+				    	} 
+				    } 
+				}
 			}	
 			
 		    return this.createBaseTerm(termString);	
