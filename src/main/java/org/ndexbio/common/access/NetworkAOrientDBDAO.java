@@ -13,18 +13,15 @@ import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePathQuery;
-import org.ndexbio.model.object.User;
 
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,6 +35,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 	private static NetworkAOrientDBDAO INSTANCE = null;
+	
+	private static final String resultOverLimitMsg = "Result set is too large for this query.";
 	
 	private static final Logger _logger = Logger.getLogger(NetworkAOrientDBDAO.class.getName());
 	
@@ -62,7 +61,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#getTerms(java.lang.String, int, int)
 	 */
-	public List<BaseTerm> getBaseTerms(User user, final String networkId,
+/*	public List<BaseTerm> getBaseTerms(User user, final String networkId,
 			final int skipBlocks, final int blockSize)
 			throws IllegalArgumentException, NdexException {
 		
@@ -150,14 +149,14 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			
 	}
 
-
+*/
 
 
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#queryForEdges(java.lang.String, org.ndexbio.common.models.object.NetworkQueryParameters, int, int)
 	 */
 	
-	public List<Edge> queryForEdges(final String networkId,
+/*	public List<Edge> queryForEdges(final String networkId,
 			final SimplePathQuery parameters, final int skipBlocks,
 			final int blockSize) throws IllegalArgumentException, NdexException {
 		try {
@@ -180,7 +179,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			teardown();
 		}
 		
-	}
+	} */
 	
 
 	/* (non-Javadoc)
@@ -205,6 +204,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 					networkRid, 
 					parameters 
 					//,skipBlocks,blockSize
+					
 					);
 			final long getEdgesTime = System.currentTimeMillis();
 			Network network =  getSubnetworkByEdgeRids( edgeRids, networkDoc);
@@ -257,7 +257,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		}
 	}
 
-	
+/*	
 	private Set<ORID> getEdgeRids(ORID networkRid, int skipBlocks, int blockSize) {
 		Set<ORID> result = new HashSet<>();
 
@@ -275,31 +275,21 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		}
 		return result;
 	}
+*/
 
-
-	private Set<ORID> queryForEdgeRids(
-			ORID networkRid,
-			SimplePathQuery parameters
+	private Set<ORID> queryForEdgeRids( ORID networkRid, SimplePathQuery parameters
 		//	,int skipBlocks,int blockSize
 			) throws NdexException {
 		
-		// Select query handler depending on parameters
 		// TODO validate parameters
 			String searchString = parameters.getSearchString();
-//			List<String> searchTerms = Arrays.asList(searchString.split("[ ,]+"));
-			
-//			for (String term : searchTerms){
-				System.out.println("termString:" + searchString);
-				
-//			}
 
 			Collection<ORID> sourceNodeRids = getNodeRidsFromTermNames(networkRid,
 					searchString,
-					//parameters.getStartingTermStrings(),
+					parameters.getEdgeLimit(),
 					true); // change to
 																// nodes
 			List<ORID> includedPredicateRids = new ArrayList<>();
-			// getBaseTermRids(networkRid,parameters.getIncludedPredicateIds());
 			int maxDepth = parameters.getSearchDepth();
 			
 			System.out.println("-----------------------------------------\n");
@@ -308,20 +298,14 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			System.out.println("-----------------------------------------\n");
 
 			return edgeIDsByTraversalFromSourceNode(networkRid, sourceNodeRids,
-					includedPredicateRids, maxDepth);
-//		}
-//		return new HashSet<ORID>();
+					includedPredicateRids, maxDepth, parameters.getEdgeLimit());
 	}
 
-	private Collection<ORID> getBaseTermRidsFromNames(ORID networkRid,
-			String searchString) {
+	private Collection<ORID> getBaseTermRidsFromNames(ORID networkRid, int edgeLimit,
+			String searchString) throws NdexException {
 
 		Set<ORID> result = new TreeSet<>();
 
-		// select from (traverse out_networkTerms from #24:733
-		// while $depth < 2) where @CLASS='baseTerm' and name like "AKT%" limit
-		// 10
-		
 		OIndex<?> basetermIdx = _ndexDatabase.getMetadata().getIndexManager().getIndex(NdexClasses.Index_BTerm_name);
 		
 		
@@ -330,15 +314,16 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			OIdentifiable tnId = termDoc.field("in_" + NdexClasses.Network_E_BaseTerms);
 			if ( tnId != null && tnId.getIdentity().equals(networkRid)) {
 				result.add(termOID.getIdentity());
+				if (edgeLimit >0 && result.size() > edgeLimit)
+					throw new NdexException(resultOverLimitMsg);
 			}
 		}
 		
 		return result;
-
 	}
 
 
-	private Collection<ORID> getNodeRidsFromTermNames(ORID networkRid,String searchString, boolean includeAliases ) throws NdexException {
+	private Collection<ORID> getNodeRidsFromTermNames(ORID networkRid,String searchString, int edgeLimit, boolean includeAliases ) throws NdexException {
 		
 		
 		Set<ORID> result = new TreeSet<>();
@@ -346,7 +331,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	  try {	
 		OTraverse traverser = new OTraverse()
   			.fields("in_" + NdexClasses.FunctionTerm_E_paramter, "in_" + NdexClasses.Node_E_represents)
-  			.target(getBaseTermRidsFromNames(networkRid, searchString));
+  			.target(getBaseTermRidsFromNames(networkRid, edgeLimit, searchString));
 		if ( includeAliases)
 			traverser.field("in_" + NdexClasses.Node_E_alias);
 		
@@ -354,8 +339,13 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
  
 			ODocument doc = (ODocument) nodeRec;
   
-			if ( doc.getClassName().equals(NdexClasses.Node)) 
+			if ( doc.getClassName().equals(NdexClasses.Node)) { 
 				result.add(nodeRec.getIdentity());
+				if ( edgeLimit >0 && result.size()> edgeLimit) { 
+					throw new NdexException(resultOverLimitMsg);
+				}
+
+			}
 		}
 		
 	    OIndex<?> nodeNameIdx = _ndexDatabase.getMetadata().getIndexManager().getIndex(NdexClasses.Index_node_name);
@@ -365,6 +355,9 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			OIdentifiable tnId = termDoc.field("in_" + NdexClasses.Network_E_Nodes);
 			if ( tnId != null && tnId.getIdentity().equals(networkRid)) {
 				result.add(termOID.getIdentity());
+				if ( edgeLimit >0 && result.size() > edgeLimit) { 
+					throw new NdexException(resultOverLimitMsg);
+				}
 			}
 		}
 
@@ -378,7 +371,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	 * result.add(new Node( node.field("jdexId"), node.field("name"),
 	 * node.field("representsId"), node.field("metadata")));
 	 */
-
+/*
 	private List<Edge> getEdgesByEdgeRids(Set<ORID> edgeRids) {
 		List<Edge> result = new ArrayList<>();
 		String edgeIdCsv = ridsToCsv(edgeRids);
@@ -399,7 +392,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		}
 		return result;
 	}
-
+*/
 	private Network getSubnetworkByEdgeRids( Set<ORID> edgeRids, ODocument networkDoc) throws Exception {
 		
 	    Network network = new Network(edgeRids.size());  //result holder
@@ -447,19 +440,18 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	// post 1.0 
 	private Set<ORID> edgeIDsByTraversalFromSourceNode(ORID networkRid,
 			Collection<ORID> sourceNodeRids, List<ORID> includedPredicateRids,
-			int maxDepth) {
+			int maxDepth, int edgeLimit) throws NdexException {
 
 		Set<ORID> foundEdgeRids = new HashSet<>();
 		Set<ORID> foundNodeRids = new HashSet<>();
-
 			
-			searchFromNode(
+		searchFromNode(
 					sourceNodeRids, 
 					includedPredicateRids, 
 					1,
 					maxDepth,
 					foundEdgeRids, 
-					foundNodeRids);
+					foundNodeRids, edgeLimit);
 			
 		return foundEdgeRids;
 	}
@@ -470,9 +462,10 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			int depth,
 			int maxDepth,
 			Set<ORID> foundEdgeRids, 
-			Set<ORID> foundNodeRids) {
+			Set<ORID> foundNodeRids,
+			int edgeLimit) throws NdexException {
 		boolean belowMaxDepth = depth < maxDepth;
-		System.out.println("search from  : " + sourceNodeRids.size() + " nodes at depth " + depth + " starting with foundEdges " + foundEdgeRids.size());
+//		System.out.println("search from  : " + sourceNodeRids.size() + " nodes at depth " + depth + " starting with foundEdges " + foundEdgeRids.size());
 		
 		List<ORID[]> results = sourceSearchQuery(sourceNodeRids, includedPredicateRids, false);
 
@@ -486,13 +479,16 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			ORID edgeRid = result[0];
 			
 			foundEdgeRids.add(edgeRid);
+			if ( edgeLimit > 0 && foundEdgeRids.size() > edgeLimit)
+				throw new NdexException(resultOverLimitMsg);
+			
 			if (!foundNodeRids.contains(nodeRid)) nextSourceNodeRids.add(nodeRid);
 	
 		}
 		
 		foundNodeRids.addAll(nextSourceNodeRids);
 		if (belowMaxDepth){
-			searchFromNode(nextSourceNodeRids, includedPredicateRids, depth + 1, maxDepth, foundEdgeRids, foundNodeRids);
+			searchFromNode(nextSourceNodeRids, includedPredicateRids, depth + 1, maxDepth, foundEdgeRids, foundNodeRids, edgeLimit);
 		}
 	}
 
@@ -546,13 +542,13 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	 * 
 	 * Common Utilities
 	 */
-
+/*
 	private void checkNetworkExists(ORID networkRid, String networkId)
 			throws ObjectNotFoundException {
 		if (null == _ndexDatabase.load(networkRid)) {
 			throw new ObjectNotFoundException("Network", networkId);
 		}
-	}
+	} 
 
 	private static ORID checkAndConvertNetworkId(String networkId) {
 		if (networkId == null || networkId.isEmpty())
@@ -565,7 +561,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			throw new IllegalArgumentException(
 					"Number of results to return is less than 1.");
 	}
-
+*/
 	private static ORID stringToRid(String ridString) {
 		final Matcher m = Pattern.compile("^.*(#\\d+:\\d+).*$").matcher(
 				ridString.trim());
