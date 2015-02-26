@@ -267,8 +267,10 @@ public class BioPAXNetworkExporter {
 					
 					for (Long termId : node.getAliases()){
 						UnificationXref xref = this.getUnificationXREF(termId);
-						if (null == xref) throw new NdexException("Expected to find UnificationXREF corresponding to termId " + termId);
-						xrefPropertyEditor.setValueToBean(xref, bpe);
+					//	if (null == xref) 
+					//		throw new NdexException("Expected to find UnificationXREF corresponding to termId " + termId);
+						if( xref != null)
+							xrefPropertyEditor.setValueToBean(xref, bpe);
 
 					}
 
@@ -277,8 +279,10 @@ public class BioPAXNetworkExporter {
 					// that was created during the processXREFNodes phase
 					for (Long termId : node.getRelatedTerms()){
 						RelationshipXref xref = this.getRelationshipXREF(termId);
-						if (null == xref) throw new NdexException("Expected to find RelationshipXREF corresponding to termId " + termId);
-						xrefPropertyEditor.setValueToBean(xref, bpe);
+					//	if (null == xref) 
+					//		throw new NdexException("Expected to find RelationshipXREF corresponding to termId " + termId);
+						if ( xref !=null )
+							xrefPropertyEditor.setValueToBean(xref, bpe);
 					}
 					
 					// write out citations
