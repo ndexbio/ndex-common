@@ -13,6 +13,8 @@ public class Configuration
 {
     public static final String UPLOADED_NETWORKS_PATH_PROPERTY = "Uploaded-Networks-Path";
     
+    private static final String PROP_USE_AD_AUTHENTICATION = "USE_AD_AUTHENTICATION";
+    
     private static Configuration INSTANCE = null;
     private static final Logger _logger = LoggerFactory.getLogger(Configuration.class);
     private Properties _configurationProperties;
@@ -26,6 +28,7 @@ public class Configuration
 	private String ndexSystemUserPassword;
 	private String ndexRoot;
    
+	private boolean useADAuthentication ;
     
     /**************************************************************************
     * Default constructor. Made private to prevent instantiation. 
@@ -62,7 +65,13 @@ public class Configuration
 
             this.ndexRoot = getRequiredProperty("NdexRoot");
             
-            
+            // get AD authentication flag
+            String useAd = getProperty(PROP_USE_AD_AUTHENTICATION);
+            if (useAd != null && Boolean.parseBoolean(useAd)) {
+            	setUseADAuthentication(true);
+            } else {
+            	setUseADAuthentication(false);
+            }
         }
         catch (Exception e)
         {
@@ -96,7 +105,7 @@ public class Configuration
     
     
     /**************************************************************************
-    * Gets the singleton instance. 
+    * Gets the value of a property from configuration.
     * 
     * @param propertyName
     *            The property name.
@@ -126,5 +135,15 @@ public class Configuration
     public String getSystmUserName() {return this.ndexSystemUser;}
     public String getSystemUserPassword () {return this.ndexSystemUserPassword;}
     public String getNdexRoot()  {return this.ndexRoot;}
+
+
+	public boolean getUseADAuthentication() {
+		return useADAuthentication;
+	}
+
+
+	public void setUseADAuthentication(boolean useADAuthentication) {
+		this.useADAuthentication = useADAuthentication;
+	}
     
 }

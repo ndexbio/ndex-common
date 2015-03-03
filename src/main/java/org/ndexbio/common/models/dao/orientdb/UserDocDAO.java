@@ -113,6 +113,7 @@ public class UserDocDAO extends OrientdbDAO {
 		Preconditions.checkArgument(
 				!Strings.isNullOrEmpty(newUser.getAccountName()),
 				"A accountName is required");
+		
 		Preconditions.checkArgument(
 				!Strings.isNullOrEmpty(newUser.getPassword()),
 				"A user password is required");
