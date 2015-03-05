@@ -159,7 +159,7 @@ public class NdexPersistenceService extends PersistenceService {
 				+ ".abortTransaction has been invoked.");
 
 		//localConnection.rollback();
-		graph.rollback();
+//		graph.rollback();
 		
 		// make sure everything relate to the network is deleted.
 		//localConnection.begin();
@@ -1017,20 +1017,23 @@ public class NdexPersistenceService extends PersistenceService {
 			        NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime() )
 			  .save();
 			
-//			this.localConnection.commit();
+			this.localConnection.commit();
 			
 			if ( this.ownerAccount != null) {
+				networkVertex.reload();
 				ODocument ownerDoc =  findUserByAccountName(this.ownerAccount);		
 				OrientVertex ownerV = this.graph.getVertex(ownerDoc);
 				
+		
 				for	(int retry = 0;	retry <	OrientdbDAO.maxRetries;	++retry)	{
 					try	{
+						ownerV.reload();
 						ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
 						break;
 					} catch(ONeedRetryException	e)	{
 						logger.warning("Retry - " + e.getMessage());
-						ownerV.reload();
-						networkVertex.reload();
+						//ownerV.reload();
+//						networkVertex.reload();
 					}
 				}
 			
