@@ -1,18 +1,17 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
@@ -21,6 +20,7 @@ import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -668,6 +668,32 @@ public abstract class PersistenceService {
 		  NdexPropertyValuePair p = new NdexPropertyValuePair (NdexClasses.Network_P_source_format, fmt.toString());
 		  this.network.getProperties().add(p);
 	  }
+
+    //DW: Moved from NdexPersistenceService to here, PersistenceService
+    public void setNetworkProvenance(ProvenanceEntity e) throws JsonProcessingException
+    {
+
+        ObjectMapper mapper = new ObjectMapper();
+        String provenanceString = mapper.writeValueAsString(e);
+        // store provenance string
+        this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_provenance, provenanceString)
+                .save();
+    }
+
+    //DW: New method to read provenance
+    public ProvenanceEntity getNetworkProvenance() throws IOException
+    {
+        // Make an object mapper
+        ObjectMapper mapper = new ObjectMapper();
+        // get the provenance string
+        String provenanceString = this.networkDoc.field("provenance");
+        // deserialize it to create a ProvenanceEntity object
+        if (provenanceString != null && provenanceString.length() > 0){
+            return mapper.readValue(provenanceString, ProvenanceEntity.class);
+        }
+        return new ProvenanceEntity();
+    }
+
 		
 	  public void close () {
 		  this.localConnection.close();

@@ -1,7 +1,5 @@
 package org.ndexbio.task.parsingengines;
 
-import static org.junit.Assert.*;
-
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Map;
@@ -9,7 +7,6 @@ import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.task.Configuration;
 
@@ -34,7 +31,7 @@ public class XgmmlParserSingleTest {
 		
 		String user = "cjtest";
 		XgmmlParser parser = new XgmmlParser("/home/chenjing/Dropbox/Network_test_files/pdmap130712.xgmml", user, 
-				db, "pdmap13");
+				db, "pdmap13", "");
 		parser.parseFile();
 //		XbelParser 
 //		parser = new XbelParser("/home/chenjing/working/ndex/networks/selventa_full.xbel", user);

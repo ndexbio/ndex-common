@@ -14,6 +14,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.ProvenanceEntity;
@@ -41,7 +42,9 @@ public class XgmmlParser implements IParsingEngine {
     private NdexPersistenceService networkService;
     private static final Logger logger = LoggerFactory.getLogger(XgmmlParser.class);
 
-	public XgmmlParser(String fn, String ownerAccountName, NdexDatabase db, String defaultNetworkName) throws Exception {
+    private String description;
+
+	public XgmmlParser(String fn, String ownerAccountName, NdexDatabase db, String defaultNetworkName, String description) throws Exception {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(fn),
 				"A filename is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(fn),
@@ -50,6 +53,7 @@ public class XgmmlParser implements IParsingEngine {
 		this.xgmmlFile = new File(fn);
 		this.networkService = new NdexPersistenceService(db);
 		this.networkTitle = defaultNetworkName;
+        this.description = description;
 		
 	}  
 	
@@ -84,11 +88,12 @@ public class XgmmlParser implements IParsingEngine {
 				// set the source format
 			
 				ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
-					uri, "FILE_UPLOAD", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
-				provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
+					uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+                Helper.populateProvenanceEntity(provEntity, currentNetwork, currentNetwork.getURI().toString());
+                provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
 				List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
-				l.add(	new SimplePropertyValuePair ( "filename",this.xgmmlFile.getName()) );
+				l.add(	new SimplePropertyValuePair ( "filename",this.description) );
 			
 				this.networkService.setNetworkProvenance(provEntity);
 

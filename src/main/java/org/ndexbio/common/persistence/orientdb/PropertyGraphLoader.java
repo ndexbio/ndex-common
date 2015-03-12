@@ -1,6 +1,7 @@
 package org.ndexbio.common.persistence.orientdb;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -10,11 +11,15 @@ import java.util.concurrent.ExecutionException;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.ProvenanceEntity;
+import org.ndexbio.model.object.ProvenanceEvent;
+import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -123,7 +128,21 @@ public class PropertyGraphLoader {
 		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
 		
 		insertNetworkElements(network,persistenceService);
-		
+
+        //DW: Provenance
+        NetworkSummary summary = persistenceService.getCurrentNetwork();
+
+        ProvenanceEntity entity = new ProvenanceEntity();
+        entity.setUri(summary.getURI());
+
+        Helper.populateProvenanceEntity(entity, summary, summary.getURI().toString() );
+
+        Timestamp now = new Timestamp(Calendar.getInstance().getTimeInMillis());
+        ProvenanceEvent event = new ProvenanceEvent("REST PropertyGraph Upload", now);
+
+        entity.setCreationEvent(event);
+
+        persistenceService.setNetworkProvenance(entity);
 	}
 	
 	

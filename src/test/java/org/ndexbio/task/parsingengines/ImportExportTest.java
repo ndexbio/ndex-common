@@ -147,13 +147,13 @@ public class ImportExportTest {
 		  String testFile = fileName;
 		  if ( m.srcFormat == NetworkSourceFormat.XGMML) {
 			  parser = new XgmmlParser(testFile, AllTests.testUser, 
-			  			AllTests.db,m.fileName);
+			  			AllTests.db,m.fileName, "");
 		  } else if ( m.srcFormat == NetworkSourceFormat.BEL) {
-			  parser = new XbelParser(testFile,AllTests.testUser, AllTests.db);
+			  parser = new XbelParser(testFile,AllTests.testUser, AllTests.db, "");
 		  } else if (m.srcFormat == NetworkSourceFormat.SIF) {
-			  parser = new SifParser(testFile,AllTests.testUser, AllTests.db, FilenameUtils.getBaseName( m.fileName) );
+			  parser = new SifParser(testFile,AllTests.testUser, AllTests.db, FilenameUtils.getBaseName( m.fileName), "" );
 		  } else if ( m.srcFormat == NetworkSourceFormat.BIOPAX) {
-			  parser = new BioPAXParser ( testFile, AllTests.testUser, AllTests.db, FilenameUtils.getBaseName( m.fileName));
+			  parser = new BioPAXParser ( testFile, AllTests.testUser, AllTests.db, FilenameUtils.getBaseName( m.fileName), "");
 		  } else 
 			  throw new Exception ("unsupported source format " + m.srcFormat);
 		  

@@ -2,24 +2,14 @@ package org.ndexbio.task.parsingengines;
 
 import static org.junit.Assert.*;
 
-import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.Map;
 import java.util.UUID;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ndexbio.common.NetworkSourceFormat;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
-import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.Network;
-import org.ndexbio.task.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-
-import static org.junit.Assert.*;
 
 
 public class XgmmlParserTest {
@@ -67,7 +57,7 @@ public class XgmmlParserTest {
 		  if ( m.srcFormat == NetworkSourceFormat.XGMML) {
 			  // load to db	
 			  XgmmlParser parser = new XgmmlParser(AllTests.testFileDirectory + m.fileName, AllTests.testUser, 
-			  			AllTests.db,m.fileName);
+			  			AllTests.db,m.fileName, "");
 			  	parser.parseFile();
 			  	
 			  	

@@ -19,6 +19,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
@@ -72,8 +73,10 @@ public class XbelParser implements IParsingEngine
     public static final String elementDisclaimer  = belPrefix + ":disclaimer";
     public static final String elementAuthor      = belPrefix + ":author";
     public static final String elementLicense     = belPrefix + ":license";
+
+    private String description;
     
-    public XbelParser(String fn, String ownerName, NdexDatabase db) throws JAXBException, NdexException
+    public XbelParser(String fn, String ownerName, NdexDatabase db, String description) throws JAXBException, NdexException
     {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(fn), "A filename is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(ownerName),
@@ -95,6 +98,7 @@ public class XbelParser implements IParsingEngine
         this.headerSplitter = new HeaderSplitter(context);
         
         this.initReader();
+        this.description = description;
     }
   
     @Override
@@ -113,12 +117,13 @@ public class XbelParser implements IParsingEngine
 			String uri = NdexDatabase.getURIPrefix();
 
 			ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
-					uri, "FILE_UPLOAD", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+					uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+            Helper.populateProvenanceEntity(provEntity, currentNetwork, currentNetwork.getURI().toString());
 			provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
 			File f = new File (this.xmlFile);
 			List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
-			l.add(	new SimplePropertyValuePair ( "filename",f.getName()) );
+			l.add(	new SimplePropertyValuePair ( "filename",this.description) );
 			
 			this.networkService.setNetworkProvenance(provEntity);
             

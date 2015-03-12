@@ -32,6 +32,7 @@ import org.biopax.paxtools.model.level3.Xref;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
@@ -67,7 +68,9 @@ public class BioPAXParser implements IParsingEngine {
 
 	private NdexPersistenceService persistenceService;
 
-	public BioPAXParser(String fn, String ownerName, NdexDatabase db, String networkName)
+    private String description;
+
+	public BioPAXParser(String fn, String ownerName, NdexDatabase db, String networkName, String description)
 			throws Exception {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(fn),
 				"A filename is required");
@@ -88,6 +91,7 @@ public class BioPAXParser implements IParsingEngine {
 		editorMap =  SimpleEditorMap.L3;
 		
 		persistenceService.createNewNetwork(ownerName, networkName, null);
+        this.description = description;
 
 	}
 
@@ -130,15 +134,15 @@ public class BioPAXParser implements IParsingEngine {
 
 			ProvenanceEntity provEntity = ProvenanceHelpers
 					.createProvenanceHistory(currentNetwork, uri,
-							"FILE_UPLOAD", currentNetwork.getCreationTime(),
+							"File Upload", currentNetwork.getCreationTime(),
 							(ProvenanceEntity) null);
+            Helper.populateProvenanceEntity(provEntity, currentNetwork, currentNetwork.getURI().toString());
 			provEntity.getCreationEvent().setEndedAtTime(
 					new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
 			List<SimplePropertyValuePair> l = provEntity.getCreationEvent()
 					.getProperties();
-			l.add(new SimplePropertyValuePair("filename", this.bioPAXFile
-					.getName()));
+			l.add(new SimplePropertyValuePair("filename", this.description));
 
 			this.persistenceService.setNetworkProvenance(provEntity);
 			

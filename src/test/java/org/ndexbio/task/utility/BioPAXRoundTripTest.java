@@ -1,7 +1,5 @@
 package org.ndexbio.task.utility;
 
-import static org.junit.Assert.*;
-
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -42,7 +40,7 @@ public class BioPAXRoundTripTest {
 		BioPAXParser parser = new BioPAXParser(
 				"/home/chenjing/Dropbox/Network_test_files/" + originalFileName + ".owl", 
 				user, 
-				NdexDatabase.getInstance(), originalFileName);
+				NdexDatabase.getInstance(), originalFileName, "");
 		
 		parser.parseFile();
 		String networkUUIDString = parser.getNetworkUUID();
@@ -59,7 +57,7 @@ public class BioPAXRoundTripTest {
 		BioPAXParser parser2 = new BioPAXParser(
 				exportedFilePath, 
 				user, 
-				NdexDatabase.getInstance(), originalFileName);
+				NdexDatabase.getInstance(), originalFileName, "");
 		
 		parser2.parseFile();
 		

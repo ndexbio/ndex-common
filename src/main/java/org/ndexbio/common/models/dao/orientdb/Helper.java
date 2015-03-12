@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -9,10 +10,8 @@ import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
-import org.ndexbio.model.object.NdexExternalObject;
-import org.ndexbio.model.object.NdexPropertyValuePair;
-import org.ndexbio.model.object.Permissions;
-import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.*;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 
@@ -286,4 +285,35 @@ public class Helper {
 	public static String escapeOrientDBSQL(String str) {
 		return str.replace("'", "\\'");
 	}
+
+    public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkDAO dao, String networkId) throws NdexException
+    {
+        NetworkSummary summary = dao.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
+        populateProvenanceEntity(entity, summary, networkId);
+    }
+
+    public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkSummary summary, String networkId) throws NdexException
+    {
+
+        List<SimplePropertyValuePair> entityProperties = new ArrayList<>();
+
+        entityProperties.add( new SimplePropertyValuePair("edge count", Integer.toString( summary.getEdgeCount() )) );
+        entityProperties.add( new SimplePropertyValuePair("node count", Integer.toString( summary.getNodeCount() )) );
+
+        if ( summary.getName() != null)
+            entityProperties.add( new SimplePropertyValuePair("dc:title", summary.getName()) );
+
+        if ( summary.getDescription() != null)
+            entityProperties.add( new SimplePropertyValuePair("description", summary.getDescription()) );
+
+        if ( summary.getVersion()!=null )
+            entityProperties.add( new SimplePropertyValuePair("version", summary.getVersion()) );
+
+        if ( summary.getVisibility()!=null )
+            entityProperties.add( new SimplePropertyValuePair("visibility", summary.getVisibility().toString()) );
+
+        entity.setProperties(entityProperties);
+    }
+
+
 }

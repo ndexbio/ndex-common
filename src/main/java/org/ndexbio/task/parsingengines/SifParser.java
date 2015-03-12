@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
@@ -53,10 +54,12 @@ public class SifParser implements IParsingEngine {
 
 	
 	private NdexPersistenceService persistenceService;
+
+    private String taskDescription;
 	
 //	private TreeSet<String> pubmedIdSet;
 
-	public SifParser(String fn, String ownerName, NdexDatabase db, String networkName) throws Exception {
+	public SifParser(String fn, String ownerName, NdexDatabase db, String networkName, String taskDescription) throws Exception {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(fn),
 				"A filename is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(ownerName),
@@ -74,6 +77,7 @@ public class SifParser implements IParsingEngine {
 			title = Files.getNameWithoutExtension(this.sifFile.getName());
 
 		persistenceService.createNewNetwork(ownerName, title, null);
+        this.taskDescription = taskDescription;
 
 //		addSystemDefaultNamespaces();
 		
@@ -129,11 +133,12 @@ public class SifParser implements IParsingEngine {
 			String uri = NdexDatabase.getURIPrefix();
 
 			ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
-					uri, "FILE_UPLOAD", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+					uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+            Helper.populateProvenanceEntity(provEntity, currentNetwork, currentNetwork.getURI().toString());
 			provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
 			List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
-			l.add(	new SimplePropertyValuePair ( "filename",this.sifFile.getName()) );
+			l.add(	new SimplePropertyValuePair ( "filename",taskDescription) );
 			
 			this.persistenceService.setNetworkProvenance(provEntity);
 			

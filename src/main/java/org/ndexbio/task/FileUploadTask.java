@@ -69,22 +69,23 @@ public class FileUploadTask extends NdexTask {
 		logger.info("File extension = " + fileExtension);
 		String networkName = Files.getNameWithoutExtension(this.getTask().getDescription());
 		IParsingEngine parser = null;
+
 		switch (fileExtension) {
 		case ("SIF"):
 			parser = new SifParser(
-						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName);
+						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName, getTask().getDescription());
 			break;
 		case ("XGMML"):
 			parser = new XgmmlParser(
-						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName);
+						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName, getTask().getDescription());
 			break;
 		case ("OWL"):
 			parser = new BioPAXParser(
-						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName);
+						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, networkName, getTask().getDescription());
 			break;
 		case ("XBEL"):
 			parser = new XbelParser(
-						file.getAbsolutePath(), this.getTaskOwnerAccount(),db);
+						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, getTask().getDescription());
 
 			if (!((XbelParser)parser).getValidationState().isValid()) {
 					logger.info("XBel validation failed");

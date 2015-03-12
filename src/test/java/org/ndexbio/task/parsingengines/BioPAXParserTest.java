@@ -1,7 +1,5 @@
 package org.ndexbio.task.parsingengines;
 
-import static org.junit.Assert.*;
-
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Map;
@@ -9,7 +7,6 @@ import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.task.Configuration;
 
@@ -35,7 +32,7 @@ public class BioPAXParserTest {
     	
 		String user = "cjtest";
 		BioPAXParser parser = new BioPAXParser("/opt/biopax/L3/testnfkb.owl", user, 
-				db, "testnfkb.owl");
+				db, "testnfkb.owl", "");
 		parser.parseFile();
 
 		db.close();

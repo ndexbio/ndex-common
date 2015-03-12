@@ -1,13 +1,10 @@
 package org.ndexbio.task.parsingengines;
 
-import static org.junit.Assert.*;
-
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import javax.xml.bind.JAXBException;
 
@@ -16,25 +13,15 @@ import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
-import org.ndexbio.common.models.dao.orientdb.UserDAO;
-import org.ndexbio.common.persistence.orientdb.NdexNetworkCloneService;
 import org.ndexbio.common.persistence.orientdb.PropertyGraphLoader;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.task.Configuration;
-import org.ndexbio.task.utility.DatabaseInitializer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 
@@ -134,7 +121,7 @@ public class xbelParserTest {
 				//  "/home/chenjing/Downloads/wiki-pain.xbel"
 				//  "/opt/ndex/exported-networks/157f410b-6539-11e4-9955-90b11c72aefa.xbel"
 				 //  "/home/chenjing/git/ndex-task/src/test/resources/small_corpus.xbel"
-				    , user, db);
+				    , user, db, "");
 		  parser.parseFile();
 		System.out.println("closing db.");
 		

@@ -1064,15 +1064,7 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 	
-	public void setNetworkProvenance(ProvenanceEntity e) throws JsonProcessingException {
-	
-		ObjectMapper mapper = new ObjectMapper();
-		String provenanceString = mapper.writeValueAsString(e);
-		// store provenance string
-		this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_provenance, provenanceString)
-				.save();
 
-	}
 	
 	public void setNetworkVisibility(VisibilityType visibility) {
 
