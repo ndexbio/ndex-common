@@ -126,7 +126,7 @@ public class Helper {
     /**
      * Check if the actual permission meets the required permission level.
      * @param requiredPermission
-     * @param acturalPermission
+     * @param actualPermission
      * @return
      */
     public static boolean permissionSatisfied(Permissions requiredPermission, Permissions actualPermission) {
@@ -286,12 +286,14 @@ public class Helper {
 		return str.replace("'", "\\'");
 	}
 
+    // Added by David Welker
     public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkDAO dao, String networkId) throws NdexException
     {
         NetworkSummary summary = dao.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
         populateProvenanceEntity(entity, summary, networkId);
     }
 
+    //Added by David Welker
     public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkSummary summary, String networkId) throws NdexException
     {
 
@@ -315,5 +317,25 @@ public class Helper {
         entity.setProperties(entityProperties);
     }
 
+    //Added by David Welker
+    public static void addUserInfoToProvenanceEventProperties(List<SimplePropertyValuePair> eventProperties, User user)
+    {
+        String firstName = user.getFirstName();
+        String lastName = user.getLastName();
+        if( firstName != null || lastName != null )
+        {
+            String name = "";
+            if( firstName == null )
+                name = lastName;
+            else if( lastName == null )
+                name = firstName;
+            else
+                name = firstName + " " + lastName;
+            eventProperties.add( new SimplePropertyValuePair("user", name));
+        }
+
+        if( user.getAccountName() != null )
+            eventProperties.add( new SimplePropertyValuePair("account name", user.getAccountName()) );
+    }
 
 }

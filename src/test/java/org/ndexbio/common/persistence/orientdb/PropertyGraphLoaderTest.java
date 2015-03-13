@@ -54,7 +54,7 @@ public class PropertyGraphLoaderTest {
 		
 		PropertyGraphLoader loader = new PropertyGraphLoader ( db);
 		
-		loader.insertNetwork(pn, "Support");
+//		loader.insertNetwork(pn, "Support", null);
 		
 	}
 

@@ -33,11 +33,14 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
+import org.ndexbio.common.models.dao.orientdb.UserDAO;
+import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.tools.PropertyHelpers;
@@ -59,6 +62,7 @@ public class BioPAXParser implements IParsingEngine {
 	public int rXrefCount;
 	public int literalPropertyCount;
 	public int referencePropertyCount;
+
 	
 	EditorMap editorMap ;
 
@@ -69,6 +73,7 @@ public class BioPAXParser implements IParsingEngine {
 	private NdexPersistenceService persistenceService;
 
     private String description;
+    private User loggedInUser;
 
 	public BioPAXParser(String fn, String ownerName, NdexDatabase db, String networkName, String description)
 			throws Exception {
@@ -92,6 +97,9 @@ public class BioPAXParser implements IParsingEngine {
 		
 		persistenceService.createNewNetwork(ownerName, networkName, null);
         this.description = description;
+
+        UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection());
+        loggedInUser = userDocDAO.getUserByAccountName(ownerName);
 
 	}
 
@@ -142,6 +150,9 @@ public class BioPAXParser implements IParsingEngine {
 
 			List<SimplePropertyValuePair> l = provEntity.getCreationEvent()
 					.getProperties();
+
+            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
+
 			l.add(new SimplePropertyValuePair("filename", this.description));
 
 			this.persistenceService.setNetworkProvenance(provEntity);

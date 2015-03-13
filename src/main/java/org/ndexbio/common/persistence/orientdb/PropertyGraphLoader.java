@@ -16,10 +16,7 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.NdexPropertyValuePair;
-import org.ndexbio.model.object.ProvenanceEntity;
-import org.ndexbio.model.object.ProvenanceEvent;
-import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.*;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -43,13 +40,13 @@ public class PropertyGraphLoader {
 		mapper = new ObjectMapper();
 	}
 	
-	public NetworkSummary insertNetwork(PropertyGraphNetwork network, String accountName) throws Exception {
+	public NetworkSummary insertNetwork(PropertyGraphNetwork network, String accountName, User loggedInUser) throws Exception {
 
 		NdexPersistenceService persistenceService = null;
 		try {
 		
 			persistenceService = new NdexPersistenceService(db);
-			insertNewNetwork(network, accountName,persistenceService );
+			insertNewNetwork(network, accountName,persistenceService, loggedInUser );
 			
 			removeNetworkSourceFormat(network);
 			
@@ -97,7 +94,7 @@ public class PropertyGraphLoader {
 	
 	
 	private void insertNewNetwork(PropertyGraphNetwork network, String accountName,
-			NdexPersistenceService persistenceService) throws Exception {
+                                  NdexPersistenceService persistenceService, User loggedInUser) throws Exception {
 
 		String title = null;
         String description = null;
@@ -139,6 +136,10 @@ public class PropertyGraphLoader {
 
         Timestamp now = new Timestamp(Calendar.getInstance().getTimeInMillis());
         ProvenanceEvent event = new ProvenanceEvent("REST PropertyGraph Upload", now);
+
+        List<SimplePropertyValuePair> eventProperties = new ArrayList<>();
+        Helper.addUserInfoToProvenanceEventProperties( eventProperties, loggedInUser);
+        event.setProperties(eventProperties);
 
         entity.setCreationEvent(event);
 

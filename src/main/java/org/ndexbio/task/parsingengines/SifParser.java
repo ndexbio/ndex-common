@@ -17,6 +17,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
+import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
@@ -24,6 +25,7 @@ import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.common.util.TermStringType;
 import org.ndexbio.common.util.TermUtilities;
+import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.tools.ProvenanceHelpers;
 
@@ -56,6 +58,7 @@ public class SifParser implements IParsingEngine {
 	private NdexPersistenceService persistenceService;
 
     private String taskDescription;
+    private User loggedInUser;
 	
 //	private TreeSet<String> pubmedIdSet;
 
@@ -78,6 +81,10 @@ public class SifParser implements IParsingEngine {
 
 		persistenceService.createNewNetwork(ownerName, title, null);
         this.taskDescription = taskDescription;
+
+        UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection());
+        loggedInUser = userDocDAO.getUserByAccountName(ownerName);
+
 
 //		addSystemDefaultNamespaces();
 		
@@ -138,6 +145,7 @@ public class SifParser implements IParsingEngine {
 			provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
 			List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
+            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
 			l.add(	new SimplePropertyValuePair ( "filename",taskDescription) );
 			
 			this.persistenceService.setNetworkProvenance(provEntity);

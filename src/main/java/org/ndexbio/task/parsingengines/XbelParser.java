@@ -20,10 +20,12 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
+import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.User;
 import org.ndexbio.xbel.model.Header;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
@@ -75,6 +77,7 @@ public class XbelParser implements IParsingEngine
     public static final String elementLicense     = belPrefix + ":license";
 
     private String description;
+    private User loggedInUser;
     
     public XbelParser(String fn, String ownerName, NdexDatabase db, String description) throws JAXBException, NdexException
     {
@@ -99,6 +102,10 @@ public class XbelParser implements IParsingEngine
         
         this.initReader();
         this.description = description;
+
+        UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection());
+        loggedInUser = userDocDAO.getUserByAccountName(ownerName);
+
     }
   
     @Override
@@ -123,6 +130,7 @@ public class XbelParser implements IParsingEngine
 			
 			File f = new File (this.xmlFile);
 			List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
+            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
 			l.add(	new SimplePropertyValuePair ( "filename",this.description) );
 			
 			this.networkService.setNetworkProvenance(provEntity);

@@ -15,10 +15,12 @@ import javax.xml.parsers.SAXParserFactory;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
+import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.tools.ProvenanceHelpers;
 import org.ndexbio.xgmml.parser.HandlerFactory;
@@ -43,6 +45,7 @@ public class XgmmlParser implements IParsingEngine {
     private static final Logger logger = LoggerFactory.getLogger(XgmmlParser.class);
 
     private String description;
+    private User loggedInUser;
 
 	public XgmmlParser(String fn, String ownerAccountName, NdexDatabase db, String defaultNetworkName, String description) throws Exception {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(fn),
@@ -54,8 +57,10 @@ public class XgmmlParser implements IParsingEngine {
 		this.networkService = new NdexPersistenceService(db);
 		this.networkTitle = defaultNetworkName;
         this.description = description;
-		
-	}  
+
+        UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection());
+        loggedInUser = userDocDAO.getUserByAccountName(ownerName);
+    }
 	
 	private static void log (String string){
 		System.out.println(string);
@@ -93,6 +98,7 @@ public class XgmmlParser implements IParsingEngine {
                 provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
 				List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
+                Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
 				l.add(	new SimplePropertyValuePair ( "filename",this.description) );
 			
 				this.networkService.setNetworkProvenance(provEntity);

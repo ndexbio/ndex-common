@@ -66,10 +66,10 @@ public class xbelParserTest {
 		
 		
 		PropertyGraphLoader pgl = new PropertyGraphLoader(NdexDatabase.getInstance());
-        NetworkSummary s = pgl.insertNetwork( pg, "cjtest");
+//        NetworkSummary s = pgl.insertNetwork( pg, "cjtest", null);
 		//NetworkSummary s = pgl.updateNetwork(pg);
 
-        System.out.println(s);
+//        System.out.println(s);
 
     //    NetworkSummary s = service.updateNetwork();
 
