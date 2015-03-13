@@ -135,7 +135,7 @@ public class PropertyGraphLoader {
         Helper.populateProvenanceEntity(entity, summary, summary.getURI().toString() );
 
         Timestamp now = new Timestamp(Calendar.getInstance().getTimeInMillis());
-        ProvenanceEvent event = new ProvenanceEvent("REST PropertyGraph Upload", now);
+        ProvenanceEvent event = new ProvenanceEvent("Program Upload", now);
 
         List<SimplePropertyValuePair> eventProperties = new ArrayList<>();
         Helper.addUserInfoToProvenanceEventProperties( eventProperties, loggedInUser);
