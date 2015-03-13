@@ -289,12 +289,12 @@ public class Helper {
     // Added by David Welker
     public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkDAO dao, String networkId) throws NdexException
     {
-        NetworkSummary summary = dao.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
-        populateProvenanceEntity(entity, summary, networkId);
+        NetworkSummary summary = NetworkDAO.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
+        populateProvenanceEntity(entity, summary);
     }
 
     //Added by David Welker
-    public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkSummary summary, String networkId) throws NdexException
+    public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkSummary summary) throws NdexException
     {
 
         List<SimplePropertyValuePair> entityProperties = new ArrayList<>();
@@ -311,8 +311,8 @@ public class Helper {
         if ( summary.getVersion()!=null )
             entityProperties.add( new SimplePropertyValuePair("version", summary.getVersion()) );
 
-        if ( summary.getVisibility()!=null )
-            entityProperties.add( new SimplePropertyValuePair("visibility", summary.getVisibility().toString()) );
+//        if ( summary.getVisibility()!=null )
+//            entityProperties.add( new SimplePropertyValuePair("visibility", summary.getVisibility().toString()) );
 
         entity.setProperties(entityProperties);
     }

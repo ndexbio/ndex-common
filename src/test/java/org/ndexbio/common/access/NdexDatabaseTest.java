@@ -2,7 +2,19 @@ package org.ndexbio.common.access;
 
 import static org.junit.Assert.*;
 
+import java.util.Hashtable;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.InitialLdapContext;
+import javax.naming.ldap.LdapContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -20,6 +32,61 @@ public class NdexDatabaseTest {
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
+		
+        String ldapAdServer = 
+        		"ldap://10.37.62.139:389";
+      
+        String ldapSearchBase="...";
+        
+        String user = "myadname";
+        String ldapUser = "NA\\" + user;
+        String ldapPassword = "myadpassword";
+        
+        
+        Hashtable <String,Object> env = new Hashtable<>();
+        
+        env.put(Context.SECURITY_AUTHENTICATION, "simple");
+        env.put(Context.SECURITY_PRINCIPAL, ldapUser);
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+        env.put(Context.PROVIDER_URL, ldapAdServer);
+        env.put(Context.SECURITY_CREDENTIALS, ldapPassword);
+        
+        env.put("java.naming.ldap.attributes.binary", "objectSID");
+        env.put("com.sun.jndi.ldap.trace.ber", System.err);
+        LdapContext ctx = new InitialLdapContext(env,null);
+        
+        
+        String searchFilter = "(&(SAMAccountName="+ user +")(objectClass=user)(objectCategory=person))";
+        SearchControls searchControls = new SearchControls();
+        searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        //searchControls.se
+		NamingEnumeration<SearchResult> results = ctx.search(ldapSearchBase, searchFilter, searchControls);
+		
+		
+		Pattern pattern = Pattern.compile("^CN=(.*?[^\\\\]),");
+		SearchResult searchResult = null;
+		if ( results.hasMoreElements()) {
+			searchResult = results.nextElement();
+			Attributes attrs = searchResult.getAttributes();
+			Attribute uWWID = attrs.get("employeeID");
+			Attribute grp = attrs.get("memberOf");
+			NamingEnumeration enu = grp.getAll();
+	        while ( enu.hasMore()) {
+	        	String obj = (String)enu.next();
+	        	System.out.println(obj);
+
+	    		Matcher matcher = pattern.matcher(obj);
+
+	    		if (matcher.find())
+	    		{
+	    		    System.out.println(matcher.group(1));
+	    		}
+	        }
+			
+			System.out.print(uWWID.toString() + grp.toString());
+		}
+		
+		
 		String[] foo = TermUtilities.getNdexQName("abc:3fg");
 		System.out.println(foo);
 		

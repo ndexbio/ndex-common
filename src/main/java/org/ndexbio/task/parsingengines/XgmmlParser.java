@@ -94,7 +94,7 @@ public class XgmmlParser implements IParsingEngine {
 			
 				ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
 					uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
-                Helper.populateProvenanceEntity(provEntity, currentNetwork, currentNetwork.getURI().toString());
+                Helper.populateProvenanceEntity(provEntity, currentNetwork);
                 provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
 				List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
