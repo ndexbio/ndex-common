@@ -1,13 +1,8 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
@@ -156,7 +151,7 @@ public class NetworkDAO extends OrientdbDAO {
     /**
      * Check if an account has a certain privilege on a network.
      * @param accountName account name to be checked.
-     * @param UUID  id of the network
+     * @param UUIDStr  id of the network
      * @param permission  permission to be verified.
      * @return true if the account has that privilege.
      * @throws NdexException 
@@ -228,7 +223,7 @@ public class NetworkDAO extends OrientdbDAO {
 	/**
 	 * Delete up to CLEANUP_BATCH_SIZE vertices in a network. This function is for cleaning up a logically 
 	 * deleted network in the database. 
-	 * @param uuid
+	 * @param networkDoc
 	 * @return the number of vertices being deleted. 
 	 * @throws NdexException 
 	 * @throws ObjectNotFoundException 
@@ -1982,7 +1977,6 @@ public class NetworkDAO extends OrientdbDAO {
 	 * of the network will be deleted. 
 	 * @param networkId
 	 * @param properties
-	 * @param isPresentationProperty
 	 * @return
 	 * @throws ObjectNotFoundException
 	 * @throws NdexException
@@ -2018,6 +2012,10 @@ public class NetworkDAO extends OrientdbDAO {
 				counter ++;
 			}
 		}
+
+
+        rec.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime());
+
 		return counter;
 	}
 
@@ -2059,6 +2057,9 @@ public class NetworkDAO extends OrientdbDAO {
             networkV.addEdge(NdexClasses.E_ndexPresentationProps, pV);
       		counter ++;
 		}
+
+        rec.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime());
+
 		return counter;
 	}
 
@@ -2082,7 +2083,6 @@ public class NetworkDAO extends OrientdbDAO {
 	 * Get all the node and edges that has neither citations nor supports as a subnetwork. This is a 
 	 * utitlity function for xbel export.
 	 * @param networkUUID
-	 * @param citationId
 	 * @return
 	 * @throws NdexException
 	 */

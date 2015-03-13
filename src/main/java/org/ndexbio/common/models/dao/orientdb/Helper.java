@@ -311,9 +311,6 @@ public class Helper {
         if ( summary.getVersion()!=null )
             entityProperties.add( new SimplePropertyValuePair("version", summary.getVersion()) );
 
-        if ( summary.getVisibility()!=null )
-            entityProperties.add( new SimplePropertyValuePair("visibility", summary.getVisibility().toString()) );
-
         entity.setProperties(entityProperties);
     }
 
