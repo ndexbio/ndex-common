@@ -138,20 +138,22 @@ public class SifParser implements IParsingEngine {
 			this.persistenceService.setNetworkSourceFormat(NetworkSourceFormat.SIF);
 			
 			String uri = NdexDatabase.getURIPrefix();
-
-			ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
-					uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
-            Helper.populateProvenanceEntity(provEntity, currentNetwork);
-			provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
-			
-			List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
-            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
-			l.add(	new SimplePropertyValuePair ( "filename",taskDescription) );
-			
-			this.persistenceService.setNetworkProvenance(provEntity);
 			
 			// close database connection
 			this.persistenceService.persistNetwork();
+
+            ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
+                    uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+            Helper.populateProvenanceEntity(provEntity, currentNetwork);
+            provEntity.getCreationEvent().setEndedAtTime(currentNetwork.getModificationTime());
+
+            List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
+            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
+            l.add(	new SimplePropertyValuePair ( "filename",taskDescription) );
+
+            this.persistenceService.setNetworkProvenance(provEntity);
+
+            persistenceService.commit();
 			
 		} catch (Exception e) {
 			// delete network and close the database connection
@@ -159,7 +161,11 @@ public class SifParser implements IParsingEngine {
 			this.persistenceService.abortTransaction();
 			throw new NdexException("Error occurred when loading file " +
 					this.sifFile.getName() + ". " + e.getMessage() );
-		} 
+		}
+        finally
+        {
+            persistenceService.close();
+        }
 	}
 
 	private boolean checkForExtendedFormat() throws IOException {

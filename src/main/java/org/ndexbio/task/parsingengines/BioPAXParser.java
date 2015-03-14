@@ -139,28 +139,29 @@ public class BioPAXParser implements IParsingEngine {
 			this.persistenceService.setNetworkSourceFormat(NetworkSourceFormat.BIOPAX);
 
 			String uri = NdexDatabase.getURIPrefix();
-
-			ProvenanceEntity provEntity = ProvenanceHelpers
-					.createProvenanceHistory(currentNetwork, uri,
-							"File Upload", currentNetwork.getCreationTime(),
-							(ProvenanceEntity) null);
-            Helper.populateProvenanceEntity(provEntity, currentNetwork);
-			provEntity.getCreationEvent().setEndedAtTime(
-					new Timestamp(Calendar.getInstance().getTimeInMillis()));
-
-			List<SimplePropertyValuePair> l = provEntity.getCreationEvent()
-					.getProperties();
-
-            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
-
-			l.add(new SimplePropertyValuePair("filename", this.description));
-
-			this.persistenceService.setNetworkProvenance(provEntity);
-			
 			this.persistenceService.setNetworkVisibility(VisibilityType.PRIVATE);
 
 			// close database connection
 			this.persistenceService.persistNetwork();
+
+            ProvenanceEntity provEntity = ProvenanceHelpers
+                    .createProvenanceHistory(currentNetwork, uri,
+                            "File Upload", currentNetwork.getCreationTime(),
+                            (ProvenanceEntity) null);
+            Helper.populateProvenanceEntity(provEntity, currentNetwork);
+            provEntity.getCreationEvent().setEndedAtTime(
+                    currentNetwork.getModificationTime());
+
+            List<SimplePropertyValuePair> l = provEntity.getCreationEvent()
+                    .getProperties();
+
+            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
+
+            l.add(new SimplePropertyValuePair("filename", this.description));
+
+            this.persistenceService.setNetworkProvenance(provEntity);
+
+            persistenceService.commit();
 			
 			System.out.println("Network UUID: " + currentNetwork.getExternalId());
 			this.networkUUID = currentNetwork.getExternalId().toString();
@@ -171,7 +172,11 @@ public class BioPAXParser implements IParsingEngine {
 			this.persistenceService.abortTransaction();
 			throw new NdexException("Error occurred when loading file "
 					+ this.bioPAXFile.getName() + ". " + e.getMessage());
-		} 
+		}
+        finally
+        {
+            persistenceService.close();
+        }
 	}
 
 	private void processBioPAX(File f) throws Exception {

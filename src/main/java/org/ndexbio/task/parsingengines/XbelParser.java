@@ -123,21 +123,25 @@ public class XbelParser implements IParsingEngine
 			
 			String uri = NdexDatabase.getURIPrefix();
 
-			ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
-					uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
-            Helper.populateProvenanceEntity(provEntity, currentNetwork);
-			provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
-			
-			File f = new File (this.xmlFile);
-			List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
-            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
-			l.add(	new SimplePropertyValuePair ( "filename",this.description) );
-			
-			this.networkService.setNetworkProvenance(provEntity);
+
             
             // set edge count and node count,
             // then close database connection
             this.networkService.persistNetwork();
+
+            ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
+                    uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+            Helper.populateProvenanceEntity(provEntity, currentNetwork);
+            provEntity.getCreationEvent().setEndedAtTime(currentNetwork.getModificationTime());
+
+            File f = new File (this.xmlFile);
+            List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
+            Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
+            l.add(	new SimplePropertyValuePair ( "filename",this.description) );
+
+            this.networkService.setNetworkProvenance(provEntity);
+
+            networkService.commit();
         }
         catch (Exception e)
         {
@@ -146,6 +150,10 @@ public class XbelParser implements IParsingEngine
             this.networkService.abortTransaction();
             throw new NdexException ("Error occurred when loading " +
               xmlFile + ". " + e.getMessage());
+        }
+        finally
+        {
+            networkService.close();
         }
 
     }

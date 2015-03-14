@@ -376,8 +376,8 @@ public class NdexPersistenceService extends PersistenceService {
 	 * @param subjectNodeId
 	 * @param objectNodeId
 	 * @param predicateId
-	 * @param support
-	 * @param citation
+	 * @param supportId
+	 * @param citationId
 	 * @param annotation
 	 * @return  The element id of the created edge.
 	 * @throws NdexException
@@ -1141,7 +1141,7 @@ public class NdexPersistenceService extends PersistenceService {
 	/**
 	 *  create a represent edge from a node to a term.
 	 * @param nodeId
-	 * @param TermId
+	 * @param termId
 	 * @throws ExecutionException 
 	 */
 	public void setNodeRepresentTerm(long nodeId, long termId) throws ExecutionException {

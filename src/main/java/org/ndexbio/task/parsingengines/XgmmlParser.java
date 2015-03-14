@@ -92,20 +92,24 @@ public class XgmmlParser implements IParsingEngine {
 
 				// set the source format
 			
-				ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
-					uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
-                Helper.populateProvenanceEntity(provEntity, currentNetwork);
-                provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
-			
-				List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
-                Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
-				l.add(	new SimplePropertyValuePair ( "filename",this.description) );
-			
-				this.networkService.setNetworkProvenance(provEntity);
+
 
             
 				// close database connection
 				this.networkService.persistNetwork();
+
+                ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
+                        uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+                Helper.populateProvenanceEntity(provEntity, currentNetwork);
+                provEntity.getCreationEvent().setEndedAtTime(currentNetwork.getModificationTime());
+
+                List<SimplePropertyValuePair> l = provEntity.getCreationEvent().getProperties();
+                Helper.addUserInfoToProvenanceEventProperties( l, loggedInUser);
+                l.add(	new SimplePropertyValuePair ( "filename",this.description) );
+
+                this.networkService.setNetworkProvenance(provEntity);
+
+                networkService.commit();
 			}
 			catch (Exception e)
 			{
@@ -122,7 +126,11 @@ public class XgmmlParser implements IParsingEngine {
             this.networkService.abortTransaction();  //TODO: close connection to database
             throw new NdexException("File not found: " + this.xgmmlFile.getName());
         }
-		
+        finally
+        {
+            networkService.close();
+        }
+
 	}
 	
 	/**

@@ -311,12 +311,6 @@ public class Helper {
         if ( summary.getVersion()!=null )
             entityProperties.add( new SimplePropertyValuePair("version", summary.getVersion()) );
 
-<<<<<<< HEAD
-=======
-//        if ( summary.getVisibility()!=null )
-//            entityProperties.add( new SimplePropertyValuePair("visibility", summary.getVisibility().toString()) );
-
->>>>>>> remotes/origin/develop
         entity.setProperties(entityProperties);
     }
 
