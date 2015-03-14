@@ -144,7 +144,7 @@ public class BioPAXParser implements IParsingEngine {
 					.createProvenanceHistory(currentNetwork, uri,
 							"File Upload", currentNetwork.getCreationTime(),
 							(ProvenanceEntity) null);
-            Helper.populateProvenanceEntity(provEntity, currentNetwork, currentNetwork.getURI().toString());
+            Helper.populateProvenanceEntity(provEntity, currentNetwork);
 			provEntity.getCreationEvent().setEndedAtTime(
 					new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
@@ -473,7 +473,7 @@ public class BioPAXParser implements IParsingEngine {
 		 * 
 		 * Comment: Publication xrefs should make use of PubMed IDs wherever
 		 * possible. The db property of an xref to an entry in PubMed should use
-		 * the string “PubMed” and not “MEDLINE”. Examples: PubMed:10234245
+		 * the string "PubMed" and not "MEDLINE". Examples: PubMed:10234245
 		 * 
 		 * therefore, if both xref.db and xref.id are available,
 		 * Citation.identifier = xref.id and Citation.idType = xref.db

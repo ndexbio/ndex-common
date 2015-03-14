@@ -1046,11 +1046,17 @@ public class NdexPersistenceService extends PersistenceService {
 			String msg = "unexpected error in persist network. Cause: " + e.getMessage();
 			logger.severe(msg);
 			throw new NdexException (msg);
-		} finally {
+		} /* finally {
 			graph.shutdown();
 	//		this.database.close();
 			logger.info("Connection to orientdb database closed");
-		}
+		} */
+	}
+	
+	@Override
+	public void close () {
+		graph.shutdown();
+		logger.info("Connection to orientdb database closed");
 	}
 	
 	public void setNetworkProperties(Collection<NdexPropertyValuePair> properties, 

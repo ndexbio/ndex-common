@@ -40,13 +40,13 @@ public class PropertyGraphLoader {
 		mapper = new ObjectMapper();
 	}
 	
-	public NetworkSummary insertNetwork(PropertyGraphNetwork network, String accountName, User loggedInUser) throws Exception {
+	public NetworkSummary insertNetwork(PropertyGraphNetwork network, User loggedInUser) throws Exception {
 
 		NdexPersistenceService persistenceService = null;
 		try {
 		
 			persistenceService = new NdexPersistenceService(db);
-			insertNewNetwork(network, accountName,persistenceService, loggedInUser );
+			insertNewNetwork(network, persistenceService, loggedInUser );
 			
 			removeNetworkSourceFormat(network);
 			
@@ -93,7 +93,7 @@ public class PropertyGraphLoader {
 	}
 	
 	
-	private void insertNewNetwork(PropertyGraphNetwork network, String accountName,
+	private void insertNewNetwork(PropertyGraphNetwork network,
                                   NdexPersistenceService persistenceService, User loggedInUser) throws Exception {
 
 		String title = null;
@@ -119,7 +119,7 @@ public class PropertyGraphLoader {
 			} 
 		}
 		
-		persistenceService.createNewNetwork(accountName, title, version);
+		persistenceService.createNewNetwork(loggedInUser.getAccountName(), title, version);
 		persistenceService.setNetworkTitleAndDescription(title, description);
 
 		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
@@ -132,7 +132,7 @@ public class PropertyGraphLoader {
         ProvenanceEntity entity = new ProvenanceEntity();
         entity.setUri(summary.getURI());
 
-        Helper.populateProvenanceEntity(entity, summary, summary.getURI().toString() );
+        Helper.populateProvenanceEntity(entity, summary );
 
         ProvenanceEvent event = new ProvenanceEvent("Program Upload", summary.getModificationTime());
 

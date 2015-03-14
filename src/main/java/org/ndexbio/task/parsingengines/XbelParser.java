@@ -125,7 +125,7 @@ public class XbelParser implements IParsingEngine
 
 			ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
 					uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
-            Helper.populateProvenanceEntity(provEntity, currentNetwork, currentNetwork.getURI().toString());
+            Helper.populateProvenanceEntity(provEntity, currentNetwork);
 			provEntity.getCreationEvent().setEndedAtTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
 			File f = new File (this.xmlFile);
