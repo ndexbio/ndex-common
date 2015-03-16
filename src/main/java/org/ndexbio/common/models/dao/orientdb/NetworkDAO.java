@@ -1945,6 +1945,7 @@ public class NetworkDAO extends OrientdbDAO {
 		String provenanceString = mapper.writeValueAsString(provenance);
 		// store provenance string
 		nDoc.field(NdexClasses.Network_P_provenance, provenanceString);
+        nDoc.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime());
 		nDoc.save();
 				
 		return 1;
