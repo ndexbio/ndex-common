@@ -2014,7 +2014,7 @@ public class NetworkDAO extends OrientdbDAO {
 		}
 
 
-        rec.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime());
+        rec.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
 
 		return counter;
 	}
