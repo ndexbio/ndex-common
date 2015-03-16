@@ -1,5 +1,6 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -237,10 +238,11 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.network.setEdgeCount(srcNetwork.getEdges().size());
 		this.network.setNodeCount(srcNetwork.getNodes().size());
 
+        Timestamp now = new Timestamp(Calendar.getInstance().getTimeInMillis());
 		networkDoc = new ODocument (NdexClasses.Network)
 		  .fields(NdexClasses.Network_P_UUID,this.network.getExternalId().toString(),
-		          NdexClasses.ExternalObj_cTime, Calendar.getInstance().getTime(),
-		          NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
+		          NdexClasses.ExternalObj_cTime, now,
+		          NdexClasses.ExternalObj_mTime, now,
 		          NdexClasses.ExternalObj_isDeleted, false,
 		          NdexClasses.Network_P_name, srcNetwork.getName(),
 		          NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
