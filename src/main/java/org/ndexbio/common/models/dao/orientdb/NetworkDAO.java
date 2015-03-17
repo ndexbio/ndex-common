@@ -1,8 +1,17 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
@@ -31,6 +40,7 @@ import org.ndexbio.model.object.network.PropertyGraphNode;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.Configuration;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -61,6 +71,10 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	private ObjectMapper mapper;
 	private OrientGraph graph;
+	
+	private static final String readOnlyFlag = "readOnly";
+	
+	private static final String workspaceDir = "workspace";
 	
 	private static final int CLEANUP_BATCH_SIZE = 50000;
 	
@@ -1951,6 +1965,48 @@ public class NetworkDAO extends OrientdbDAO {
 		return 1;
 	}
 
+	/** 
+	 * Set a flag of a network. We currently only support setting readOnly flag for download optimization purpose.
+	 * @param UUIDstr
+	 * @param parameter
+	 * @param value
+	 * @return
+	 * @throws NdexException 
+	 * @throws IOException 
+	 */
+	public String setFlag(String UUIDstr, String parameter, String value) throws NdexException, IOException {
+		
+		if ( !parameter.equals(readOnlyFlag)) 
+			throw new NdexException("Unsupported flag parameter received.");
+		
+		String newVal = value.toLowerCase();
+		ODocument networkDoc =this.getRecordByUUIDStr(UUIDstr, null);
+		String oldValue = networkDoc.field(parameter);
+		ODocument rd = networkDoc.field("in_" + NdexClasses.E_admin);
+		String accountName = rd.field (NdexClasses.account_P_accountName);
+		
+		String fullpath = Configuration.getInstance().getNdexRoot() + 
+				  "/" + workspaceDir + "/" + accountName + "/" + UUIDstr+".json";
+		
+		if ( newVal.equals("true") ) {
+			// create cache.
+			Network n = getNetworkById(UUID.fromString(UUIDstr));
+			try (FileWriter w = new FileWriter(fullpath)) {
+				//  String s = mapper.writeValueAsString( original);
+				mapper.writeValue(w, n);
+			}
+		} else if ( newVal.equals("false")) {
+			//remove cache.
+			File f = new File(fullpath);
+			f.delete();
+		} else 
+			throw new NdexException ("Unsupported value for paramter " + parameter );
+		
+		networkDoc.field(parameter,value).save();
+		return oldValue;
+		
+	}
+	
 	public void rollback() {
 		graph.rollback();		
 	}
