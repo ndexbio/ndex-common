@@ -88,7 +88,7 @@ public class UserDocDAO extends OrientdbDAO {
 			throw new SecurityException(e.getMessage());
 		} catch (Exception e) {
 			throw new NdexException(
-					"There's a problem with the authentication server. Please try again later."+e.getMessage());
+					"Ndex internal error when authenticate user. "+e.getMessage());
 		}
 	}
 

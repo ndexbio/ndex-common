@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
@@ -74,7 +76,7 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	private static final String readOnlyFlag = "readOnly";
 	
-	private static final String workspaceDir = "workspace";
+	public static final String workspaceDir = "workspace";
 	
 	private static final int CLEANUP_BATCH_SIZE = 50000;
 	
@@ -447,6 +449,12 @@ public class NetworkDAO extends OrientdbDAO {
          
     	return networks.get(0);
     }
+	
+	
+	public NetworkSummary getNetworkSummaryById (String networkUUIDStr) {
+		ODocument doc = getNetworkDocByUUIDString(networkUUIDStr);
+		return getNetworkSummary(doc);
+	}
  
 	
     public ODocument getNetworkDocByUUID(UUID id) {
@@ -1434,6 +1442,16 @@ public class NetworkDAO extends OrientdbDAO {
         	nSummary.setIsComplete(isComplete.booleanValue());
         else 
         	nSummary.setIsComplete(false);
+
+        Boolean isReadOnly = doc.field(NdexClasses.Network_P_isReadOnly);
+        if ( isReadOnly != null)
+        	nSummary.setIsReadOnly(isReadOnly.booleanValue());
+        else 
+        	nSummary.setIsReadOnly(false);
+
+        ODocument ud = doc.field("in_" + NdexClasses.E_admin);
+        nSummary.setOwner((String)ud.field(NdexClasses.account_P_accountName));
+        
         nSummary.setIsLocked((boolean)doc.field(NdexClasses.Network_P_isLocked));
         nSummary.setURI(NdexDatabase.getURIPrefix()+ "/network/" + nSummary.getExternalId().toString());
 
@@ -1979,31 +1997,34 @@ public class NetworkDAO extends OrientdbDAO {
 		if ( !parameter.equals(readOnlyFlag)) 
 			throw new NdexException("Unsupported flag parameter received.");
 		
-		String newVal = value.toLowerCase();
+		Boolean newVal = Boolean.parseBoolean(value.toLowerCase());
+		if (newVal == null)
+			throw new NdexException ("Unsupported value for paramter " + parameter );
+		
 		ODocument networkDoc =this.getRecordByUUIDStr(UUIDstr, null);
-		String oldValue = networkDoc.field(parameter);
+		Boolean oldValue = networkDoc.field(parameter);
 		ODocument rd = networkDoc.field("in_" + NdexClasses.E_admin);
 		String accountName = rd.field (NdexClasses.account_P_accountName);
 		
 		String fullpath = Configuration.getInstance().getNdexRoot() + 
 				  "/" + workspaceDir + "/" + accountName + "/" + UUIDstr+".json";
 		
-		if ( newVal.equals("true") ) {
+		
+		if ( newVal) {
 			// create cache.
 			Network n = getNetworkById(UUID.fromString(UUIDstr));
-			try (FileWriter w = new FileWriter(fullpath)) {
+			try (GZIPOutputStream w = new GZIPOutputStream( new FileOutputStream(fullpath), 16384)) {
 				//  String s = mapper.writeValueAsString( original);
 				mapper.writeValue(w, n);
 			}
-		} else if ( newVal.equals("false")) {
+		} else {
 			//remove cache.
 			File f = new File(fullpath);
 			f.delete();
-		} else 
-			throw new NdexException ("Unsupported value for paramter " + parameter );
+		} 
 		
-		networkDoc.field(parameter,value).save();
-		return oldValue;
+		networkDoc.field(NdexClasses.Network_P_isReadOnly,newVal).save();
+		return oldValue ==null ? "false" : oldValue.toString();
 		
 	}
 	
