@@ -1449,9 +1449,9 @@ public class NetworkDAO extends OrientdbDAO {
         else 
         	nSummary.setIsReadOnly(false);
 
-        ODocument ud = doc.field("in_" + NdexClasses.E_admin);
+/*        ODocument ud = doc.field("in_" + NdexClasses.E_admin);
         nSummary.setOwner((String)ud.field(NdexClasses.account_P_accountName));
-        
+*/        
         nSummary.setIsLocked((boolean)doc.field(NdexClasses.Network_P_isLocked));
         nSummary.setURI(NdexDatabase.getURIPrefix()+ "/network/" + nSummary.getExternalId().toString());
 
