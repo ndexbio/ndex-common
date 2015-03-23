@@ -68,7 +68,7 @@ public class UserDocDAO extends OrientdbDAO {
 	 * @return The user, from NDEx Object Model.
 	 **************************************************************************/
 	public User authenticateUser(String accountName, String password)
-			throws SecurityException, NdexException {
+			throws SecurityException, NdexException,ObjectNotFoundException {
 
 		if (Strings.isNullOrEmpty(accountName)
 				|| Strings.isNullOrEmpty(password))
@@ -85,7 +85,7 @@ public class UserDocDAO extends OrientdbDAO {
 			logger.info("Authentication failed: " + se.getMessage());
 			throw se;
 		} catch (ObjectNotFoundException e) {
-			throw new SecurityException(e.getMessage());
+			throw e;
 		} catch (Exception e) {
 			throw new NdexException(
 					"Ndex internal error when authenticate user. "+e.getMessage());
