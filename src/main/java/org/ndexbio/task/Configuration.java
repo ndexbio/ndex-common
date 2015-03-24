@@ -9,6 +9,8 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
+
 public class Configuration
 {
     public static final String UPLOADED_NETWORKS_PATH_PROPERTY = "Uploaded-Networks-Path";
@@ -29,6 +31,13 @@ public class Configuration
 	private String ndexRoot;
    
 	private boolean useADAuthentication ;
+	
+	// Possible values for Log-Level are:
+    // trace, debug, info, warn, error, all, off
+    // If no Log-Level config parameter specified in /opt/ndex/conf/ndex.properties, or the value is 
+	// invalid/unrecognized, we set loglevel to 'info'.
+	// Please see http://logback.qos.ch/manual/architecture.html for description of log levels	
+	private Level logLevel;
     
     /**************************************************************************
     * Default constructor. Made private to prevent instantiation. 
@@ -50,7 +59,7 @@ public class Configuration
         		throw new NdexException("ndexConfigurationPath is not defined in environement.");
         	} 
         	
-        	_logger.info("Loadinging ndex configuration from " + configFilePath);
+        	_logger.info("Loading ndex configuration from " + configFilePath);
         	
         	_configurationProperties = new Properties();
         	FileReader reader = new FileReader(configFilePath);
@@ -65,6 +74,8 @@ public class Configuration
 
             this.ndexRoot = getRequiredProperty("NdexRoot");
             
+            setLogLevel();
+                        
             // get AD authentication flag
             String useAd = getProperty(PROP_USE_AD_AUTHENTICATION);
             if (useAd != null && Boolean.parseBoolean(useAd)) {
@@ -80,8 +91,79 @@ public class Configuration
         }
     }
     
-    
-    private String getRequiredProperty (String propertyName ) throws NdexException {
+    /*
+     * This method reads Log-Level configuration parameter from /opt/ndex/conf/ndex.properties 
+     * and sets the log level.
+     * In case Log-Level is not found in ndex.properties or value of Log-Level is invalid/unrecognozed,
+     * we set log level to 'info'.
+     */
+    private void setLogLevel() {
+        ch.qos.logback.classic.Logger rootLog = 
+        		(ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+        
+    	String result = _configurationProperties.getProperty("Log-Level");
+
+        if (result == null) {
+        	// if no Log-Level is specified in /opt/ndex/conf/ndex.properties, we set loglevel to info 
+        	this.logLevel = Level.INFO;
+        	rootLog.setLevel(Level.INFO);
+        	_logger.error("No 'Log-Level' parameter found in config ndex.properties file. Log level set to 'info'.");
+        } else {
+        	switch (result.toLowerCase()) {
+        	case "trace": 
+            	_logger.trace("Log-Level configuration property is " + result + ". Log level set to 'trace'.");
+            	this.logLevel = Level.TRACE;
+        		rootLog.setLevel(Level.TRACE);	
+        		break;
+        		
+        	case "debug":
+        		_logger.trace("Log-Level configuration property is " + result + ". Log level set to 'debug'.");
+        		this.logLevel = Level.DEBUG;
+        		rootLog.setLevel(Level.DEBUG);
+        		break;
+        		
+        	case "info":
+        		_logger.trace("Log-Level configuration property is " + result + ". Log level set to 'info'.");
+        		this.logLevel = Level.INFO;
+        		rootLog.setLevel(Level.INFO);
+        		break;
+        		
+        	case "warn":
+        		_logger.trace("Log-Level configuration property is " + result + ". Log level set to 'warn'.");
+        		this.logLevel = Level.WARN;
+        		rootLog.setLevel(Level.WARN);
+        		break;
+        		
+        	case "error":
+        		_logger.trace("Log-Level configuration property is " + result + ". Log level set to 'error'.");
+        		this.logLevel = Level.ERROR;
+        		rootLog.setLevel(Level.ERROR);
+        		break;
+        		
+        	case "all":
+        		_logger.trace("Log-Level configuration property is " + result + ". Log level set to 'all'.");
+        		this.logLevel = Level.ALL;
+        		rootLog.setLevel(Level.ALL);
+        		break;
+        		
+        	case "off":	
+        		_logger.trace("Log-Level configuration property is " + result + ". Log level set to 'off'.");
+        		this.logLevel = Level.OFF;
+        		rootLog.setLevel(Level.OFF);
+        		break;
+        		
+        	default:
+            	_logger.error("Unrecoginzed value for Log-Level configuration property found: " + "'" + 
+        	        result + "'" + ". Log level set to 'info'.");
+            	this.logLevel = Level.INFO;
+        		rootLog.setLevel(Level.INFO);
+        	    break;
+        	}	
+        }
+	}
+
+
+	private String getRequiredProperty (String propertyName ) throws NdexException {
     	String result = _configurationProperties.getProperty(propertyName);
         if ( result == null) {
         	throw new NdexException ("property " + propertyName + " not found in configuration.");
@@ -135,7 +217,7 @@ public class Configuration
     public String getSystmUserName() {return this.ndexSystemUser;}
     public String getSystemUserPassword () {return this.ndexSystemUserPassword;}
     public String getNdexRoot()  {return this.ndexRoot;}
-
+    public Level  getLogLevel()  {return this.logLevel;}
 
 	public boolean getUseADAuthentication() {
 		return useADAuthentication;
