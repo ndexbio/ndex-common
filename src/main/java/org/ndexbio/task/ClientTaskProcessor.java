@@ -39,8 +39,8 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 			try {
 				NdexTask t = getNdexTask(task);
 				saveTaskStatus(task.getExternalId().toString(), Status.PROCESSING, null);
-				t.call();
-				saveTaskStatus(task.getExternalId().toString(), Status.COMPLETED, null);
+				Task taskObj = t.call();
+				saveTaskStatus(task.getExternalId().toString(), Status.COMPLETED, taskObj.getMessage());
 				
 			} catch (Exception e) {
 				logger.severe("Error occured when executing task " + task.getExternalId());
@@ -62,21 +62,27 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 	private static NdexTask getNdexTask(Task task) throws NdexException{
 		
 		try {
-			if( task.getTaskType() == TaskType.PROCESS_UPLOADED_NETWORK) {
-				return new FileUploadTask(task, NdexDatabase.getInstance());
-			}
-			if( task.getTaskType() == TaskType.EXPORT_NETWORK_TO_FILE) {
-				if ( task.getFormat() == FileFormat.XBEL)
-					return new XbelExporterTask(task);
-				else if ( task.getFormat() == FileFormat.XGMML) {
-					return new XGMMLExporterTask(task);
-				} if ( task.getFormat() == FileFormat.BIOPAX) {
-					return new BioPAXExporterTask(task);
-				}
+			switch ( task.getTaskType()) { 
+				case PROCESS_UPLOADED_NETWORK: 
+					return new FileUploadTask(task, NdexDatabase.getInstance());
+				case EXPORT_NETWORK_TO_FILE: 
+					
+					if ( task.getFormat() == FileFormat.XBEL)
+						return new XbelExporterTask(task);
+					else if ( task.getFormat() == FileFormat.XGMML) {
+						return new XGMMLExporterTask(task);
+					} if ( task.getFormat() == FileFormat.BIOPAX) {
+						return new BioPAXExporterTask(task);
+					}
 				
-				throw new NdexException ("Only XBEL, XGMML and BIOPAX exporters are implemented.");
-			}
-			throw new IllegalArgumentException("Task type: " +task.getType() +" is not supported");
+					throw new NdexException ("Only XBEL, XGMML and BIOPAX exporters are implemented.");
+				case CREATE_NETWORK_CACHE: 
+					return new AddNetworkToCacheTask(task);
+				case DELETE_NETWORK_CACHE:
+					return new RemoveNetworkFromCacheTask(task);
+				default:
+					throw new IllegalArgumentException("Task type: " +task.getType() +" is not supported");
+			}		
 		} catch (IllegalArgumentException | SecurityException | NdexException e) {
 			e.printStackTrace();
 			throw new NdexException ("Error occurred when creating task. " + e.getMessage());

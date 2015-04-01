@@ -29,6 +29,7 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
  * run until the task queue is empty and return the number of tasks completed.
  * 
  */
+@Deprecated
 public class NdexTaskExecutor implements Callable<Integer> {
 
 	private Integer completionCount = 0;

@@ -65,10 +65,11 @@ public interface NdexClasses {
     public static final String Network_P_desc       = "description";
     public static final String Network_P_version    = "version";
     public static final String Network_P_nodeCount  = "nodeCount";
-    public static final String Network_P_edgeCount = "edgeCount";
+    public static final String Network_P_edgeCount 	= "edgeCount";
     public static final String Network_P_provenance = "provenance";
     public static final String Network_P_source_format = "sourceFormat";  // Used internally. Will be convert to properties in the network model.
-    public static final String Network_P_isReadOnly = "readOnly";
+    public static final String Network_P_readOnlyCommitId = "ROId";
+    public static final String Network_P_cacheId 	= "cacheId";
     
     public static final String Network_E_Namespace = "networkNS";
     public static final String Network_E_BaseTerms = "BaseTerms";
