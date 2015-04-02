@@ -552,7 +552,9 @@ public class NdexPersistenceService extends PersistenceService {
 		  	NdexClasses.Network_P_desc, "",
 		  	NdexClasses.Network_P_isLocked, this.network.getIsLocked(),
 		  	NdexClasses.Network_P_isComplete, this.network.getIsComplete(),
-		  	NdexClasses.Network_P_visibility, this.network.getVisibility().toString());
+		  	NdexClasses.Network_P_visibility, this.network.getVisibility().toString(),
+		  	NdexClasses.Network_P_cacheId, this.network.getReadOnlyCacheId(),
+		  	NdexClasses.Network_P_readOnlyCommitId, this.network.getReadOnlyCommitId());
 
 		if ( version != null) {
 			this.network.setVersion(version);

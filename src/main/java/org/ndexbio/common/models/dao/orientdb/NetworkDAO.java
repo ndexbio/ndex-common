@@ -1450,6 +1450,14 @@ public class NetworkDAO extends OrientdbDAO {
         
         nSummary.setEdgeCount((int)doc.field(NdexClasses.Network_P_edgeCount));
         
+        Long ROcommitId = doc.field(NdexClasses.Network_P_readOnlyCommitId);
+        if ( ROcommitId !=null)
+        	nSummary.setReadOnlyCommitId(ROcommitId);
+        
+        Long ROCacheId = doc.field(NdexClasses.Network_P_cacheId);
+        if ( ROCacheId !=null)
+        	nSummary.setReadOnlyCacheId(ROCacheId);
+        
 /*        ODocument ud = doc.field("in_" + NdexClasses.E_admin);
         nSummary.setOwner((String)ud.field(NdexClasses.account_P_accountName));
 */        

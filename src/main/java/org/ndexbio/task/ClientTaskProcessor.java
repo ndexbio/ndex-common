@@ -37,11 +37,12 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 			}
 			
 			try {
+				logger.info("[system]\t[start task]");
 				NdexTask t = getNdexTask(task);
 				saveTaskStatus(task.getExternalId().toString(), Status.PROCESSING, null);
 				Task taskObj = t.call();
 				saveTaskStatus(task.getExternalId().toString(), Status.COMPLETED, taskObj.getMessage());
-				
+				logger.info("[system]\t[complete task]");
 			} catch (Exception e) {
 				logger.severe("Error occured when executing task " + task.getExternalId());
 				e.printStackTrace();
