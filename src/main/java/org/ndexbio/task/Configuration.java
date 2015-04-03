@@ -1,10 +1,12 @@
 package org.ndexbio.task;
 
+import java.io.File;
 import java.io.FileReader;
 import java.util.Properties;
 
 import javax.naming.InitialContext;
 
+import org.ndexbio.common.NdexServerProperties;
 import org.ndexbio.model.exceptions.NdexException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,8 @@ public class Configuration
 	private String ndexSystemUser ;
 	private String ndexSystemUserPassword;
 	private String ndexRoot;
+	
+	private String ndexNetworkCachePath;
    
 	private boolean useADAuthentication ;
 	
@@ -62,9 +66,10 @@ public class Configuration
         	_logger.info("Loading ndex configuration from " + configFilePath);
         	
         	_configurationProperties = new Properties();
-        	FileReader reader = new FileReader(configFilePath);
-        	_configurationProperties.load(reader);
-        	reader.close();
+        
+        	try (FileReader reader = new FileReader(configFilePath)) {
+        		_configurationProperties.load(reader);
+        	}
             
             dbURL 	= getRequiredProperty("OrientDB-URL");
             hostURI = getRequiredProperty("HostURI");
@@ -73,6 +78,15 @@ public class Configuration
             this.ndexSystemUserPassword = getRequiredProperty("NdexSystemUserPassword");
 
             this.ndexRoot = getRequiredProperty("NdexRoot");
+            
+            ndexNetworkCachePath = ndexRoot + "/" + NdexServerProperties.workspaceDir + "/cache/";
+            
+			File file = new File (ndexNetworkCachePath );
+			if (!file.exists()) {
+				if ( ! file.mkdirs()) {
+					throw new NdexException ("Server failed to create cache directory " + ndexNetworkCachePath);
+				}
+			}
             
             setLogLevel();
                         
@@ -226,6 +240,10 @@ public class Configuration
 
 	public void setUseADAuthentication(boolean useADAuthentication) {
 		this.useADAuthentication = useADAuthentication;
+	}
+	
+	public String getNdexNetworkCachePath() {
+		return ndexNetworkCachePath;
 	}
     
 }

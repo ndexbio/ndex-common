@@ -28,6 +28,10 @@ import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.Status;
+import org.ndexbio.model.object.Task;
+import org.ndexbio.model.object.TaskAttribute;
+import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -74,9 +78,8 @@ public class NetworkDAO extends OrientdbDAO {
 	private ObjectMapper mapper;
 	private OrientGraph graph;
 	
-	private static final String readOnlyFlag = "readOnly";
+//	private static final String readOnlyFlag = "readOnly";
 	
-	public static final String workspaceDir = "workspace";
 	
 	private static final int CLEANUP_BATCH_SIZE = 50000;
 	
@@ -1151,6 +1154,7 @@ public class NetworkDAO extends OrientdbDAO {
 		return result;
 	}
 
+/*	
     private static Namespace getNamespaceForPropertyGraph(ODocument ns) {
         Namespace rns = new Namespace();
         rns.setId((long)ns.field("id"));
@@ -1160,7 +1164,7 @@ public class NetworkDAO extends OrientdbDAO {
         getPropertiesFromDocumentForPropertyGraph(rns, ns);
         return rns;
      } 
-	
+*/	
     private static Namespace getNamespace(ODocument ns, Network network) {
        Namespace rns = new Namespace();
        rns.setId((long)ns.field("id"));
@@ -1368,7 +1372,7 @@ public class NetworkDAO extends OrientdbDAO {
     	// get the functionTerm 
     	
     	ODocument baseTermDoc =doc.field("out_"+ NdexClasses.FunctionTerm_E_baseTerm);
-    	BaseTerm functionNameTerm = this.getBaseTerm(baseTermDoc, network);
+    	BaseTerm functionNameTerm = getBaseTerm(baseTermDoc, network);
     	Long key = Long.valueOf(functionNameTerm.getId());
     	if ( network != null ) {
     		if ( !network.getBaseTerms().containsKey(key))
@@ -1392,7 +1396,8 @@ public class NetworkDAO extends OrientdbDAO {
     			    if ( !network.getBaseTerms().containsKey(t.getId()))
     			    	network.getBaseTerms().put(t.getId(), t);
     		     } else if(parameterDoc.getClassName().equals(NdexClasses.ReifiedEdgeTerm)) {
-    		    	 ReifiedEdgeTerm t = this.getReifiedEdgeTermFromDoc(parameterDoc, network);
+    		    	 ReifiedEdgeTerm t = 
+    		    			 this.getReifiedEdgeTermFromDoc(parameterDoc, network);
     		    //	 if ( !network.getReifiedEdgeTerms().containsKey(t.getId())) {
     		    //		 network.getReifiedEdgeTerms().put(t.getId(), t);
     		    //	 }
@@ -1442,13 +1447,9 @@ public class NetworkDAO extends OrientdbDAO {
         	nSummary.setIsComplete(isComplete.booleanValue());
         else 
         	nSummary.setIsComplete(false);
-
-        Boolean isReadOnly = doc.field(NdexClasses.Network_P_isReadOnly);
-        if ( isReadOnly != null)
-        	nSummary.setIsReadOnly(isReadOnly.booleanValue());
-        else 
-        	nSummary.setIsReadOnly(false);
-
+        
+        nSummary.setEdgeCount((int)doc.field(NdexClasses.Network_P_edgeCount));
+        
 /*        ODocument ud = doc.field("in_" + NdexClasses.E_admin);
         nSummary.setOwner((String)ud.field(NdexClasses.account_P_accountName));
 */        
@@ -1992,39 +1993,46 @@ public class NetworkDAO extends OrientdbDAO {
 	 * @throws NdexException 
 	 * @throws IOException 
 	 */
-	public String setFlag(String UUIDstr, String parameter, String value) throws NdexException, IOException {
+	public long setReadOnlyFlag(String UUIDstr,  boolean value, String userAccountName) throws NdexException {
 		
-		if ( !parameter.equals(readOnlyFlag)) 
-			throw new NdexException("Unsupported flag parameter received.");
-		
-		Boolean newVal = Boolean.parseBoolean(value.toLowerCase());
-		if (newVal == null)
-			throw new NdexException ("Unsupported value for paramter " + parameter );
 		
 		ODocument networkDoc =this.getRecordByUUIDStr(UUIDstr, null);
-		Boolean oldValue = networkDoc.field(parameter);
-		ODocument rd = networkDoc.field("in_" + NdexClasses.E_admin);
-		String accountName = rd.field (NdexClasses.account_P_accountName);
-		
-		String fullpath = Configuration.getInstance().getNdexRoot() + 
-				  "/" + workspaceDir + "/" + accountName + "/" + UUIDstr+".json";
-		
-		
-		if ( newVal) {
-			// create cache.
-			Network n = getNetworkById(UUID.fromString(UUIDstr));
-			try (GZIPOutputStream w = new GZIPOutputStream( new FileOutputStream(fullpath), 16384)) {
-				//  String s = mapper.writeValueAsString( original);
-				mapper.writeValue(w, n);
-			}
-		} else {
-			//remove cache.
-			File f = new File(fullpath);
-			f.delete();
+		Long commitId = networkDoc.field(NdexClasses.Network_P_readOnlyCommitId);
+
+		if ( commitId == null || commitId.longValue() < 0 ) {
+		   if ( value ) { // set the flag to true
+			    long newCommitId = NdexDatabase.getCommitId();
+				networkDoc.fields(NdexClasses.Network_P_readOnlyCommitId, newCommitId).save();
+				Task createCache = new Task();
+				createCache.setTaskType(TaskType.CREATE_NETWORK_CACHE);
+				createCache.setResource(UUIDstr); 
+				createCache.setStatus(Status.QUEUED);
+				createCache.setAttribute(TaskAttribute.readOnlyCommitId, Long.valueOf(newCommitId));
+				
+				TaskDAO taskDAO = new TaskDAO(this.db);
+				taskDAO.createTask(userAccountName, createCache);
+			   
+		   } 
+		   return -1;
+			   
 		} 
 		
-		networkDoc.field(NdexClasses.Network_P_isReadOnly,newVal).save();
-		return oldValue ==null ? "false" : oldValue.toString();
+		// was readOnly
+		if ( !value ) { // unset the flag
+			networkDoc.fields(NdexClasses.Network_P_readOnlyCommitId, Long.valueOf(-1),
+					          NdexClasses.Network_P_cacheId, Long.valueOf(-1)).save();
+			Task deleteCache = new Task();
+			deleteCache.setTaskType(TaskType.DELETE_NETWORK_CACHE);
+			deleteCache.setResource(UUIDstr); 
+			deleteCache.setStatus(Status.QUEUED);
+			deleteCache.setAttribute(TaskAttribute.readOnlyCommitId, commitId);
+			
+			TaskDAO taskDAO = new TaskDAO(this.db);
+			taskDAO.createTask(userAccountName, deleteCache);
+			
+		} 
+		return commitId.longValue();
+		
 		
 	}
 	

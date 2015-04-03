@@ -1,25 +1,26 @@
 package org.ndexbio.common.exceptions;
 
+import org.ndexbio.model.errorcodes.ErrorCode;
 import org.ndexbio.model.exceptions.NdexException;
 
 public class ObjectNotFoundException extends NdexException
 {
     private static final long serialVersionUID = 1L;
 
-    
-    
     public ObjectNotFoundException(String message)
     {
-        super(message);
+        super(message, ErrorCode.NDEx_Ndex_Object_Not_Found_Exception);
     }
-
     public ObjectNotFoundException(String message, Throwable cause)
     {
-        super(message, cause);
+        super(message, cause, ErrorCode.NDEx_Ndex_Object_Not_Found_Exception);
     }
-    
-    public ObjectNotFoundException(String objectType, Object objectId)
+    public ObjectNotFoundException(String message, String description)
     {
-        super(objectType + " with ID: " + objectId.toString() + " doesn't exist.");
+        super(message, description, ErrorCode.NDEx_Ndex_Object_Not_Found_Exception);
+    }
+    public ObjectNotFoundException(String message, String description, Throwable cause)
+    {
+        super(message, description, ErrorCode.NDEx_Ndex_Object_Not_Found_Exception, cause);
     }
 }

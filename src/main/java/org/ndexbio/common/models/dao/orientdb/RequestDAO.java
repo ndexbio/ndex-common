@@ -96,13 +96,13 @@ public class RequestDAO extends OrientdbDAO  {
 		if( newRequest.getPermission().equals(Permissions.GROUPADMIN) || newRequest.getPermission().equals(Permissions.MEMBER)) {
 			destinationResource = this.getRecordByUUID(newRequest.getDestinationUUID(), NdexClasses.Group);
 			if(sourceAccount.getClassName().equals(NdexClasses.Group))
-				throw new IllegalArgumentException("Group cannot request access to group");
+				throw new NdexException("Group cannot request access to group");
 		} else
 			destinationResource = this.getRecordByUUID(newRequest.getDestinationUUID(), NdexClasses.Network);
 	
 		if(sourceAccount.getClassName().equals(NdexClasses.Group))
 			if(!checkPermission(userAccount.getIdentity(), sourceAccount.getIdentity(), Direction.OUT, 1, Permissions.GROUPADMIN))
-				throw new IllegalArgumentException("Not admin of specified group");
+				throw new NdexException("Not admin of specified group");
 		
 		// check for redundant requests
 		this.checkForExistingRequest(userAccount, sourceAccount, destinationResource, newRequest.getPermission());

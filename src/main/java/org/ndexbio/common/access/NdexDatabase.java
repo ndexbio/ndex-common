@@ -38,6 +38,8 @@ public class NdexDatabase {
 	private static final Logger logger = Logger
 			.getLogger(NdexAOrientDBConnectionPool.class.getName());
 	
+	private static long currentId = System.currentTimeMillis(); 
+	
 	private NdexDatabase(String HostURI, String dbURL, String dbUserName,
 			String dbPassword, int size) throws NdexException {
 		
@@ -63,6 +65,10 @@ public class NdexDatabase {
 		
 		URIPrefix = HostURI;
 		
+	}
+	
+	public static synchronized long getCommitId () {
+		return currentId++;
 	}
 	
 	public static synchronized NdexDatabase createNdexDatabase (String HostURI, String dbURL, String dbUserName,

@@ -495,7 +495,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	private List<ORID[]> sourceSearchQuery(
 			Collection<ORID> sourceNodeRids,
 			List<ORID> includedPredicateRids,
-			boolean upstream) {
+			boolean upstream) throws NdexException {
 
 		String query;
 		String sourceNodeCsv = ridsToCsv(sourceNodeRids);
@@ -552,24 +552,24 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 	private static ORID checkAndConvertNetworkId(String networkId) {
 		if (networkId == null || networkId.isEmpty())
-			throw new IllegalArgumentException("No network ID was specified.");
+			throw new NdexException("No network ID was specified.");
 		return new ORecordId(networkId);
 	}
 
 	private static void checkBlockSize(int blockSize) {
 		if (blockSize < 1)
-			throw new IllegalArgumentException(
+			throw new NdexException(
 					"Number of results to return is less than 1.");
 	}
 */
-	private static ORID stringToRid(String ridString) {
+	private static ORID stringToRid(String ridString) throws NdexException {
 		final Matcher m = Pattern.compile("^.*(#\\d+:\\d+).*$").matcher(
 				ridString.trim());
 
 		if (m.matches())
 			return new ORecordId(m.group(1));
 		
-		throw new IllegalArgumentException(ridString
+		throw new NdexException(ridString
 				+ " is not a valid RID.");
 
 	}

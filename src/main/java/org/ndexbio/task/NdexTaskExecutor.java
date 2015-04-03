@@ -29,6 +29,7 @@ import org.ndexbio.common.exceptions.ObjectNotFoundException;
  * run until the task queue is empty and return the number of tasks completed.
  * 
  */
+@Deprecated
 public class NdexTaskExecutor implements Callable<Integer> {
 
 	private Integer completionCount = 0;
@@ -123,7 +124,7 @@ public class NdexTaskExecutor implements Callable<Integer> {
 				
 				throw new NdexException ("Only XBEL, XGMML and BIOPAX exporters are implemented.");
 			}
-			throw new IllegalArgumentException("Task type: " +task.getType() +" is not supported");
+			throw new NdexException("Task type: " +task.getType() +" is not supported");
 		} catch (IllegalArgumentException | SecurityException | NdexException e) {
 			e.printStackTrace();
 			throw new NdexException ("Error occurred when creating task. " + e.getMessage());

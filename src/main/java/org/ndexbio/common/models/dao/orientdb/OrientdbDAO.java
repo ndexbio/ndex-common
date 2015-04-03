@@ -54,8 +54,7 @@ public class OrientdbDAO implements AutoCloseable {
 				record = temp;
 				
 			if(record == null || ( orientClass !=null && !((ODocument)record.getRecord()).getClassName().equals(orientClass))) 
-				throw new ObjectNotFoundException("[Class "+ orientClass + "] Object", id.toString());
-
+				throw new ObjectNotFoundException("[Class "+ orientClass + "] Object with ID: " + id.toString() + " doesn't exist.");
 			
 			return (ODocument) record.getRecord();
 			
@@ -100,8 +99,8 @@ public class OrientdbDAO implements AutoCloseable {
 		try {
 			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex( NdexClasses.Index_accountName );
 			OIdentifiable user = (OIdentifiable) Idx.get(accountName); // account to traverse by
-			if(user == null) 
-				throw new ObjectNotFoundException("Account ", accountName);
+			if(user == null)
+				throw new ObjectNotFoundException("Account with ID: " + accountName + " doesn't exist.");
 			
 			if( orientClass != null && 
 					!( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
