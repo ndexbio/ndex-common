@@ -15,10 +15,16 @@ import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskAttribute;
 import org.ndexbio.model.object.network.Network;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class AddNetworkToCacheTask extends NdexTask {
+	
+	static Logger logger = LoggerFactory.getLogger(AddNetworkToCacheTask.class);
 
 	public AddNetworkToCacheTask(Task itask) throws NdexException {
 		super(itask);
@@ -26,7 +32,9 @@ public class AddNetworkToCacheTask extends NdexTask {
 	
 	@Override
 	public Task call() throws Exception {
+		logger.info("creating cache.");
 		this.createNetworkCache();
+		logger.info("finished creating cache.");
 		return this.getTask();
 	}
 
@@ -35,8 +43,9 @@ public class AddNetworkToCacheTask extends NdexTask {
 		String networkIdStr = this.getTask().getResource();
 		
 		try ( NetworkDAO dao = new NetworkDAO(NdexDatabase.getInstance().getAConnection())) {
-			String fullpath = Configuration.getInstance().getNdexNetworkCachePath() + networkIdStr+".gz";
 			Long taskCommitId = (Long)getTask().getAttribute(TaskAttribute.readOnlyCommitId);
+
+			String fullpath = Configuration.getInstance().getNdexNetworkCachePath() + taskCommitId+".gz";
 
 			ODocument d = dao.getNetworkDocByUUIDString(networkIdStr);
 			

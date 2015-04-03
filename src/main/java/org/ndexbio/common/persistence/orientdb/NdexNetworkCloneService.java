@@ -249,6 +249,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 		          NdexClasses.Network_P_nodeCount, network.getNodeCount(),
 		          NdexClasses.Network_P_isLocked, false,
 		          NdexClasses.Network_P_isComplete, false,
+		          NdexClasses.Network_P_cacheId, Long.valueOf(-1),
+		          NdexClasses.Network_P_readOnlyCommitId, Long.valueOf(-1),
 		          NdexClasses.Network_P_visibility, 
 		          ( srcNetwork.getVisibility() == null ? 
 		        		  VisibilityType.PRIVATE.toString()  : 
