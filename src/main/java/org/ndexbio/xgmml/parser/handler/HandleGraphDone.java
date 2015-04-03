@@ -27,8 +27,7 @@ package org.ndexbio.xgmml.parser.handler;
 import java.util.Map;
 import java.util.Set;
 
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.*;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.xgmml.parser.ParseState;
 import org.xml.sax.Attributes;

@@ -7,12 +7,11 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Logger;
+
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.Priority;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
@@ -120,7 +119,7 @@ public class TaskDocDAO extends OrientdbDAO {
 					return this.getTaskByUUID(UUIDString);
 				} 
 				logger.severe("Account " + account.getAccountName() + " is not owner of task " + UUIDString);
-				throw new SecurityException("access denied - " + account.getAccountName() + " is not owner of task " + UUIDString); // message will not be saved
+				throw new UnauthorizedOperationException("access denied - " + account.getAccountName() + " is not owner of task " + UUIDString); // message will not be saved
 				
     		}
 		} catch (SecurityException e){

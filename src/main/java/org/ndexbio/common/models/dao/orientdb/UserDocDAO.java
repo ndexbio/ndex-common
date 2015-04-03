@@ -7,11 +7,9 @@ import java.util.logging.Logger;
 import java.util.Date;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.exceptions.DuplicateObjectException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
-import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.*;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.Permissions;
@@ -68,20 +66,20 @@ public class UserDocDAO extends OrientdbDAO {
 	 * @return The user, from NDEx Object Model.
 	 **************************************************************************/
 	public User authenticateUser(String accountName, String password)
-			throws SecurityException, NdexException,ObjectNotFoundException {
+			throws UnauthorizedOperationException, NdexException,ObjectNotFoundException {
 
 		if (Strings.isNullOrEmpty(accountName)
 				|| Strings.isNullOrEmpty(password))
-			throw new SecurityException("No accountName or password entered.");
+			throw new UnauthorizedOperationException("No accountName or password entered.");
 
 		try {
 			final ODocument OAuthUser = this.getRecordByAccountName(
 					accountName, NdexClasses.User);
 			if (!Security.authenticateUser(password, (String)OAuthUser.field("password"))) {
-				throw new SecurityException("Invalid accountName or password.");
+				throw new UnauthorizedOperationException("Invalid accountName or password.");
 			}
 			return UserDAO.getUserFromDocument(OAuthUser);
-		} catch (SecurityException se) {
+		} catch (UnauthorizedOperationException se) {
 			logger.info("Authentication failed: " + se.getMessage());
 			throw se;
 		} catch (ObjectNotFoundException e) {

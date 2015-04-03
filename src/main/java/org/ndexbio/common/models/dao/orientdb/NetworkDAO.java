@@ -19,8 +19,7 @@ import java.util.zip.GZIPOutputStream;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.*;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.NdexPropertyValuePair;
@@ -1847,8 +1846,8 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	public List<Membership> getNetworkUserMemberships(UUID networkId, Permissions permission, int skipBlocks, int blockSize) 
 			throws ObjectNotFoundException, NdexException {
-		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId.toString()),
+		
 				"A network UUID is required");
 		Preconditions.checkArgument( 
 				(permission.equals( Permissions.ADMIN) )

@@ -11,11 +11,9 @@ import org.junit.Test;
 
 import java.util.UUID;
 
-import org.ndexbio.common.exceptions.DuplicateObjectException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
-import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.*;
 import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.User;

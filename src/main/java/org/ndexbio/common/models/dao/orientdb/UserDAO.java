@@ -5,7 +5,8 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.exceptions.DuplicateObjectException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
 
 import com.google.common.base.Preconditions;

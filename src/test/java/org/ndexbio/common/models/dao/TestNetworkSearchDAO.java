@@ -7,8 +7,6 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.ndexbio.common.exceptions.DuplicateObjectException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkSearchDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;

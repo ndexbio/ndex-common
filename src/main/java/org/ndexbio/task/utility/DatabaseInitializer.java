@@ -1,8 +1,8 @@
 package org.ndexbio.task.utility;
 
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NewUser;
 import org.ndexbio.model.object.User;
 

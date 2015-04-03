@@ -6,8 +6,8 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.Permissions;
 
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
