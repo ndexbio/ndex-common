@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.FileFormat;
@@ -17,7 +18,7 @@ import org.slf4j.*;
 
 import java.util.concurrent.Future;
 
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
+
 
 /*
  * Represents a class responsible for pulling itasks off the task queue,
