@@ -36,13 +36,15 @@ public class NdexSchemaManager
     	ODocument  versionDoc = orientDb.getDictionary().get(NdexDbVersionKey); 
     	if( versionDoc != null ) {
     	   if ( versionDoc.field(NdexVField).equals(NdexDbVersion))	
-    		return;
-		throw new NdexException("Another version ("+versionDoc.field(NdexVField)+ 
+    		  return;
+		   throw new NdexException("Another version ("+versionDoc.field(NdexVField)+ 
 				") of Ndex database found in the database. Please drop it before creating a new one.");
     	}
-//        orientDb.commit();
         
         OrientBaseGraph orientDbGraph = new OrientGraph(orientDb);
+        orientDbGraph.setAutoScaleEdgeType(true);
+        orientDbGraph.setEdgeContainerEmbedded2TreeThreshold(40);
+        orientDbGraph.setUseLightweightEdges(true);
 
         /**********************************************************************
         * Create base types first. 
@@ -59,6 +61,7 @@ public class NdexSchemaManager
             clsNdxExternalObj.createProperty(NdexClasses.Network_P_UUID, OType.STRING);
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_cTime, OType.DATETIME);
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_mTime, OType.DATETIME);
+            clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_isDeleted, OType.BOOLEAN);
             
             clsNdxExternalObj.createIndex(NdexClasses.Index_externalID, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
         }
@@ -75,7 +78,7 @@ public class NdexSchemaManager
         	clsAccount.createProperty(NdexClasses.account_P_accountName, OType.STRING);
         	clsAccount.createProperty("password", OType.STRING);
         	clsAccount.createProperty("website", OType.STRING);
-
+        	clsAccount.createProperty(NdexClasses.account_P_oldAcctName, OType.STRING);
         	clsAccount.createIndex(NdexClasses.Index_accountName, 
         			OClass.INDEX_TYPE.UNIQUE, 
         			NdexClasses.account_P_accountName);
@@ -126,6 +129,7 @@ public class NdexSchemaManager
             cls.createProperty("response", OType.STRING);
             cls.createProperty("responder", OType.STRING);
             cls.createProperty("responseMessage", OType.STRING);
+            cls.createProperty(NdexClasses.Request_P_responseTime, OType.DATETIME);
         }
 
         
@@ -139,6 +143,9 @@ public class NdexSchemaManager
             taskClass.createProperty(NdexClasses.Task_P_progress, OType.INTEGER);
             taskClass.createProperty(NdexClasses.Task_P_taskType, OType.STRING);
             taskClass.createProperty(NdexClasses.Task_P_resource, OType.STRING);
+            taskClass.createProperty(NdexClasses.Task_P_startTime, OType.DATETIME);
+            taskClass.createProperty(NdexClasses.Task_P_endTime, OType.DATETIME);
+            taskClass.createProperty(NdexClasses.Task_P_message, OType.STRING);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.User);  
@@ -148,7 +155,7 @@ public class NdexSchemaManager
 
             userClass.createProperty("firstName", OType.STRING);
             userClass.createProperty("lastName", OType.STRING);
-            userClass.createProperty("emailAddress", OType.STRING);
+            userClass.createProperty(NdexClasses.User_P_emailAddress, OType.STRING);
 
             userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
 

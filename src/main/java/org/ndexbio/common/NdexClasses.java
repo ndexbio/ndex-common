@@ -43,6 +43,7 @@ public interface NdexClasses {
     public static final String account_E_canRead     = Permissions.READ.toString().toLowerCase();
     public static final String account_E_canEdit     = Permissions.WRITE.toString().toLowerCase();
 	public static final String account_P_accountName = "accountName";
+    public static final String account_P_oldAcctName = "oldAcctName";
 	
     public static final String Index_accountName = "index-user-username";
     
@@ -50,6 +51,8 @@ public interface NdexClasses {
     public static final String ExternalObj_ID    = "UUID";
     public static final String ExternalObj_cTime = "createdTime";
     public static final String ExternalObj_mTime = "modificationTime";
+    public static final String ExternalObj_isDeleted = "isDeleted";
+
 
     public static final String Index_externalID = "index-external-id";
     
@@ -62,9 +65,11 @@ public interface NdexClasses {
     public static final String Network_P_desc       = "description";
     public static final String Network_P_version    = "version";
     public static final String Network_P_nodeCount  = "nodeCount";
-    public static final String Network_P_edgeCount = "edgeCount";
+    public static final String Network_P_edgeCount 	= "edgeCount";
     public static final String Network_P_provenance = "provenance";
     public static final String Network_P_source_format = "sourceFormat";  // Used internally. Will be convert to properties in the network model.
+    public static final String Network_P_readOnlyCommitId = "ROId";
+    public static final String Network_P_cacheId 	= "cacheId";
     
     public static final String Network_E_Namespace = "networkNS";
     public static final String Network_E_BaseTerms = "BaseTerms";
@@ -143,10 +148,11 @@ public interface NdexClasses {
     public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
 
     //user
-
+    
 //    public static final String user_E_memberOf        ="member";
 //    public static final String user_E_grp_admin	      = "grpAdmin";
-    
+    public static final String User_P_oldEmailAddress = "oldEmail";
+    public static final String User_P_emailAddress   = "emailAddress";
     
     // task
     public static final String Task_P_description = "description";
@@ -156,14 +162,17 @@ public interface NdexClasses {
     public static final String Task_P_taskType = "taskType";
     public static final String Task_P_resource = "resource";
     public static final String Task_P_fileFormat = "format";
+    public static final String Task_P_startTime = "startTime";
+    public static final String Task_P_endTime   = "endTime";
+    public static final String Task_P_message   = "message";
     
     public static final String Task_E_owner   = "ownedBy";
-    
     
     //request
     public static final String Request_P_sourceUUID = "sourceUUID";
     public static final String Request_P_sourceName = "sourceName";
-    
+    public static final String Request_P_responseTime = "responseTime";
+    public static final String Request_E_requests   = "requests";
     
     //reserved NDEx property names
 }

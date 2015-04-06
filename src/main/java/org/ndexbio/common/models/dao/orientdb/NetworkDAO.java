@@ -1,19 +1,25 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.*;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
 import org.ndexbio.model.object.NdexPropertyValuePair;
@@ -21,6 +27,10 @@ import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.Status;
+import org.ndexbio.model.object.Task;
+import org.ndexbio.model.object.TaskAttribute;
+import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -35,6 +45,7 @@ import org.ndexbio.model.object.network.PropertyGraphNode;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.Configuration;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,10 +53,11 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -60,10 +72,21 @@ public class NetworkDAO extends OrientdbDAO {
 	//flag to specify whether need to search in the current un-commited transaction. 
 	//This is used to work around the problem that sql query doesn't search the current 
 	// uncommited transaction in OriantDB.
-	private boolean searchCurrentTx;
+//	private boolean searchCurrentTx;
 	
 	private ObjectMapper mapper;
 	private OrientGraph graph;
+	
+//	private static final String readOnlyFlag = "readOnly";
+	
+	
+	private static final int CLEANUP_BATCH_SIZE = 50000;
+	
+    private static final String[] networkElementType = {NdexClasses.Network_E_BaseTerms, NdexClasses.Network_E_Nodes, NdexClasses.Network_E_Citations,
+    		NdexClasses.Network_E_Edges, NdexClasses.Network_E_FunctionTerms, NdexClasses.Network_E_Namespace,
+    		NdexClasses.Network_E_ReifiedEdgeTerms, NdexClasses.Network_E_Supports,
+    		NdexClasses.E_ndexPresentationProps, NdexClasses.E_ndexProperties
+    		};
 	
 	static Logger logger = Logger.getLogger(NetworkDAO.class.getName());
 	
@@ -71,14 +94,18 @@ public class NetworkDAO extends OrientdbDAO {
 	public NetworkDAO (ODatabaseDocumentTx db) {
 	    super(db);
 //		this.db = db;
-		this.searchCurrentTx = false;
+//		this.searchCurrentTx = false;
 		mapper = new ObjectMapper();
 		graph = new OrientGraph(this.db,false);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
+
 	}
 
 	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {
 	    this(db);
-		this.searchCurrentTx = searchCurrentTransaction;
+//		this.searchCurrentTx = searchCurrentTransaction;
 	}
 
 	
@@ -142,7 +169,7 @@ public class NetworkDAO extends OrientdbDAO {
     /**
      * Check if an account has a certain privilege on a network.
      * @param accountName account name to be checked.
-     * @param UUID  id of the network
+     * @param UUIDStr  id of the network
      * @param permission  permission to be verified.
      * @return true if the account has that privilege.
      * @throws NdexException 
@@ -151,7 +178,7 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	public boolean checkPrivilege(String accountName, String UUIDStr, Permissions permission) throws ObjectNotFoundException, NdexException {
 		
-		ODocument d = this.getRecordById(UUID.fromString(UUIDStr), NdexClasses.Network);
+		ODocument d = this.getRecordByUUID(UUID.fromString(UUIDStr), NdexClasses.Network);
 		
 		String vstr = d.field(NdexClasses.Network_P_visibility);
 		
@@ -164,20 +191,140 @@ public class NetworkDAO extends OrientdbDAO {
 	}
 	
 	
-	public int deleteNetwork (String UUID) {
-		int counter = deleteNetworkElements(UUID);
+	public int deleteNetwork (String UUID) throws ObjectNotFoundException, NdexException {
+		int counter = 0, cnt = 0;
 		
-		String query = "select from network where UUID='"+ UUID + "'";
-        final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
-        
-        for ( ODocument n: networks ) {
-        	OrientVertex v =  graph.getVertex(n);
-        	graph.removeVertex(v);
-        	counter ++;
-        }
-        
+		do {
+			cnt = cleanupDeleteNetwork(UUID);
+			if (cnt <0 ) 
+				counter += -1*cnt;
+			else 
+				counter += cnt;
+		} while ( cnt < 0 ); 
  		return counter;
 	}
+	
+	/** 
+	 * Delete up to CLEANUP_BATCH_SIZE vertices in a network. This function is for cleaning up a logically 
+	 * deleted network in the database. 
+	 * @param uuid
+	 * @return Number of vertices being deleted. If the returned number is negative, it means the elements
+	 * of the network are not completely deleted yet, and the number of vertices deleted are abs(returned number).
+	 * @throws ObjectNotFoundException
+	 * @throws NdexException
+	 */
+	public int cleanupDeleteNetwork(String uuid) throws ObjectNotFoundException, NdexException {
+		ODocument networkDoc = getRecordByUUID(UUID.fromString(uuid), NdexClasses.Network);
+		
+		int count = cleanupNetworkElements(networkDoc);
+		if ( count >= CLEANUP_BATCH_SIZE) {
+			return (-1) * count;
+		}
+		
+		// remove the network node.
+		networkDoc.reload();
+		
+		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+			try	{
+				graph.removeVertex(graph.getVertex(networkDoc));
+				break;
+			} catch(ONeedRetryException	e)	{
+				logger.warning("Retry: "+ e.getMessage());
+				networkDoc.reload();
+			}
+		}
+		
+		return count++;
+	}
+	
+
+	/**
+	 * Delete up to CLEANUP_BATCH_SIZE vertices in a network. This function is for cleaning up a logically 
+	 * deleted network in the database. 
+	 * @param networkDoc
+	 * @return the number of vertices being deleted. 
+	 * @throws NdexException 
+	 * @throws ObjectNotFoundException 
+	 */
+	private int cleanupNetworkElements(ODocument networkDoc) throws ObjectNotFoundException, NdexException {
+        int counter = 0;
+
+        
+        for ( String fieldName : networkElementType) {
+        	counter = cleanupElementsByEdge(networkDoc, fieldName, counter);
+        	if ( counter >= CLEANUP_BATCH_SIZE) {
+        		return counter;
+        	}
+        }
+        
+        return counter;
+	}
+	
+	/**
+	 * Cleanup up to CLEANUP_BATCH_SIZE vertices in the out going edge of fieldName. 
+	 * @param doc The ODocument record to be clean up on.
+	 * @param fieldName
+	 * @param currentCounter
+	 * @return the number of vertices being deleted. 
+	 */
+	private int cleanupElementsByEdge(ODocument doc, String fieldName, int currentCounter) {
+		
+		Object f = doc.field("out_"+fieldName);
+		if ( f != null ) {
+			if ( f instanceof ORidBag ) {
+				ORidBag e = (ORidBag)f;
+				int counter = currentCounter;
+				for ( OIdentifiable rid : e) {
+					counter = cleanupElement((ODocument)rid, counter);
+					if ( counter >= CLEANUP_BATCH_SIZE) {
+						return counter;
+					}
+				}
+				return  counter;
+			} 
+			return cleanupElement((ODocument)f, currentCounter);
+		}
+		return currentCounter;
+	}
+	
+	private int cleanupElement(ODocument doc, int currentCount) {
+		int counter = currentCount;
+		if (!doc.getClassName().equals(NdexClasses.NdexProperty) && 
+				!doc.getClassName().equals(NdexClasses.SimpleProperty)) { // not NdexProperty or SimpleProperty Vertex
+			counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexProperties, counter);  // cleanup Properties
+			counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexPresentationProps, counter); 
+		}
+		doc.reload();
+
+		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+			try	{
+				graph.removeVertex(graph.getVertex(doc));
+				break;
+			} catch(ONeedRetryException	e)	{
+				logger.warning("Retry: "+ e.getMessage());
+				doc.reload();
+			}
+		}
+		counter ++;
+		if ( counter % 2000 == 0 ) {
+			graph.commit();
+			if (counter % 10000 == 0 ) {
+				logger.info("Deleted " + counter + " vertexes from network during cleanup.");
+			}
+		}
+		return counter;
+	}
+
+	public int logicalDeleteNetwork (String uuid) throws ObjectNotFoundException, NdexException {
+		ODocument networkDoc = getRecordByUUID(UUID.fromString(uuid), NdexClasses.Network);
+
+		if ( networkDoc != null) {
+		   networkDoc.fields(NdexClasses.ExternalObj_isDeleted,true,
+				   NdexClasses.ExternalObj_mTime, new Date()).save();
+		}
+ 		return 1;
+	}
+	
 	
 	public int deleteNetworkElements(String UUID) {
 		int counter = 0;
@@ -190,6 +337,13 @@ public class NetworkDAO extends OrientdbDAO {
         	element.reload();
         	graph.removeVertex(graph.getVertex(element));
         	counter ++;
+        	if ( counter % 1500 == 0 ) {
+        		graph.commit();
+        		if (counter % 6000 == 0 ) {
+        			logger.info("Deleted " + counter + " vertexes from network during cleanup." + UUID);
+        		}
+        	}
+
         }
         return counter;
 	}
@@ -289,7 +443,7 @@ public class NetworkDAO extends OrientdbDAO {
     
 	public ODocument getNetworkDocByUUIDString(String id) {
 	     String query = "select from " + NdexClasses.Network + " where UUID='"
-                 +id+"'";
+                 +id+"' and (not isDeleted)";
          final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
   
          if (networks.isEmpty())
@@ -297,6 +451,12 @@ public class NetworkDAO extends OrientdbDAO {
          
     	return networks.get(0);
     }
+	
+	
+	public NetworkSummary getNetworkSummaryById (String networkUUIDStr) {
+		ODocument doc = getNetworkDocByUUIDString(networkUUIDStr);
+		return getNetworkSummary(doc);
+	}
  
 	
     public ODocument getNetworkDocByUUID(UUID id) {
@@ -993,6 +1153,7 @@ public class NetworkDAO extends OrientdbDAO {
 		return result;
 	}
 
+/*	
     private static Namespace getNamespaceForPropertyGraph(ODocument ns) {
         Namespace rns = new Namespace();
         rns.setId((long)ns.field("id"));
@@ -1002,7 +1163,7 @@ public class NetworkDAO extends OrientdbDAO {
         getPropertiesFromDocumentForPropertyGraph(rns, ns);
         return rns;
      } 
-	
+*/	
     private static Namespace getNamespace(ODocument ns, Network network) {
        Namespace rns = new Namespace();
        rns.setId((long)ns.field("id"));
@@ -1074,29 +1235,6 @@ public class NetworkDAO extends OrientdbDAO {
    			return t;
    		}
 
-   		if ( this.searchCurrentTx ) {
-	         List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClasses.Edge);
-	         for (ORecordOperation op : txOperations) {
-	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
-	            if (id == edgeId) {
-	            	for (OIdentifiable reifiedTRec : new OTraverse()
-      	       	    			.field("in_"+ NdexClasses.ReifiedEdge_E_edge )
-      	       	    			.target((ODocument) op.getRecord())
-      	       	    			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	       				ODocument doc = (ODocument) reifiedTRec;
-       	          
-	       				if ( doc.getClassName().equals(NdexClasses.ReifiedEdgeTerm)) {
-	       		   				ReifiedEdgeTerm t = new ReifiedEdgeTerm();
-	       		   				t.setId((long)doc.field(NdexClasses.Element_ID));
-	       		   				t.setEdgeId(edgeId);
-	       						return t;
-	       					
-	       				}
-	       			}
-	            }
-	         }
-   		}
        	return null;
     }
     /*
@@ -1233,7 +1371,7 @@ public class NetworkDAO extends OrientdbDAO {
     	// get the functionTerm 
     	
     	ODocument baseTermDoc =doc.field("out_"+ NdexClasses.FunctionTerm_E_baseTerm);
-    	BaseTerm functionNameTerm = this.getBaseTerm(baseTermDoc, network);
+    	BaseTerm functionNameTerm = getBaseTerm(baseTermDoc, network);
     	Long key = Long.valueOf(functionNameTerm.getId());
     	if ( network != null ) {
     		if ( !network.getBaseTerms().containsKey(key))
@@ -1257,7 +1395,8 @@ public class NetworkDAO extends OrientdbDAO {
     			    if ( !network.getBaseTerms().containsKey(t.getId()))
     			    	network.getBaseTerms().put(t.getId(), t);
     		     } else if(parameterDoc.getClassName().equals(NdexClasses.ReifiedEdgeTerm)) {
-    		    	 ReifiedEdgeTerm t = this.getReifiedEdgeTermFromDoc(parameterDoc, network);
+    		    	 ReifiedEdgeTerm t = 
+    		    			 this.getReifiedEdgeTermFromDoc(parameterDoc, network);
     		    //	 if ( !network.getReifiedEdgeTerms().containsKey(t.getId())) {
     		    //		 network.getReifiedEdgeTerms().put(t.getId(), t);
     		    //	 }
@@ -1302,7 +1441,25 @@ public class NetworkDAO extends OrientdbDAO {
     	nSummary.setNodeCount((int)doc.field(NdexClasses.Network_P_nodeCount));
     	nSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
         nSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
-        nSummary.setIsComplete((boolean)doc.field(NdexClasses.Network_P_isComplete));
+        Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
+        if ( isComplete != null)
+        	nSummary.setIsComplete(isComplete.booleanValue());
+        else 
+        	nSummary.setIsComplete(false);
+        
+        nSummary.setEdgeCount((int)doc.field(NdexClasses.Network_P_edgeCount));
+
+        Long ROcommitId = doc.field(NdexClasses.Network_P_readOnlyCommitId);
+        if ( ROcommitId !=null)
+        	nSummary.setReadOnlyCommitId(ROcommitId);
+        
+        Long ROCacheId = doc.field(NdexClasses.Network_P_cacheId);
+        if ( ROCacheId !=null)
+        	nSummary.setReadOnlyCacheId(ROCacheId);
+        
+/*        ODocument ud = doc.field("in_" + NdexClasses.E_admin);
+        nSummary.setOwner((String)ud.field(NdexClasses.account_P_accountName));
+*/        
         nSummary.setIsLocked((boolean)doc.field(NdexClasses.Network_P_isLocked));
         nSummary.setURI(NdexDatabase.getURIPrefix()+ "/network/" + nSummary.getExternalId().toString());
 
@@ -1356,28 +1513,6 @@ public class NetworkDAO extends OrientdbDAO {
         	}
 	    }
         
-    	if ( this.searchCurrentTx) {
-	         List<ORecordOperation> txOperations = db.getTransaction().getRecordEntriesByClass(NdexClasses.Citation);
-	         for (ORecordOperation op : txOperations) {
-	         	long id = ((ODocument) op.getRecord()).field(NdexClasses.Element_ID);
-	            if (id == citationId) {
-	            	for (OIdentifiable supportRec : new OTraverse()
-       	       	    			.field("in_"+ NdexClasses.Support_E_citation )
-       	       	    			.target((ODocument) op.getRecord())
-       	       	    			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	       				ODocument doc = (ODocument) supportRec;
-        	          
-	       				if ( doc.getClassName().equals(NdexClasses.Support)) {
-	       					if ( doc.field(NdexClasses.Support_P_text).equals(text) ) {
-	       						return getSupportFromDoc(doc,null);
-	       					}
-	       				}
-	       			}
-	        	    
-	            }
-	         }
-    	}
     	return null;
     }
     
@@ -1711,8 +1846,8 @@ public class NetworkDAO extends OrientdbDAO {
 	
 	public List<Membership> getNetworkUserMemberships(UUID networkId, Permissions permission, int skipBlocks, int blockSize) 
 			throws ObjectNotFoundException, NdexException {
-		
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId.toString()),
+		
 				"A network UUID is required");
 		Preconditions.checkArgument( 
 				(permission.equals( Permissions.ADMIN) )
@@ -1720,7 +1855,7 @@ public class NetworkDAO extends OrientdbDAO {
 				|| (permission.equals( Permissions.READ )),
 				"Valid permission required");
 		
-		ODocument network = this.getRecordById(networkId, NdexClasses.Network);
+		ODocument network = this.getRecordByUUID(networkId, NdexClasses.Network);
 		
 		final int startIndex = skipBlocks
 				* blockSize;
@@ -1782,7 +1917,7 @@ public class NetworkDAO extends OrientdbDAO {
         }
         
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
-        ODocument accountdoc = this.getRecordById(UUID.fromString(accountUUID), NdexClasses.Account);
+        ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), null);
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         
@@ -1816,7 +1951,7 @@ public class NetworkDAO extends OrientdbDAO {
         }
         
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
-        ODocument accountdoc = this.getRecordById(UUID.fromString(accountUUID), NdexClasses.Account);
+        ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), null);
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         
@@ -1850,20 +1985,75 @@ public class NetworkDAO extends OrientdbDAO {
 		String provenanceString = mapper.writeValueAsString(provenance);
 		// store provenance string
 		nDoc.field(NdexClasses.Network_P_provenance, provenanceString);
+        nDoc.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime());
 		nDoc.save();
 				
 		return 1;
 	}
 
+	/** 
+	 * Set a flag of a network. We currently only support setting readOnly flag for download optimization purpose.
+	 * @param UUIDstr
+	 * @param parameter
+	 * @param value
+	 * @return
+	 * @throws NdexException 
+	 * @throws IOException 
+	 */
+	public long setReadOnlyFlag(String UUIDstr,  boolean value, String userAccountName) throws NdexException {
+		
+		
+		ODocument networkDoc =this.getRecordByUUIDStr(UUIDstr, null);
+		Long commitId = networkDoc.field(NdexClasses.Network_P_readOnlyCommitId);
+
+		if ( commitId == null || commitId.longValue() < 0 ) {
+		   if ( value ) { // set the flag to true
+			    long newCommitId = NdexDatabase.getCommitId();
+				networkDoc.fields(NdexClasses.Network_P_readOnlyCommitId, newCommitId).save();
+				Task createCache = new Task();
+				createCache.setTaskType(TaskType.CREATE_NETWORK_CACHE);
+				createCache.setResource(UUIDstr); 
+				createCache.setStatus(Status.QUEUED);
+				createCache.setAttribute(TaskAttribute.readOnlyCommitId, Long.valueOf(newCommitId));
+				
+				TaskDAO taskDAO = new TaskDAO(this.db);
+				taskDAO.createTask(userAccountName, createCache);
+			   
+		   } 
+		   return -1;
+			   
+		} 
+		
+		// was readOnly
+		if ( !value ) { // unset the flag
+			networkDoc.fields(NdexClasses.Network_P_readOnlyCommitId, Long.valueOf(-1),
+					          NdexClasses.Network_P_cacheId, Long.valueOf(-1)).save();
+			Task deleteCache = new Task();
+			deleteCache.setTaskType(TaskType.DELETE_NETWORK_CACHE);
+			deleteCache.setResource(UUIDstr); 
+			deleteCache.setStatus(Status.QUEUED);
+			deleteCache.setAttribute(TaskAttribute.readOnlyCommitId, commitId);
+			
+			TaskDAO taskDAO = new TaskDAO(this.db);
+			taskDAO.createTask(userAccountName, deleteCache);
+			
+		} 
+		return commitId.longValue();
+		
+		
+	}
+	
 	public void rollback() {
 		graph.rollback();		
 	}
 
+	@Override
 	public void commit() {
 		graph.commit();
 		
 	}
 	
+	@Override
 	public void close() {
 		graph.shutdown();
 	}
@@ -1880,7 +2070,6 @@ public class NetworkDAO extends OrientdbDAO {
 	 * of the network will be deleted. 
 	 * @param networkId
 	 * @param properties
-	 * @param isPresentationProperty
 	 * @return
 	 * @throws ObjectNotFoundException
 	 * @throws NdexException
@@ -1889,7 +2078,7 @@ public class NetworkDAO extends OrientdbDAO {
 			 ) throws ObjectNotFoundException, NdexException {
 
 		
-		ODocument rec = this.getRecordById(networkId, null);
+		ODocument rec = this.getRecordByUUID(networkId, null);
 		OrientVertex networkV = graph.getVertex(rec);
 		String traverseField = "out_" + NdexClasses.E_ndexProperties; 
 		
@@ -1916,6 +2105,10 @@ public class NetworkDAO extends OrientdbDAO {
 				counter ++;
 			}
 		}
+
+
+        rec.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
+
 		return counter;
 	}
 
@@ -1933,7 +2126,7 @@ public class NetworkDAO extends OrientdbDAO {
 			 ) throws ObjectNotFoundException, NdexException {
 
 		
-		ODocument rec = this.getRecordById(networkId, null);
+		ODocument rec = this.getRecordByUUID(networkId, null);
 		OrientVertex networkV = graph.getVertex(rec);
 		String traverseField = "out_" + NdexClasses.E_ndexPresentationProps; 
 		
@@ -1957,6 +2150,9 @@ public class NetworkDAO extends OrientdbDAO {
             networkV.addEdge(NdexClasses.E_ndexPresentationProps, pV);
       		counter ++;
 		}
+
+        rec.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime());
+
 		return counter;
 	}
 
@@ -1980,13 +2176,12 @@ public class NetworkDAO extends OrientdbDAO {
 	 * Get all the node and edges that has neither citations nor supports as a subnetwork. This is a 
 	 * utitlity function for xbel export.
 	 * @param networkUUID
-	 * @param citationId
 	 * @return
 	 * @throws NdexException
 	 */
     public Network getOrphanStatementsSubnetwork(String networkUUID) throws NdexException {
     	
-    	ODocument networkDoc = getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
+    	ODocument networkDoc = getRecordByUUID(UUID.fromString(networkUUID), NdexClasses.Network);
     	
     	Network result = new Network();
     	

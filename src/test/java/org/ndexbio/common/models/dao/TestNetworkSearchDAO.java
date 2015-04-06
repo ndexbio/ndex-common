@@ -7,8 +7,6 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.ndexbio.common.exceptions.DuplicateObjectException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkSearchDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
@@ -30,7 +28,7 @@ public class TestNetworkSearchDAO   {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		// For acquiring connections from the pool
-		database = new NdexDatabase("http://localhost");
+		database =NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10);
 		
 		// For use with Orient Document API
 		localConnection = database.getAConnection();

@@ -6,12 +6,9 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.Permissions;
-import org.ndexbio.orientdb.NdexSchemaManager;
 
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -21,16 +18,16 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public abstract class OrientdbDAO {
-//	protected ODatabaseDocumentTx _ndexDatabase = null;
+public class OrientdbDAO implements AutoCloseable {
+
+	public static final int maxRetries = 100; 
 	
 	protected ODatabaseDocumentTx db;
 	private static final Logger logger = Logger.getLogger(OrientdbDAO.class.getName());
 
-	public OrientdbDAO(ODatabaseDocumentTx db) {
-		this.db = db;
+	public OrientdbDAO(ODatabaseDocumentTx connection) {
+		this.db = connection;
 	}
 
 	/*
@@ -38,35 +35,26 @@ public abstract class OrientdbDAO {
 	 * 
 	 */
 
-	//TODO: review the needs for parameter orientClass
-	protected ODocument getRecordById(UUID id, String orientClass) 
+	protected ODocument getRecordByUUID(UUID id, String orientClass) 
+			throws ObjectNotFoundException, NdexException {
+		return getRecordByUUIDStr(id.toString(), orientClass);
+		
+	}
+	
+	public ODocument getRecordByUUIDStr(String id, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
 		
 		try {
 			OIndex<?> Idx;
 			OIdentifiable record = null;
 			
-//			for(String oclass : orientClass) {
-					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
-					if((temp != null) )
-						record = temp;
+			Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
+			OIdentifiable temp = (OIdentifiable) Idx.get(id);
+			if((temp != null) )
+				record = temp;
 				
-//			}
-			
-/*			if(orientClass.length > 0 && record == null) 
-				throw new ObjectNotFoundException("Object", id.toString());
-			
-			if(orientClass.length > 0)
-				return (ODocument) record.getRecord();
-			
-			if(orientClass.length == 0) {
-				Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-				record = (OIdentifiable) Idx.get(id.toString());
-			}
-*/			
-			if(record == null) 
-				throw new ObjectNotFoundException("Object", id.toString());
+			if(record == null || ( orientClass !=null && !((ODocument)record.getRecord()).getClassName().equals(orientClass))) 
+				throw new ObjectNotFoundException("[Class "+ orientClass + "] Object with ID: " + id.toString() + " doesn't exist.");
 			
 			return (ODocument) record.getRecord();
 			
@@ -77,8 +65,8 @@ public abstract class OrientdbDAO {
 		}
 		
 	}
-
 	
+/*	
 	protected ODocument getRecordByExternalId(UUID id) 
 			throws ObjectNotFoundException, NdexException {
 		
@@ -86,10 +74,10 @@ public abstract class OrientdbDAO {
 			OIndex<?> Idx;
 			OIdentifiable record = null;
 			
-					Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-					OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
-					if((temp != null) )
-						record = temp;
+			Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
+			OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
+			if((temp != null) )
+					record = temp;
 				
 			if(record == null) 
 				throw new ObjectNotFoundException("Object", id.toString());
@@ -103,7 +91,7 @@ public abstract class OrientdbDAO {
 		}
 		
 	}
-	
+*/	
 	
 	public ODocument getRecordByAccountName(String accountName, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
@@ -111,8 +99,8 @@ public abstract class OrientdbDAO {
 		try {
 			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex( NdexClasses.Index_accountName );
 			OIdentifiable user = (OIdentifiable) Idx.get(accountName); // account to traverse by
-			if(user == null) 
-				throw new ObjectNotFoundException("Account ", accountName);
+			if(user == null)
+				throw new ObjectNotFoundException("Account with ID: " + accountName + " doesn't exist.");
 			
 			if( orientClass != null && 
 					!( (ODocument) user.getRecord() ).getSchemaClass().getName().equals( orientClass ) )
@@ -131,7 +119,7 @@ public abstract class OrientdbDAO {
 		
 	} 
 	
-	public boolean checkPermission(ORID source, ORID destination, Direction dir, Integer depth, Permissions... permissions) {
+	public static boolean checkPermission(ORID source, ORID destination, Direction dir, Integer depth, Permissions... permissions) {
 		
 		Collection<Object> fields = new ArrayList<>();
 		
@@ -149,6 +137,12 @@ public abstract class OrientdbDAO {
 		return false;
 	}
 	
+	@Override
+	public void close () {
+		db.close();
+	}
 
-
+    public void commit () {
+    	db.commit();
+    }
 }

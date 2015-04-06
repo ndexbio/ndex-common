@@ -1,5 +1,6 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
+import org.ndexbio.model.object.network.VisibilityType;
 
 import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,7 +66,7 @@ public class NdexNetworkCloneService extends PersistenceService {
      * 2. Create New network
      */
     
-	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName) {
+	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName) throws NdexException {
         super(db);
 		
 		Preconditions.checkNotNull(sourceNetwork.getName(),"A network title is required");
@@ -236,16 +238,23 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.network.setEdgeCount(srcNetwork.getEdges().size());
 		this.network.setNodeCount(srcNetwork.getNodes().size());
 
+        Timestamp now = new Timestamp(Calendar.getInstance().getTimeInMillis());
 		networkDoc = new ODocument (NdexClasses.Network)
 		  .fields(NdexClasses.Network_P_UUID,this.network.getExternalId().toString(),
-		          NdexClasses.ExternalObj_cTime, network.getCreationTime(),
-		          NdexClasses.ExternalObj_mTime, network.getModificationTime(),
+		          NdexClasses.ExternalObj_cTime, now,
+		          NdexClasses.ExternalObj_mTime, now,
+		          NdexClasses.ExternalObj_isDeleted, false,
 		          NdexClasses.Network_P_name, srcNetwork.getName(),
 		          NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
 		          NdexClasses.Network_P_nodeCount, network.getNodeCount(),
 		          NdexClasses.Network_P_isLocked, false,
 		          NdexClasses.Network_P_isComplete, false,
-		          NdexClasses.Network_P_visibility, srcNetwork.getVisibility().toString());
+		          NdexClasses.Network_P_cacheId, Long.valueOf(-1),
+		          NdexClasses.Network_P_readOnlyCommitId, Long.valueOf(-1),
+		          NdexClasses.Network_P_visibility, 
+		          ( srcNetwork.getVisibility() == null ? 
+		        		  VisibilityType.PRIVATE.toString()  : 
+		        		  srcNetwork.getVisibility().toString()));
 		
 		if ( srcNetwork.getDescription() != null) {
 			networkDoc.field(NdexClasses.Network_P_desc,srcNetwork.getDescription());

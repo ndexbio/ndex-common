@@ -19,7 +19,7 @@ public class NdexPersistenceServiceTest {
 	private static NdexPersistenceService service;
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		service = new NdexPersistenceService(new NdexDatabase("http://localhost"));
+		service = new NdexPersistenceService(NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10));
 	}
 
 	@AfterClass
