@@ -173,7 +173,7 @@ public class SifParser implements IParsingEngine {
 				new BufferedReader(new FileReader(this.getSifFile()))){
 			String line = bufferedReader.readLine();
 			// Check the first line for the EBS header
-			if (extendedBinarySIFEdgeHeader.equals(line)) {
+			if ( line.startsWith(extendedBinarySIFEdgeHeader)) {
 				bufferedReader.close();
 				return true;
 			}

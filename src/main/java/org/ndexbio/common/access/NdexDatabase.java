@@ -139,7 +139,6 @@ public class NdexDatabase {
     }
     
     public ODatabaseDocumentTx getAConnection() throws NdexException {
-//    	logger.info("available conn: " + pool.getAvailableConnections());
   
     	for ( int i = 0 ; i < 3000; i ++) {
     		try { 
@@ -159,17 +158,6 @@ public class NdexDatabase {
     	throw new NdexException ("Timeout in getting db connection from pool.");
     }
 
-  /*  
-    public OrientGraph getGraph() {
-    	OrientGraph graph = pool.getTx();
-    	 
- 		graph.setAutoScaleEdgeType(true);
- 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
- 		graph.setUseLightweightEdges(true);
-
-    	return graph;
-    	 
-    }  */
 
  
 }

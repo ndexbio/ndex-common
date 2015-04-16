@@ -76,6 +76,7 @@ public abstract class PersistenceService {
 	        // the reverse lookup.
 
 			aMap.put("biogrid", 	"http://identifiers.org/biogrid/");
+			aMap.put("BIOGRID", 	"http://identifiers.org/biogrid/");
 		 	
 			aMap.put("CAS",			"http://identifiers.org/cas/");
 
@@ -106,14 +107,17 @@ public abstract class PersistenceService {
 			aMap.put("HGNC SYMBOL",	"http://identifiers.org/hgnc.symbol/");
 
 			aMap.put("hprd",		"http://identifiers.org/hprd/");
+			aMap.put("HPRD",		"http://identifiers.org/hprd/");
 			
 			
 			aMap.put("InChIKey",	"http://identifiers.org/inchikey/");
 
 			aMap.put("intact",		"http://identifiers.org/intact/");
+			aMap.put("INTACT",		"http://identifiers.org/intact/");
 			
 			aMap.put("interpro",	"http://identifiers.org/interpro/");
 			aMap.put("InterPro",	"http://identifiers.org/interpro/");
+			aMap.put("INTERPRO",	"http://identifiers.org/interpro/");
 
 			aMap.put("KEGG COMPOUND",	"http://identifiers.org/kegg.compound/");
 			aMap.put("KEGG GLYCAN",		"http://identifiers.org/kegg.glycan/");
@@ -127,6 +131,7 @@ public abstract class PersistenceService {
 			aMap.put("Pubmed",	"http://www.ncbi.nlm.nih.gov/pubmed/");
 			aMap.put("Reactome",	"http://identifiers.org/reactome/");
 			aMap.put("reactome",	"http://identifiers.org/reactome/");
+			aMap.put("REACTOME",	"http://identifiers.org/reactome/");
 			
 			aMap.put("RefSeq",	"http://identifiers.org/refseq/");
 			aMap.put("REFSEQ",	"http://identifiers.org/refseq/");
@@ -138,6 +143,7 @@ public abstract class PersistenceService {
 			aMap.put("PUBCHEM-COMPOUND",	"http://identifiers.org/pubchem.compound/");
 
 			aMap.put("omim",		"http://identifiers.org/omim/");
+			aMap.put("OMIM",		"http://identifiers.org/omim/");
 
 			aMap.put("PROTEIN DATA BANK", "http://identifiers.org/pdb/");
 			aMap.put("Protein Data Bank", "http://identifiers.org/pdb/");
@@ -147,7 +153,9 @@ public abstract class PersistenceService {
 			
 			aMap.put("Panther Family", 		"http://identifiers.org/panther.family/");
 			aMap.put("PANTHER Family", 		"http://identifiers.org/panther.family/");
+			aMap.put("PANTHER FAMILY", 		"http://identifiers.org/panther.family/");
 			aMap.put("Panther", 			"http://identifiers.org/panther.family/");
+			aMap.put("PANTHER", 			"http://identifiers.org/panther.family/");
 
 			aMap.put("Pfam", 		"http://identifiers.org/pfam/");
 			
@@ -156,6 +164,7 @@ public abstract class PersistenceService {
 			aMap.put("RAT GENOME DATABASE", 		"http://identifiers.org/rgd/");
 			
 			aMap.put("Smart", 		"http://identifiers.org/smart/");
+			aMap.put("SMART", 		"http://identifiers.org/smart/");
 			
 			aMap.put("Taxonomy", 		"http://identifiers.org/taxonomy/");
 
@@ -192,7 +201,7 @@ public abstract class PersistenceService {
 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
 		graph.setUseLightweightEdges(true);
 		
-		this.networkDAO = new NetworkDAO(localConnection,true);
+		this.networkDAO = new NetworkDAO(localConnection);
 
 		this.baseTermStrMap = new TreeMap <>();
 		prefixMap = new HashMap<>();

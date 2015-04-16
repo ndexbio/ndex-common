@@ -103,12 +103,11 @@ public class NetworkDAO extends OrientdbDAO {
 
 	}
 
-	public NetworkDAO (ODatabaseDocumentTx db, boolean searchCurrentTransaction) {
-	    this(db);
-//		this.searchCurrentTx = searchCurrentTransaction;
+	public NetworkDAO () throws NdexException {
+	    this(NdexDatabase.getInstance().getAConnection());
 	}
 
-	
+		
 	/**
 	 * Returns a subnetwork based on a block of edges selected from the network specified by networkUUID 
 	 *     based on the specified blockSize and number of blocks to skip. It is intended to be used to 
