@@ -1,6 +1,5 @@
 package org.ndexbio.task;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -48,12 +47,13 @@ public class AddNetworkToCacheTask extends NdexTask {
 			String fullpath = Configuration.getInstance().getNdexNetworkCachePath() + taskCommitId+".gz";
 
 			ODocument d = dao.getNetworkDocByUUIDString(networkIdStr);
-			
+			d.reload();
 			Long actId = d.field(NdexClasses.Network_P_readOnlyCommitId);
 			
 			if ( ! actId.equals(taskCommitId)) {
 				// stop task
-				getTask().setMessage("Network Cache not created because unmatched readOnlyCommitId.");
+				getTask().setMessage("Network cache not created. readOnlyCommitId="
+						+ actId + " in db, but in task we have commitId=" + taskCommitId);
 				return;
 			}
 			
@@ -76,11 +76,13 @@ public class AddNetworkToCacheTask extends NdexTask {
 			actId = d.field(NdexClasses.Network_P_readOnlyCommitId);
 			if ( ! actId.equals(taskCommitId)) {
 				// stop task
-				getTask().setMessage("Network Cache not created because unmatched readOnlyCommitId.");
+				getTask().setMessage("Network cache not created. Second check found network readOnlyCommitId is"+ 
+				   actId + ", task has commitId " + taskCommitId);
 				return;
 			}
 
 			d.field(NdexClasses.Network_P_cacheId,taskCommitId).save();
+			logger.info("Cache " + actId + " created.");
 			dao.commit();
 	    }
 	}
