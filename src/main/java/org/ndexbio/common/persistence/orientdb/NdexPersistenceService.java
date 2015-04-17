@@ -14,6 +14,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawEdge;
@@ -130,7 +131,7 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		this.networkDoc = this.networkDAO.getNetworkDocByUUID(networkID);
 		this.networkVertex = graph.getVertex(this.networkDoc);
-		this.network = NetworkDAO.getNetworkSummary(networkDoc);
+		this.network = NetworkDocDAO.getNetworkSummary(networkDoc);
 		
 		
 		this.rawCitationMap  = new TreeMap <> ();
