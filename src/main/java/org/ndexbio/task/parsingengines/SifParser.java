@@ -268,7 +268,7 @@ public class SifParser implements IParsingEngine {
 					String object = tokens[2];
 					// String dataSource = null; // ignored for now
 					String[] pubMedIds = null;
-					if (tokens.length > 4 && tokens[4] != null) {
+					if (tokens.length > 4 && tokens[4] != null && tokens[4].length()>0) {
 						pubMedIds = tokens[4].split(";");
 					}
 
@@ -300,10 +300,13 @@ public class SifParser implements IParsingEngine {
 							       pubMedId + " found in file.\n line:\n " + line +"\n Ignore this pubmedId.\n" ); */
 								}
 							} else if (pubmedIdTokens.length == 1 ) {
-								Long citationId = this.persistenceService.getCitationId(
+								String pubmedId = pubmedIdTokens[0];
+								if ( pubmedId.length() > 0 ) {
+									Long citationId = this.persistenceService.getCitationId(
 										"", NdexPersistenceService.defaultCitationType,
 										NdexPersistenceService.pmidPrefix + pubmedIdTokens[0], null);
-								this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
+									this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
+								}
 							} else 
 								throw new NdexException("Invalid Pubmed format in line: " + line);
 							
