@@ -1,5 +1,6 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -11,19 +12,21 @@ import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.common.exceptions.ValidationException;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
+import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawEdge;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.models.object.network.RawSupport;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
-import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.Task;
+import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.FunctionTerm;
@@ -31,10 +34,10 @@ import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.NdexServerQueue;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -99,7 +102,7 @@ public class NdexPersistenceService extends PersistenceService {
      * 2. Create New network
      */
     
-	public NdexPersistenceService(NdexDatabase db) {
+	public NdexPersistenceService(NdexDatabase db) throws NdexException {
 		super(db);
 
 		this.network = null;
@@ -123,12 +126,12 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 
 	
-	public NdexPersistenceService(NdexDatabase db, UUID networkID)  {
+	public NdexPersistenceService(NdexDatabase db, UUID networkID) throws NdexException  {
 		super(db);
 		
 		this.networkDoc = this.networkDAO.getNetworkDocByUUID(networkID);
 		this.networkVertex = graph.getVertex(this.networkDoc);
-		this.network = NetworkDAO.getNetworkSummary(networkDoc);
+		this.network = NetworkDocDAO.getNetworkSummary(networkDoc);
 		
 		
 		this.rawCitationMap  = new TreeMap <> ();
@@ -148,19 +151,23 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 	
 	
-	public void abortTransaction() {
+	public void abortTransaction() throws ObjectNotFoundException, NdexException {
 		System.out.println(this.getClass().getName()
 				+ ".abortTransaction has been invoked.");
 
 		//localConnection.rollback();
-		graph.rollback();
+//		graph.rollback();
 		
 		// make sure everything relate to the network is deleted.
 		//localConnection.begin();
 		logger.info("Deleting partial network "+ network.getExternalId().toString() + " in order to rollback in response to error");
-		this.networkDAO.deleteNetwork(network.getExternalId().toString());
+		this.networkDAO.logicalDeleteNetwork(network.getExternalId().toString());
 		//localConnection.commit();
 		graph.commit();
+		Task task = new Task();
+		task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
+		task.setResource(network.getExternalId().toString());
+		NdexServerQueue.INSTANCE.addSystemTask(task);
 		logger.info("Partial network "+ network.getExternalId().toString() + " is deleted.");
 	}
 	
@@ -366,8 +373,8 @@ public class NdexPersistenceService extends PersistenceService {
 	 * @param subjectNodeId
 	 * @param objectNodeId
 	 * @param predicateId
-	 * @param support
-	 * @param citation
+	 * @param supportId
+	 * @param citationId
 	 * @param annotation
 	 * @return  The element id of the created edge.
 	 * @throws NdexException
@@ -537,11 +544,14 @@ public class NdexPersistenceService extends PersistenceService {
 		  .fields(NdexClasses.Network_P_UUID,this.network.getExternalId().toString(),
 		  	NdexClasses.ExternalObj_cTime, this.network.getCreationTime(),
 		  	NdexClasses.ExternalObj_mTime, this.network.getModificationTime(),
+		  	NdexClasses.ExternalObj_isDeleted, false,
 		  	NdexClasses.Network_P_name, this.network.getName(),
 		  	NdexClasses.Network_P_desc, "",
 		  	NdexClasses.Network_P_isLocked, this.network.getIsLocked(),
 		  	NdexClasses.Network_P_isComplete, this.network.getIsComplete(),
-		  	NdexClasses.Network_P_visibility, this.network.getVisibility().toString());
+		  	NdexClasses.Network_P_visibility, this.network.getVisibility().toString(),
+		  	NdexClasses.Network_P_cacheId, this.network.getReadOnlyCacheId(),
+		  	NdexClasses.Network_P_readOnlyCommitId, this.network.getReadOnlyCommitId());
 
 		if ( version != null) {
 			this.network.setVersion(version);
@@ -695,7 +705,7 @@ public class NdexPersistenceService extends PersistenceService {
 			throws NdexException
 			{
 		if (accountName == null	)
-			throw new ValidationException("No accountName was specified.");
+			throw new NdexException("No accountName was specified.");
 
 
 		final String query = "select * from " + NdexClasses.Account + 
@@ -1000,33 +1010,52 @@ public class NdexPersistenceService extends PersistenceService {
 		try {
 			
 			network.setIsComplete(true);
-			getNetworkDoc().field(NdexClasses.Network_P_isComplete,true)
-			  .field(NdexClasses.Network_P_edgeCount, network.getEdgeCount())
-			  .field(NdexClasses.Network_P_nodeCount, network.getNodeCount())
+			getNetworkDoc().fields(NdexClasses.Network_P_isComplete,true,
+					NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
+			        NdexClasses.Network_P_nodeCount, network.getNodeCount(),
+			        NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime() )
 			  .save();
 			
 			this.localConnection.commit();
 			
 			if ( this.ownerAccount != null) {
+				networkVertex.reload();
 				ODocument ownerDoc =  findUserByAccountName(this.ownerAccount);		
 				OrientVertex ownerV = this.graph.getVertex(ownerDoc);
-				ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+				
+		
+				for	(int retry = 0;	retry <	OrientdbDAO.maxRetries;	++retry)	{
+					try	{
+						ownerV.reload();
+						ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+						break;
+					} catch(ONeedRetryException	e)	{
+						logger.warning("Retry - " + e.getMessage());
+						//ownerV.reload();
+//						networkVertex.reload();
+					}
+				}
 			
 				this.localConnection.commit();
 			}
 
-			System.out.println("The new network " + network.getName() + " is complete");
+			logger.info("Finished loading network " + network.getName());
 		} catch (Exception e) {
 			e.printStackTrace();
 			String msg = "unexpected error in persist network. Cause: " + e.getMessage();
 			logger.severe(msg);
 			throw new NdexException (msg);
-		} finally {
+		} /* finally {
 			graph.shutdown();
-			this.database.close();
-			System.out
-					.println("Connection to orientdb database has been closed");
-		}
+	//		this.database.close();
+			logger.info("Connection to orientdb database closed");
+		} */
+	}
+	
+	@Override
+	public void close () {
+		graph.shutdown();
+		logger.info("Connection to orientdb database closed");
 	}
 	
 	public void setNetworkProperties(Collection<NdexPropertyValuePair> properties, 
@@ -1040,15 +1069,7 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 	
-	public void setNetworkProvenance(ProvenanceEntity e) throws JsonProcessingException {
-	
-		ObjectMapper mapper = new ObjectMapper();
-		String provenanceString = mapper.writeValueAsString(e);
-		// store provenance string
-		this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_provenance, provenanceString)
-				.save();
 
-	}
 	
 	public void setNetworkVisibility(VisibilityType visibility) {
 
@@ -1119,7 +1140,7 @@ public class NdexPersistenceService extends PersistenceService {
 	/**
 	 *  create a represent edge from a node to a term.
 	 * @param nodeId
-	 * @param TermId
+	 * @param termId
 	 * @throws ExecutionException 
 	 */
 	public void setNodeRepresentTerm(long nodeId, long termId) throws ExecutionException {

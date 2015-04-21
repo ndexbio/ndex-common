@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -9,31 +10,32 @@ import java.util.regex.Pattern;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
-import org.ndexbio.model.object.NdexExternalObject;
-import org.ndexbio.model.object.NdexPropertyValuePair;
-import org.ndexbio.model.object.Permissions;
-import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.*;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 public class Helper {
-	
+
+	/**
+	 * Populate a NdexExternalObject using data from an ODocument object.
+	 * @param obj The NdexExternaObject to be populated.
+	 * @param doc
+	 * @return the Pouplated NdexExernalObject.
+	 */
 	public static NdexExternalObject populateExternalObjectFromDoc(NdexExternalObject obj, ODocument doc) {
 		obj.setExternalId(UUID.fromString((String)doc.field(NdexClasses.Network_P_UUID)));
 		
 		Date d = doc.field(NdexClasses.ExternalObj_cTime);
 		obj.setCreationTime(new Timestamp(d.getTime()));
-		d = doc.field(NdexClasses.ExternalObj_cTime);
+		d = doc.field(NdexClasses.ExternalObj_mTime);
 		obj.setModificationTime(new Timestamp(d.getTime()));
-
+        Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+       	obj.setIsDeleted(isDeleted != null && isDeleted.booleanValue());
 		return obj;
 	}
 
@@ -124,7 +126,7 @@ public class Helper {
     /**
      * Check if the actual permission meets the required permission level.
      * @param requiredPermission
-     * @param acturalPermission
+     * @param actualPermission
      * @return
      */
     public static boolean permissionSatisfied(Permissions requiredPermission, Permissions actualPermission) {
@@ -177,6 +179,18 @@ public class Helper {
     	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
 
 	    if ((long) result.get(0).field("c") > 1 ) return true;
+    	return false;
+    }
+
+    public static boolean canRemoveAdminOnGrp(ODatabaseDocumentTx db, String grpUUID, 
+			String accountUUID) {
+
+    	String query = "select count(*) as c from (traverse in_" + NdexClasses.GRP_E_admin + " from (select from " +
+    	NdexClasses.Group +" where UUID = '"+ grpUUID + "')) where UUID <> '"+ accountUUID +"'";
+
+    	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    	if ((long) result.get(0).field("c") > 1 ) return true;
     	return false;
     }
 
@@ -271,4 +285,54 @@ public class Helper {
 	public static String escapeOrientDBSQL(String str) {
 		return str.replace("'", "\\'");
 	}
+
+    // Added by David Welker
+    public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkDAO dao, String networkId) throws NdexException
+    {
+        NetworkSummary summary = NetworkDAO.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
+        populateProvenanceEntity(entity, summary);
+    }
+
+    //Added by David Welker
+    public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkSummary summary) throws NdexException
+    {
+
+        List<SimplePropertyValuePair> entityProperties = new ArrayList<>();
+
+        entityProperties.add( new SimplePropertyValuePair("edge count", Integer.toString( summary.getEdgeCount() )) );
+        entityProperties.add( new SimplePropertyValuePair("node count", Integer.toString( summary.getNodeCount() )) );
+
+        if ( summary.getName() != null)
+            entityProperties.add( new SimplePropertyValuePair("dc:title", summary.getName()) );
+
+        if ( summary.getDescription() != null)
+            entityProperties.add( new SimplePropertyValuePair("description", summary.getDescription()) );
+
+        if ( summary.getVersion()!=null )
+            entityProperties.add( new SimplePropertyValuePair("version", summary.getVersion()) );
+
+        entity.setProperties(entityProperties);
+    }
+
+    //Added by David Welker
+    public static void addUserInfoToProvenanceEventProperties(List<SimplePropertyValuePair> eventProperties, User user)
+    {
+        String firstName = user.getFirstName();
+        String lastName = user.getLastName();
+        if( firstName != null || lastName != null )
+        {
+            String name = "";
+            if( firstName == null )
+                name = lastName;
+            else if( lastName == null )
+                name = firstName;
+            else
+                name = firstName + " " + lastName;
+            eventProperties.add( new SimplePropertyValuePair("user", name));
+        }
+
+        if( user.getAccountName() != null )
+            eventProperties.add( new SimplePropertyValuePair("account name", user.getAccountName()) );
+    }
+
 }

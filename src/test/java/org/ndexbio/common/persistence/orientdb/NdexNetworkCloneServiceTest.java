@@ -17,7 +17,7 @@ public class NdexNetworkCloneServiceTest {
 
 	@Test
 	public void test() throws NdexException, ExecutionException {
-		NdexDatabase db = new NdexDatabase("http://localhost");
+		NdexDatabase db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10);
 		ODatabaseDocumentTx connection = db.getAConnection();
 		NetworkDAO dao = new NetworkDAO ( connection);
 	//	Network network =  dao.getNetworkById(UUID.fromString("4842a831-1e5c-11e4-9f34-90b11c72aefa"));

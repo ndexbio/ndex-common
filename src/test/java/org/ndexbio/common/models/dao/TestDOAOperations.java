@@ -1,18 +1,11 @@
 package org.ndexbio.common.models.dao;
 
-import java.util.List;
 
-import org.junit.Assert;
-import org.ndexbio.common.exceptions.DuplicateObjectException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.SearchParameters;
+import org.ndexbio.model.exceptions.*;
 import org.ndexbio.model.object.network.Network;
 
 public class TestDOAOperations {
 
-	
-	
 	private  String testUserId = "C31R0";
 	private  String testUserName = "biologist1";
 	private  String testPassword = "bio1";

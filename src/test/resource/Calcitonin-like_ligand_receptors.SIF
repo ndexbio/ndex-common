@@ -1,0 +1,38 @@
+PARTICIPANT_A	INTERACTION_TYPE	PARTICIPANT_B	INTERACTION_DATA_SOURCE	INTERACTION_PUBMED_ID
+http://biopax.org/generated/group/-51854394	REACTS_WITH	http://purl.org/pc2/4/ProteinReference_e1ac9296e0f5d33491c51fb408a5fbdd	pid	Pubmed:2177866;Pubmed:2985435;Pubmed:8626685;Pubmed:6609312;Pubmed:14722252
+http://biopax.org/generated/group/-68251248	REACTS_WITH	http://purl.org/pc2/4/ProteinReference_ff4dbec371a34475dd30979dd2fd888a	pid	Pubmed:8387282;Pubmed:14615490;Pubmed:9620797;Pubmed:10217420;Pubmed:11693189
+http://biopax.org/generated/group/-79681069	REACTS_WITH	http://identifiers.org/uniprot/P10997	pid	Pubmed:2608057;Pubmed:9620797;Pubmed:1331173
+http://biopax.org/generated/group/93564871	COMPONENT_OF	http://biopax.org/generated/group/-51854394	pid	
+http://biopax.org/generated/group/93564871	REACTS_WITH	http://biopax.org/generated/group/-51854394	pid	Pubmed:2177866;Pubmed:2985435;Pubmed:8626685;Pubmed:6609312;Pubmed:14722252
+http://biopax.org/generated/group/93564871	REACTS_WITH	http://purl.org/pc2/4/ProteinReference_e1ac9296e0f5d33491c51fb408a5fbdd	pid	Pubmed:2177866;Pubmed:2985435;Pubmed:8626685;Pubmed:6609312;Pubmed:14722252
+http://identifiers.org/uniprot/O60894	COMPONENT_OF	http://biopax.org/generated/group/93564871	pid	
+http://identifiers.org/uniprot/O60894	IN_SAME_COMPONENT	http://identifiers.org/uniprot/Q16602	pid	
+http://identifiers.org/uniprot/P01258	COMPONENT_OF	http://biopax.org/generated/group/93338649	pid	
+http://identifiers.org/uniprot/P01258	IN_SAME_COMPONENT	http://identifiers.org/uniprot/P30988	pid	
+http://identifiers.org/uniprot/P01258	REACTS_WITH	http://biopax.org/generated/group/93338649	pid	Pubmed:6148938;Pubmed:1331173
+http://identifiers.org/uniprot/P10997	COMPONENT_OF	http://biopax.org/generated/group/-79681069	pid	
+http://identifiers.org/uniprot/P30988	COMPONENT_OF	http://biopax.org/generated/group/93338649	pid	
+http://identifiers.org/uniprot/P30988	REACTS_WITH	http://biopax.org/generated/group/93338649	pid	Pubmed:6148938;Pubmed:1331173
+http://identifiers.org/uniprot/P30988	REACTS_WITH	http://identifiers.org/uniprot/P01258	pid	Pubmed:6148938;Pubmed:1331173
+http://identifiers.org/uniprot/Q16602	COMPONENT_OF	http://biopax.org/generated/group/93564871	pid	
+http://purl.org/pc2/4/ProteinReference_e1ac9296e0f5d33491c51fb408a5fbdd	COMPONENT_OF	http://biopax.org/generated/group/-51854394	pid	
+http://purl.org/pc2/4/ProteinReference_e1ac9296e0f5d33491c51fb408a5fbdd	IN_SAME_COMPONENT	http://biopax.org/generated/group/93564871	pid	
+http://purl.org/pc2/4/ProteinReference_ff4dbec371a34475dd30979dd2fd888a	COMPONENT_OF	http://biopax.org/generated/group/-68251248	pid	
+
+PARTICIPANT	PARTICIPANT_TYPE	PARTICIPANT_NAME	UNIFICATION_XREF	RELATIONSHIP_XREF
+http://purl.org/pc2/4/ProteinReference_e1ac9296e0f5d33491c51fb408a5fbdd	ProteinReference	CGRP ligands		
+http://biopax.org/generated/group/93564871	ComplexGroup	CGRP receptor		
+http://biopax.org/generated/group/-79681069	ComplexGroup	AMY receptors:Amylin		
+http://identifiers.org/uniprot/O60894	ProteinReference	RAMP1_HUMAN	UniProt:O60894;UniProt:Q6FGS5	Ensembl:ENSP00000254661;HGNC Symbol:RAMP1;Ensembl:ENST00000254661;HGNC:HGNC:9843;NCBI Gene:10267;RefSeq:NP_005846;omim:605153;PROTEIN DATA BANK:2YX8;Ensembl:ENSG00000132329;HGNC:RAMP1;RefSeq:NM_005855
+http://identifiers.org/uniprot/P01258	ProteinReference	CALC_HUMAN	UniProt:Q13935;UniProt:Q52LX7;UniProt:Q13937;UniProt:P01258;UniProt:B7ZL39	Ensembl:ENST00000396372;HGNC Symbol:CALCA;Ensembl:ENSP00000352663;Ensembl:ENST00000359642;Ensembl:ENSG00000262933;Ensembl:ENST00000469608;RefSeq:NM_001741;RefSeq:NM_001033952;Ensembl:ENSG00000110680;Ensembl:ENSP00000460716;RefSeq:NP_001029124;HGNC:CALCA;omim:114130;NCBI Gene:796;Ensembl:ENSP00000379657;Ensembl:ENSP00000331746;Ensembl:ENST00000331587;Ensembl:ENST00000570903;Ensembl:ENSP00000459971;Ensembl:ENSP00000420618;RefSeq:NP_001732;Ensembl:ENST00000571711;Ensembl:ENSP00000459562;Ensembl:ENST00000574146;PROTEIN DATA BANK:1LS7;HGNC:HGNC:1437
+http://purl.org/pc2/4/ProteinReference_ff4dbec371a34475dd30979dd2fd888a	ProteinReference	ADM/ADM2		
+http://biopax.org/generated/group/-51854394	ComplexGroup	CGRP1 receptor:CGRP		
+http://biopax.org/generated/group/-68251248	ComplexGroup	Adrenomedullin receptor:AM/AM2		
+http://identifiers.org/uniprot/Q16602	ProteinReference	CALRL_HUMAN	UniProt:A8K6G5;UniProt:Q53TS5;UniProt:Q53S02;UniProt:Q16602;UniProt:A8KAD3	HGNC Symbol:CALCRL;Ensembl:ENST00000410068;NCBI Gene:10203;RefSeq:NP_001258680;Ensembl:ENSP00000386972;Ensembl:ENST00000409998;HGNC:CALCRL;Ensembl:ENSP00000376177;RefSeq:NM_005795;RefSeq:NM_001271751;HGNC:HGNC:16709;omim:114190;RefSeq:NP_005786;Ensembl:ENST00000392370;Ensembl:ENSG00000064989;Ensembl:ENSP00000387190
+http://identifiers.org/uniprot/P10997	ProteinReference	IAPP_HUMAN	UniProt:Q14598;UniProt:P10997;UniProt:Q0ZD87	Ensembl:ENSP00000437357;NCBI Gene:3375;RefSeq:NP_000406;Ensembl:ENSP00000240652;RefSeq:NM_000415;Ensembl:ENST00000539393;HGNC Symbol:IAPP;PROTEIN DATA BANK:1KUW;Ensembl:ENSG00000121351;Ensembl:ENST00000240652;omim:147940;HGNC:IAPP;HGNC:HGNC:5329
+http://biopax.org/generated/group/93338649	ComplexGroup	Calcitonin receptor:Calcitonin		
+http://identifiers.org/uniprot/P30988	ProteinReference	CALCR_HUMAN	UniProt:O14585;UniProt:Q5ZGL8;UniProt:Q6DJU8;UniProt:P30988;UniProt:Q659U6;UniProt:Q13941;UniProt:Q6T712	Ensembl:ENST00000421592;Ensembl:ENSP00000399552;NCBI Gene:799;Ensembl:ENSG00000004948;RefSeq:NP_001158210;Ensembl:ENSP00000391369;Ensembl:ENST00000360249;Ensembl:ENSP00000413179;RefSeq:NP_001733;RefSeq:NM_001742;NCBI Gene:114131;RefSeq:NM_001164738;RefSeq:NM_001164737;HGNC Symbol:CALCR;Ensembl:ENST00000423724;HGNC:CALCR;RefSeq:NP_001158209;HGNC:HGNC:1440;Ensembl:ENSP00000353385;Ensembl:ENST00000415529
+
+
+NAME	ORGANISM	URI	DATASOURCE	
+Calcitonin-like ligand receptors	http://identifiers.org/taxonomy/9606	http://purl.org/pc2/4/Pathway_3946b282420339bf28c84ffdbc1be02e	http://purl.org/pc2/4/pid
