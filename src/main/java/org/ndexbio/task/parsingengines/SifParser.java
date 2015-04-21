@@ -5,9 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -353,7 +351,7 @@ public class SifParser implements IParsingEngine {
 					String participantIdentifier = tokens[0];
 					// find the node that represents the term specified by the
 					// participantIdentifier
-					Long participantNodeId = this.persistenceService.getNodeIdByBaseTerm(participantIdentifier);
+					Long participantNodeId = addNode(participantIdentifier);
 					if (participantNodeId == null)
 						break;
 					//String type = tokens[1];
