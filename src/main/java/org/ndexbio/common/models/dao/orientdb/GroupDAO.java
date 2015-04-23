@@ -418,9 +418,8 @@ public class GroupDAO extends GroupDocDAO {
 
 		try {
 			getRecordByAccountName(group.getAccountName(), null);
-			logger.info("Group with accountName " + group.getAccountName() + " already exists");
-			throw new DuplicateObjectException(
-					CommonDAOValues.DUPLICATED_ACCOUNT_FLAG);
+			logger.info("Group with accountName " + group.getAccountName() + " already exists.");
+			throw new DuplicateObjectException("Group with Name " + group.getAccountName() + " already exists.");
 		} catch ( ObjectNotFoundException e) {
 		}
 	}

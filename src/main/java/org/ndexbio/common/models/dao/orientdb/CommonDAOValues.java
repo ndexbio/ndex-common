@@ -12,8 +12,8 @@ public interface CommonDAOValues {
 	
 	public static final String DUPLICATED_KEY_FLAG = "duplicated key";
 
-	public static final String DUPLICATED_ACCOUNT_FLAG = "duplicated account name";
-	public static final String DUPLICATED_EMAIL_FLAG = "duplicated email";
+	public static final String DUPLICATED_ACCOUNT_FLAG = "A user with that Account Name has already registered.";
+	public static final String DUPLICATED_EMAIL_FLAG = "A user with that Email has already registered.";
 	
 	public static final String ORIENTDB_DAO_TYPE = "orientdb";
 }
