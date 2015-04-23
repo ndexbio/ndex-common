@@ -177,7 +177,7 @@ public class Configuration
 	}
 
 
-	private String getRequiredProperty (String propertyName ) throws NdexException {
+	public String getRequiredProperty (String propertyName ) throws NdexException {
     	String result = _configurationProperties.getProperty(propertyName);
         if ( result == null) {
         	throw new NdexException ("property " + propertyName + " not found in configuration.");
@@ -210,6 +210,8 @@ public class Configuration
     {
         return _configurationProperties.getProperty(propertyName);
     }
+
+      
     
     /**************************************************************************
     * Gets the singleton instance. 
