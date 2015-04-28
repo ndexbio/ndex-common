@@ -2,7 +2,9 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -21,6 +23,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class Helper {
 
+	private static final Collection<ODocument> emptyDocs = new LinkedList<ODocument>();
+	
 	/**
 	 * Populate a NdexExternalObject using data from an ODocument object.
 	 * @param obj The NdexExternaObject to be populated.
@@ -333,6 +337,34 @@ public class Helper {
 
         if( user.getAccountName() != null )
             eventProperties.add( new SimplePropertyValuePair("account name", user.getAccountName()) );
+    }
+
+
+    public static Iterable<ODocument> getNetworkElements(ODocument networkDoc, String elementEdgeString) {	
+    	
+    	Object f = networkDoc.field("out_"+ elementEdgeString);
+    	
+    	if ( f == null) return emptyDocs;
+    	
+    	if ( f instanceof ODocument)
+    		 return new OrientDBIterableSingleLink((ODocument)f);
+    	
+    	return ((Iterable<ODocument>)f);
+    	     
+    }
+
+    
+    public static Iterable<ODocument> getDocumentLinks(ODocument doc, String direction, String elementEdgeString) {	
+    	
+    	Object f = doc.field(direction+ elementEdgeString);
+    	
+    	if ( f == null) return emptyDocs;
+    	
+    	if ( f instanceof ODocument)
+    		 return new OrientDBIterableSingleLink((ODocument)f);
+    	
+    	return ((Iterable<ODocument>)f);
+    	     
     }
 
 }

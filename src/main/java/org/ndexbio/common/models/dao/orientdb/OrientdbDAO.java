@@ -66,6 +66,10 @@ public class OrientdbDAO implements AutoCloseable {
 		
 	}
 	
+	
+	public ODatabaseDocumentTx getDBConnection() {
+		return db;
+	}
 /*	
 	protected ODocument getRecordByExternalId(UUID id) 
 			throws ObjectNotFoundException, NdexException {
