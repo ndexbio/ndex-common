@@ -1,0 +1,32 @@
+package org.ndexbio.common.models.dao.orientdb;
+
+import java.util.Iterator;
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+public class OrientDBLinkIterator implements Iterator<ODocument> {
+
+	private ODocument odoc;
+	private boolean hasBeenRead;
+	
+	public OrientDBLinkIterator(ODocument doc) {
+		odoc = doc;
+		hasBeenRead=false;
+	}
+	
+	@Override
+	public boolean hasNext() {
+		return ! hasBeenRead;
+	}
+
+	@Override
+	public ODocument next() {
+		return hasBeenRead? null : odoc;
+	}
+
+	@Override
+	public void remove() {
+	}
+
+}
