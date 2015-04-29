@@ -60,9 +60,9 @@ public class NetworkFilterQueryExecutor {
 	private static boolean elementHasPropertySatisfyFilter(ODocument elementDoc, PropertyFilterODB filter) {
 
 		for (ODocument propDoc : Helper.getDocumentLinks(elementDoc, "out_", NdexClasses.E_ndexProperties )) {
-				if ( propertySatisfyFilter(propDoc,filter)) {
+			if ( filter.containsPropertyId(propDoc.getIdentity().toString()) ) {
 					return true;
-				}
+			}
 		}
 		return false;
 	}
@@ -79,14 +79,9 @@ public class NetworkFilterQueryExecutor {
 		if ( edgeFilter == null) return true;
 		
 		// check the predicates
-		if ( edgeFilter.getPredicateIds() != null) {
-		ODocument predicateRec = edgeDoc.field("out_"+NdexClasses.Edge_E_predicate);
-		  for (String predicateId : edgeFilter.getPredicateIds()) {
-		    if ( predicateId.equals(predicateRec.getIdentity().toString())) {
+		  ODocument predicateRec = edgeDoc.field("out_"+NdexClasses.Edge_E_predicate);
+		  if ( edgeFilter.containsPredicateId(predicateRec.getIdentity().toString()))
 			  return true;
-		    }
-		  }
-		}
 		
 		//check other edgeProperties.
 		return elementHasPropertySatisfyFilter(edgeDoc, edgeFilter);
@@ -149,7 +144,7 @@ public class NetworkFilterQueryExecutor {
 		
 		return elementHasPropertySatisfyFilter(nodeDoc,nodeFilter);
 	}
-	
+	/*
 	
 	private static boolean propertySatisfyFilter (ODocument propDoc, PropertyFilterODB filter) {
 
@@ -163,5 +158,5 @@ public class NetworkFilterQueryExecutor {
 		}
 		return false;
 	}
-	
+	*/
 }

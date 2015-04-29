@@ -1,7 +1,5 @@
 package org.ndexbio.common.query;
 
-import java.util.ArrayList;
-
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
@@ -55,8 +53,6 @@ public class NetworkFilterQueryExecutorFactory {
 		
 		EdgeByEdgePropertyFilterODB odbFilter = new EdgeByEdgePropertyFilterODB();
 
-		ArrayList<String> predicates = new ArrayList<> ();
-		
 		for ( PropertySpecification spec : filter.getPropertySpecList()) {
 			String value = spec.getValue();
 			String propName = spec.getProperty();
@@ -66,7 +62,7 @@ public class NetworkFilterQueryExecutorFactory {
 					for ( ODocument d : bTerms) {
 						String name = d.field(NdexClasses.BTerm_P_name);
 						if ( name !=null && name.equalsIgnoreCase(value)) {
-							predicates .add(d.getIdentity().toString());
+							odbFilter.addPredicateId(d.getIdentity().toString());
 						}
 					}
 				}
@@ -77,15 +73,13 @@ public class NetworkFilterQueryExecutorFactory {
 						   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
 							   String v = prop.field(NdexClasses.ndexProp_P_value);
 							   if ( v.equalsIgnoreCase(value)) {
-								   odbFilter.getPropertySpecList().add(prop.getIdentity().toString());
+								   odbFilter.addPropertyId(prop.getIdentity().toString());
 							   }
 						   }
 					}
 				}
 			}
 		}
-		
-		odbFilter.setPredicateIds(predicates);
 		
 		return odbFilter;
 	}
@@ -125,7 +119,7 @@ public class NetworkFilterQueryExecutorFactory {
 						   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
 							   String v = prop.field(NdexClasses.ndexProp_P_value);
 							   if ( v.equalsIgnoreCase(value)) {
-								   odbFilter.getPropertySpecList().add(prop.getIdentity().toString());
+								   odbFilter.addPropertyId(prop.getIdentity().toString());
 							   }
 						   }
 					}

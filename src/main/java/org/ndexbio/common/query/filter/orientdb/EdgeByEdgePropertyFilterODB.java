@@ -1,23 +1,27 @@
 package org.ndexbio.common.query.filter.orientdb;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class EdgeByEdgePropertyFilterODB extends PropertyFilterODB {
 	
-	private Collection<String> predicateIds;  //rids of predicates
+	private Set<String> predicateIds;  //rids of predicates
 	
 	public EdgeByEdgePropertyFilterODB () {
 		super();
-		predicateIds = new ArrayList<String>();
+		predicateIds = new TreeSet<String>();
 	}
 
-	public Collection<String> getPredicateIds() {
+/*	public Set<String> getPredicateIds() {
 		return predicateIds;
-	}
+	} */
 
-	public void setPredicateIds(Collection<String> predicateIds) {
-		this.predicateIds = predicateIds;
+	public void addPredicateId(String predicateId) {
+		this.predicateIds.add(predicateId);
+	}
+	
+	public boolean containsPredicateId(String id) {
+		return predicateIds.contains(id);
 	}
 
 }

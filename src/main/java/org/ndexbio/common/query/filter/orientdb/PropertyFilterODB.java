@@ -1,22 +1,26 @@
 package org.ndexbio.common.query.filter.orientdb;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class PropertyFilterODB {
 
 	
-	private List<String> _propertyList;
+	private Set<String> _propertyIdSet;
 	
 	public PropertyFilterODB () {
-		_propertyList = new ArrayList<>(10);
+		_propertyIdSet = new TreeSet<>();
 	}
 	
-	public List<String> getPropertySpecList() {
+/*	public List<String> getPropertySpecList() {
 		return _propertyList;
 	}
-	public void setPropertySpecList(List<String> propertyList) {
-		this._propertyList = propertyList;
+*/	
+	public void addPropertyId(String propertyId) {
+		this._propertyIdSet.add( propertyId);
 	}
 
+	public boolean containsPropertyId(String propertyRid) {
+		return _propertyIdSet.contains(propertyRid);
+	}
 }
