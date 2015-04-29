@@ -200,6 +200,6 @@
 		</plugins>
 	</build>
 	<properties>
-		<orientdb.version>2.0.7</orientdb.version>
+		<orientdb.version>2.0.8</orientdb.version>
 	</properties>
 </project>

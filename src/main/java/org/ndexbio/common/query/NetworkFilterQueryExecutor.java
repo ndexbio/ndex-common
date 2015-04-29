@@ -66,12 +66,7 @@ public class NetworkFilterQueryExecutor {
 
 	private static boolean elementHasPropertySatisfyFilter(ODocument elementDoc, PropertyFilterODB filter) {
 
-		for (OIdentifiable ndexPropertyDoc : new OTraverse()
-			.field("out_"+ NdexClasses.E_ndexProperties )
-			.target(elementDoc)
-			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-			ODocument propDoc = (ODocument) ndexPropertyDoc;
+		for (ODocument propDoc : Helper.getDocumentLinks(elementDoc, "out_", NdexClasses.E_ndexProperties )) {
 
 			if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
 				if ( propertySatisfyFilter(propDoc,filter)) {
@@ -114,21 +109,21 @@ public class NetworkFilterQueryExecutor {
 		
 		switch (nodeFilter.getMode()) {
 		case Both: {
-			ODocument subject= edgeDoc.field(NdexClasses.Edge_E_subject);
-			ODocument object = edgeDoc.field(NdexClasses.Edge_E_object);
+			ODocument subject= edgeDoc.field("in_"+ NdexClasses.Edge_E_subject);
+			ODocument object = edgeDoc.field("out_"+NdexClasses.Edge_E_object);
 			return nodeSatisfyNodeFilter(subject,nodeFilter) && nodeSatisfyNodeFilter(object, nodeFilter);
 		}
 		case Either: {
-			ODocument subject= edgeDoc.field(NdexClasses.Edge_E_subject);
-			ODocument object = edgeDoc.field(NdexClasses.Edge_E_object);
+			ODocument subject= edgeDoc.field("in_"+ NdexClasses.Edge_E_subject);
+			ODocument object = edgeDoc.field("out_"+NdexClasses.Edge_E_object);
 			return nodeSatisfyNodeFilter(subject,nodeFilter) || nodeSatisfyNodeFilter(object, nodeFilter);
 		}
 		case Source:
-			ODocument subject= edgeDoc.field(NdexClasses.Edge_E_subject);
+			ODocument subject= edgeDoc.field("in_"+ NdexClasses.Edge_E_subject);
 			return nodeSatisfyNodeFilter(subject,nodeFilter) ;
 			
 		case Target:
-			ODocument object = edgeDoc.field(NdexClasses.Edge_E_object);
+			ODocument object = edgeDoc.field("out_"+NdexClasses.Edge_E_object);
 			return  nodeSatisfyNodeFilter(object, nodeFilter);
 
 		default:
