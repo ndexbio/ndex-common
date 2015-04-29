@@ -14,17 +14,12 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 public class NetworkFilterQueryExecutor {
 
 	private EdgeCollectionQueryODB query;
 	private String networkId;
-//	private NetworkDocDAO dao;
 	
 	public NetworkFilterQueryExecutor(String networkIdStr, EdgeCollectionQueryODB edgeQuery) {
 		this.query = edgeQuery;
@@ -41,15 +36,13 @@ public class NetworkFilterQueryExecutor {
 	        if ( edgeDocs != null)
 		    for ( ODocument edgeDoc : edgeDocs) {
 
-	        	if ( edgeDoc.getClassName().equals(NdexClasses.Edge) ) {
-	        		// check against filter
-	        		if ( EdgeRecordSatisfyFilter(edgeDoc)) {
+	        	// check against filter
+	        	if ( EdgeRecordSatisfyFilter(edgeDoc)) {
 	        			Edge e = dao.getEdgeFromDocument(edgeDoc,result);
 	        			result.getEdges().put(e.getId(), e);
 	        			if ( result.getEdges().size() >= query.getEdgeLimit())
 	        				break;
-	        		}	
-	        	}
+	        	}	
 	    }
 		
 		if( query.getQueryName() != null) 
@@ -67,12 +60,9 @@ public class NetworkFilterQueryExecutor {
 	private static boolean elementHasPropertySatisfyFilter(ODocument elementDoc, PropertyFilterODB filter) {
 
 		for (ODocument propDoc : Helper.getDocumentLinks(elementDoc, "out_", NdexClasses.E_ndexProperties )) {
-
-			if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
 				if ( propertySatisfyFilter(propDoc,filter)) {
 					return true;
 				}
-			}
 		}
 		return false;
 	}
@@ -149,9 +139,9 @@ public class NetworkFilterQueryExecutor {
 		Collection<String> representIDs = nodeFilter.getRepresentTermIDs();
 		if ( representIDs !=null) {
 			for ( String termId: representIDs) {
-				ORID id = nodeDoc.field(NdexClasses.Node_E_represents);
-				if (id != null) {
-					if ( id.toString().equals(termId))
+				ODocument term = nodeDoc.field("out_"+NdexClasses.Node_E_represents);
+				if (term != null) {
+					if ( term.getIdentity().toString().equals(termId))
 						return true;
 				}
 			}

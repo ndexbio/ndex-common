@@ -22,7 +22,10 @@ public class OrientDBLinkIterator implements Iterator<ODocument> {
 
 	@Override
 	public ODocument next() {
-		return hasBeenRead? null : odoc;
+		if ( hasBeenRead)
+			return null;
+		hasBeenRead=true;
+		return odoc;
 	}
 
 	@Override
