@@ -28,6 +28,7 @@ public class NetworkFilterQueryExecutor {
 	
 	public Network evaluate() throws NdexException {
 
+		int limit = query.getEdgeLimit();
 		try (NetworkDocDAO dao = new NetworkDocDAO() ) {
 			Network result = new Network () ;
  		    ODocument networkDoc = dao.getRecordByUUIDStr(networkId, NdexClasses.Network);
@@ -40,7 +41,7 @@ public class NetworkFilterQueryExecutor {
 	        	if ( EdgeRecordSatisfyFilter(edgeDoc)) {
 	        			Edge e = dao.getEdgeFromDocument(edgeDoc,result);
 	        			result.getEdges().put(e.getId(), e);
-	        			if ( result.getEdges().size() >= query.getEdgeLimit())
+	        			if ( limit > 0 && result.getEdges().size() >= limit)
 	        				break;
 	        	}	
 	    }
@@ -121,26 +122,14 @@ public class NetworkFilterQueryExecutor {
 	private static boolean nodeSatisfyNodeFilter(ODocument nodeDoc, EdgeByNodePropertyFilterODB nodeFilter) {
 		
 		//check on node name
-		Collection<String> nodeNames = nodeFilter.getNodeNames();
-		if( nodeNames !=null) {
-			for ( String nodeName : nodeNames) {
-				String nName = nodeDoc.field(NdexClasses.Node_P_name);
-				if ( nName !=null && nName.equalsIgnoreCase(nodeName))
-					return true;
-			}
-		}
+		String nName = nodeDoc.field(NdexClasses.Node_P_name);
+		if (  nName !=null && nodeFilter.conatinsNodeName(nName) )
+				return true;
 		
 		// check on baseTerm
-		Collection<String> representIDs = nodeFilter.getRepresentTermIDs();
-		if ( representIDs !=null) {
-			for ( String termId: representIDs) {
-				ODocument term = nodeDoc.field("out_"+NdexClasses.Node_E_represents);
-				if (term != null) {
-					if ( term.getIdentity().toString().equals(termId))
-						return true;
-				}
-			}
-		}
+		ODocument term = nodeDoc.field("out_"+NdexClasses.Node_E_represents);
+		if (term != null && nodeFilter.containsRepresentTermId(term.getIdentity().toString()))
+				return true;
 		
 		return elementHasPropertySatisfyFilter(nodeDoc,nodeFilter);
 	}
