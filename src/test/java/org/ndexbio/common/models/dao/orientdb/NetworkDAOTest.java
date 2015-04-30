@@ -48,7 +48,21 @@ public class NetworkDAOTest {
 		NetworkDAO dao = new NetworkDAO(db);
 	
 		
-		ODocument networkDoc = dao.getRecordByUUIDStr("8c5b2180-b150-11e4-9d4c-90b11c72aefa", NdexClasses.Network);
+		ODocument networkDoc = dao.getRecordByUUIDStr("6915a88d-ea14-11e4-8afc-92907a9fabf5", NdexClasses.Network);
+		
+		Object obj2 = networkDoc.field("in_admin");
+		System.out.println(obj2);
+		
+/*		ORidBag obj = networkDoc.field("out_"+NdexClasses.Network_E_BaseTerms);
+		for ( OIdentifiable o : obj ) {
+		
+		System.out.println(o);
+		} */
+		int i = 0;
+		for ( OIdentifiable id : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
+			ODocument d = (ODocument)id;
+			System.out.println(i++ + "\t"+ d.toString());
+		};
 		
 		Object f = networkDoc.field("out_"+NdexClasses.Network_E_Namespace);
 		if ( f instanceof ORidBag ) {
@@ -81,7 +95,7 @@ public class NetworkDAOTest {
 		System.out.println(s);
 		
 	}
-	
+/*	
 	@Test
 	public void testPropertyGraph() throws JsonProcessingException, NdexException {
 		NetworkDAO dao = new NetworkDAO(db);
@@ -102,7 +116,7 @@ public class NetworkDAOTest {
 		
 		System.out.println( r + "Vertex deleted from graph.");
 	}
-	
+	*/
 	@Test
     public void test2() throws NdexException, JsonProcessingException {
 /*		NetworkDAO dao = new NetworkDAO(db);

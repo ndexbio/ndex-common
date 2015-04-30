@@ -10,6 +10,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.exporter.BioPAXNetworkExporter;
 import org.ndexbio.task.Configuration;
 import org.ndexbio.task.parsingengines.BioPAXParser;
 

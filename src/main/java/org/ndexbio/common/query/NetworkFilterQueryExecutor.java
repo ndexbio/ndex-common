@@ -1,8 +1,6 @@
 package org.ndexbio.common.query;
 
 
-import java.util.Collection;
-
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
@@ -51,11 +49,13 @@ public class NetworkFilterQueryExecutor {
 		else
 				result.setName("");
 		
+		result.setNodeCount(result.getNodes().size());
+		result.setEdgeCount(result.getEdges().size());
+		
 		return result;
 		}
 		
 	}
-	
 	
 
 	private static boolean elementHasPropertySatisfyFilter(ODocument elementDoc, PropertyFilterODB filter) {
@@ -133,19 +133,4 @@ public class NetworkFilterQueryExecutor {
 		
 		return elementHasPropertySatisfyFilter(nodeDoc,nodeFilter);
 	}
-	/*
-	
-	private static boolean propertySatisfyFilter (ODocument propDoc, PropertyFilterODB filter) {
-
-		if ( filter.getPropertySpecList() == null) return true;
-		
-		String propDocId = propDoc.getIdentity().toString();
-		for ( String propId: filter.getPropertySpecList() ) {
-			if ( propDocId.equals(propId)) {
-					return true;
-			}
-		}
-		return false;
-	}
-	*/
 }

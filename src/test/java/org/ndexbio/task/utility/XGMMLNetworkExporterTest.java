@@ -16,11 +16,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.exporter.XGMMLNetworkExporter;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.User;
 import org.ndexbio.task.Configuration;
-import org.ndexbio.task.utility.XGMMLNetworkExporter;
 import org.xml.sax.SAXException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

@@ -1,4 +1,4 @@
-package org.ndexbio.xbel.exporter;
+package org.ndexbio.common.exporter;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

@@ -1,4 +1,4 @@
-package org.ndexbio.task.utility;
+package org.ndexbio.common.exporter;
 
 import java.io.IOException;
 import java.io.OutputStream;

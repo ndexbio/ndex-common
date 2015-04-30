@@ -15,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.exporter.BioPAXNetworkExporter;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.task.Configuration;
 

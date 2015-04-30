@@ -5,13 +5,13 @@ import java.io.IOException;
 
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.exporter.XbelNetworkExporter;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.task.event.NdexTaskEventHandler;
 import org.ndexbio.task.service.NdexJVMDataModelService;
 import org.ndexbio.task.service.NdexTaskModelService;
-import org.ndexbio.xbel.exporter.XbelNetworkExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

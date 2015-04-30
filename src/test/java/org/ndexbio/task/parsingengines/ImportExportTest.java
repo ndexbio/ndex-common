@@ -10,6 +10,9 @@ import java.util.logging.Logger;
 
 import org.junit.Test;
 import org.ndexbio.common.NetworkSourceFormat;
+import org.ndexbio.common.exporter.BioPAXNetworkExporter;
+import org.ndexbio.common.exporter.XGMMLNetworkExporter;
+import org.ndexbio.common.exporter.XbelNetworkExporter;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Edge;
@@ -18,9 +21,6 @@ import org.ndexbio.model.object.network.Node;
 import org.ndexbio.task.event.NdexNetworkState;
 import org.ndexbio.task.service.NdexJVMDataModelService;
 import org.ndexbio.task.service.NdexTaskModelService;
-import org.ndexbio.task.utility.BioPAXNetworkExporter;
-import org.ndexbio.task.utility.XGMMLNetworkExporter;
-import org.ndexbio.xbel.exporter.XbelNetworkExporter;
 import org.xml.sax.SAXException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
