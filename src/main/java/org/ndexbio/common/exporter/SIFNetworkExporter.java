@@ -33,10 +33,8 @@ public class SIFNetworkExporter {
 	}
 
 	public void exportNetwork(Writer writer) throws NdexException, IOException {
-	        int i = 0 ;
 			for ( Edge edge: network.getEdges().values()) {
-				System.out.println(i + "\t" + edge.getId());
-				writer.write(getNodeSIFId(edge.getSubjectId()));
+				writer.write(getNodeSIFId(edge.getSubjectId()).replace('\t', ' ').replace('\n', ' '));
 				writer.write("\t");
 				writer.write(getBaseTermName(edge.getPredicateId(),true));
 				writer.write("\t");
@@ -49,7 +47,6 @@ public class SIFNetworkExporter {
 
 	private String getNodeSIFId(long nodeId) throws NdexException {
 	    Node node = network.getNodes().get(nodeId);
-	    System.out.println("node:" + node.getId());
 	    Long termId = node.getRepresents();
 	    if ( termId != null ) {
 	    	return getSIFIdFromTerm(termId);
@@ -78,6 +75,7 @@ public class SIFNetworkExporter {
 			name = name + "("+i+")";
 		} 
 		
+		name = name.replace('\t', ' ').replace('\n', ' ');
 		//add name to the tables and return the name;
 		uniqueNodeNames.add(name);
 		nodeNameMap.put(node.getId(), name);
@@ -139,8 +137,8 @@ public class SIFNetworkExporter {
 		if ( includeNameSpace && bterm.getNamespaceId()  > 0) {
 			Namespace ns = network.getNamespaces().get(bterm.getNamespaceId());
 			if (ns.getPrefix()!=null)
-				return ns.getPrefix() + ":" + bterm.getName();
-			return ns.getUri() + ":" + bterm.getName();
+				return ns.getPrefix() + ":" + bterm.getName().replace('\t', ' ').replace('\n', ' ');
+			return ns.getUri() + ":" + bterm.getName().replace('\t', ' ').replace('\n', ' ');
 		}
 			
 		return bterm.getName();
