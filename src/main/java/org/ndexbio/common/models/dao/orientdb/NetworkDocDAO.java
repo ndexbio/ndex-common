@@ -843,6 +843,12 @@ public class NetworkDocDAO extends OrientdbDAO {
 	}
  
 	
+	public boolean networkIsReadOnly(String networkUUIDStr) {
+		ODocument doc = getNetworkDocByUUIDString(networkUUIDStr);
+		Long commitId = doc.field(NdexClasses.Network_P_readOnlyCommitId );
+		return commitId != null && commitId.longValue() >0 ;
+	}
+	
     public ODocument getNetworkDocByUUID(UUID id) {
     	return getNetworkDocByUUIDString(id.toString());
     }
