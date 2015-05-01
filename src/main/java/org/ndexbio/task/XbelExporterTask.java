@@ -1,9 +1,7 @@
 package org.ndexbio.task;
 
 import java.io.File;
-import java.io.IOException;
 
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exporter.XbelNetworkExporter;
 import org.ndexbio.model.exceptions.NdexException;

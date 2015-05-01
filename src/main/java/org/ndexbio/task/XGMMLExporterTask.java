@@ -2,19 +2,14 @@ package org.ndexbio.task;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.UUID;
 
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exporter.XGMMLNetworkExporter;
-import org.ndexbio.common.exporter.XbelNetworkExporter;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.task.event.NdexTaskEventHandler;
-import org.ndexbio.task.service.NdexJVMDataModelService;
-import org.ndexbio.task.service.NdexTaskModelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +27,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 public class XGMMLExporterTask extends NdexTask {
 	
 	private static final String NETWORK_EXPORT_PATH = "/opt/ndex/exported-networks/";
-	private static final String NETWORK_EXPORT_EVENT_PATH = "/opt/ndex/exported-networks-events/";
+//	private static final String NETWORK_EXPORT_EVENT_PATH = "/opt/ndex/exported-networks-events/";
 	private static final String XGMML_FILE_EXTENSION = ".xgmml";
-	private static final String EVENT_FILE_EXTENSION = ".csv";
+//	private static final String EVENT_FILE_EXTENSION = ".csv";
 
 	private NdexTaskEventHandler eventHandler;
 	private Status taskStatus;
@@ -74,7 +69,7 @@ public class XGMMLExporterTask extends NdexTask {
 	private void exportNetwork() throws Exception{
 		this.taskStatus = Status.PROCESSING;
 		this.startTask();
-		String exportFilename = this.resolveFilename(this.NETWORK_EXPORT_PATH, this.XGMML_FILE_EXTENSION);
+		String exportFilename = this.resolveFilename(NETWORK_EXPORT_PATH, XGMML_FILE_EXTENSION);
 
 		FileOutputStream out = new FileOutputStream (exportFilename);
 		ODatabaseDocumentTx db = null; 

@@ -48,17 +48,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.orientechnologies.orient.core.id.ORID;
 
 public class NetworkDAO extends NetworkDocDAO {
-	
-	
-	//flag to specify whether need to search in the current un-commited transaction. 
-	//This is used to work around the problem that sql query doesn't search the current 
-	// uncommited transaction in OriantDB.
-//	private boolean searchCurrentTx;
-	
-	private OrientGraph graph;
-	
-//	private static final String readOnlyFlag = "readOnly";
-	
+		
+	private OrientGraph graph;	
 	
 	private static final int CLEANUP_BATCH_SIZE = 50000;
 	
@@ -332,69 +323,6 @@ public class NetworkDAO extends NetworkDocDAO {
         }
 	}
 	
-/*	
-	public Network getNetworkById(UUID id) throws NdexException {
-		ODocument nDoc = getNetworkDocByUUID(id);
-
-        if (nDoc==null) return null;
-   
-        Network network = new Network(); 
-
-        NetworkDAO.setNetworkSummary(nDoc, network);
-        
-        for ( Namespace ns : NetworkDAO.getNamespacesFromNetworkDoc(nDoc, network)) {
-        	network.getNamespaces().put(ns.getId(),ns);
-        }
-
-        // get all baseTerms
-        for (OIdentifiable bTermDoc : new OTraverse()
-    			.field("out_"+ NdexClasses.Network_E_BaseTerms )
-    			.target(nDoc)
-    			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-        	ODocument doc = (ODocument) bTermDoc;
-
-        	if ( doc.getClassName().equals(NdexClasses.BaseTerm) ) {
-        		BaseTerm term = getBaseTerm(doc,network);
-        		network.getBaseTerms().put(term.getId(), term);
-
-        	}
-        }
-
-        
-        for (OIdentifiable nodeDoc : new OTraverse()
-        	.field("out_"+ NdexClasses.Network_E_Nodes )
-        	.target(nDoc)
-        	.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-        	ODocument doc = (ODocument) nodeDoc;
-
-        	if ( doc.getClassName().equals(NdexClasses.Node) ) {
-        		Node node = getNode(doc,network);
-        		network.getNodes().put(node.getId(), node);
- 
-        	}
-        }
-
-        for (OIdentifiable nodeDoc : new OTraverse()
-      	              	.field("out_"+ NdexClasses.Network_E_Edges )
-      	              	.target(nDoc)
-                      	.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-            ODocument doc = (ODocument) nodeDoc;
-         
-            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
-              	   Edge e = getEdgeFromDocument(doc,network);
-              	   network.getEdges().put(e.getId(), e);
-            	 
-            }
-        }
-        
-        return network;
-	}
-	
-*/    
-	
 	
 	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) throws NdexException {
 		ODocument nDoc = getNetworkDocByUUID(networkID);
@@ -433,7 +361,7 @@ public class NetworkDAO extends NetworkDocDAO {
         }
    	    return network; 
 	}
-    
+
     
     
 	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
@@ -501,25 +429,6 @@ public class NetworkDAO extends NetworkDocDAO {
             network.getProperties().add(new NdexPropertyValuePair(
             		NdexClasses.Network_P_source_format, fmt.toString()));
         	
-        
-        //namespace // this is not populated any more.
-/*        List<Namespace> nsList = new ArrayList<>();
-        for (OIdentifiable nodeDoc : new OTraverse()
-   	    	.field("out_"+ NdexClasses.Network_E_Namespace )
-   	    	.target(doc)
-   	    	.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-          ODocument nsDoc = (ODocument) nodeDoc;
-      
-          if ( nsDoc.getClassName().equals(NdexClasses.Namespace)) {
-      
-        	  nsList.add(getNamespaceForPropertyGraph(nsDoc));
-          }
-          if ( ! nsList.isEmpty()) 
-        	  network.getProperties().add(new NdexPropertyValuePair(
-            		PropertyGraphNetwork.namspaces, 
-            		mapper.writeValueAsString(nsList)));
-       }  */
 
         getPropertiesFromDocumentForPropertyGraph(network,doc);
 	}
@@ -745,18 +654,7 @@ public class NetworkDAO extends NetworkDocDAO {
 		return getNamespacesFromNetworkDoc(networkDoc, null);
 	}
 	
-	
-/*	
-    private static Namespace getNamespaceForPropertyGraph(ODocument ns) {
-        Namespace rns = new Namespace();
-        rns.setId((long)ns.field("id"));
-        rns.setPrefix((String)ns.field(NdexClasses.ns_P_prefix));
-        rns.setUri((String)ns.field(NdexClasses.ns_P_uri));
-        
-        getPropertiesFromDocumentForPropertyGraph(rns, ns);
-        return rns;
-     } 
-*/	
+		
     private static final String nodeQuery = "select from (traverse in_" + 
          NdexClasses.Node_E_represents + " from (select from "+ NdexClasses.BaseTerm + " where " +
          NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
@@ -820,13 +718,7 @@ public class NetworkDAO extends NetworkDocDAO {
 
        	return null;
     }
-    /*
-    private ReifiedEdgeTerm getReifiedTermFromDocument(ODocument doc) {
-    	ReifiedEdgeTerm rt = new ReifiedEdgeTerm();
-    	rt.setEdgeId(termEdge);
-    } */
-    
-    
+
  
     private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
     	
@@ -875,15 +767,6 @@ public class NetworkDAO extends NetworkDocDAO {
         return nSummary;
     }
     
-
-/*    
-    public Citation getCitationById(long elementId) {
-    	ODocument doc = getDocumentByElementId(NdexClasses.Citation,elementId);
-    	if ( doc == null) return null;
-    	return getCitationFromDoc(doc);
-    	
-    }
-*/    
     
     private static final String functionTermQuery = "select from (traverse in_" + 
             NdexClasses.FunctionTerm_E_baseTerm + " from (select from "+ NdexClasses.BaseTerm + " where " +
@@ -970,17 +853,7 @@ public class NetworkDAO extends NetworkDocDAO {
 	    return results;
     }
     
-	
-	/**
-	 * This function adds a namespace to a network, unless the namespace is already present.
-	 */
-/*	public int addNetworkNamespace (UUID networkId, Namespace namespace
-			 ) throws  NdexException {
 
-		return 1;
-	} */
-    
-    
     
 	/**************************************************************************
 	    * getNetworkUserMemberships
