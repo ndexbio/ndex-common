@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
-import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.object.network.RawCitation;
@@ -54,7 +53,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class NdexPersistenceService extends PersistenceService {
 	
-	public static final String defaultCitationType="URI";
+	public static final String URICitationType="URI";
 	public static final String pmidPrefix = "pmid:";
 
 

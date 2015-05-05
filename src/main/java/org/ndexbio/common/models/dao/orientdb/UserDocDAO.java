@@ -384,10 +384,8 @@ public class UserDocDAO extends OrientdbDAO {
 
 		try {
 			// Remove quotes around the password
-			if (password.startsWith("\""))
-				password = password.substring(1);
-			if (password.endsWith("\""))
-				password = password.substring(0, password.length() - 1);
+			if (password.startsWith("\"") && password.endsWith("\"") )
+				password = password.substring(1, password.length() - 2);
 
 			user.fields("password", Security.hashText(password.trim()),
 					    NdexClasses.ExternalObj_mTime, new Date());
@@ -520,22 +518,17 @@ public class UserDocDAO extends OrientdbDAO {
 
 		try {
 			// updatedUser.getDescription().isEmpty();
-			if (!Strings.isNullOrEmpty(updatedUser.getDescription()))
-				user.field("description", updatedUser.getDescription());
-			if (!Strings.isNullOrEmpty(updatedUser.getWebsite()))
-				user.field("websiteURL", updatedUser.getWebsite());
-			if (!Strings.isNullOrEmpty(updatedUser.getImage()))
-				user.field("imageURL", updatedUser.getImage());
-			if (!Strings.isNullOrEmpty(updatedUser.getFirstName()))
-				user.field("firstName", updatedUser.getFirstName());
-			if (!Strings.isNullOrEmpty(updatedUser.getLastName()))
-				user.field("lastName", updatedUser.getLastName());
-			user.field(NdexClasses.ExternalObj_mTime, updatedUser.getModificationTime());
+				user.fields("description", updatedUser.getDescription(),
+						"websiteURL", updatedUser.getWebsite(),
+						"imageURL", updatedUser.getImage(),
+						"firstName", updatedUser.getFirstName(),
+						"lastName", updatedUser.getLastName(),
+						NdexClasses.ExternalObj_mTime, updatedUser.getModificationTime());
 
 			user = user.save();
 			logger.info("Updated user profile with UUID " + id);
 
-			return UserDAO.getUserFromDocument(user);
+			return getUserFromDocument(user);
 
 		} catch (Exception e) {
 

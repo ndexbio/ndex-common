@@ -283,14 +283,14 @@ public class SifParser implements IParsingEngine {
 							if ( pubmedIdTokens.length ==2 ) {
 								if ( pubmedIdTokens[0].equals("Pubmed")) {
 									Long citationId = this.persistenceService.getCitationId(
-										"", NdexPersistenceService.defaultCitationType,
+										"", NdexPersistenceService.URICitationType,
 										NdexPersistenceService.pmidPrefix + pubmedIdTokens[1], null);
 								//	this.pubmedIdSet.add(pubmedIdTokens[1]);
 									this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
 								
 								} else if ( pubmedIdTokens[0].equals("ISBN")){
 									Long citationId = this.persistenceService.getCitationId(
-											"", NdexPersistenceService.defaultCitationType, pubMedId, null);
+											"", NdexPersistenceService.URICitationType, pubMedId, null);
 //										this.pubmedIdSet.add(pubmedIdTokens[1]);
 										this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
 								} else {	
@@ -301,7 +301,7 @@ public class SifParser implements IParsingEngine {
 								String pubmedId = pubmedIdTokens[0];
 								if ( pubmedId.length() > 0 ) {
 									Long citationId = this.persistenceService.getCitationId(
-										"", NdexPersistenceService.defaultCitationType,
+										"", NdexPersistenceService.URICitationType,
 										NdexPersistenceService.pmidPrefix + pubmedIdTokens[0], null);
 									this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
 								}

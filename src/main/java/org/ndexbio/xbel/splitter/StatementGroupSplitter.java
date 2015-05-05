@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 
 public class StatementGroupSplitter extends XBelSplitter {
-	private static final String xmlElement = "statementGroup";
+	private static final String xmlStatementGroup = "statementGroup";
 	
 	public static final String nameAttr = "name";
 	public static final String commentAttr = "comment";
@@ -43,7 +43,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 
 	public StatementGroupSplitter(JAXBContext jaxbContext,
 			NdexPersistenceService networkService) {
-		super(jaxbContext, xmlElement);
+		super(jaxbContext, xmlStatementGroup);
 		this.networkService = networkService;
 		counter=0;
 	}
@@ -153,8 +153,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 		}
 	}
 
-	private Map<String, String> annotationsFromAnnotationGroup(
-			AnnotationGroup annotationGroup) {
+	private static Map<String, String> annotationsFromAnnotationGroup ( AnnotationGroup annotationGroup) {
 		if (null == annotationGroup)
 			return null;
 		Map<String,String> annotationMap = new HashMap<>();
@@ -205,7 +204,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 		//		String idType = c.getType().value();
 				if ( citationType == CitationType.PUB_MED) {
 					return this.networkService.getCitationId
-							(c.getName(), NdexPersistenceService.defaultCitationType, 
+							(c.getName(), NdexPersistenceService.URICitationType, 
 									NdexPersistenceService.pmidPrefix+c.getReference(), 
 								(c.getAuthorGroup() == null ? null : c.getAuthorGroup().getAuthor())	
 						        );
@@ -312,7 +311,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 
 			if (null != r) {
 				Long predicateId = this.networkService.getBaseTermId(
-						XbelParser.belPrefix + ":"+statement.getRelationship().name());
+						XbelParser.belPrefix + ":"+r.value());
 
 				Long objectNodeId = this.processStatementObject(statement
 						.getObject(), localSupportId, localCitationId, annotations, level);
@@ -351,8 +350,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 			return null;
 		}
 		try {
-			Long representedTermId = this.processFunctionTerm(sub
-					.getTerm());
+			Long representedTermId = this.processFunctionTerm(sub.getTerm());
 			
 			Long subjectNodeId ;
 			if ( isOrphanNode ) {
@@ -412,7 +410,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 			throws ExecutionException, NdexException {
 		// XBEL "Term" corresponds to NDEx FunctionTerm
 		
-		Long functionId = this.networkService.getBaseTermId(XbelParser.belPrefix +":"+term.getFunction());
+		Long functionId = this.networkService.getBaseTermId(XbelParser.belPrefix +":"+term.getFunction().value());
 
 		List<Long> argumentList = this.processInnerTerms(term);
 
@@ -436,7 +434,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 	private List<Long> processInnerTerms(Term term) throws ExecutionException,
 			NdexException {
 
-		List<Long> argumentList = new ArrayList<Long> ();
+		List<Long> argumentList = new ArrayList<> ();
 
 		for (Object item : term.getParameterOrTerm()) {
 			if (item instanceof Term) {

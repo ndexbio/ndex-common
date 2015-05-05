@@ -426,7 +426,7 @@ public class GroupDAO extends GroupDocDAO {
 		}
 		
 	}
-	
+
 	/**************************************************************************
 	    * Update a group
 	    * 
@@ -461,16 +461,16 @@ public class GroupDAO extends GroupDocDAO {
 		
 		try {
 			//updatedGroup.getDescription().isEmpty();
-			if(!Strings.isNullOrEmpty(updatedGroup.getDescription())) group.field("description", updatedGroup.getDescription());
-			if(!Strings.isNullOrEmpty(updatedGroup.getWebsite())) group.field("websiteURL", updatedGroup.getWebsite());
-			if(!Strings.isNullOrEmpty(updatedGroup.getImage())) group.field("imageURL", updatedGroup.getImage());
-			if(!Strings.isNullOrEmpty(updatedGroup.getOrganizationName())) group.field("organizationName", updatedGroup.getOrganizationName()); 
-			group.field(NdexClasses.ExternalObj_mTime, new Date());
+			group.fields("description", updatedGroup.getDescription(),
+					"websiteURL", updatedGroup.getWebsite(),
+					"imageURL", updatedGroup.getImage(),
+					"organizationName", updatedGroup.getOrganizationName(),
+					NdexClasses.ExternalObj_mTime, new Date());
 
 			group = group.save();
 			logger.info("Updated group profile with UUID " + groupId);
 			
-			return GroupDAO.getGroupFromDocument(group);
+			return getGroupFromDocument(group);
 			
 		} catch (Exception e) {
 			
@@ -480,6 +480,7 @@ public class GroupDAO extends GroupDocDAO {
 		} 
 	}
 	
+
 	/**
 	 * Check if the member has given permission in a group.
 	 * @param group the group to check this member in

@@ -137,25 +137,25 @@ public class XbelNetworkExporter {
 		}
 	}
 
-	private void setAuditExpectedMetrics(Network subNetwork) {
+	private void setAuditExpectedMetrics(Network aSubNetwork) {
 		// edge count
 
 		this.auditService.increaseExpectedMetricValue("edge count",
-				(long) subNetwork.getEdgeCount());
+				(long) aSubNetwork.getEdgeCount());
 
 		this.auditService.increaseExpectedMetricValue(
-				"function term count", (long)subNetwork.getFunctionTerms().size());
+				"function term count", (long)aSubNetwork.getFunctionTerms().size());
 		this.auditService.increaseExpectedMetricValue(
-				"base term count", (long)subNetwork.getBaseTerms().size());
+				"base term count", (long)aSubNetwork.getBaseTerms().size());
 		this.auditService.increaseExpectedMetricValue(
-				"reified edge count", (long)subNetwork.getReifiedEdgeTerms().size());
+				"reified edge count", (long)aSubNetwork.getReifiedEdgeTerms().size());
 
 		this.auditService.increaseExpectedMetricValue("citation count",
-				(long) subNetwork.getCitations().size());
+				(long) aSubNetwork.getCitations().size());
 		this.auditService.increaseExpectedMetricValue("node count",
-				(long) subNetwork.getNodeCount());
+				(long) aSubNetwork.getNodeCount());
 		this.auditService.increaseExpectedMetricValue("support count",
-				(long) subNetwork.getSupports().size());
+				(long) aSubNetwork.getSupports().size());
 		logger.info("Expected values set in Audit Service");
 
 	}
@@ -339,7 +339,7 @@ public class XbelNetworkExporter {
 		processNameNCommentOnStatementGroup(sg, modelCitation);
 		
 		
- 		this.createXbelCitation(ag, modelCitation);
+ 		XbelNetworkExporter.createXbelCitation(ag, modelCitation);
 		sg.setAnnotationGroup(ag);
 		
 		// Setup tracker so that we can tell which nodes are orphan nodes
@@ -407,7 +407,7 @@ public class XbelNetworkExporter {
 		   this.auditService.incrementObservedMetricValue("support count");
 			
 		   // add support annotations
-		   this.processSupportAnnotations(iag, support);
+//		   this.processSupportAnnotations(iag, support);
 
 		   isg.setAnnotationGroup(iag);
 		   sg.getStatementGroup().add(isg);
@@ -466,8 +466,7 @@ public class XbelNetworkExporter {
 				ag.getAnnotationOrEvidenceOrCitation().add(evidence);
 				// increment audit support count
 				this.auditService.incrementObservedMetricValue("support count");
-				// add support annotations
-				this.processSupportAnnotations(ag, support);
+
 				supportStatementGroup.setAnnotationGroup(ag);
 				outerSG.getStatementGroup().add(supportStatementGroup);
 //				sgStack.peek().getStatementGroup().add(supportStatementGroup);
@@ -521,17 +520,17 @@ public class XbelNetworkExporter {
 	}
 	
 	
-	private void processSupportAnnotations(AnnotationGroup ag, Support support) {
+//	private static void processSupportAnnotations(AnnotationGroup ag, Support support) {
 		//TODO: commented out by cj. need to review it.
 		// because we dont have annotations on support now. so we commented this function out. --cj
-		/*
+/*		
 		Annotation annotation = new Annotation();
 		annotation.setRefID("evidence");
 		annotation.setValue(support.getText());
 		System.out.println("Support Annotation " + support.getText());
 		ag.getAnnotationOrEvidenceOrCitation().add(annotation);
-		 */
-	}
+*/		 
+//	}
 
 	/*
 	 * The collection of nodes and edges which reference the same support (i.e. evidence)
@@ -607,7 +606,7 @@ public class XbelNetworkExporter {
 		// increment the audit edge count
 		this.auditService.incrementObservedMetricValue("node count");
 	
-		this.processStatementAnnotations(stmt, node);
+		XbelNetworkExporter.processStatementAnnotations(stmt, node);
 
 		this.processTermSubject(stmt, node.getId());
 	}
@@ -741,7 +740,7 @@ public class XbelNetworkExporter {
 		// set the function attribute for the current term
 		BaseTerm bt = this.subNetwork.getBaseTerms().get(
 				ft.getFunctionTermId());
-		this.xbelTermStack.peek().setFunction(Function.valueOf(bt.getName()));
+		this.xbelTermStack.peek().setFunction(Function.fromValue(bt.getName()));
 		// increment audit base term count
 		this.auditService.incrementObservedMetricValue("base term count");
 		// remove base term from list of unprocess terms
@@ -800,14 +799,14 @@ public class XbelNetworkExporter {
 			// add the base term to the current Statement as a relationship
 			// attribute
 			stmt.setRelationship(
-					Relationship.valueOf(bt.getName()));
+					Relationship.fromValue(bt.getName()));
 			// increment the audit base term count
 			this.auditService.incrementObservedMetricValue("base term count");
 		}
 
 	}
 
-	private String createXbelCitation(AnnotationGroup annotGroup,
+	private static String createXbelCitation(AnnotationGroup annotGroup,
 			org.ndexbio.model.object.network.Citation modelCitation) {
 		Citation xbelCitation = new Citation();
 

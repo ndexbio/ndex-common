@@ -13,6 +13,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
@@ -97,6 +98,14 @@ public class NdexNetworkCloneService extends PersistenceService {
 	 */
 	public NetworkSummary updateNetwork() throws NdexException, ExecutionException {
 		try {
+			
+			// create new network and set the isComplete flag to false 
+			
+			//move the UUID from old network to new network, set new one's isComplete and set the old one to isDeleted.
+			
+			// added a delete old network task.
+			
+			
 			// need to keep this order because of the dependency between objects.
 			updateNetworkNode ();
 			
@@ -124,7 +133,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			throw new NdexException("Network with UUID " + this.srcNetwork.getExternalId()
 					+ " is not found in this server");
 		
-		this.network = NetworkDAO.getNetworkSummary(networkDoc);
+		this.network = NetworkDocDAO.getNetworkSummary(networkDoc);
 		
 		this.network.setName(srcNetwork.getName());
 		this.network.setEdgeCount(srcNetwork.getEdges().size());
