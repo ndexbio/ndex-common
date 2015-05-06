@@ -8,9 +8,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
@@ -34,7 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public abstract class PersistenceService {
+public abstract class PersistenceService implements AutoCloseable {
 
 	//TODO: turn this into configuration property
 	private static final long CACHE_SIZE = 200000L;
@@ -705,7 +703,8 @@ public abstract class PersistenceService {
 
 		
 	  public void close () {
-		  this.localConnection.close();
+          this.graph.shutdown();
+//		  this.localConnection.close();
 //		  this.database.close();
 	  }
 }

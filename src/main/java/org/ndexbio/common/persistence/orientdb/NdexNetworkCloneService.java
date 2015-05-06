@@ -6,19 +6,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.Task;
+import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -30,6 +32,7 @@ import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.NdexServerQueue;
 
 import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -45,9 +48,6 @@ public class NdexNetworkCloneService extends PersistenceService {
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
 
 
-//	private ODocument networkDoc;
-	
-//    private ODocument ownerDoc;
     private String ownerAccount;
     
     // all these mapping are for mapping from source Id to Ids in the newly persisted graph.
@@ -67,7 +67,7 @@ public class NdexNetworkCloneService extends PersistenceService {
      * 2. Create New network
      */
     
-	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName) throws NdexException {
+	public NdexNetworkCloneService(NdexDatabase db, final Network sourceNetwork, String ownerAccountName) throws NdexException {
         super(db);
 		
 		Preconditions.checkNotNull(sourceNetwork.getName(),"A network title is required");
@@ -100,21 +100,38 @@ public class NdexNetworkCloneService extends PersistenceService {
 		try {
 			
 			// create new network and set the isComplete flag to false 
+			cloneNetworkCore();
+			
+			UUID newUUID = this.network.getExternalId();
+			this.network.setExternalId(this.srcNetwork.getExternalId());
 			
 			//move the UUID from old network to new network, set new one's isComplete and set the old one to isDeleted.
 			
-			// added a delete old network task.
+			ODocument srcNetworkDoc = networkDAO.getNetworkDocByUUID(this.srcNetwork.getExternalId());
+			if (srcNetworkDoc == null)
+				throw new NdexException("Network with UUID " + this.srcNetwork.getExternalId()
+						+ " is not found in this server");
 			
+			srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
+					  NdexClasses.ExternalObj_isDeleted,true).save();
 			
-			// need to keep this order because of the dependency between objects.
-			updateNetworkNode ();
-			
-			cloneNetworkElements();
-
-//			addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
-		
 			this.networkDoc.reload();
-			this.networkDoc.field(NdexClasses.Network_P_isComplete , true);
+			networkDoc.fields(NdexClasses.ExternalObj_ID, this.srcNetwork.getExternalId(),
+					          NdexClasses.Network_P_isComplete,true)
+			.save();
+
+			// find the network owner in the database
+			UserDAO userdao = new UserDAO(localConnection, graph);
+			ODocument ownerDoc = userdao.getRecordByAccountName(this.ownerAccount, null) ;
+			OrientVertex ownerV = graph.getVertex(ownerDoc);
+			ownerV.addEdge(NdexClasses.E_admin, networkVertex);
+			this.localConnection.commit();
+	
+			// added a delete old network task.
+			Task task = new Task();
+			task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
+			task.setResource(newUUID.toString());
+			NdexServerQueue.INSTANCE.addSystemTask(task);
 			
 			return this.network;
 		} finally {
@@ -123,6 +140,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 	
+/*	
 	private void updateNetworkNode() throws NdexException, ExecutionException {
 		if ( this.srcNetwork.getExternalId() == null)
 			throw new NdexException("Source network doesn't have a UUID. ");
@@ -183,7 +201,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		logger.info("NDEx network titled: " +srcNetwork.getName() +" has been updated.");
 
 	}
-
+*/
 	private void cloneNetworkElements() throws NdexException, ExecutionException {
 		try {
 			// need to keep this order because of the dependency between objects.
@@ -203,8 +221,6 @@ public class NdexNetworkCloneService extends PersistenceService {
 			network.setIsLocked(false);
 			network.setIsComplete(true);
 		
-			networkDoc.field(NdexClasses.Network_P_isComplete,true)
-				.save();
 
 			logger.info("Updating network " + network.getName() + " is complete.");
 		} finally {
@@ -215,12 +231,12 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 	public NetworkSummary cloneNetwork() throws NdexException, ExecutionException {
 		try {
-			// need to keep this order because of the dependency between objects.
-			cloneNetworkNode ();
-
-			cloneNetworkElements();
-			this.localConnection.commit();
 			
+			cloneNetworkCore();
+			
+			networkDoc.field(NdexClasses.Network_P_isComplete,true)
+			.save();
+
 			// find the network owner in the database
 			UserDAO userdao = new UserDAO(localConnection, graph);
 			ODocument ownerDoc = userdao.getRecordByAccountName(this.ownerAccount, null) ;
@@ -233,6 +249,20 @@ public class NdexNetworkCloneService extends PersistenceService {
 			logger.info("Network "+ network.getName() + " with UUID:"+ network.getExternalId() +" has been saved. ");
 		}
 	}
+	
+	
+	/**
+	 * clone the network without the permission links and isComplete flag.
+	 * @throws NdexException
+	 * @throws ExecutionException
+	 */
+	private void cloneNetworkCore() throws NdexException, ExecutionException {
+			cloneNetworkNode ();
+
+			cloneNetworkElements();
+			this.localConnection.commit();
+	}
+	
 	
 	private void cloneNetworkNode() throws NdexException, ExecutionException  {
 
