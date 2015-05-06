@@ -15,7 +15,6 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
-import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
@@ -163,68 +162,6 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 	}
 	
-/*	
-	private void updateNetworkNode() throws NdexException, ExecutionException {
-		if ( this.srcNetwork.getExternalId() == null)
-			throw new NdexException("Source network doesn't have a UUID. ");
-		
-		this.networkDoc = networkDAO.getNetworkDocByUUID(this.srcNetwork.getExternalId());
-		
-		if (networkDoc == null)
-			throw new NdexException("Network with UUID " + this.srcNetwork.getExternalId()
-					+ " is not found in this server");
-		
-		this.network = NetworkDocDAO.getNetworkSummary(networkDoc);
-		
-		this.network.setName(srcNetwork.getName());
-		this.network.setEdgeCount(srcNetwork.getEdges().size());
-		this.network.setNodeCount(srcNetwork.getNodes().size());
-		this.network.setDescription(srcNetwork.getDescription());
-		this.network.setVersion(srcNetwork.getVersion());
-		
-		// make description is not null so that the Lucene index will index this field.
-		if ( this.network.getDescription() == null)
-			this.network.setDescription("");
-		
-		networkDoc = networkDoc.fields(
-		          NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
-		          NdexClasses.Network_P_name, srcNetwork.getName(),
-		          NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
-		          NdexClasses.Network_P_nodeCount, network.getNodeCount(),
-		          NdexClasses.Network_P_desc,srcNetwork.getDescription(),
-		          NdexClasses.Network_P_version,srcNetwork.getVersion(),
-		          NdexClasses.Network_P_isLocked, false,
-		          NdexClasses.Network_P_isComplete, false);
-		
-		
-		NetworkSourceFormat fmt = removeNetworkSourceFormat(srcNetwork);
-		if ( fmt!=null)
-			networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
-	
-		networkDoc = networkDoc.save();
-
-		this.localConnection.commit();
-		
-		networkVertex = graph.getVertex(networkDoc);
-		
-		networkDAO.deleteNetworkProperties(networkDoc);
-
-		networkDAO.deleteNetworkElements(network.getExternalId().toString());
-		
-		networkVertex.getRecord().reload();
-
-		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
-
-        this.network.getProperties().addAll(srcNetwork.getProperties());
-		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
-		
-		networkDoc.reload();
-		networkVertex.getRecord().reload();
-
-		logger.info("NDEx network titled: " +srcNetwork.getName() +" has been updated.");
-
-	}
-*/
 	private void cloneNetworkElements() throws NdexException, ExecutionException {
 		try {
 			// need to keep this order because of the dependency between objects.
