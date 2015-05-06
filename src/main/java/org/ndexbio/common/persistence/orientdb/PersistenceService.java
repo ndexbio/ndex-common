@@ -237,18 +237,34 @@ public abstract class PersistenceService implements AutoCloseable {
 
 		if ( presentationProperties !=null ) {
 			for (SimplePropertyValuePair e : presentationProperties) {
-				ODocument pDoc = this.createSimplePropertyDoc(e.getName(),e.getValue());
+				ODocument pDoc = createSimplePropertyDoc(e.getName(),e.getValue());
                OrientVertex pV = graph.getVertex(pDoc);
                vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
 			}
-//			this.network.getPresentationProperties().addAll(presentationProperties);
 		}
 	}
 
+	
+	protected void addPresentationPropertiesToVertex (OrientVertex vertex, Collection<SimplePropertyValuePair> presentationProperties) {
+
+		if ( presentationProperties !=null ) {
+			for (SimplePropertyValuePair e : presentationProperties) {
+				ODocument pDoc = createSimplePropertyDoc(e.getName(),e.getValue());
+               OrientVertex pV = graph.getVertex(pDoc);
+               vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
+			}
+		}
+	}
+	
 
 	 protected OrientVertex createNdexPropertyVertex(NdexPropertyValuePair e) throws NdexException, ExecutionException {
 		 Long baseTermId = this.getBaseTermId(e.getPredicateString());
 		 ODocument btDoc = this.elementIdCache.get(baseTermId);
+		 
+		 return createNdexPropertyVertex(e, baseTermId, btDoc);
+		}
+
+	 protected OrientVertex createNdexPropertyVertex(NdexPropertyValuePair e, Long baseTermId, ODocument btDoc)  {
 		 OrientVertex btV = graph.getVertex(btDoc);
 		 
  		 ODocument pDoc = new ODocument(NdexClasses.NdexProperty)
@@ -264,7 +280,8 @@ public abstract class PersistenceService implements AutoCloseable {
  		 return pV;
 		}
 
-	 protected ODocument createSimplePropertyDoc(String key, String value) {
+	 
+	 protected static ODocument createSimplePropertyDoc(String key, String value) {
 			ODocument pDoc = new ODocument(NdexClasses.SimpleProperty)
 				.fields(NdexClasses.SimpleProp_P_name,key,
 						NdexClasses.SimpleProp_P_value, value)
@@ -702,7 +719,8 @@ public abstract class PersistenceService implements AutoCloseable {
     }
 
 		
-	  public void close () {
+	  @Override
+	public void close () {
           this.graph.shutdown();
 //		  this.localConnection.close();
 //		  this.database.close();

@@ -2,6 +2,7 @@ package org.ndexbio.common.persistence.orientdb;
 
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.BaseTerm;
@@ -529,6 +531,35 @@ public class NdexNetworkCloneService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
         return nodeId;		
 	}
+	
+	
+	@Override
+	protected void addPropertiesToVertex(OrientVertex vertex, Collection<NdexPropertyValuePair> properties, 
+			Collection<SimplePropertyValuePair> presentationProperties ) throws NdexException, ExecutionException {
+		
+		if ( properties != null) {
+			for (NdexPropertyValuePair e : properties) {
+				Long baseTermId = baseTermIdMap.get(e.getPredicateId());
+				if ( baseTermId == null )
+					throw new NdexException ("Baseterm id " + e.getPredicateId() + " not defined in baseTerm table.");
+				
+				ODocument bTermDoc = this.elementIdCache.get(baseTermId);
+
+				String name = bTermDoc.field(NdexClasses.BTerm_P_name);
+				if ( !name.equals(e.getPredicateString())) {
+					throw new NdexException ("Baseterm name of " + e.getPredicateId() +
+							" doesn't match with property name " + e.getPredicateString());
+				}
+				OrientVertex pV = this.createNdexPropertyVertex(e, baseTermId, bTermDoc);
+               vertex.addEdge(NdexClasses.E_ndexProperties, pV);
+			}
+		
+		}
+		
+		addPresentationPropertiesToVertex ( vertex, presentationProperties);
+	}
+	
+	
 	
 	private void cloneEdges() throws NdexException, ExecutionException {
 		if ( srcNetwork.getEdges() != null) {
