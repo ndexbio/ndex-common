@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
@@ -102,16 +103,23 @@ public class NdexNetworkCloneService extends PersistenceService {
 			// create new network and set the isComplete flag to false 
 			cloneNetworkCore();
 			
-			UUID newUUID = this.network.getExternalId();
 			this.network.setExternalId(this.srcNetwork.getExternalId());
 			
-			//move the UUID from old network to new network, set new one's isComplete and set the old one to isDeleted.
-			
+			// get the old network head node
 			ODocument srcNetworkDoc = networkDAO.getNetworkDocByUUID(this.srcNetwork.getExternalId());
 			if (srcNetworkDoc == null)
 				throw new NdexException("Network with UUID " + this.srcNetwork.getExternalId()
 						+ " is not found in this server");
 			
+			// copy the permission from source to target.
+			copyNetworkPermissions(srcNetworkDoc, networkVertex);
+			this.localConnection.commit();
+			
+			//move the UUID from old network to new network, set new one's isComplete and set the old one to isDeleted.
+			
+			localConnection.begin();
+			UUID newUUID = NdexUUIDFactory.INSTANCE.getNDExUUID();
+
 			srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
 					  NdexClasses.ExternalObj_isDeleted,true).save();
 			
@@ -119,14 +127,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 			networkDoc.fields(NdexClasses.ExternalObj_ID, this.srcNetwork.getExternalId(),
 					          NdexClasses.Network_P_isComplete,true)
 			.save();
+			localConnection.commit();
 
-			// find the network owner in the database
-			UserDAO userdao = new UserDAO(localConnection, graph);
-			ODocument ownerDoc = userdao.getRecordByAccountName(this.ownerAccount, null) ;
-			OrientVertex ownerV = graph.getVertex(ownerDoc);
-			ownerV.addEdge(NdexClasses.E_admin, networkVertex);
-			this.localConnection.commit();
-	
 			// added a delete old network task.
 			Task task = new Task();
 			task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
@@ -138,6 +140,25 @@ public class NdexNetworkCloneService extends PersistenceService {
 			this.localConnection.commit();
 
 		}
+	}
+	
+	
+	private void copyNetworkPermissions(ODocument srcNetworkDoc, OrientVertex targetNetworkVertex) {
+		
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.E_admin);
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.account_E_canEdit);
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.account_E_canRead);
+
+	}
+	
+	private void copyNetworkPermissionAux(ODocument srcNetworkDoc, OrientVertex targetNetworkVertex, String permissionEdgeType) {
+		
+		for ( ODocument rec : Helper.getDocumentLinks(srcNetworkDoc, "in_", permissionEdgeType)) {
+			OrientVertex userV = graph.getVertex(rec);
+			targetNetworkVertex.reload();
+			userV.addEdge(permissionEdgeType, targetNetworkVertex);
+		}
+		
 	}
 	
 /*	
