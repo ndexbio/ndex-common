@@ -55,7 +55,7 @@ public class NetworkFilterQueryExecutorFactory {
 
 		for ( PropertySpecification spec : filter.getPropertySpecList()) {
 			String value = spec.getValue();
-			String propName = spec.getProperty();
+			String propName = spec.getName();
 			if ( propName.equalsIgnoreCase(edgePredicatePropertyName) ) {
 				Iterable<ODocument> bTerms = Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms);
 				if ( bTerms !=null) {
@@ -93,7 +93,7 @@ public class NetworkFilterQueryExecutorFactory {
 		
 		for (PropertySpecification spec: filter.getPropertySpecList()) {
 			String value = spec.getValue();
-			String propName = spec.getProperty();
+			String propName = spec.getName();
 			if ( propName.equalsIgnoreCase(nodePropertyNodeName) ) {
 		       odbFilter.addNodeName(value);
 			} else if (propName.equalsIgnoreCase(nodePropertyNameORTerm)) {
