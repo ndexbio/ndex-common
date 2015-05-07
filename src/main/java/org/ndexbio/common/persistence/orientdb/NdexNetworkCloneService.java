@@ -3,6 +3,7 @@ package org.ndexbio.common.persistence.orientdb;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +115,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			
 			// copy the permission from source to target.
 			copyNetworkPermissions(srcNetworkDoc, networkVertex);
+			
 			this.localConnection.commit();
 			
 			//move the UUID from old network to new network, set new one's isComplete and set the old one to isDeleted.
@@ -125,7 +127,11 @@ public class NdexNetworkCloneService extends PersistenceService {
 					  NdexClasses.ExternalObj_isDeleted,true).save();
 			
 			this.networkDoc.reload();
+			// copy the creationTime and visibility
 			networkDoc.fields(NdexClasses.ExternalObj_ID, this.srcNetwork.getExternalId(),
+					NdexClasses.ExternalObj_cTime, srcNetworkDoc.field(NdexClasses.ExternalObj_cTime),
+					NdexClasses.Network_P_visibility, srcNetworkDoc.field(NdexClasses.Network_P_visibility),
+					NdexClasses.ExternalObj_mTime, new Date() ,
 					          NdexClasses.Network_P_isComplete,true)
 			.save();
 			localConnection.commit();

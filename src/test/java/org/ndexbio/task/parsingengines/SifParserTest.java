@@ -1,34 +1,23 @@
 package org.ndexbio.task.parsingengines;
 
-import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.task.Configuration;
-import org.ndexbio.task.utility.BulkFileUploadUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public class SifParserTest {
 
-	private static ODatabaseDocumentTx db;
-	private static String user = "Support";
 	
-	private static final Logger logger = LoggerFactory.getLogger(BulkFileUploadUtility.class);
+	private static final Logger logger = LoggerFactory.getLogger(SifParserTest.class);
 
 	
 /*	@BeforeClass
@@ -76,14 +65,6 @@ public class SifParserTest {
 				db,"Calcineurin-regulated_NFAT-dependent_transcription_in_lymphocytes", "");
 		parser.parseFile();
 
-//		SifParser parser = new SifParser("/home/chenjing/working/ndex/networks/reactome46_human/Meiosis.SIF","Support");
-	//	SifParser parser = new SifParser("/home/chenjing/working/ndex/networks/reactome46_human/Metabolism_of_RNA.SIF","Support");
-		
-//		SifParser parser = new SifParser("/home/chenjing/working/ndex/networks/reactome46_human/Cell_Cycle.SIF","Support");
-//		SifParser parser = new SifParser("/home/chenjing/working/ndex/networks/reactome46_human/Signaling_Pathways.SIF","Support");
-//		SifParser parser = new SifParser("/home/chenjing/working/ndex/networks/reactome46_human/Circadian_Clock.SIF","Support");
-//		parser.parseFile();
-		
 		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(
 				Paths.get("/home/chenjing/working/ndex/networks/reactome46_human"))) 
 		{

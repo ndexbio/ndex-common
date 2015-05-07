@@ -38,6 +38,7 @@ import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.NdexProvenanceEventType;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.User;
@@ -145,8 +146,8 @@ public class BioPAXParser implements IParsingEngine {
 			this.persistenceService.persistNetwork();
 
             ProvenanceEntity provEntity = ProvenanceHelpers
-                    .createProvenanceHistory(currentNetwork, uri,
-                            "File Upload", currentNetwork.getCreationTime(),
+                    .createProvenanceHistory(currentNetwork, uri, 
+                    		NdexProvenanceEventType.FILE_UPLOAD, currentNetwork.getCreationTime(),
                             (ProvenanceEntity) null);
             Helper.populateProvenanceEntity(provEntity, currentNetwork);
             provEntity.getCreationEvent().setEndedAtTime(
