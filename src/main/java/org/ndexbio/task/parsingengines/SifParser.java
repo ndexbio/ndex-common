@@ -18,6 +18,7 @@ import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.NdexProvenanceEventType;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
@@ -141,7 +142,8 @@ public class SifParser implements IParsingEngine {
 			this.persistenceService.persistNetwork();
 
             ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
-                    uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+                    uri, NdexProvenanceEventType.FILE_UPLOAD, currentNetwork.getCreationTime(), 
+                    (ProvenanceEntity)null);
             Helper.populateProvenanceEntity(provEntity, currentNetwork);
             provEntity.getCreationEvent().setEndedAtTime(currentNetwork.getModificationTime());
 

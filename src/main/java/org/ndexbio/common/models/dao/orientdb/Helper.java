@@ -258,21 +258,30 @@ public class Helper {
 
 	public static ODocument updateNetworkProfile(ODocument doc, NetworkSummary newSummary){
 	
-	   if ( newSummary.getName() != null)
-		doc.field( NdexClasses.Network_P_name, newSummary.getName());
+	   boolean needResetModificationTime = false;
+	   
+	   if ( newSummary.getName() != null) {
+		 doc.field( NdexClasses.Network_P_name, newSummary.getName());
+		 needResetModificationTime = true;
+	   }
 		
-	  if ( newSummary.getDescription() != null)
+	  if ( newSummary.getDescription() != null) {
 		doc.field( NdexClasses.Network_P_desc, newSummary.getDescription());
+		needResetModificationTime = true;
+	  }
 	
-	  if ( newSummary.getVersion()!=null )
+	  if ( newSummary.getVersion()!=null ) {
 		doc.field( NdexClasses.Network_P_version, newSummary.getVersion());
-	
+		needResetModificationTime = true;
+	  }
+	  
 	  if ( newSummary.getVisibility()!=null )
 		doc.field( NdexClasses.Network_P_visibility, newSummary.getVisibility());
-	
-	  doc.field(NdexClasses.ExternalObj_mTime, new Date())
-	     .save();
 	  
+	  if (needResetModificationTime) 
+	     doc.field(NdexClasses.ExternalObj_mTime, new Date());
+      
+	  doc.save();
 	  return doc;
 	}
 	

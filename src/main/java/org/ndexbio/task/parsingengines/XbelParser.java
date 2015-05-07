@@ -25,6 +25,7 @@ import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.NdexProvenanceEventType;
 import org.ndexbio.model.object.User;
 import org.ndexbio.xbel.model.Header;
 import org.ndexbio.model.object.ProvenanceEntity;
@@ -130,7 +131,8 @@ public class XbelParser implements IParsingEngine
             this.networkService.persistNetwork();
 
             ProvenanceEntity provEntity = ProvenanceHelpers.createProvenanceHistory(currentNetwork,
-                    uri, "File Upload", currentNetwork.getCreationTime(), (ProvenanceEntity)null);
+                    uri, NdexProvenanceEventType.FILE_UPLOAD, currentNetwork.getCreationTime(), 
+                    (ProvenanceEntity)null);
             Helper.populateProvenanceEntity(provEntity, currentNetwork);
             provEntity.getCreationEvent().setEndedAtTime(currentNetwork.getModificationTime());
 
