@@ -2,20 +2,14 @@ package org.ndexbio.task;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.UUID;
 
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exporter.BioPAXNetworkExporter;
-import org.ndexbio.common.exporter.XGMMLNetworkExporter;
-import org.ndexbio.common.exporter.XbelNetworkExporter;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.task.event.NdexTaskEventHandler;
-import org.ndexbio.task.service.NdexJVMDataModelService;
-import org.ndexbio.task.service.NdexTaskModelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,10 +45,6 @@ public class BioPAXExporterTask extends NdexTask {
 	@Override
 	public Task call() throws Exception {
 		try {
-			//TODO: Event stuff was commented out bj CJ. need to review later.
-	/*		String eventFilename = 
-					this.resolveFilename(this.NETWORK_EXPORT_EVENT_PATH, this.EVENT_FILE_EXTENSION);
-			this.eventHandler = new NdexTaskEventHandler(eventFilename); */
 			this.exportNetwork();
 			return this.getTask();
 		} catch (InterruptedException e) {

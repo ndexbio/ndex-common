@@ -1,12 +1,8 @@
 package org.ndexbio.task.parsingengines;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,18 +18,15 @@ import org.biopax.paxtools.controller.SimpleEditorMap;
 import org.biopax.paxtools.io.BioPAXIOHandler;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.BioPAXElement;
-import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.PublicationXref;
 import org.biopax.paxtools.model.level3.RelationshipXref;
 import org.biopax.paxtools.model.level3.UnificationXref;
-import org.biopax.paxtools.model.level3.XReferrable;
 import org.biopax.paxtools.model.level3.Xref;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
-import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
@@ -98,9 +91,9 @@ public class BioPAXParser implements IParsingEngine {
 		persistenceService.createNewNetwork(ownerName, networkName, null);
         this.description = description;
 
-        UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection());
-        loggedInUser = userDocDAO.getUserByAccountName(ownerName);
-
+        try (UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection())) {
+           loggedInUser = userDocDAO.getUserByAccountName(ownerName);
+        } 
 	}
 
 	public List<String> getMsgBuffer() {
