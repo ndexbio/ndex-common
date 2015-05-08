@@ -134,7 +134,7 @@ public class PropertyGraphLoader {
 
         Helper.populateProvenanceEntity(entity, summary );
 
-        ProvenanceEvent event = new ProvenanceEvent("Program Upload", summary.getModificationTime());
+        ProvenanceEvent event = new ProvenanceEvent(NdexProvenanceEventType.PROGRAM_UPLOAD, summary.getModificationTime());
 
         List<SimplePropertyValuePair> eventProperties = new ArrayList<>();
         Helper.addUserInfoToProvenanceEventProperties( eventProperties, loggedInUser);
