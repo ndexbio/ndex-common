@@ -482,18 +482,23 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		if ( properties != null) {
 			for (NdexPropertyValuePair e : properties) {
-				Long baseTermId = baseTermIdMap.get(e.getPredicateId());
-				if ( baseTermId == null )
-					throw new NdexException ("Baseterm id " + e.getPredicateId() + " not defined in baseTerm table.");
+				OrientVertex pV = null;
 				
-				ODocument bTermDoc = this.elementIdCache.get(baseTermId);
+				Long baseTermId = baseTermIdMap.get(e.getPredicateId());
+				
+				if ( baseTermId == null ) {
+				   logger.warning("Baseterm id " + e.getPredicateId() + " not defined in baseTerm table. Creating new basterm for property name.");
+				   pV = this.createNdexPropertyVertex(e);
+				} else {
+					ODocument bTermDoc = this.elementIdCache.get(baseTermId);
 
-				String name = bTermDoc.field(NdexClasses.BTerm_P_name);
-				if ( !name.equals(e.getPredicateString())) {
-					throw new NdexException ("Baseterm name of " + e.getPredicateId() +
+					String name = bTermDoc.field(NdexClasses.BTerm_P_name);
+					if ( !name.equals(e.getPredicateString())) {
+						throw new NdexException ("Baseterm name of " + e.getPredicateId() +
 							" doesn't match with property name " + e.getPredicateString());
+					}
+					pV = this.createNdexPropertyVertex(e, baseTermId, bTermDoc);
 				}
-				OrientVertex pV = this.createNdexPropertyVertex(e, baseTermId, bTermDoc);
                vertex.addEdge(NdexClasses.E_ndexProperties, pV);
 			}
 		
