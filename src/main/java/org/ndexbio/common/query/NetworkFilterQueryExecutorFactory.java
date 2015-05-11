@@ -24,6 +24,15 @@ public class NetworkFilterQueryExecutorFactory {
 	
 	public static NetworkFilterQueryExecutor createODBExecutor(String networkIdStr, EdgeCollectionQuery query) throws NdexException {
 		
+		// check if the query is valid
+		if ( query.getEdgeFilter() == null || query.getEdgeFilter().getPropertySpecifications().size() == 0) {
+			if ( query.getNodeFilter() == null || query.getNodeFilter().getPropertySpecifications().size() == 0 )  {  //error
+				throw new NdexException ("Invalid query object received. Both filters are empty.");
+			}
+		} 
+		
+		//TODO: optimize the case that when filter compiled to an empty list. Should just return empty collection without iteration.
+		
 		EdgeCollectionQueryODB edgeQuery = new EdgeCollectionQueryODB();
 		edgeQuery.setQueryName(query.getQueryName());
 		edgeQuery.setEdgeLimit(query.getEdgeLimit());
@@ -53,7 +62,7 @@ public class NetworkFilterQueryExecutorFactory {
 		
 		EdgeByEdgePropertyFilterODB odbFilter = new EdgeByEdgePropertyFilterODB();
 
-		for ( PropertySpecification spec : filter.getPropertySpecList()) {
+		for ( PropertySpecification spec : filter.getPropertySpecifications()) {
 			String value = spec.getValue();
 			String propName = spec.getName();
 			if ( propName.equalsIgnoreCase(edgePredicatePropertyName) ) {
@@ -91,7 +100,7 @@ public class NetworkFilterQueryExecutorFactory {
 		EdgeByNodePropertyFilterODB odbFilter = new EdgeByNodePropertyFilterODB();
 		odbFilter.setMode(filter.getMode());
 		
-		for (PropertySpecification spec: filter.getPropertySpecList()) {
+		for (PropertySpecification spec: filter.getPropertySpecifications()) {
 			String value = spec.getValue();
 			String propName = spec.getName();
 			if ( propName.equalsIgnoreCase(nodePropertyNodeName) ) {
