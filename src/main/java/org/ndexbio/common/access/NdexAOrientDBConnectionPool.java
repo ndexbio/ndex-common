@@ -9,7 +9,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 public class NdexAOrientDBConnectionPool {
 	
-	private static NdexAOrientDBConnectionPool INSTANCE = null;
+//	private static NdexAOrientDBConnectionPool INSTANCE = null;
 
 	
 	private OrientGraphFactory pool;
@@ -28,6 +28,7 @@ public class NdexAOrientDBConnectionPool {
 	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " created.");
 	}
 	
+/*	
 	private static synchronized void createOrientDBConnectionPool (String dbURL, String dbUserName,
 				String dbPassword, int size) {
 	      if(INSTANCE == null) {
@@ -57,6 +58,6 @@ public class NdexAOrientDBConnectionPool {
        } else 
          logger.info("Connection pool already closed.");
    }
-   
+*/   
    
 }

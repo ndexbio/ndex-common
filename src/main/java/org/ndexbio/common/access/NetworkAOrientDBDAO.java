@@ -15,10 +15,12 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePathQuery;
@@ -53,134 +55,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	      return INSTANCE;
 	   }
 
-	/*
-	 * Returns a block of BaseTerm objects in the network specified by
-	 * networkId. 'blockSize' specified the number of terms to retrieve in the
-	 * block, 'skipBlocks' specifies the number of blocks to skip.")
-	 */
-	/* (non-Javadoc)
-	 * @see org.ndexbio.common.access.NetworkADAO#getTerms(java.lang.String, int, int)
-	 */
-/*	public List<BaseTerm> getBaseTerms(User user, final String networkId,
-			final int skipBlocks, final int blockSize)
-			throws IllegalArgumentException, NdexException {
-		
-		NetworkDAO dao = new NetworkDAO(this._ndexDatabase);
-		ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
-		
-		final ORID networkRid = networkDoc.getIdentity();
-		checkBlockSize(blockSize);
 
-		final List<BaseTerm> foundTerms = new ArrayList<>();
-		final int startIndex = skipBlocks * blockSize;
-
-		final String query = "SELECT name, id, out_baseTermNamespace.jdexId as namespaceId FROM (TRAVERSE out_networkTerms FROM "
-				+ networkRid
-				+ " \n "
-				+ "WHILE $depth < 2) WHERE @class='baseTerm' "
-				+ "ORDER BY name \n"
-				+ "SKIP "
-				+ startIndex
-				+ " \n"
-				+ "LIMIT "
-				+ blockSize;
-
-		try {
-			setup();
-
-			checkNetworkExists(networkRid, networkId);
-
-			final List<ODocument> baseTerms = _ndexDatabase
-					.query(new OSQLSynchQuery<ODocument>(query));
-			for (final ODocument doc : baseTerms) {
-				BaseTerm bterm = new BaseTerm();
-				bterm.setId( (long)doc.field("jdexId"));
-				bterm.setName( (String)doc.field("name"));
-				bterm.setNamespaceId((long)doc.field("namespaceId"));
-
-				foundTerms.add(bterm);
-			}
-			return foundTerms;
-		} catch (ObjectNotFoundException onfe) {
-			throw onfe;
-		} catch (Exception e) {
-			_logger.severe("Failed to query network: " + networkId + ". " + e.getMessage());
-			throw new NdexException(e.getMessage());
-		} finally {
-			teardown();
-		}
-	}
-	
-	public Network getEdges(
-			User loggedInUser, 
-			String networkId,
-			int skipBlocks, 
-			int blockSize) 
-	
-		throws IllegalArgumentException, NdexException {
-			try {
-				setup();
-
-				final ORID networkRid = checkAndConvertNetworkId(networkId);
-				checkBlockSize(blockSize);
-				final long startTime = System.currentTimeMillis();
-				Set<ORID> edgeRids = getEdgeRids(networkRid, skipBlocks, blockSize);
-				
-				final long getEdgesTime = System.currentTimeMillis();
-				NetworkDAO dao = new NetworkDAO(this._ndexDatabase);
-				ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
-				
-				//final ORID networkRid = networkDoc.getIdentity();
-
-				Network network =  getSubnetworkByEdgeRids( edgeRids, networkDoc);
-				final long getSubnetworkTime = System.currentTimeMillis();
-				System.out.println("  Network Nodes : " + network.getNodes().size());
-				System.out.println("  Network Edges : " + network.getEdges().values().size());
-				System.out.println("  Getting Edges : " + (getEdgesTime - startTime));
-				System.out.println("Getting Network : " + (getSubnetworkTime - getEdgesTime));
-				return network;
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new NdexException("Error in getEdges: " + e.getLocalizedMessage());
-				
-			} finally {
-				teardown();
-			}
-			
-	}
-
-*/
-
-
-	/* (non-Javadoc)
-	 * @see org.ndexbio.common.access.NetworkADAO#queryForEdges(java.lang.String, org.ndexbio.common.models.object.NetworkQueryParameters, int, int)
-	 */
-	
-/*	public List<Edge> queryForEdges(final String networkId,
-			final SimplePathQuery parameters, final int skipBlocks,
-			final int blockSize) throws IllegalArgumentException, NdexException {
-		try {
-			setup();
-			NetworkDAO dao = new NetworkDAO(this._ndexDatabase);
-			ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
-			
-			final ORID networkRid = networkDoc.getIdentity();
-			checkBlockSize(blockSize);
-			
-			Set<ORID> edgeRids = queryForEdgeRids(networkRid, parameters
-			//		,skipBlocks, blockSize
-					);
-			
-			return getEdgesByEdgeRids(edgeRids);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new NdexException("Error in queryForEdges: " + e.getLocalizedMessage());
-		} finally {
-			teardown();
-		}
-		
-	} */
-	
 
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#queryForSubnetwork(java.lang.String, org.ndexbio.common.models.object.NetworkQueryParameters, int, int)
@@ -257,25 +132,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		}
 	}
 
-/*	
-	private Set<ORID> getEdgeRids(ORID networkRid, int skipBlocks, int blockSize) {
-		Set<ORID> result = new HashSet<>();
 
-		final String query = 
-				"SELECT @rid as rid FROM "
-				+ "(TRAVERSE out_networkEdges FROM " 
-				+ networkRid 
-				+ " WHILE $depth < 2) WHERE @class = 'edge' LIMIT " + blockSize + " SKIP " + skipBlocks;
-		// System.out.println("node query: " + query);
-		final List<ODocument> edges = _ndexDatabase
-				.query(new OSQLSynchQuery<ODocument>(query));
-		for (final ODocument doc : edges) {
-			ORID rid = doc.field("rid", ORID.class);
-			result.add(rid);
-		}
-		return result;
-	}
-*/
 
 	private Set<ORID> queryForEdgeRids( ORID networkRid, SimplePathQuery parameters
 		//	,int skipBlocks,int blockSize
@@ -321,17 +178,16 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		
 		return result;
 	}
+	
 
-
-	private Collection<ORID> getNodeRidsFromTermNames(ORID networkRid,String searchString, int edgeLimit, boolean includeAliases ) throws NdexException {
-		
+	private Set<ORID> getNodeRidsFromTermNames(ORID networkRID,String searchString, int edgeLimit, boolean includeAliases ) throws NdexException {
 		
 		Set<ORID> result = new TreeSet<>();
 		
 	  try {	
 		OTraverse traverser = new OTraverse()
   			.fields("in_" + NdexClasses.FunctionTerm_E_paramter, "in_" + NdexClasses.Node_E_represents)
-  			.target(getBaseTermRidsFromNames(networkRid, edgeLimit, searchString));
+  			.target(getBaseTermRidsFromNames(networkRID, edgeLimit, searchString));
 		if ( includeAliases)
 			traverser.field("in_" + NdexClasses.Node_E_alias);
 		
@@ -353,7 +209,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	 	for (OIdentifiable termOID : (Collection<OIdentifiable>) nodeNameIdx.get( searchString)) {
 			ODocument termDoc = (ODocument) termOID.getRecord();
 			OIdentifiable tnId = termDoc.field("in_" + NdexClasses.Network_E_Nodes);
-			if ( tnId != null && tnId.getIdentity().equals(networkRid)) {
+			if ( tnId != null && tnId.getIdentity().equals(networkRID)) {
 				result.add(termOID.getIdentity());
 				if ( edgeLimit >0 && result.size() > edgeLimit) { 
 					throw new NdexException(resultOverLimitMsg);
@@ -367,32 +223,172 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	  }
 	}
 
-	/*
-	 * result.add(new Node( node.field("jdexId"), node.field("name"),
-	 * node.field("representsId"), node.field("metadata")));
-	 */
-/*
-	private List<Edge> getEdgesByEdgeRids(Set<ORID> edgeRids) {
-		List<Edge> result = new ArrayList<>();
-		String edgeIdCsv = ridsToCsv(edgeRids);
+	
+	
+	private Collection<ORID> getBaseTermRidsFromNamesV2(ORID networkRid, int nodeLimit,
+			String searchString,NetworkDocDAO networkdao) throws NdexException {
 
-		final String query = 
-				"SELECT id, in_edgeSubject.id as sId, out_edgePredicate.id as pId, out_edgeObject.id as oId FROM "
-				+ "[ " + edgeIdCsv + " ] ";
-		// System.out.println("node query: " + query);
-		final List<ODocument> edges = _ndexDatabase
-				.query(new OSQLSynchQuery<ODocument>(query));
-		for (final ODocument doc : edges) {
-			Edge edge = new Edge();
-			edge.setId((Long) doc.field("id"));
-			edge.setSubjectId((Long) doc.field("sId"));
-			edge.setPredicateId((Long) doc.field("pId"));
-			edge.setObjectId((Long) doc.field("oId"));
-			result.add(edge);
+		Set<ORID> result = new TreeSet<>();
+
+		OIndex<?> basetermIdx =  networkdao.getDBConnection().getMetadata().getIndexManager().getIndex(NdexClasses.Index_BTerm_name);
+		
+		for (OIdentifiable termOID : (Collection<OIdentifiable>) basetermIdx.get( searchString)) {
+			ODocument termDoc = (ODocument) termOID.getRecord();
+			OIdentifiable tnId = termDoc.field("in_" + NdexClasses.Network_E_BaseTerms);
+			if ( tnId != null && tnId.getIdentity().equals(networkRid)) {
+				result.add(termOID.getIdentity());
+				if (nodeLimit >0 && result.size() > nodeLimit)
+					throw new NdexException(resultOverLimitMsg);
+			}
 		}
+		
 		return result;
 	}
-*/
+
+	
+	public Network queryForSubnetworkV2(final String networkId,
+			final SimplePathQuery parameters
+			) throws IllegalArgumentException, NdexException {
+
+		try (NetworkDocDAO dao = new NetworkDocDAO()){
+			ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
+			
+			final ORID networkRid = networkDoc.getIdentity();
+			
+			final long startTime = System.currentTimeMillis();
+			System.out.println("Starting subnetworkQuery ");
+      
+			Network result = new Network();
+			Set<ORID> nodeRIDs = getNodeRidsFromSearchString(networkRid, parameters.getSearchString(), parameters.getEdgeLimit()*2, 
+					    true, dao, result);
+			
+			Set<ORID> traversedEdges = new TreeSet<>();
+			
+			traverseNeighborHood(nodeRIDs, parameters.getSearchDepth(), dao, result, parameters.getEdgeLimit(),traversedEdges );
+
+			result.setEdgeCount(result.getEdges().size());
+			result.setNodeCount(result.getNodes().size());
+			
+			final long getSubnetworkTime = System.currentTimeMillis();
+			System.out.println("  Network Nodes : " + result.getNodeCount());
+			System.out.println("  Network Edges : " + result.getEdgeCount());
+			System.out.println("Getting Network : " + (getSubnetworkTime - startTime));
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new NdexException("Error in queryForSubnetwork: " + e.getLocalizedMessage());
+		} 
+	}
+	
+	
+	/**
+	 * Get a set of ORIDs of node from search term. This will be the start point of edge query.
+	 * 
+	 * @param networkRID
+	 * @param searchString
+	 * @param nodeLimit   if nodeLimit > 0 this query returns up to nodeLimit number of nodes.
+	 * @param includeAliases
+	 * @param networkdao
+	 * @return
+	 * @throws NdexException
+	 */
+	private Set<ORID> getNodeRidsFromSearchString(ORID networkRID,String searchString, int nodeLimit, boolean includeAliases, 
+			NetworkDocDAO networkdao ,Network resultNetwork) throws NdexException {
+		
+		Set<ORID> result = new TreeSet<>();
+		
+	  try {	
+		OTraverse traverser = new OTraverse()
+  			.fields("in_" + NdexClasses.FunctionTerm_E_paramter, "in_" + NdexClasses.Node_E_represents)
+  			.target(getBaseTermRidsFromNamesV2(networkRID, nodeLimit, searchString, networkdao));
+		if ( includeAliases)
+			traverser.field("in_" + NdexClasses.Node_E_alias);
+		
+		for (OIdentifiable nodeRec : traverser) {
+ 
+			ODocument doc = (ODocument) nodeRec;
+  
+			if ( doc.getClassName().equals(NdexClasses.Node)) {
+				ORID rid = nodeRec.getIdentity();
+				if ( !result.contains(rid) ) {
+					result.add(rid);
+                    Node n = networkdao.getNode(doc, resultNetwork);
+                    resultNetwork.getNodes().put(n.getId(), n);
+				}
+				if ( nodeLimit >0 && result.size()> nodeLimit) {
+					break;
+				}
+			}
+		}
+		
+	    OIndex<?> nodeNameIdx = networkdao.getDBConnection().getMetadata().getIndexManager().getIndex(NdexClasses.Index_node_name);
+				
+	 	for (OIdentifiable termOID : (Collection<OIdentifiable>) nodeNameIdx.get( searchString)) {
+			ODocument nodeDoc = (ODocument) termOID.getRecord();
+			OIdentifiable tnId = nodeDoc.field("in_" + NdexClasses.Network_E_Nodes);
+			if ( tnId != null && tnId.getIdentity().equals(networkRID)) {
+				
+				if ( !result.contains(nodeDoc.getIdentity())) {
+					result.add(nodeDoc.getIdentity());
+					Node n = networkdao.getNode(nodeDoc, resultNetwork);
+	                resultNetwork.getNodes().put(n.getId(), n);
+				}
+				if ( nodeLimit >0 && result.size() > nodeLimit) { 
+					throw new NdexException(resultOverLimitMsg);
+				}
+			}
+		}
+
+		return result;
+	  } catch (OIndexException e1) {
+		  throw new NdexException ("Invalid search string. " + e1.getCause().getMessage());
+	  }
+	}
+
+
+	private void  traverseNeighborHood(Set<ORID> nodeRIDs, int searchDepth, NetworkDocDAO dao, Network result, int edgeLimit ,Set<ORID> traversedEdges) throws NdexException {
+		if ( searchDepth <= 0 ) return ;
+		
+		Set<ORID> newNodes1 = getNeighborHood(nodeRIDs, dao,result, edgeLimit, true,traversedEdges);  // upstream
+		Set<ORID> newNodes2 = getNeighborHood(nodeRIDs, dao,result, edgeLimit, false,traversedEdges);  // downstream;
+		
+        newNodes1.addAll(newNodes2);
+		traverseNeighborHood(newNodes1, searchDepth-1, dao,result, edgeLimit, traversedEdges);
+	}
+	
+	
+	private Set<ORID> getNeighborHood(Set<ORID> nodeRIDs,NetworkDocDAO dao, Network resultNetwork, int edgeLimit ,boolean upstream, Set<ORID> traversedEdges) throws NdexException {
+		Set<ORID> newNodes = new TreeSet<>();
+		for ( ORID nodeRID: nodeRIDs) {
+			ODocument nodeDoc = new ODocument(nodeRID);
+			for ( ODocument edgeDoc :
+				       ( upstream ? 
+				    		   Helper.getDocumentLinks( nodeDoc, "in_", NdexClasses.Edge_E_object) 
+				    		 : Helper.getDocumentLinks( nodeDoc, "out_", NdexClasses.Edge_E_subject) )) {
+				if( !traversedEdges.contains(edgeDoc.getIdentity())) { //new edge found
+					traversedEdges.add(edgeDoc.getIdentity());
+					Edge e = dao.getEdgeFromDocument(edgeDoc, resultNetwork);
+					resultNetwork.getEdges().put(e.getId(), e);
+					ODocument newNodeDoc = (ODocument)(upstream ? 
+							         edgeDoc.field("in_" + NdexClasses.Edge_E_subject) : 
+							         edgeDoc.field("out_", NdexClasses.Edge_E_object) );
+					ORID newNodeRID = newNodeDoc.getIdentity();
+					if ( !newNodes.contains(newNodeRID)) {
+						newNodes.add(newNodeRID);
+					}
+					
+					if(edgeLimit>0 && traversedEdges.size()> edgeLimit)
+						throw new NdexException(resultOverLimitMsg);
+
+				}
+				
+			}
+			
+			
+		}
+		return newNodes;
+	}
+
 	private Network getSubnetworkByEdgeRids( Set<ORID> edgeRids, ODocument networkDoc) throws Exception {
 		
 	    Network network = new Network(edgeRids.size());  //result holder
@@ -537,6 +533,55 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		return results;
 		
 	}
+	
+	private List<ORID[]> neighborhoodSearchQuery(
+			Set<ORID> sourceNodeRids,
+			List<ORID> includedPredicateRids,
+			boolean upstream) throws NdexException {
+
+		String query;
+		String sourceNodeCsv = ridsToCsv(sourceNodeRids);
+		
+		if (upstream){
+			query= "select $path from "
+				+ "(traverse in_edgeObject, in_edgeSubject from [ "
+				+ sourceNodeCsv
+				+ " ] while $depth < 3) where $depth = 2";
+		} else {
+			query= "select $path from "
+					+ "(traverse out_edgeSubject, out_edgeObject from [ "
+					+ sourceNodeCsv 
+					+ " ] while $depth < 3) where $depth = 2";
+		}
+		
+		System.out.println("query = " + query);
+
+		List<ODocument> paths = _ndexDatabase
+				.query(new OSQLSynchQuery<ODocument>(query));
+
+		List<ORID[]> results = new ArrayList<>();
+
+		for (ODocument doc : paths) {
+			String path = (String) doc.fieldValues()[0];
+			String[] components = path.split("\\.");
+			ORID edgeRid = stringToRid(components[1]);
+			ORID nodeRid = stringToRid(components[2]);
+			ORID[] pair = { edgeRid, nodeRid };
+			results.add(pair);
+			//System.out.println("edgeId = " + pair[0] + " nodeRid = " + pair[1]);
+		}
+		if (upstream){
+			System.out.println("sourceQuery upstream results : " + results.size());
+		} else {
+			System.out.println("sourceQuery downstream results : " + results.size());
+		}
+
+		return results;
+		
+	}	
+	
+
+	
 	
 	/*
 	 * 

@@ -2,7 +2,6 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -184,6 +183,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	// Populate properties
      	getPropertiesFromDocument(n, nodeDoc, network);
 
+     	// populate baseterm
     	ODocument o = nodeDoc.field("out_" + NdexClasses.Node_E_represents);
     	if ( o != null) {
     		Long termId = o.field(NdexClasses.Element_ID);
