@@ -68,6 +68,8 @@ public class BioPAXParser implements IParsingEngine {
 
     private String description;
     private User loggedInUser;
+    
+    private String bioPaxPrefix;  // prefix for namespace http://www.biopax.org/release/biopax-level3.owl#
 
 	public BioPAXParser(String fn, String ownerName, NdexDatabase db, String networkName, String description)
 			throws Exception {
@@ -185,6 +187,7 @@ public class BioPAXParser implements IParsingEngine {
 
 	private void loadBioPAXModel(Model model) throws Exception {
 		
+
 		String xmlBase = model.getXmlBase();
 		NdexPropertyValuePair xmlBaseProp = new NdexPropertyValuePair("xmlBase", xmlBase);
 		List<NdexPropertyValuePair> networkProperties = new ArrayList<>();
@@ -233,6 +236,7 @@ public class BioPAXParser implements IParsingEngine {
 		
 	}
 
+	
 	private void processElementToNode(BioPAXElement bpe) throws NdexException {
 		String rdfId = bpe.getRDFId();
 //		String className = bpe.getClass().getName();
@@ -375,18 +379,114 @@ public class BioPAXParser implements IParsingEngine {
 		if (xref instanceof PublicationXref) {
 			processPublicationXref(xref);
 		} else if (xref instanceof UnificationXref) {
-			processXref(xref);
+			processUnificationXref((UnificationXref)xref);
 			this.uXrefCount++;
 		} else if (xref instanceof RelationshipXref) {
-			processXref(xref);
+			processRelationshipXref((RelationshipXref)xref);
 			this.rXrefCount++;
 		} else {
-			// TBD: turn this into an exception?
-			String name = xref.getClass().getName();
-			System.out.println("Unexpected xref of type: " + name);
+			
+			processXref(xref);
+			this.rXrefCount++;
+			System.out.println("Unexpected xref of type: " + xref.getClass().getSimpleName());
 		}
 	}
 
+	private void processUnificationXref(UnificationXref xref) throws NdexException, ExecutionException {
+
+		String rdfId = xref.getRDFId();
+
+		String simpleName = xref.getModelInterface().getSimpleName();
+		
+		// Create a node to hold the mapping of the rdfId to a biopax type
+		Long nodeId = this.persistenceService.getNodeIdByName(rdfId);
+		List<NdexPropertyValuePair> literalProperties = new ArrayList<>();
+		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", simpleName));
+			
+		// These are the Xref properties
+		// that we have available for the the BaseTerm and Namespace
+		//Map<String, Object> annotations = uXref.getAnnotations();
+		//Set<String> comments = uXref.getComment();
+		String xrefDb = xref.getDb();
+		String xrefDbVersion = xref.getDbVersion();
+		String xrefId = xref.getId();
+		String xrefIdVersion = xref.getIdVersion();
+//		Set<XReferrable> refersTo = xref.getXrefOf();
+		
+		if (null != xrefDb) PropertyHelpers.addNdexProperty("db", xrefDb, literalProperties);
+		if (null != xrefDbVersion) PropertyHelpers.addNdexProperty("dbVersion", xrefDbVersion, literalProperties);
+		if (null != xrefId) PropertyHelpers.addNdexProperty("id", xrefId, literalProperties);
+		if (null != xrefIdVersion) PropertyHelpers.addNdexProperty("idVersion", xrefIdVersion, literalProperties);
+		
+		Long termId = null;
+		if (null != xrefId && null != xrefDb) {
+			// We have both an identifier string for a BaseTerm
+			// AND a prefix string for a Namespace
+			termId = this.persistenceService.getBaseTermId(xrefDb + ":" + xrefId);
+		} else if (null != xrefId) {
+			// We have an identifier string for a BaseTerm but no Namespace prefix
+			termId = this.persistenceService.getBaseTermId(xrefId);
+		} else {
+			// bad xref with no id!
+			throw new NdexException("no id for xref " + rdfId);
+		}
+//		System.out.println("BaseTerm (" + className + "): " + rdfId + " -> " + termId);
+		// make the node represent the term
+		// This will allow reconstruction of the links to xrefs when outputting bioPAX
+		this.persistenceService.setNodeRepresentTerm(nodeId, termId);
+		this.persistenceService.setNodeProperties(nodeId, literalProperties, null);
+//		System.out.println("XREF Node: " + nodeId + " -> " + rdfId + ": " + simpleName);
+		this.mapRdfIdToElementId(rdfId, termId);
+		
+	}
+
+	private void processRelationshipXref(RelationshipXref xref) throws NdexException, ExecutionException {
+		String rdfId = xref.getRDFId();
+//		String className = xref.getClass().getName();
+		String simpleName = xref.getModelInterface().getSimpleName();
+		
+		// Create a node to hold the mapping of the rdfId to a biopax type
+		Long nodeId = this.persistenceService.getNodeIdByName(rdfId);
+		List<NdexPropertyValuePair> literalProperties = new ArrayList<>();
+		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", simpleName));
+			
+		// These are the Xref properties
+		// that we have available for the the BaseTerm and Namespace
+		//Map<String, Object> annotations = uXref.getAnnotations();
+		//Set<String> comments = uXref.getComment();
+		String xrefDb = xref.getDb();
+		String xrefDbVersion = xref.getDbVersion();
+		String xrefId = xref.getId();
+		String xrefIdVersion = xref.getIdVersion();
+//		Set<XReferrable> refersTo = xref.getXrefOf();
+		
+		if (null != xrefDb) PropertyHelpers.addNdexProperty("db", xrefDb, literalProperties);
+		if (null != xrefDbVersion) PropertyHelpers.addNdexProperty("dbVersion", xrefDbVersion, literalProperties);
+		if (null != xrefId) PropertyHelpers.addNdexProperty("id", xrefId, literalProperties);
+		if (null != xrefIdVersion) PropertyHelpers.addNdexProperty("idVersion", xrefIdVersion, literalProperties);
+		
+		Long termId = null;
+		if (null != xrefId && null != xrefDb) {
+			// We have both an identifier string for a BaseTerm
+			// AND a prefix string for a Namespace
+			termId = this.persistenceService.getBaseTermId(xrefDb + ":" + xrefId);
+		} else if (null != xrefId) {
+			// We have an identifier string for a BaseTerm but no Namespace prefix
+			termId = this.persistenceService.getBaseTermId(xrefId);
+		} else {
+			// bad xref with no id!
+			throw new NdexException("no id for xref " + rdfId);
+		}
+//		System.out.println("BaseTerm (" + className + "): " + rdfId + " -> " + termId);
+		// make the node represent the term
+		// This will allow reconstruction of the links to xrefs when outputting bioPAX
+		this.persistenceService.setNodeRepresentTerm(nodeId, termId);
+		this.persistenceService.setNodeProperties(nodeId, literalProperties, null);
+//		System.out.println("XREF Node: " + nodeId + " -> " + rdfId + ": " + simpleName);
+		this.mapRdfIdToElementId(rdfId, termId);
+		
+	}
+	
 	
 	private void processXref(Xref xref) throws NdexException, ExecutionException {
 		String rdfId = xref.getRDFId();
@@ -570,6 +670,8 @@ public class BioPAXParser implements IParsingEngine {
 			String prefix = pair.getKey();
 			String uri = pair.getValue();
 			this.persistenceService.createNamespace2(prefix, uri);
+			if ( uri.equals("http://www.biopax.org/release/biopax-level3.owl#"))
+				this.bioPaxPrefix = prefix;
 		}
 	}
 	
