@@ -788,8 +788,6 @@ public class UserDocDAO extends OrientdbDAO {
 				NdexClasses.User);
 		final int startIndex = skipBlocks * blockSize;
 
-		try {
-
 			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 					"SELECT FROM" + " (TRAVERSE out_requests FROM" + " "
 							+ user.getIdentity().toString()
@@ -805,10 +803,6 @@ public class UserDocDAO extends OrientdbDAO {
 			}
 
 			return requests;
-		} catch (Exception e) {
-			logger.severe("Unable to retrieve requests : " + e.getMessage());
-			throw new NdexException("Unable to retrieve sent requests" + e.getMessage());
-		}
 	}
 
 	/**************************************************************************

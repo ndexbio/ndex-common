@@ -279,6 +279,7 @@ public class RequestDAO extends OrientdbDAO  {
 				if(updatedRequest.getPermission() != null) request.field("requestPermission", updatedRequest.getPermission().name());
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponseMessage() )) request.field("responseMessage", updatedRequest.getResponseMessage() );
 				if(!Strings.isNullOrEmpty( updatedRequest.getResponse().name() )) request.field("response", updatedRequest.getResponse().name());
+				request.field(NdexClasses.Request_P_responseTime, new Date());
 				request.save();
 				logger.info("Request has been updated. UUID : " + requestId.toString());
 				
@@ -310,8 +311,8 @@ public class RequestDAO extends OrientdbDAO  {
 			Request result = new Request();
 			
 			Helper.populateExternalObjectFromDoc(result, request);
-			result.setSourceName((String) request.field("sourceName"));
-			result.setSourceUUID( UUID.fromString( (String) request.field("sourceUUID") ) ); 
+			result.setSourceName((String) request.field(NdexClasses.Request_P_sourceName));
+			result.setSourceUUID( UUID.fromString( (String) request.field(NdexClasses.Request_P_sourceUUID) ) ); 
 			result.setDestinationName((String) request.field("destinationName"));
 			result.setDestinationUUID( UUID.fromString( (String) request.field("destinationUUID") ) );
 			result.setMessage((String) request.field("message"));
@@ -320,7 +321,8 @@ public class RequestDAO extends OrientdbDAO  {
 			result.setResponse( ResponseType.valueOf( (String) request.field("response") ) );
 			result.setResponseMessage((String) request.field("responseMessage"));
 			Date d = request.field(NdexClasses.Request_P_responseTime);
-			result.setResponseTime(new Timestamp(d.getTime()));
+			if ( d !=null )
+				result.setResponseTime(new Timestamp (d.getTime()));
 
 			return result;
 		} catch (Exception e) {
