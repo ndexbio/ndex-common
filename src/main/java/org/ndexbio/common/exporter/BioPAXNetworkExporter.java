@@ -64,7 +64,7 @@ public class BioPAXNetworkExporter {
 		termIdToUnificationXrefMap = new HashMap<>();
 		termIdToRelationshipXrefMap = new HashMap<>();
 		setUpModel(bioPAXModel, network);
-		processCitations(bioPAXModel, network);
+//		processCitations(bioPAXModel, network);
 		processXREFNodes(bioPAXModel, network);
 		processNodes(bioPAXModel, network);
 		processEdges(bioPAXModel, network);
