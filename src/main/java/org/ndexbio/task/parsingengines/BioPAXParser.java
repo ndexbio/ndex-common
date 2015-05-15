@@ -253,7 +253,7 @@ public class BioPAXParser implements IParsingEngine {
 	private void processElementProperties(BioPAXElement bpe) throws ExecutionException, NdexException {
 		String rdfId = bpe.getRDFId();
 		// Get the elementId for the Node corresponding to this rdfId
-		Long nodeId = this.getElementIdByRdfId(rdfId);
+		Long nodeId = this.persistenceService.getNodeIdByBaseTerm(rdfId);
 		
 		List<NdexPropertyValuePair> literalProperties = new ArrayList<>();
 
@@ -355,7 +355,9 @@ public class BioPAXParser implements IParsingEngine {
 			UnificationXref xref, 
 			Long nodeId) throws ExecutionException, NdexException {
 		
-		processEdge (predicateId,xref,nodeId);
+        Long objectId = this.persistenceService.getNodeIdByBaseTerm(xref.getRDFId());
+		
+		this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,null);
 		
 		Long termId = getElementIdByRdfId(xref.getRDFId());
 //		System.out.println("       Alias: " + nodeId + " -> " + termId);
@@ -367,7 +369,9 @@ public class BioPAXParser implements IParsingEngine {
 			RelationshipXref xref, 
 			Long nodeId) throws ExecutionException, NdexException {
 		
-		processEdge (predicateId,xref,nodeId);
+        Long objectId = this.persistenceService.getNodeIdByBaseTerm(xref.getRDFId());
+		
+		this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,null);
 		
 		Long termId = getElementIdByRdfId(xref.getRDFId());
 //		System.out.println("       Related: " + nodeId + " -> " + termId);
@@ -378,7 +382,9 @@ public class BioPAXParser implements IParsingEngine {
 			PublicationXref xref, 
 			Long nodeId) throws ExecutionException, NdexException {
 
-		processEdge (predicateId,xref,nodeId);
+        Long objectId = this.persistenceService.getNodeIdByBaseTerm(xref.getRDFId());
+		
+		this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,null);
 		
 		Long citationId = getElementIdByRdfId(xref.getRDFId());
 		
@@ -499,7 +505,7 @@ public class BioPAXParser implements IParsingEngine {
 	 */
 	private void addBPPropertyToList(String propertyName, String value, List<NdexPropertyValuePair> propertyList) {
 		if (value != null) {
-			PropertyHelpers.addNdexProperty(this.bioPaxPrefix + ":"+"db", value, propertyList);
+			PropertyHelpers.addNdexProperty(this.bioPaxPrefix + ":"+ propertyName, value, propertyList);
 		}
 	}
 	

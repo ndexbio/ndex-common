@@ -25,11 +25,13 @@ import org.biopax.paxtools.model.level3.RelationshipXref;
 import org.biopax.paxtools.model.level3.UnificationXref;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
+import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.tools.PropertyHelpers;
@@ -39,23 +41,27 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public class BioPAXNetworkExporter {
 
-	private NetworkDAO dao;
+	private NetworkDocDAO dao;
 	private BioPAXFactory bioPAXFactory;
 	private BioPAXIOHandler bioPAXIOHandler;
 	private Map<Long, BioPAXElement> elementIdToBioPAXElementMap;
 	private Map<Long, UnificationXref> termIdToUnificationXrefMap;
 	private Map<Long, RelationshipXref> termIdToRelationshipXrefMap;
+	
+	private Network network;
 
 	public BioPAXNetworkExporter (ODatabaseDocumentTx db) {
-		dao = new NetworkDAO (db);
+		dao = new NetworkDocDAO (db);
 		bioPAXFactory = BioPAXLevel.L3.getDefaultFactory();
 		bioPAXIOHandler = new SimpleIOHandler();
 
 	}
 
 	public void exportNetwork(UUID networkId, OutputStream output) throws NdexException, ClassCastException {
-		System.out.println("Finding network to export by " + networkId);
-		Network network = dao.getNetworkById(networkId);
+		
+//		System.out.println("Finding network to export by " + networkId);
+		
+		network = dao.getNetworkById(networkId);
 		if (null == network){
 			throw new NdexException("No Network found by: " + networkId);
 		}
@@ -63,16 +69,16 @@ public class BioPAXNetworkExporter {
 		elementIdToBioPAXElementMap = new HashMap<>();
 		termIdToUnificationXrefMap = new HashMap<>();
 		termIdToRelationshipXrefMap = new HashMap<>();
-		setUpModel(bioPAXModel, network);
+		setUpModel(bioPAXModel);
 //		processCitations(bioPAXModel, network);
-		processXREFNodes(bioPAXModel, network);
-		processNodes(bioPAXModel, network);
-		processEdges(bioPAXModel, network);
+		processXREFNodes(bioPAXModel);
+		processNodes(bioPAXModel);
+		processEdges(bioPAXModel);
 		bioPAXIOHandler.convertToOWL(bioPAXModel, output);
 
 	}
 
-	private void setUpModel(Model bioPAXModel, Network network){
+	private void setUpModel(Model bioPAXModel){
 		String xmlBase = PropertyHelpers.getNetworkPropertyValueString(network, "xmlBase");
 		if (null == xmlBase){
 			xmlBase = "http://www.ndexbio.org/biopax/";
@@ -80,6 +86,7 @@ public class BioPAXNetworkExporter {
 		bioPAXModel.setXmlBase(xmlBase);
 	}
 
+/*	
 	private void processCitations(Model bioPAXModel, Network network) {
 		// Each Citation object becomes a PublicationXref
 		// Create the PublicationXref in the model and add it to the elementIdToBioPAXObjectMap
@@ -168,8 +175,8 @@ public class BioPAXNetworkExporter {
 		}
 
 	}
-
-	private void processXREFNodes(Model bioPAXModel, Network network) throws NdexException {
+*/
+	private void processXREFNodes(Model bioPAXModel) throws NdexException {
 		for (Entry<Long, Node> e : network.getNodes().entrySet()){
 			Node node = e.getValue();
 			Long nodeId = e.getKey();
@@ -177,32 +184,45 @@ public class BioPAXNetworkExporter {
 			String bioPAXType = PropertyHelpers.getNodePropertyValueString(network, node, "ndex:bioPAXType");
 			if (bioPAXType != null){
 				if (bioPAXType.equals("UnificationXref")){
-					processUnificationXREFNode(bioPAXModel, network, node, nodeId);
+					processUnificationXREFNode(bioPAXModel, node);
 				} else if(bioPAXType.equals("RelationshipXref")){
-					processRelationshipXREFNode(bioPAXModel, network, node, nodeId);
+					processRelationshipXREFNode(bioPAXModel, node);
+				} else if (bioPAXType.equals("PublicationXref")) {
+					processPublicationXrefNode(bioPAXModel,  node);
 				}
 			}
 		}
 	}
 
-	private void processUnificationXREFNode(Model bioPAXModel, Network network,
-			Node node, Long nodeId) throws NdexException {
-		String rdfId = node.getName();
+	private void processUnificationXREFNode(Model bioPAXModel, 	Node node) throws NdexException {
+		String rdfId = getNodeRDFID(node);
 		UnificationXref bpe = bioPAXModel.addNew(UnificationXref.class, rdfId);
 		processProperties(bpe, node.getProperties(), UnificationXref.class);
-		Long termId = node.getRepresents();
-//		System.out.println("UnificationXref: " + termId + " rdfId: " + rdfId);
-		this.termIdToUnificationXrefMap.put(termId, bpe);
+		this.elementIdToBioPAXElementMap.put(node.getId(), bpe);
+//		Long termId = node.getRepresents();
+//		this.termIdToUnificationXrefMap.put(termId, bpe);
 	}
 
-	private void processRelationshipXREFNode(Model bioPAXModel, Network network,
-			Node node, Long nodeId) throws NdexException {
-		String rdfId = node.getName();
+	private void processRelationshipXREFNode(Model bioPAXModel, Node node) throws NdexException {
+		String rdfId = getNodeRDFID( node);
 		RelationshipXref bpe = bioPAXModel.addNew(RelationshipXref.class, rdfId);
 		processProperties(bpe, node.getProperties(),RelationshipXref.class);
-		Long termId = node.getRepresents();
+		this.elementIdToBioPAXElementMap.put(node.getId(), bpe);
+//		Long termId = node.getRepresents();
+//		this.termIdToRelationshipXrefMap.put(termId, bpe);
+	}
+	
+	
+	private void processPublicationXrefNode(Model bioPAXModel, Node node) throws NdexException {
+		
+		String rdfId = getNodeRDFID( node);
+		PublicationXref bpe = bioPAXModel.addNew(PublicationXref.class, rdfId);
+		processProperties(bpe, node.getProperties(),PublicationXref.class);
+		this.elementIdToBioPAXElementMap.put(node.getId(), bpe);
+/*		Long termId = node.getRepresents();
 //		System.out.println("RelationshipXref: " + termId + " rdfId: " + rdfId);
-		this.termIdToRelationshipXrefMap.put(termId, bpe);
+		this.termIdToRelationshipXrefMap.put(termId, bpe); */
+		
 	}
 
 	private void processProperties(BioPAXElement bpe,
@@ -212,8 +232,8 @@ public class BioPAXNetworkExporter {
 //		System.out.println("Properties for " + bpe.getRDFId());
 		EditorMap editorMap = SimpleEditorMap.L3;
 		for (NdexPropertyValuePair pvp : properties){
-			String propertyString = pvp.getPredicateString();
-			if (! propertyString.equalsIgnoreCase("rdfId") && ! propertyString.equalsIgnoreCase("ndex:bioPAXType")){
+			if ( ! pvp.getPredicateString().equals("ndex:bioPAXType")){
+				String propertyString = getBioPaxProperty(pvp);
 				String value = pvp.getValue();
 				PropertyEditor editor = editorMap.getEditorForProperty(propertyString, bioPAXClass);
 				if (editor != null){
@@ -226,17 +246,24 @@ public class BioPAXNetworkExporter {
 		}
 	}
 
+	
+	private String getBioPaxProperty(NdexPropertyValuePair prop) {
+		BaseTerm bTerm = network.getBaseTerms().get(prop.getPredicateId());
+		return bTerm.getName();
+	}
+	
 
 	// Process all Nodes that are *not* XREF nodes
 	// None of these will have a "represents" property
-	private void processNodes(Model bioPAXModel, Network network) throws NdexException {
+	private void processNodes(Model bioPAXModel) throws NdexException {
 		for (Entry<Long, Node> e : network.getNodes().entrySet()){
 			Node node = e.getValue();
 			Long nodeId = e.getKey();
 
 			String bioPAXType = PropertyHelpers.getNodePropertyValueString(network, node, "ndex:bioPAXType");
 			if (bioPAXType != null){
-				if (!bioPAXType.equals("UnificationXref") && !bioPAXType.equals("RelationshipXref")){
+				if (!bioPAXType.equals("UnificationXref") && !bioPAXType.equals("RelationshipXref")
+						&& !bioPAXType.equals("PublicationXref") ){
 
 
 					Class<? extends BioPAXElement> bioPAXClass;
@@ -247,7 +274,7 @@ public class BioPAXNetworkExporter {
 						throw new NdexException("Unknown BioPAX class " + bioPAXType);
 					}
 					BioPAXElement bpe;
-					String rdfId = node.getName();
+					String rdfId = getNodeRDFID(node);
 					if (bioPAXClass != null && rdfId != null){
 						bpe = bioPAXModel.addNew(bioPAXClass, rdfId);
 					} else {
@@ -260,36 +287,6 @@ public class BioPAXNetworkExporter {
 
 					this.elementIdToBioPAXElementMap.put(nodeId, bpe);
 
-					// Process the node aliases
-					// Each termId should map to a UnificationXREF
-					// that was created during the processXREFNodes phase
-					PropertyEditor xrefPropertyEditor = editorMap.getEditorForProperty("xref", bioPAXClass);
-					
-					for (Long termId : node.getAliases()){
-						UnificationXref xref = this.getUnificationXREF(termId);
-					//	if (null == xref) 
-					//		throw new NdexException("Expected to find UnificationXREF corresponding to termId " + termId);
-						if( xref != null)
-							xrefPropertyEditor.setValueToBean(xref, bpe);
-
-					}
-
-					// Process the node relatedTerms
-					// Each termId should map to a RelationshipXREF
-					// that was created during the processXREFNodes phase
-					for (Long termId : node.getRelatedTerms()){
-						RelationshipXref xref = this.getRelationshipXREF(termId);
-					//	if (null == xref) 
-					//		throw new NdexException("Expected to find RelationshipXREF corresponding to termId " + termId);
-						if ( xref !=null )
-							xrefPropertyEditor.setValueToBean(xref, bpe);
-					}
-					
-					// write out citations
-					for (Long citationId: node.getCitationIds()) {
-						BioPAXElement citation = this.elementIdToBioPAXElementMap.get(citationId);
-						xrefPropertyEditor.setValueToBean(citation, bpe);
-					}
 				}
 			}
 		}
@@ -303,7 +300,7 @@ public class BioPAXNetworkExporter {
 		return this.termIdToUnificationXrefMap.get(termId);
 	}
 
-	private void processEdges(Model bioPAXModel, Network network) throws NdexException {
+	private void processEdges(Model bioPAXModel) throws NdexException {
 		EditorMap editorMap = SimpleEditorMap.L3;
 
 		for (Edge edge : network.getEdges().values()){
@@ -315,7 +312,8 @@ public class BioPAXNetworkExporter {
 			Long objectId = edge.getObjectId();
 			if (objectId == null || objectId == 0) throw new NdexException("Malformed BioPAX Edge with objectId = " + objectId);
 			BioPAXElement objectBPE = this.elementIdToBioPAXElementMap.get(objectId);
-			if (objectBPE == null) throw new NdexException("Malformed BioPAX Edge, no BioPAX Element found for objectId = " + objectId);
+			if (objectBPE == null) 
+				throw new NdexException("Malformed BioPAX Edge, no BioPAX Element found for objectId = " + objectId);
 
 			Long predicateId = edge.getPredicateId();
 			BaseTerm predicateTerm = network.getBaseTerms().get(predicateId);
@@ -334,7 +332,19 @@ public class BioPAXNetworkExporter {
 
 	}
 
-	// 4b91eadb-5c84-11e4-9ec0-040ccee25000
+	
+	private String getNodeRDFID( Node node) {
+		BaseTerm bTerm = network.getBaseTerms().get(node.getRepresents());
+		
+		Namespace ns = network.getNamespaces().get(bTerm.getNamespaceId());
+		
+		if ( ns.getUri() == null)
+			return bTerm.getName();
+		
+		return ns.getUri() + bTerm.getName();
+		
+	}
+	
 
 	public static  void main (String[] args) throws NdexException, ClassCastException {
 		ODatabaseDocumentTx db = NdexDatabase.getInstance().getAConnection();
