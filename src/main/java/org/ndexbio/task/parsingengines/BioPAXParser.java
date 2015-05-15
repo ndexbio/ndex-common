@@ -262,6 +262,10 @@ public class BioPAXParser implements IParsingEngine {
 		
 //		EditorMap editorMap =  SimpleEditorMap.L2;
 		Set<PropertyEditor> editors = editorMap.getEditorsOf(bpe);
+		
+		String nodeName = null;
+		String standardName = null;
+		String displayName = null;
 		//
 		// iterate over the property editors
 		//
@@ -309,6 +313,16 @@ public class BioPAXParser implements IParsingEngine {
 					NdexPropertyValuePair pvp = new NdexPropertyValuePair(propertyName, valueString);
 					literalProperties.add(pvp);
 					this.literalPropertyCount++;
+					
+					// populate the node name if possible.
+					if ( nodeName ==null && propertyName.equals("name")) {
+						nodeName = valueString;
+					} 
+					if ( propertyName.equals("displayName")) {
+						displayName = valueString;
+					} else if ( propertyName.equals("standardName")) {
+						standardName = valueString;
+					}
 				}
 			}
 
@@ -319,6 +333,14 @@ public class BioPAXParser implements IParsingEngine {
 		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", bpe.getModelInterface().getSimpleName()));
 		this.persistenceService.setNodeProperties(nodeId, literalProperties, null);
 
+		// set the node name if possible.
+		if ( displayName != null) { 
+			this.persistenceService.setNodeName(nodeId, displayName);
+		} else if ( standardName !=null) {
+			this.persistenceService.setNodeName(nodeId, standardName);
+		} else if (nodeName !=null) {
+			this.persistenceService.setNodeName(nodeId, nodeName);
+		}
 	}
 
 	private void processEdge(

@@ -75,7 +75,7 @@ public class NetworkFilterQueryExecutor {
 				EdgeRecordSatisfyNodeFilters  (edgeDoc, query.getNodeFilter())		;
 	}
 
-	private boolean EdgeRecordSatisfyEdgePropertyFilter (ODocument edgeDoc, EdgeByEdgePropertyFilterODB edgeFilter) {
+	private static boolean EdgeRecordSatisfyEdgePropertyFilter (ODocument edgeDoc, EdgeByEdgePropertyFilterODB edgeFilter) {
 		
 		if ( edgeFilter == null) return true;
 		
@@ -89,7 +89,7 @@ public class NetworkFilterQueryExecutor {
 		
 	}
 	
-	private boolean EdgeRecordSatisfyNodeFilters (ODocument edgeDoc, EdgeByNodePropertyFilterODB nodeFilter) {
+	private static boolean EdgeRecordSatisfyNodeFilters (ODocument edgeDoc, EdgeByNodePropertyFilterODB nodeFilter) {
 		
 		if ( nodeFilter == null) return true;
 		
