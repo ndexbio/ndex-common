@@ -293,14 +293,13 @@ public class BioPAXParser implements IParsingEngine {
 				if (val instanceof PublicationXref) {
 					processPublicationXrefProperty(predicateId,(PublicationXref) val, nodeId);
 				} else if (val instanceof UnificationXref) {
-					processUnificationXrefProperty(editor, (UnificationXref) val,
-							nodeId);
+					processUnificationXrefProperty(predicateId, (UnificationXref) val,nodeId);
 				} else if (val instanceof RelationshipXref) {
-					processRelationshipXrefProperty(editor, (RelationshipXref) val,
+					processRelationshipXrefProperty(predicateId, (RelationshipXref) val,
 							nodeId);
 				} else if (val instanceof BioPAXElement){
 					// create the edge
-					processEdge(editor, (BioPAXElement) val, nodeId);
+					processEdge(predicateId, (BioPAXElement) val, nodeId);
 					this.referencePropertyCount++;
 				} else if (null != val){
 					// queue up a property to be in the set to add
@@ -322,38 +321,32 @@ public class BioPAXParser implements IParsingEngine {
 	}
 
 	private void processEdge(
-			PropertyEditor editor,
+			Long predicateId,
 			BioPAXElement bpe, 
 			Long subjectNodeId) throws NdexException, ExecutionException {
 		Long objectNodeId = getElementIdByRdfId(bpe.getRDFId());
-		// Determine the predicate Id from the editor
-		Long predicateId = getPropertyEditorPredicateId(editor);
-//		Long supportId = null;
-//		Long citationId = null;
-//		Map<String,String> annotation = null;
-//		System.out.println("       Edge: " + subjectNodeId + " | " + predicateId + " (" + editor.getProperty() + ") | " + objectNodeId);
 		this.persistenceService.createEdge(subjectNodeId, objectNodeId, predicateId, null, null, null);		
 	}
 	
-	private Long getPropertyEditorPredicateId(PropertyEditor editor) throws ExecutionException{
-		String propertyName  = editor.getProperty();
-		Long predicateId = this.persistenceService.getBaseTermId("bp", propertyName);
-		return predicateId;
-	}
-
 	private void processUnificationXrefProperty(
-			PropertyEditor editor,
+			Long predicateId,
 			UnificationXref xref, 
 			Long nodeId) throws ExecutionException, NdexException {
+		
+		processEdge (predicateId,xref,nodeId);
+		
 		Long termId = getElementIdByRdfId(xref.getRDFId());
 //		System.out.println("       Alias: " + nodeId + " -> " + termId);
 		this.persistenceService.addAliasToNode(nodeId,termId);	
 	}
 
 	private void processRelationshipXrefProperty(
-			PropertyEditor editor,
+			Long predicateId,
 			RelationshipXref xref, 
-			Long nodeId) throws ExecutionException {
+			Long nodeId) throws ExecutionException, NdexException {
+		
+		processEdge (predicateId,xref,nodeId);
+		
 		Long termId = getElementIdByRdfId(xref.getRDFId());
 //		System.out.println("       Related: " + nodeId + " -> " + termId);
 		this.persistenceService.addRelatedTermToNode(nodeId, termId);
@@ -363,13 +356,9 @@ public class BioPAXParser implements IParsingEngine {
 			PublicationXref xref, 
 			Long nodeId) throws ExecutionException, NdexException {
 
-		String rdfID = xref.getRDFId();
-
-		Long citationNodeId = this.persistenceService.getNodeIdByBaseTerm(rdfID);
-
-		this.persistenceService.createEdge(nodeId, citationNodeId, predicateId, null, null, null,null);
+		processEdge (predicateId,xref,nodeId);
 		
-		Long citationId = getElementIdByRdfId(rdfID);
+		Long citationId = getElementIdByRdfId(xref.getRDFId());
 		
 //		System.out.println("       citation: " + nodeId + " -> " + citationId);
 		this.persistenceService.addCitationToElement(nodeId, citationId, NdexClasses.Node);
