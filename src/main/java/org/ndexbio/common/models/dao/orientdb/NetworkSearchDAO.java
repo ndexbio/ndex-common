@@ -311,7 +311,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	}
 	
 	
-	private static boolean isSearchable(ODocument networkDoc, ORID userRID, ORID adminUserRID, boolean canRead, boolean includeGroups, Permissions permission)
+	public static boolean isSearchable(ODocument networkDoc, ORID userRID, ORID adminUserRID, boolean canRead, boolean includeGroups, Permissions permission)
 			throws NdexException {
 		
 		if ( adminUserRID != null) {  // we only want networks administrated by that user.
@@ -329,7 +329,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 	 }
 	
-	  private static boolean networkIsReadableByAccount(ODocument networkDoc, 
+	  public static boolean networkIsReadableByAccount(ODocument networkDoc, 
 				ORID userORID) {
 	
 		  for (OIdentifiable reifiedTRec : new OTraverse()

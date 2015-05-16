@@ -266,6 +266,16 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			
 			traverseNeighborHood(nodeRIDs, parameters.getSearchDepth(), dao, result, parameters.getEdgeLimit(),traversedEdges );
 
+			
+	        // copy the source format
+	        NetworkSourceFormat fmt = Helper.getSourceFormatFromNetworkDoc(networkDoc);
+	        if ( fmt!=null) {
+//	        	if ( fmt == NetworkSourceFormat.BIOPAX)
+//	        		fmt = 
+	        	result.getProperties().add(new NdexPropertyValuePair(NdexClasses.Network_P_source_format, fmt.toString()));
+	        }
+	        	
+
 			result.setEdgeCount(result.getEdges().size());
 			result.setNodeCount(result.getNodes().size());
 			

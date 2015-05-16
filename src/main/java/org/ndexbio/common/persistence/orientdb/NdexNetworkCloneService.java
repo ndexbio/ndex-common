@@ -19,6 +19,7 @@ import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePropertyValuePair;
@@ -493,9 +494,15 @@ public class NdexNetworkCloneService extends PersistenceService {
 					ODocument bTermDoc = this.elementIdCache.get(baseTermId);
 
 					String name = bTermDoc.field(NdexClasses.BTerm_P_name);
-					if ( !name.equals(e.getPredicateString())) {
-						throw new NdexException ("Baseterm name of " + e.getPredicateId() +
-							" doesn't match with property name " + e.getPredicateString());
+					
+					String[] qnames = TermUtilities.getNdexQName(e.getPredicateString());
+					
+					if ( ( qnames == null && !name.equals(e.getPredicateString())) || 
+						 ( qnames != null && !name.equals(qnames[1]) ) ) {
+						if ( !name.equals(e.getPredicateString())) {
+							throw new NdexException ("Baseterm name of " + e.getPredicateId() +
+									" doesn't match with property name " + e.getPredicateString());
+						}
 					}
 					pV = this.createNdexPropertyVertex(e, baseTermId, bTermDoc);
 				}
