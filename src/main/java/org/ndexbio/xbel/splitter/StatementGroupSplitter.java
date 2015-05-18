@@ -445,8 +445,9 @@ public class StatementGroupSplitter extends XBelSplitter {
 			} else if (item instanceof Parameter) {
 				Parameter parameter = (Parameter)item;
 				String termString = 
-				 ((parameter.getNs() == null) ? XbelParser.belPrefix : parameter.getNs()) +
-				  		":" + parameter.getValue();
+				 ((parameter.getNs() == null) ? 
+						 parameter.getValue() : 
+					     (parameter.getNs() + ":" + parameter.getValue()));
 				Long baseTermId = this.networkService.getBaseTermId(termString);
 				argumentList.add(baseTermId);
 			} else {

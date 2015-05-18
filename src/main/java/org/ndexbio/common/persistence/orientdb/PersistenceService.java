@@ -156,6 +156,7 @@ public abstract class PersistenceService implements AutoCloseable {
 			aMap.put("PANTHER", 			"http://identifiers.org/panther.family/");
 
 			aMap.put("Pfam", 		"http://identifiers.org/pfam/");
+			aMap.put("PFAM", 		"http://identifiers.org/pfam/");
 			
 			aMap.put("PHARMGKB DRUG", 		"http://identifiers.org/pharmgkb.drug/");
 			
