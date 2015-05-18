@@ -11,9 +11,12 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkSearchDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkSearchDAO.NetworkResultComparator;
+import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.network.query.NetworkPropertyFilter;
 import org.ndexbio.model.network.query.PropertyFilter;
+import org.ndexbio.model.network.query.PropertySpecification;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
@@ -30,31 +33,44 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 public class SearchNetworkByPropertyExecutor {
 
-	Collection<PropertyFilter> filters;
+	Collection<PropertySpecification> filters;
 	ORID userRID;
 	ORID adminUserRID;
 	
-	public SearchNetworkByPropertyExecutor( NetworkPropertyFilter propertyFilter) {
+	public SearchNetworkByPropertyExecutor( NetworkPropertyFilter propertyFilter, String userAccount) throws NdexException {
+		filters = propertyFilter.getProperties();
 		
-         //this.filter = propertyFilter; 
+		try ( UserDocDAO userdao = new UserDocDAO() ) {
+			if ( propertyFilter.getAdmin() != null ) {
+				ODocument accDoc = userdao.getRecordByAccountName(propertyFilter.getAdmin(), NdexClasses.User);
+				adminUserRID = accDoc.getIdentity();
+			} else 
+				adminUserRID = null;
+		if ( userAccount == null )
+			throw new NdexException ("userAccount can't be null in SearchNetworkByPropertyExecutor.");
+		ODocument accDoc = userdao.getRecordByAccountName(userAccount, NdexClasses.User);
+		userRID = accDoc.getIdentity();
+		}
+		
+		
 	}
 	
 	public Collection<NetworkSummary> evaluate() throws NdexException {
 		
 		Collection<NetworkSummary> result = new ArrayList<>();
 
+		if ( filters == null || filters.size() == 0)
+			return result;
+		
 		try (NetworkDAO dao = new NetworkDAO() ) {
 
 			for (final ODocument networkDoc : dao.getDBConnection().browseClass(NdexClasses.Network)) {
 				Boolean isComplete = networkDoc.field(NdexClasses.Network_P_isComplete);
 				Boolean isDeleted = networkDoc.field(NdexClasses.ExternalObj_isDeleted);
 				if ( isComplete !=null && isComplete.booleanValue() && !isDeleted.booleanValue()) {
-					VisibilityType visibility = 
-								  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
-					if ( NetworkSearchDAO.isSearchable(networkDoc, userRID, adminUserRID, true, true, Permissions.READ) )	{	
-						   
-						   if ( networkSatisfyFilter(networkDoc, filters))
-							result.add(NetworkDAO.getNetworkSummary(networkDoc));
+					if ( NetworkSearchDAO.isSearchable(networkDoc, userRID, adminUserRID, false, true, Permissions.READ) )	{	
+						   if ( networkSatisfyFilter(networkDoc))
+							result.add(NetworkDocDAO.getNetworkSummary(networkDoc));
 					}
 				}
 			} 
@@ -66,13 +82,19 @@ public class SearchNetworkByPropertyExecutor {
 	}
 
 		
-	private boolean networkSatisfyFilter(ODocument networkDoc, Collection<PropertyFilter> filters) {
+	private boolean networkSatisfyFilter(ODocument networkDoc) {
 		
 		for ( ODocument propDoc : Helper.getDocumentLinks(networkDoc, "out_", NdexClasses.E_ndexProperties)) {
+			NdexPropertyValuePair prop = Helper.getNdexPropertyFromDoc(propDoc);
+			for ( PropertySpecification spec : filters) {
+				if ( spec.getName().equalsIgnoreCase(prop.getPredicateString()) &&
+						spec.getValue().equalsIgnoreCase((prop.getValue())) ) 
+						return true;
+			}
 			
 		}
 		
-		return true;
+		return false;
 	}
 
 	

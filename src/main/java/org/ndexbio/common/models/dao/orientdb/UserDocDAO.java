@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import java.util.Date;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.Security;
 import org.ndexbio.model.exceptions.*;
@@ -50,6 +51,10 @@ public class UserDocDAO extends OrientdbDAO {
 	 **************************************************************************/
 	public UserDocDAO(ODatabaseDocumentTx dbConnection) {
 		super(dbConnection);
+	}
+	
+	public UserDocDAO() throws NdexException {
+		super(NdexDatabase.getInstance().getAConnection());
 	}
 
 	/**************************************************************************
