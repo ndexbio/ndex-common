@@ -75,9 +75,16 @@ public abstract class PersistenceService implements AutoCloseable {
 	        // fore the repetitive prefix entries, the first record will be used as the default namespace in 
 	        // the reverse lookup.
 
+			aMap.put("BINDINGDB", 	"http://identifiers.org/bindingDB/");
+			aMap.put("bindingDB", 	"http://identifiers.org/bindingDB/");
+	        
+			aMap.put("BIOCYC", 	"http://identifiers.org/biocyc/");
+			
 			aMap.put("biogrid", 	"http://identifiers.org/biogrid/");
 			aMap.put("BIOGRID", 	"http://identifiers.org/biogrid/");
-		 	
+
+			aMap.put("BIOMODELS DATABASE", 	"http://www.ebi.ac.uk/biomodels-main/");
+			
 			aMap.put("CAS",			"http://identifiers.org/cas/");
 
 			aMap.put("CAZY",		"http://identifiers.org/cazy/");
@@ -96,11 +103,19 @@ public abstract class PersistenceService implements AutoCloseable {
 			aMap.put("ENSEMBL", 	"http://identifiers.org/ensembl/");
 			aMap.put("ensembl", 	"http://identifiers.org/ensembl/");
 
+			aMap.put("GENATLAS",		"http://identifiers.org/genatlas/");
+			aMap.put("genatlas",		"http://identifiers.org/genatlas/");
+
+			aMap.put("GENECARDS",		"http://identifiers.org/genecards/");
+			
 			aMap.put("GENE ONTOLOGY",		"http://identifiers.org/go/");
 			aMap.put("Gene Ontology",		"http://identifiers.org/go/");
 
-			aMap.put("GENPEPT",				"http://www.ncbi.nlm.nih.gov/protein/");
-
+			aMap.put("GENPEPT",		"http://www.ncbi.nlm.nih.gov/protein/");
+			aMap.put("GENBANK PROTEIN DATABASE",		"http://www.ncbi.nlm.nih.gov/protein/");
+			
+			aMap.put("GLYCOMEDB",	"http://identifiers.org/glycomedb/");
+			
 			aMap.put("HGNC",		"http://identifiers.org/hgnc/");
 			aMap.put("hgnc",		"http://identifiers.org/hgnc/");
 
@@ -121,13 +136,25 @@ public abstract class PersistenceService implements AutoCloseable {
 			aMap.put("INTERPRO",	"http://identifiers.org/interpro/");
 
 			aMap.put("KEGG COMPOUND",	"http://identifiers.org/kegg.compound/");
-			aMap.put("KEGG GLYCAN",		"http://identifiers.org/kegg.glycan/");
+			aMap.put("KEGG Compound",	"http://identifiers.org/kegg.compound/");
 			aMap.put("KEGG DRUG",		"http://identifiers.org/kegg.drug/");
+			aMap.put("KEGG GENES",	"http://identifiers.org/kegg.genes/");
+			aMap.put("KEGG GLYCAN",		"http://identifiers.org/kegg.glycan/");
+			aMap.put("KEGG ORTHOLOGY",	"http://identifiers.org/kegg.orthology/");
+			aMap.put("KEGG PATHWAY",	"http://identifiers.org/kegg.pathway/");
 			
+			aMap.put("KEGG REACTION",	"http://identifiers.org/kegg.reaction/");
+			
+			aMap.put("LIPIDBANK",	"http://identifiers.org/lipidbank/");
+			
+			aMap.put("MOLECULAR INTERACTIONS ONTOLOGY",		"http://identifiers.org/psimi/");
+
 			aMap.put("MOLECULAR MODELING DATABASE",		"http://identifiers.org/mmdb/");
 			
 			aMap.put("NCBI Gene","http://identifiers.org/ncbigene/");
 			aMap.put("NCBI GENE","http://identifiers.org/ncbigene/");
+			
+			aMap.put("PROSITE","http://identifiers.org/prosite/");
 			
 			aMap.put("Pubmed",	"http://www.ncbi.nlm.nih.gov/pubmed/");
 			aMap.put("Reactome",	"http://identifiers.org/reactome/");
@@ -150,7 +177,7 @@ public abstract class PersistenceService implements AutoCloseable {
 			aMap.put("Protein Data Bank", "http://identifiers.org/pdb/");
 			
 			aMap.put("Protein Modification Ontology", "http://identifiers.org/psimod/");
-			
+			aMap.put("PROTEIN MODIFICATION ONTOLOGY", "http://identifiers.org/psimod/");
 			
 			aMap.put("Panther Family", 		"http://identifiers.org/panther.family/");
 			aMap.put("PANTHER Family", 		"http://identifiers.org/panther.family/");
@@ -169,7 +196,8 @@ public abstract class PersistenceService implements AutoCloseable {
 			aMap.put("SMART", 		"http://identifiers.org/smart/");
 			
 			aMap.put("Taxonomy", 		"http://identifiers.org/taxonomy/");
-
+			aMap.put("TAXONOMY", 		"http://identifiers.org/taxonomy/");
+			
 			aMap.put("UniProt", 			"http://identifiers.org/uniprot/");
 			aMap.put("UNIPROT", 			"http://identifiers.org/uniprot/");
 			aMap.put("UniProt Isoform",		"http://identifiers.org/uniprot.isoform/");
@@ -182,6 +210,8 @@ public abstract class PersistenceService implements AutoCloseable {
 			aMap.put("Wikipedia",		"http://identifiers.org/wikipedia.en/");
 			
 			aMap.put("nucleotide genbank identifier",	"http://www.ncbi.nlm.nih.gov/nuccore/");
+			aMap.put("NUCLEOTIDE GENBANK IDENTIFIER",	"http://www.ncbi.nlm.nih.gov/nuccore/");
+			aMap.put("GENBANK GENE DATABASE",			"http://www.ncbi.nlm.nih.gov/nuccore/");
 			
 			defaultNSMap = Collections.unmodifiableMap(aMap);
 
