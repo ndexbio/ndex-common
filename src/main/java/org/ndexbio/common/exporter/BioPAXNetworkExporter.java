@@ -338,7 +338,7 @@ public class BioPAXNetworkExporter {
 		
 		Namespace ns = network.getNamespaces().get(bTerm.getNamespaceId());
 		
-		if ( ns.getUri() == null)
+		if ( ns ==null || ns.getUri() == null)
 			return bTerm.getName();
 		
 		return ns.getUri() + bTerm.getName();

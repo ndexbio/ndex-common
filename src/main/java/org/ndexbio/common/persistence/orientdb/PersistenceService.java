@@ -70,6 +70,8 @@ public abstract class PersistenceService implements AutoCloseable {
 	 static {
 	        Map<String, String> aMap = new TreeMap<>();
 	        
+	        aMap.put("ndex", 	"http://www.ndexbio.org/");
+	        
 	        // fore the repetitive prefix entries, the first record will be used as the default namespace in 
 	        // the reverse lookup.
 
@@ -86,6 +88,7 @@ public abstract class PersistenceService implements AutoCloseable {
 			aMap.put("CHEMBL",		"http://identifiers.org/chembl.compound/");
 			
 			aMap.put("DRUGBANK",	"http://www.drugbank.ca/drugs/");
+			aMap.put("DrugBank",	"http://www.drugbank.ca/drugs/");
 			
 			aMap.put("ENA",			"http://identifiers.org/ena.embl/");
 			
@@ -170,11 +173,13 @@ public abstract class PersistenceService implements AutoCloseable {
 			aMap.put("UniProt", 			"http://identifiers.org/uniprot/");
 			aMap.put("UNIPROT", 			"http://identifiers.org/uniprot/");
 			aMap.put("UniProt Isoform",		"http://identifiers.org/uniprot.isoform/");
+			aMap.put("UNIPROT ISOFORM",		"http://identifiers.org/uniprot.isoform/");
 			
 			aMap.put("UniProt Knowledgebase",		"http://identifiers.org/uniprot/");
 			aMap.put("UNIPROT KNOWLEDGEBASE",		"http://identifiers.org/uniprot/");
 			
 			aMap.put("WIKIPEDIA",		"http://identifiers.org/wikipedia.en/");
+			aMap.put("Wikipedia",		"http://identifiers.org/wikipedia.en/");
 			
 			aMap.put("nucleotide genbank identifier",	"http://www.ncbi.nlm.nih.gov/nuccore/");
 			
