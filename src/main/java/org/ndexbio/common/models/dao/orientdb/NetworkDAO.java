@@ -877,7 +877,8 @@ public class NetworkDAO extends NetworkDocDAO {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId.toString()),
 		
 				"A network UUID is required");
-		Preconditions.checkArgument( 
+		if ( permission !=null )
+			Preconditions.checkArgument( 
 				(permission.equals( Permissions.ADMIN) )
 				|| (permission.equals( Permissions.WRITE ))
 				|| (permission.equals( Permissions.READ )),
@@ -888,13 +889,20 @@ public class NetworkDAO extends NetworkDocDAO {
 		final int startIndex = skipBlocks
 				* blockSize;
 		
-		try {
 			List<Membership> memberships = new ArrayList<>();
 			
 			String networkRID = network.getIdentity().toString();
+			
+			String traverseCondition = null;
+			
+			if ( permission != null) 
+				traverseCondition = NdexClasses.Network +".in_"+ permission.name().toString();
+			else 
+				traverseCondition = "in_" + Permissions.ADMIN + ",in_" + Permissions.READ + ",in_" + Permissions.WRITE;   
+			
 			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 		  			"SELECT FROM"
-		  			+ " (TRAVERSE "+ NdexClasses.Network +".in_"+ permission.name().toString().toLowerCase() +" FROM"
+		  			+ " (TRAVERSE "+ traverseCondition.toLowerCase() +" FROM"
 		  				+ " " + networkRID
 		  				+ "  WHILE $depth <=1)"
 		  			+ " WHERE @class = '" + NdexClasses.User + "'"
@@ -918,11 +926,6 @@ public class NetworkDAO extends NetworkDocDAO {
 			
 			logger.info("Successfuly retrieved network-user memberships");
 			return memberships;
-			
-		} catch(Exception e) {
-			logger.severe("An unexpected error occured while retrieving network-user memberships");
-			throw new NdexException(e.getMessage());
-		}
 	}
 	
     
