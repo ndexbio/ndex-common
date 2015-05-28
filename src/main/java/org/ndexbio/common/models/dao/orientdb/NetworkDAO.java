@@ -901,7 +901,10 @@ public class NetworkDAO extends NetworkDocDAO {
 				traverseCondition = "in_" + Permissions.ADMIN + ",in_" + Permissions.READ + ",in_" + Permissions.WRITE;   
 			
 			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
-		  			"SELECT FROM"
+		  			"SELECT " + NdexClasses.account_P_accountName + "," +
+		  					NdexClasses.ExternalObj_ID + ", $path" +
+		  					
+			        " FROM"
 		  			+ " (TRAVERSE "+ traverseCondition.toLowerCase() +" FROM"
 		  				+ " " + networkRID
 		  				+ "  WHILE $depth <=1)"
@@ -917,7 +920,7 @@ public class NetworkDAO extends NetworkDocDAO {
 				membership.setMembershipType( MembershipType.NETWORK );
 				membership.setMemberAccountName( (String) member.field(NdexClasses.account_P_accountName) ); 
 				membership.setMemberUUID( UUID.fromString( (String) member.field(NdexClasses.ExternalObj_ID) ) );
-				membership.setPermissions( permission );
+				membership.setPermissions( Helper.getNetworkPermissionFromInPath ((String)member.field("$path") ));
 				membership.setResourceName( (String) network.field("name") );
 				membership.setResourceUUID( networkId );
 				

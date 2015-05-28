@@ -59,18 +59,33 @@ public class Helper {
 
 	    for ( ODocument d : result ) { 
 	    	String s = d.field("$path");
-	    	Pattern pattern = Pattern.compile("out_([a-z]+)");
-	    	Matcher matcher = pattern.matcher(s);
-	    	if (matcher.find())
-	    	{
-	    	    return Permissions.valueOf(matcher.group(1).toUpperCase());
-	    	}  
-	    	return null;
+	    	return getNetworkPermissionFromOutPath(s);
         }
     	
     	return null;
     }
 
+    public static Permissions getNetworkPermissionFromOutPath(String path) {
+	    Pattern pattern = Pattern.compile("out_([a-z]+)");
+	    Matcher matcher = pattern.matcher(path);
+	    if (matcher.find())
+	    {
+	    	return Permissions.valueOf(matcher.group(1).toUpperCase());
+	    }  
+	    return null;
+    }
+
+    public static Permissions getNetworkPermissionFromInPath(String path) {
+	    Pattern pattern = Pattern.compile("in_([a-z]+)");
+	    Matcher matcher = pattern.matcher(path);
+	    if (matcher.find())
+	    {
+	    	return Permissions.valueOf(matcher.group(1).toUpperCase());
+	    }  
+	    return null;
+    }
+
+    
     public static boolean isAdminOfNetwork(ODatabaseDocumentTx db, String networkUUID, 
 			String accountUUID) {
     	String query = "select $path from (traverse out_admin,out_member,out_groupadmin from (select * from " + NdexClasses.Account + 
