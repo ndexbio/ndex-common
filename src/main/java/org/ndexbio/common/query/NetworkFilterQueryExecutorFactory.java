@@ -6,6 +6,8 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.query.filter.orientdb.EdgeByEdgePropertyFilterODB;
 import org.ndexbio.common.query.filter.orientdb.EdgeByNodePropertyFilterODB;
 import org.ndexbio.common.query.filter.orientdb.EdgeCollectionQueryODB;
+import org.ndexbio.common.util.TermStringType;
+import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.network.query.EdgeByEdgePropertyFilter;
 import org.ndexbio.model.network.query.EdgeByNodePropertyFilter;
@@ -57,7 +59,7 @@ public class NetworkFilterQueryExecutorFactory {
 
 	
 	private static EdgeByEdgePropertyFilterODB preprocessEdgeByEdgePropertyFilter(
-			   EdgeByEdgePropertyFilter filter, ODocument networkDoc) {
+			   EdgeByEdgePropertyFilter filter, ODocument networkDoc) throws NdexException {
 		if ( filter == null) return null;
 		
 		EdgeByEdgePropertyFilterODB odbFilter = new EdgeByEdgePropertyFilterODB();
@@ -75,16 +77,15 @@ public class NetworkFilterQueryExecutorFactory {
 						}
 					}
 				}
-			} else {
+			} else {  // normal properties
 				for ( ODocument baseTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
-					String name = baseTermDoc.field(NdexClasses.BTerm_P_name);
-					if ( name !=null && name.equalsIgnoreCase(propName)) {
-						   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
+					if (propertyNameMatchesBaseterm(propName, baseTermDoc) ) {
+					   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
 							   String v = prop.field(NdexClasses.ndexProp_P_value);
 							   if ( v.equalsIgnoreCase(value)) {
 								   odbFilter.addPropertyId(prop.getIdentity().toString());
 							   }
-						   }
+					   }
 					}
 				}
 			}
@@ -94,7 +95,7 @@ public class NetworkFilterQueryExecutorFactory {
 	}
 
 	private static EdgeByNodePropertyFilterODB preprocessEdgeByNodePropertyFilter(
-			   EdgeByNodePropertyFilter filter, ODocument networkDoc) {
+			   EdgeByNodePropertyFilter filter, ODocument networkDoc) throws NdexException {
 		if ( filter == null) return null;
 		
 		EdgeByNodePropertyFilterODB odbFilter = new EdgeByNodePropertyFilterODB();
@@ -123,14 +124,14 @@ public class NetworkFilterQueryExecutorFactory {
 					}
 			} else {  // normal property
 				for ( ODocument baseTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
-					String name = baseTermDoc.field(NdexClasses.BTerm_P_name);
-					if ( name !=null && name.equalsIgnoreCase(propName)) {
-						   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
-							   String v = prop.field(NdexClasses.ndexProp_P_value);
-							   if ( v.equalsIgnoreCase(value)) {
+					
+					if (propertyNameMatchesBaseterm(propName, baseTermDoc)) {
+					   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
+						   String v = prop.field(NdexClasses.ndexProp_P_value);
+						   if ( v.equalsIgnoreCase(value)) {
 								   odbFilter.addPropertyId(prop.getIdentity().toString());
-							   }
 						   }
+					   }
 					}
 				}
 			}
@@ -138,4 +139,38 @@ public class NetworkFilterQueryExecutorFactory {
 		return odbFilter;
 	}
 
+	private static boolean propertyNameMatchesBaseterm(String propertyName, ODocument baseTermDoc) throws NdexException {
+
+		String name = baseTermDoc.field(NdexClasses.BTerm_P_name);
+		
+		if ( name == null) return false;
+		
+		TermStringType termType = TermUtilities.getTermType(propertyName);
+		
+		switch (termType) {
+		case URI:
+			throw new NdexException("URI type baseterm search not implemented yet.");
+	//		break;
+		case CURIE:
+			String[] qname =TermUtilities.getNdexQName(propertyName);
+			if ( ! name.equalsIgnoreCase(qname[1]) ) return false;
+			
+			ODocument nsDoc = baseTermDoc.field("out_"+NdexClasses.BTerm_E_Namespace);
+			String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
+			if (prefix !=null && prefix.equalsIgnoreCase(qname[0])) 
+				  return true;	 
+			break;
+		case NAME:
+			if ( name.equalsIgnoreCase(propertyName)) 
+				return true;
+			break;
+		default:
+			break;
+		}
+
+		
+		return false;
+		
+	}
+	
 }
