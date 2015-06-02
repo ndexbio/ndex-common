@@ -58,6 +58,11 @@ public class OrientdbDAO implements AutoCloseable {
 			
 			return (ODocument) record.getRecord();
 			
+		}  catch (ObjectNotFoundException e) {
+			logger.severe("Object with UUID " + id + " not found : " + e.getMessage());
+			e.printStackTrace();
+			throw new ObjectNotFoundException(e.getMessage());
+			
 		}  catch (Exception e) {
 			logger.severe("Unexpected error on external object retrieval by UUID : " + e.getMessage());
 			e.printStackTrace();
