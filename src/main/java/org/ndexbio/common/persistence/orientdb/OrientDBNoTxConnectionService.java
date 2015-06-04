@@ -1,6 +1,7 @@
 package org.ndexbio.common.persistence.orientdb;
 
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
 import org.slf4j.Logger;
@@ -41,22 +42,12 @@ public class OrientDBNoTxConnectionService {
 		// configuration to close the storage; this is required here otherwise
 		// OrientDB connection pooling doesn't work as expected
 		// OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-/*
-		FramedGraphFactory _graphFactory = new FramedGraphFactory(new GremlinGroovyModule(),
-				new TypedGraphModuleBuilder().withClass(IGroup.class)
-						.withClass(IUser.class)
-						.withClass(IGroupMembership.class)
-						.withClass(INetworkMembership.class)
-						.withClass(IGroupInvitationRequest.class)
-						.withClass(IJoinGroupRequest.class)
-						.withClass(INetworkAccessRequest.class)
-						.withClass(IBaseTerm.class)
-						.withClass(IReifiedEdgeTerm.class)
-						.withClass(IFunctionTerm.class).build());
-*/
-		_ndexDatabase = NdexAOrientDBConnectionPool.getInstance().acquire(); 
+		_ndexDatabase = NdexDatabase.getInstance().getAConnection(); 
 
 		graph = new OrientGraph(_ndexDatabase,false);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
 		NdexSchemaManager.INSTANCE.init(_ndexDatabase);
 		this.setSetup(true);
 		logger.info("Connection to OrientDB established");

@@ -1,16 +1,21 @@
 package org.ndexbio.common.access;
 
 
+import java.util.logging.Logger;
+
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class NdexDatabase {
 	
-	private NdexAOrientDBConnectionPool pool;
+	private static NdexDatabase INSTANCE = null;
+	
+	private OPartitionedDatabasePool pool;
 	
 	private ODatabaseDocumentTx ndexDatabase;  // this connection is used for transactions in this database object.
 	
@@ -24,16 +29,28 @@ public class NdexDatabase {
 	
 	private long internalCounterBase;
 
-	private static final int blockSize = 60;  
+	private static final int blockSize = 80;  
 	
 	private ODocument vdoc;
 	
 	static private String URIPrefix = null;
 	
-	public NdexDatabase(String HostURI) throws NdexException {
-		pool = NdexAOrientDBConnectionPool.getInstance();
-		ndexDatabase = pool.acquire();
+	private static final Logger logger = Logger
+			.getLogger(NdexAOrientDBConnectionPool.class.getName());
+	
+	private static long currentId = System.currentTimeMillis(); 
+	
+	private NdexDatabase(String HostURI, String dbURL, String dbUserName,
+			String dbPassword, int size) throws NdexException {
+		
+		pool = new OPartitionedDatabasePool(dbURL, dbUserName, dbPassword,size);
+	    
+	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " ("+ size + ") created.");
+
+	    ndexDatabase = pool.acquire();
+	    
 		dictionary = ndexDatabase.getDictionary();
+		
 		NdexSchemaManager.INSTANCE.init(ndexDatabase);
 		vdoc = (ODocument) dictionary.get(sequenceKey);
 		if (vdoc == null ) {
@@ -49,6 +66,31 @@ public class NdexDatabase {
 		URIPrefix = HostURI;
 		
 	}
+	
+	public static synchronized long getCommitId () {
+		return currentId++;
+	}
+	
+	public static synchronized NdexDatabase createNdexDatabase (String HostURI, String dbURL, String dbUserName,
+			String dbPassword, int size) throws NdexException {
+		if(INSTANCE == null) {
+	         INSTANCE = new NdexDatabase(HostURI, dbURL, dbUserName, dbPassword, size);
+	         return INSTANCE;
+		} 
+		
+		throw new NdexException("Database has arlready been  opened.");
+		
+	}
+
+	
+	
+	public static synchronized NdexDatabase getInstance() throws NdexException {
+	      if(INSTANCE == null) {
+	         throw new NdexException ("Connection pool is not created yet.");
+	      }
+	      return INSTANCE;
+	}
+
 	
 	static public String getURIPrefix ()  {
 		return URIPrefix;
@@ -76,20 +118,46 @@ public class NdexDatabase {
     	vdoc.field(seqField,0);
     }
     
-    public void close () {
-    //	vdoc.save();
-    	ndexDatabase.commit();
-    	ndexDatabase.close();
+    public static synchronized void close () {
+    	if ( INSTANCE != null ) {
+    		logger.info("Closing database.");
+    		INSTANCE.ndexDatabase.commit();
+    		INSTANCE.ndexDatabase.close();
+    		INSTANCE.pool.close();
+    		INSTANCE.pool = null;
+    		INSTANCE = null;
+    		logger.info("Database closed.");
+    	} else 
+    		logger.info("Database is already closed.");
     }
     
+    /**
+     * This function commit the metadata changes in the data. It doesn't comment any connections in the pool.
+     */
     public void commit() {
     	ndexDatabase.commit();
-//    	ndexDatabase.begin();
     }
     
-    public ODatabaseDocumentTx getAConnection() {
-    	return pool.acquire();
+    public ODatabaseDocumentTx getAConnection() throws NdexException {
+  
+    	for ( int i = 0 ; i < 3000; i ++) {
+    		try { 
+    			return pool.acquire();
+    		} catch (java.lang.IllegalStateException e) {
+    			if ( e.getMessage().equals("You have reached maximum pool size for given partition")) {
+					logger.warning("DB connection pool is full, wait and retry " + i);
+    				try {
+						Thread.sleep(150);
+					} catch (InterruptedException e1) {
+						throw new NdexException ("Interrupted in getAConnection.");
+					}
+    			} else 
+    				throw e;
+    		}
+    	}
+    	throw new NdexException ("Timeout in getting db connection from pool.");
     }
-    
- //   public ODatabaseDocumentTx getTransactionConnection() {return ndexDatabase;}
+
+
+ 
 }

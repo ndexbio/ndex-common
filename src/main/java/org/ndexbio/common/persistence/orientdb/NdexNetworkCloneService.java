@@ -1,22 +1,30 @@
 package org.ndexbio.common.persistence.orientdb;
 
+import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.SimplePropertyValuePair;
+import org.ndexbio.model.object.Task;
+import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -27,6 +35,8 @@ import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
+import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.NdexServerQueue;
 
 import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -42,9 +52,6 @@ public class NdexNetworkCloneService extends PersistenceService {
   //	private LoadingCache<String, BaseTerm> baseTermStrCache;
 
 
-//	private ODocument networkDoc;
-	
-//    private ODocument ownerDoc;
     private String ownerAccount;
     
     // all these mapping are for mapping from source Id to Ids in the newly persisted graph.
@@ -64,7 +71,7 @@ public class NdexNetworkCloneService extends PersistenceService {
      * 2. Create New network
      */
     
-	public NdexNetworkCloneService(NdexDatabase db, Network sourceNetwork, String ownerAccountName) {
+	public NdexNetworkCloneService(NdexDatabase db, final Network sourceNetwork, String ownerAccountName) throws NdexException {
         super(db);
 		
 		Preconditions.checkNotNull(sourceNetwork.getName(),"A network title is required");
@@ -95,15 +102,46 @@ public class NdexNetworkCloneService extends PersistenceService {
 	 */
 	public NetworkSummary updateNetwork() throws NdexException, ExecutionException {
 		try {
-			// need to keep this order because of the dependency between objects.
-			updateNetworkNode ();
 			
-			cloneNetworkElements();
+			// create new network and set the isComplete flag to false 
+			cloneNetworkCore();
+			
+			this.network.setExternalId(this.srcNetwork.getExternalId());
+			
+			// get the old network head node
+			ODocument srcNetworkDoc = networkDAO.getNetworkDocByUUID(this.srcNetwork.getExternalId());
+			if (srcNetworkDoc == null)
+				throw new NdexException("Network with UUID " + this.srcNetwork.getExternalId()
+						+ " is not found in this server");
+			
+			// copy the permission from source to target.
+			copyNetworkPermissions(srcNetworkDoc, networkVertex);
+			
+			this.localConnection.commit();
+			
+			//move the UUID from old network to new network, set new one's isComplete and set the old one to isDeleted.
+			
+			localConnection.begin();
+			UUID newUUID = NdexUUIDFactory.INSTANCE.getNDExUUID();
 
-//			addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
-		
+			srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
+					  NdexClasses.ExternalObj_isDeleted,true).save();
+			
 			this.networkDoc.reload();
-			this.networkDoc.field(NdexClasses.Network_P_isComplete , true);
+			// copy the creationTime and visibility
+			networkDoc.fields(NdexClasses.ExternalObj_ID, this.srcNetwork.getExternalId(),
+					NdexClasses.ExternalObj_cTime, srcNetworkDoc.field(NdexClasses.ExternalObj_cTime),
+					NdexClasses.Network_P_visibility, srcNetworkDoc.field(NdexClasses.Network_P_visibility),
+					NdexClasses.ExternalObj_mTime, new Date() ,
+					          NdexClasses.Network_P_isComplete,true)
+			.save();
+			localConnection.commit();
+
+			// added a delete old network task.
+			Task task = new Task();
+			task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
+			task.setResource(newUUID.toString());
+			NdexServerQueue.INSTANCE.addSystemTask(task);
 			
 			return this.network;
 		} finally {
@@ -112,67 +150,25 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 	
-	private void updateNetworkNode() throws NdexException, ExecutionException {
-		if ( this.srcNetwork.getExternalId() == null)
-			throw new NdexException("Source network doesn't have a UUID. ");
-		
-		this.networkDoc = networkDAO.getNetworkDocByUUID(this.srcNetwork.getExternalId());
-		
-		if (networkDoc == null)
-			throw new NdexException("Network with UUID " + this.srcNetwork.getExternalId()
-					+ " is not found in this server");
-		
-		this.network = NetworkDAO.getNetworkSummary(networkDoc);
-		
-		this.network.setName(srcNetwork.getName());
-		this.network.setEdgeCount(srcNetwork.getEdges().size());
-		this.network.setNodeCount(srcNetwork.getNodes().size());
-		this.network.setDescription(srcNetwork.getDescription());
-		this.network.setVersion(srcNetwork.getVersion());
-		
-		// make description is not null so that the Lucene index will index this field.
-		if ( this.network.getDescription() == null)
-			this.network.setDescription("");
-		
-		networkDoc = networkDoc.fields(
-		          NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime(),
-		          NdexClasses.Network_P_name, srcNetwork.getName(),
-		          NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
-		          NdexClasses.Network_P_nodeCount, network.getNodeCount(),
-		          NdexClasses.Network_P_desc,srcNetwork.getDescription(),
-		          NdexClasses.Network_P_version,srcNetwork.getVersion(),
-		          NdexClasses.Network_P_isLocked, false,
-		          NdexClasses.Network_P_isComplete, false);
-		
-		
-		NetworkSourceFormat fmt = removeNetworkSourceFormat(srcNetwork);
-		if ( fmt!=null)
-			networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
 	
-		networkDoc = networkDoc.save();
-
-		this.localConnection.commit();
+	private void copyNetworkPermissions(ODocument srcNetworkDoc, OrientVertex targetNetworkVertex) {
 		
-		networkVertex = graph.getVertex(networkDoc);
-		
-		networkDAO.deleteNetworkProperties(networkDoc);
-
-		networkDAO.deleteNetworkElements(network.getExternalId().toString());
-		
-		networkVertex.getRecord().reload();
-
-		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
-
-        this.network.getProperties().addAll(srcNetwork.getProperties());
-		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
-		
-		networkDoc.reload();
-		networkVertex.getRecord().reload();
-
-		logger.info("NDEx network titled: " +srcNetwork.getName() +" has been updated.");
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.E_admin);
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.account_E_canEdit);
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.account_E_canRead);
 
 	}
-
+	
+	private void copyNetworkPermissionAux(ODocument srcNetworkDoc, OrientVertex targetNetworkVertex, String permissionEdgeType) {
+		
+		for ( ODocument rec : Helper.getDocumentLinks(srcNetworkDoc, "in_", permissionEdgeType)) {
+			OrientVertex userV = graph.getVertex(rec);
+			targetNetworkVertex.reload();
+			userV.addEdge(permissionEdgeType, targetNetworkVertex);
+		}
+		
+	}
+	
 	private void cloneNetworkElements() throws NdexException, ExecutionException {
 		try {
 			// need to keep this order because of the dependency between objects.
@@ -192,8 +188,6 @@ public class NdexNetworkCloneService extends PersistenceService {
 			network.setIsLocked(false);
 			network.setIsComplete(true);
 		
-			networkDoc.field(NdexClasses.Network_P_isComplete,true)
-				.save();
 
 			logger.info("Updating network " + network.getName() + " is complete.");
 		} finally {
@@ -204,12 +198,12 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 	public NetworkSummary cloneNetwork() throws NdexException, ExecutionException {
 		try {
-			// need to keep this order because of the dependency between objects.
-			cloneNetworkNode ();
-
-			cloneNetworkElements();
-			this.localConnection.commit();
 			
+			cloneNetworkCore();
+			
+			networkDoc.field(NdexClasses.Network_P_isComplete,true)
+			.save();
+
 			// find the network owner in the database
 			UserDAO userdao = new UserDAO(localConnection, graph);
 			ODocument ownerDoc = userdao.getRecordByAccountName(this.ownerAccount, null) ;
@@ -222,6 +216,20 @@ public class NdexNetworkCloneService extends PersistenceService {
 			logger.info("Network "+ network.getName() + " with UUID:"+ network.getExternalId() +" has been saved. ");
 		}
 	}
+	
+	
+	/**
+	 * clone the network without the permission links and isComplete flag.
+	 * @throws NdexException
+	 * @throws ExecutionException
+	 */
+	private void cloneNetworkCore() throws NdexException, ExecutionException {
+			cloneNetworkNode ();
+
+			cloneNetworkElements();
+			this.localConnection.commit();
+	}
+	
 	
 	private void cloneNetworkNode() throws NdexException, ExecutionException  {
 
@@ -236,16 +244,23 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.network.setEdgeCount(srcNetwork.getEdges().size());
 		this.network.setNodeCount(srcNetwork.getNodes().size());
 
+        Timestamp now = new Timestamp(Calendar.getInstance().getTimeInMillis());
 		networkDoc = new ODocument (NdexClasses.Network)
 		  .fields(NdexClasses.Network_P_UUID,this.network.getExternalId().toString(),
-		          NdexClasses.ExternalObj_cTime, network.getCreationTime(),
-		          NdexClasses.ExternalObj_mTime, network.getModificationTime(),
+		          NdexClasses.ExternalObj_cTime, now,
+		          NdexClasses.ExternalObj_mTime, now,
+		          NdexClasses.ExternalObj_isDeleted, false,
 		          NdexClasses.Network_P_name, srcNetwork.getName(),
 		          NdexClasses.Network_P_edgeCount, network.getEdgeCount(),
 		          NdexClasses.Network_P_nodeCount, network.getNodeCount(),
 		          NdexClasses.Network_P_isLocked, false,
 		          NdexClasses.Network_P_isComplete, false,
-		          NdexClasses.Network_P_visibility, srcNetwork.getVisibility().toString());
+		          NdexClasses.Network_P_cacheId, Long.valueOf(-1),
+		          NdexClasses.Network_P_readOnlyCommitId, Long.valueOf(-1),
+		          NdexClasses.Network_P_visibility, 
+		          ( srcNetwork.getVisibility() == null ? 
+		        		  VisibilityType.PRIVATE.toString()  : 
+		        		  srcNetwork.getVisibility().toString()));
 		
 		if ( srcNetwork.getDescription() != null) {
 			networkDoc.field(NdexClasses.Network_P_desc,srcNetwork.getDescription());
@@ -460,6 +475,46 @@ public class NdexNetworkCloneService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
         return nodeId;		
 	}
+	
+	
+	@Override
+	protected void addPropertiesToVertex(OrientVertex vertex, Collection<NdexPropertyValuePair> properties, 
+			Collection<SimplePropertyValuePair> presentationProperties ) throws NdexException, ExecutionException {
+		
+		if ( properties != null) {
+			for (NdexPropertyValuePair e : properties) {
+				OrientVertex pV = null;
+				
+				Long baseTermId = baseTermIdMap.get(e.getPredicateId());
+				
+				if ( baseTermId == null ) {
+				   logger.warning("Baseterm id " + e.getPredicateId() + " not defined in baseTerm table. Creating new basterm for property name.");
+				   pV = this.createNdexPropertyVertex(e);
+				} else {
+					ODocument bTermDoc = this.elementIdCache.get(baseTermId);
+
+					String name = bTermDoc.field(NdexClasses.BTerm_P_name);
+					
+					String[] qnames = TermUtilities.getNdexQName(e.getPredicateString());
+					
+					if ( ( qnames == null && !name.equals(e.getPredicateString())) || 
+						 ( qnames != null && !name.equals(qnames[1]) ) ) {
+						if ( !name.equals(e.getPredicateString())) {
+							throw new NdexException ("Baseterm name of " + e.getPredicateId() +
+									" doesn't match with property name " + e.getPredicateString());
+						}
+					}
+					pV = this.createNdexPropertyVertex(e, baseTermId, bTermDoc);
+				}
+               vertex.addEdge(NdexClasses.E_ndexProperties, pV);
+			}
+		
+		}
+		
+		addPresentationPropertiesToVertex ( vertex, presentationProperties);
+	}
+	
+	
 	
 	private void cloneEdges() throws NdexException, ExecutionException {
 		if ( srcNetwork.getEdges() != null) {

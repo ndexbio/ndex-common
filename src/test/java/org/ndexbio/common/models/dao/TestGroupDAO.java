@@ -7,12 +7,10 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.ndexbio.common.exceptions.DuplicateObjectException;
-import org.ndexbio.common.exceptions.ObjectNotFoundException;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.dao.orientdb.GroupDAO;
-import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.*;
 import org.ndexbio.model.object.SimpleUserQuery;
 import org.ndexbio.model.object.Group;
 import org.ndexbio.model.object.Membership;
@@ -43,11 +41,11 @@ public class TestGroupDAO
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		// For acquiring connections from the pool
-		database = new NdexDatabase("http://localhost");
+		database = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10);
 		localConnection = database.getAConnection();
 		graph = new OrientGraph(localConnection);
 		userDAO = new UserDAO(localConnection, graph);
-		dao = new GroupDAO(localConnection, graph);
+		dao = new GroupDAO(localConnection);
 		
 		//localConnection.begin();
 		final NewUser newUser = new NewUser();

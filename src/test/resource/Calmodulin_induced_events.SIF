@@ -1,0 +1,45 @@
+PARTICIPANT_A	INTERACTION_TYPE	PARTICIPANT_B	INTERACTION_DATA_SOURCE	INTERACTION_PUBMED_ID
+http://biopax.org/generated/group/-79670964	REACTS_WITH	http://identifiers.org/uniprot/P16220	pid	
+http://biopax.org/generated/group/-79670964	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_3aa00259447d8c05afa64bbd2a4aab56	pid	
+http://biopax.org/generated/group/-79670964	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_ea9ff4c4436688dd5772e043567754a4	pid	
+http://biopax.org/generated/group/-81911945	REACTS_WITH	http://identifiers.org/uniprot/P62158	pid	
+http://biopax.org/generated/group/-81911945	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_4ca437bb13c88288778ef9c4565a1854	pid	
+http://biopax.org/generated/group/1689575	METABOLIC_CATALYSIS	http://purl.org/pc2/4/SmallMoleculeReference_3aa00259447d8c05afa64bbd2a4aab56	pid	Pubmed:11042191
+http://biopax.org/generated/group/1689575	METABOLIC_CATALYSIS	http://purl.org/pc2/4/SmallMoleculeReference_ea9ff4c4436688dd5772e043567754a4	pid	Pubmed:11042191
+http://biopax.org/generated/group/1689575	STATE_CHANGE	http://identifiers.org/uniprot/P25098	pid	Pubmed:11042191
+http://biopax.org/generated/group/93620223	REACTS_WITH	http://identifiers.org/uniprot/P25098	pid	Pubmed:9753452;Pubmed:8910504;Pubmed:11042191
+http://biopax.org/generated/group/93620223	REACTS_WITH	http://identifiers.org/uniprot/P62158	pid	Pubmed:9753452;Pubmed:8910504;Pubmed:11042191
+http://identifiers.org/uniprot/P16220	COMPONENT_OF	http://biopax.org/generated/group/-79670964	pid	
+http://identifiers.org/uniprot/P16220	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_3aa00259447d8c05afa64bbd2a4aab56	pid	
+http://identifiers.org/uniprot/P16220	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_ea9ff4c4436688dd5772e043567754a4	pid	
+http://identifiers.org/uniprot/P25098	COMPONENT_OF	http://biopax.org/generated/group/93620223	pid	
+http://identifiers.org/uniprot/P25098	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_ea9ff4c4436688dd5772e043567754a4	pid	Pubmed:11042191
+http://identifiers.org/uniprot/P62158	COMPONENT_OF	http://biopax.org/generated/group/-81911945	pid	
+http://identifiers.org/uniprot/P62158	COMPONENT_OF	http://biopax.org/generated/group/93620223	pid	
+http://identifiers.org/uniprot/P62158	IN_SAME_COMPONENT	http://identifiers.org/uniprot/P25098	pid	
+http://identifiers.org/uniprot/P62158	IN_SAME_COMPONENT	http://purl.org/pc2/4/SmallMoleculeReference_4ca437bb13c88288778ef9c4565a1854	pid	
+http://identifiers.org/uniprot/P62158	REACTS_WITH	http://identifiers.org/uniprot/P25098	pid	Pubmed:9753452;Pubmed:8910504;Pubmed:11042191
+http://identifiers.org/uniprot/P62158	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_4ca437bb13c88288778ef9c4565a1854	pid	
+http://purl.org/pc2/4/ProteinReference_bd6a001dc754922c54abcb7229ede8b1	COMPONENT_OF	http://biopax.org/generated/group/1689575	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_3aa00259447d8c05afa64bbd2a4aab56	REACTS_WITH	http://identifiers.org/uniprot/P25098	pid	Pubmed:11042191
+http://purl.org/pc2/4/SmallMoleculeReference_3aa00259447d8c05afa64bbd2a4aab56	REACTS_WITH	http://purl.org/pc2/4/SmallMoleculeReference_ea9ff4c4436688dd5772e043567754a4	pid	;Pubmed:11042191
+http://purl.org/pc2/4/SmallMoleculeReference_4ca437bb13c88288778ef9c4565a1854	COMPONENT_OF	http://biopax.org/generated/group/-81911945	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_4ca437bb13c88288778ef9c4565a1854	COMPONENT_OF	http://biopax.org/generated/group/1689575	pid	
+http://purl.org/pc2/4/SmallMoleculeReference_4ca437bb13c88288778ef9c4565a1854	IN_SAME_COMPONENT	http://purl.org/pc2/4/ProteinReference_bd6a001dc754922c54abcb7229ede8b1	pid	
+
+PARTICIPANT	PARTICIPANT_TYPE	PARTICIPANT_NAME	UNIFICATION_XREF	RELATIONSHIP_XREF
+http://identifiers.org/uniprot/P62158	ProteinReference	CALM_HUMAN	UniProt:P62158;UniProt:P02593;UniProt:Q96HK3;UniProt:Q61379;UniProt:P70667;UniProt:Q53S29;UniProt:Q13942;UniProt:Q61380;UniProt:P99014	NCBI Gene:805;RefSeq:NM_001743;Ensembl:ENSP00000272298;Ensembl:ENSG00000143933;RefSeq:NP_001734;HGNC Symbol:CALM1;HGNC:HGNC:1445;Ensembl:ENSG00000198668;Ensembl:ENST00000596362;omim:114182;RefSeq:NP_008819;Ensembl:ENSP00000349467;HGNC:HGNC:1442;NCBI Gene:801;HGNC:CALM3;RefSeq:NM_005184;HGNC:CALM2;Ensembl:ENST00000272298;PANTHER Family:PTHR23050:SF20;NCBI Gene:808;RefSeq:NP_005175;RefSeq:NM_006888;HGNC Symbol:CALM2;Ensembl:ENSG00000160014;Ensembl:ENSP00000472141;HGNC:CALM1;Ensembl:ENST00000291295;Ensembl:ENST00000356978;HGNC Symbol:CALM3;Ensembl:ENSP00000291295;PROTEIN DATA BANK:1AJI;HGNC:HGNC:1449
+http://purl.org/pc2/4/SmallMoleculeReference_3aa00259447d8c05afa64bbd2a4aab56	SmallMoleculeReference	ADP		
+http://purl.org/pc2/4/SmallMoleculeReference_ea9ff4c4436688dd5772e043567754a4	SmallMoleculeReference	ATP		
+http://biopax.org/generated/group/1689575	ComplexGroup	active PKC (alpha, gamma, delta)		
+http://biopax.org/generated/group/-79670964	ComplexGroup	phospho-CREB dimer		
+http://identifiers.org/uniprot/P16220	ProteinReference	CREB1_HUMAN	UniProt:Q9UMA7;UniProt:P21934;UniProt:P16220;UniProt:Q6V963	omim:123810;RefSeq:NM_134442;PANTHER Family:PTHR22952:SF15;HGNC:CREB1;Ensembl:ENST00000374397;RefSeq:NP_004370;Ensembl:ENSP00000387699;HGNC Symbol:CREB1;Ensembl:ENSP00000236995;NCBI Gene:1385;Ensembl:ENSG00000118260;Ensembl:ENST00000353267;Ensembl:ENSP00000405539;RefSeq:NP_604391;Ensembl:ENST00000430624;RefSeq:NM_004379;HGNC:HGNC:2345;Ensembl:ENST00000432329;Ensembl:ENSP00000363518
+http://biopax.org/generated/group/-81911945	ComplexGroup	active Calmodulin		
+http://identifiers.org/uniprot/P25098	ProteinReference	ARBK1_HUMAN	UniProt:B0ZBE1;UniProt:P25098;UniProt:Q6GTT3;UniProt:Q13837	HGNC Symbol:ADRBK1;RefSeq:NP_001610;HGNC:HGNC:289;HGNC:ADRBK1;Ensembl:ENSG00000173020;NCBI Gene:156;RefSeq:NM_001619;Ensembl:ENST00000308595;Ensembl:ENSP00000312262;PROTEIN DATA BANK:1BAK;PANTHER Family:PTHR24355:SF17;omim:109635
+http://purl.org/pc2/4/SmallMoleculeReference_4ca437bb13c88288778ef9c4565a1854	SmallMoleculeReference	Ca2+		
+http://purl.org/pc2/4/ProteinReference_bd6a001dc754922c54abcb7229ede8b1	ProteinReference	Protein kinase C (alpha, gamma, delta)		
+http://biopax.org/generated/group/93620223	ComplexGroup	GRK2:calmodulin		
+
+
+NAME	ORGANISM	URI	DATASOURCE	
+Calmodulin induced events	http://identifiers.org/taxonomy/9606	http://purl.org/pc2/4/Pathway_ab267ee00ca05b1dc8abc7e704e27d6f	http://purl.org/pc2/4/pid

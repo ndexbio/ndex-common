@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -31,7 +32,7 @@ public class NdexSchemaManagerTest {
 		
 //		db = new ODatabaseDocumentTx(DB_URL);
 //		db.create();
-		db = NdexAOrientDBConnectionPool.getInstance().acquire();
+		db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10).getAConnection();
 		long s = db.getDictionary().size();
 		System.out.println(s);
 		/*for ( Object o : db.getDictionary().keys())

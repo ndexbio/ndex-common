@@ -11,7 +11,7 @@ public class NdexAOrientDBDAO {
     @Deprecated    
     protected void setup() throws NdexException
     {
-       _ndexDatabase = NdexAOrientDBConnectionPool.getInstance().acquire();
+       _ndexDatabase = NdexDatabase.getInstance().getAConnection();
     }
     
     protected void teardown()

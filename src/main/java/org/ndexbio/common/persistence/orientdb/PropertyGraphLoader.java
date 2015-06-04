@@ -1,6 +1,7 @@
 package org.ndexbio.common.persistence.orientdb;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -10,11 +11,12 @@ import java.util.concurrent.ExecutionException;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.*;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -38,13 +40,13 @@ public class PropertyGraphLoader {
 		mapper = new ObjectMapper();
 	}
 	
-	public NetworkSummary insertNetwork(PropertyGraphNetwork network, String accountName) throws Exception {
+	public NetworkSummary insertNetwork(PropertyGraphNetwork network, User loggedInUser) throws Exception {
 
 		NdexPersistenceService persistenceService = null;
 		try {
 		
 			persistenceService = new NdexPersistenceService(db);
-			insertNewNetwork(network, accountName,persistenceService );
+			insertNewNetwork(network, persistenceService, loggedInUser );
 			
 			removeNetworkSourceFormat(network);
 			
@@ -91,8 +93,8 @@ public class PropertyGraphLoader {
 	}
 	
 	
-	private void insertNewNetwork(PropertyGraphNetwork network, String accountName,
-			NdexPersistenceService persistenceService) throws Exception {
+	private void insertNewNetwork(PropertyGraphNetwork network,
+                                  NdexPersistenceService persistenceService, User loggedInUser) throws Exception {
 
 		String title = null;
         String description = null;
@@ -117,13 +119,30 @@ public class PropertyGraphLoader {
 			} 
 		}
 		
-		persistenceService.createNewNetwork(accountName, title, version);
+		persistenceService.createNewNetwork(loggedInUser.getAccountName(), title, version);
 		persistenceService.setNetworkTitleAndDescription(title, description);
 
 		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
 		
 		insertNetworkElements(network,persistenceService);
-		
+
+        //DW: Provenance
+        NetworkSummary summary = persistenceService.getCurrentNetwork();
+
+        ProvenanceEntity entity = new ProvenanceEntity();
+        entity.setUri(summary.getURI());
+
+        Helper.populateProvenanceEntity(entity, summary );
+
+        ProvenanceEvent event = new ProvenanceEvent(NdexProvenanceEventType.PROGRAM_UPLOAD, summary.getModificationTime());
+
+        List<SimplePropertyValuePair> eventProperties = new ArrayList<>();
+        Helper.addUserInfoToProvenanceEventProperties( eventProperties, loggedInUser);
+        event.setProperties(eventProperties);
+
+        entity.setCreationEvent(event);
+
+        persistenceService.setNetworkProvenance(entity);
 	}
 	
 	

@@ -21,7 +21,7 @@ public class PropertyGraphLoaderTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		db = new NdexDatabase("http://localhost");
+		db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10);
 //		service = new NdexPersistenceService(db);
 	}
 	
@@ -54,7 +54,7 @@ public class PropertyGraphLoaderTest {
 		
 		PropertyGraphLoader loader = new PropertyGraphLoader ( db);
 		
-		loader.insertNetwork(pn, "Support");
+//		loader.insertNetwork(pn, "Support", null);
 		
 	}
 
