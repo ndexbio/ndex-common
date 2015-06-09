@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.model.exceptions.NdexException;
@@ -51,6 +51,12 @@ public class TaskDocDAO extends OrientdbDAO {
 		result.setResource((String)doc.field(NdexClasses.Task_P_resource));
 		result.setStatus(Status.valueOf((String)doc.field(NdexClasses.Task_P_status)));
 		result.setTaskType(TaskType.valueOf((String)doc.field(NdexClasses.Task_P_taskType)));
+		
+		Object o = doc.field(NdexClasses.Task_P_attributes);
+		if ( o != null) {
+			Map<String, Object> attr = (Map<String,Object>) o;
+			result.setAttributes(attr);
+		}
 		
 		Date d = doc.field(NdexClasses.Task_P_startTime);
 		if (d !=null)
@@ -198,6 +204,11 @@ public class TaskDocDAO extends OrientdbDAO {
    		}
    		
     	return 1;		           
+    }
+    
+    public void saveTaskAttributes(String UUIDStr, Map<String, Object> attributes ) throws ObjectNotFoundException, NdexException {
+    	ODocument d = this.getRecordByUUID(UUID.fromString(UUIDStr), NdexClasses.Task);
+    	d.field(NdexClasses.Task_P_attributes, attributes).save();
     }
 
     /**

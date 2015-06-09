@@ -777,10 +777,6 @@ public class NdexPersistenceService extends PersistenceService {
 		return citationId; 
 	}
 	
-	public NetworkSummary getCurrentNetwork() {
-		return this.network;
-	}
-	
 	
 	// input parameter is a "rawFunctionTerm", which has element_id as -1;
 	public Long getFunctionTermId(Long baseTermId, List<Long> termList) throws ExecutionException {

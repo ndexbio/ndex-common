@@ -3,6 +3,7 @@ package org.ndexbio.common.persistence.orientdb;
 import java.util.List;
 
 import org.ndexbio.common.models.dao.orientdb.TaskDAO;
+import org.ndexbio.common.models.dao.orientdb.TaskDocDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Status;
@@ -112,15 +113,15 @@ public class NdexTaskService
     	try {
     		
 			this.ndexService.setupDatabase();
-			TaskDAO dao = new TaskDAO(this.ndexService._ndexDatabase);
+			TaskDocDAO dao = new TaskDocDAO(this.ndexService._ndexDatabase);
 			logger.info("Updating status of tasks " + task.getExternalId() + " from " +
 			   task.getStatus() + " to " + status);
 			dao.updateTaskStatus(status, task);
 			this.ndexService._ndexDatabase.commit();
 			return task;
 		} catch (Exception e) {
-			logger.error("Failed to search tasks: " + e.getMessage(), e);
-			throw new NdexException("Failed to search tasks.");
+			logger.error("Failed to update task satus : " + e.getMessage(), e);
+			throw new NdexException("Failed to update status of task: " + task.getExternalId() + " to " + status);
 			
 		}finally {
 			this.ndexService.teardownDatabase();
@@ -128,6 +129,23 @@ public class NdexTaskService
     	
     }
 
+    public void addTaskAttribute(String uuidStr, String name, Object value) throws NdexException {
+    	try {
+    		
+			this.ndexService.setupDatabase();
+			TaskDocDAO dao = new TaskDocDAO(this.ndexService._ndexDatabase);
+			Task t = dao.getTaskByUUID(uuidStr);
+			t.getAttributes().put(name,value);
+			dao.saveTaskAttributes(uuidStr,t.getAttributes());
+			this.ndexService._ndexDatabase.commit();
+			return;
+		} finally {
+			this.ndexService.teardownDatabase();
+		}
+    	
+    	
+    }
+    
     public String getTaskOwnerAccount(Task task) throws NdexException {
     	try {
     		

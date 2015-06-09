@@ -165,6 +165,7 @@ public interface NdexClasses {
     public static final String Task_P_startTime = "startTime";
     public static final String Task_P_endTime   = "endTime";
     public static final String Task_P_message   = "message";
+    public static final String Task_P_attributes = "attributes";
     
     public static final String Task_E_owner   = "ownedBy";
     

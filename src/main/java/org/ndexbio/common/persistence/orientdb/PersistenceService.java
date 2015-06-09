@@ -761,4 +761,11 @@ public abstract class PersistenceService implements AutoCloseable {
 //		  this.localConnection.close();
 //		  this.database.close();
 	  }
+	  
+	  
+	public NetworkSummary getCurrentNetwork() {
+			return this.network;
+	}
+		
+
 }
