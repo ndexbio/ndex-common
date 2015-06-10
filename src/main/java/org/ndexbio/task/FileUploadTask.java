@@ -109,7 +109,7 @@ public class FileUploadTask extends NdexTask {
 		this.taskStatus = Status.COMPLETED;
 		logger.info("Network upload file: " + file.getName() +" deleted from staging area");			
 		file.delete(); // delete the file from the staging area
-		this.addTaskAttribute("netowrkUUID", parser.getUUIDOfUploadedNetwork().toString());
+		this.addTaskAttribute("networkUUID", parser.getUUIDOfUploadedNetwork().toString());
 		this.updateTaskStatus(this.taskStatus);
 	}
 

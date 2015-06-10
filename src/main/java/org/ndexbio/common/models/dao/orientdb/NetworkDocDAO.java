@@ -53,6 +53,33 @@ public class NetworkDocDAO extends OrientdbDAO {
 	    this(NdexDatabase.getInstance().getAConnection());
 	}
 
+	/**
+	 * Set the islocked flag to true in the db.
+	 * This is an atomic operation. Will commit the current transaction.
+	 * @param networkID
+	 */
+	public void lockNetwork(String networkIDstr) {
+		ODocument nDoc = getNetworkDocByUUIDString(networkIDstr);
+		nDoc.field(NdexClasses.Network_P_isLocked,true);
+		db.commit();
+	}
+	
+	/**
+	 * Set the islocked flag to false in the db.
+	 * This is an atomic operation. Will commit the current transaction.
+	 * @param networkID
+	 */
+	public void unlockNetwork (String networkIDstr) {
+		ODocument nDoc = getNetworkDocByUUIDString(networkIDstr);
+		nDoc.field(NdexClasses.Network_P_isLocked,false);
+		db.commit();
+	}
+	
+	public boolean networkIsLocked(String networkUUIDStr) {
+		ODocument nDoc = getNetworkDocByUUIDString(networkUUIDStr);
+		return nDoc.field(NdexClasses.Network_P_isLocked);
+	}
+	
 	public ProvenanceEntity getProvenance(UUID networkId) throws JsonParseException, JsonMappingException, IOException {
 		// get the network document
 		ODocument nDoc = getNetworkDocByUUIDString(networkId.toString());

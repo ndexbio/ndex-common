@@ -132,17 +132,20 @@ public class NdexNetworkCloneService extends PersistenceService {
 			networkDoc.fields(NdexClasses.ExternalObj_ID, this.srcNetwork.getExternalId(),
 					NdexClasses.ExternalObj_cTime, srcNetworkDoc.field(NdexClasses.ExternalObj_cTime),
 					NdexClasses.Network_P_visibility, srcNetworkDoc.field(NdexClasses.Network_P_visibility),
+					NdexClasses.Network_P_isLocked,false,
 					NdexClasses.ExternalObj_mTime, new Date() ,
 					          NdexClasses.Network_P_isComplete,true)
 			.save();
 			localConnection.commit();
-
+			
+			
 			// added a delete old network task.
 			Task task = new Task();
 			task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
 			task.setResource(newUUID.toString());
 			NdexServerQueue.INSTANCE.addSystemTask(task);
 			
+			this.network.setIsLocked(false);
 			return this.network;
 		} finally {
 			this.localConnection.commit();
