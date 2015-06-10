@@ -66,8 +66,8 @@ public class GroupDAO extends GroupDocDAO {
 
 			Preconditions.checkArgument(null != newGroup, 
 					"A group is required");
-			Preconditions.checkArgument(!Strings.isNullOrEmpty(newGroup.getOrganizationName()),
-					"An organizationName is required");
+//			Preconditions.checkArgument(!Strings.isNullOrEmpty(newGroup.getOrganizationName()),
+	//				"An organizationName is required");
 			Preconditions.checkArgument(!Strings.isNullOrEmpty( newGroup.getAccountName()),
 					"An accountName is required" );
 			Preconditions.checkArgument(!Strings.isNullOrEmpty(adminId.toString()),
