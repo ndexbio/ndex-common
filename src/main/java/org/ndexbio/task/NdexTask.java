@@ -39,6 +39,12 @@ public abstract class NdexTask implements Callable<Task> {
 		ObjectNotFoundException, SecurityException, NdexException{
 		this.task = this.taskService.updateTaskStatus(status, this.task);
 	}
+	
+	protected final void addTaskAttribute(String attributeName, Object value) throws NdexException {
+	   task.getAttributes().put(attributeName, value);
+	   this.taskService.addTaskAttribute(task.getExternalId().toString(), attributeName, value);
+	}
+	
 
 	@Override
 	public abstract Task call() throws Exception;

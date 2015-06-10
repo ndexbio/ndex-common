@@ -55,6 +55,10 @@ public class TaskDAO extends TaskDocDAO {
 		if ( newTask.getFormat() != null) 
 			taskDoc = taskDoc.field(NdexClasses.Task_P_fileFormat, newTask.getFormat());
 		
+		if ( newTask.getAttributes() != null ) {
+			taskDoc = taskDoc.field(NdexClasses.Task_P_attributes, newTask.getAttributes());
+		}
+		
 		taskDoc = taskDoc.save();
 		
 		if ( accountName != null) {
