@@ -60,6 +60,12 @@ public class NdexDatabase {
 	private NdexDatabase(String HostURI, String dbURL, String dbUserName,
 			String dbPassword, int size) throws NdexException {
 		
+		// check if the db exists, if not create it.
+		try ( ODatabaseDocumentTx odb = new ODatabaseDocumentTx(dbURL)) {
+			if ( !odb.exists() ) 
+				odb.create();
+		}
+		
 		pool = new OPartitionedDatabasePool(dbURL, dbUserName, dbPassword,size);
 	    
 	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " ("+ size + ") created.");
@@ -88,6 +94,16 @@ public class NdexDatabase {
 		return currentId++;
 	}
 	
+	/**
+	 * This function create a NDEx database object. It connects to the specified back end database if it exists, otherwise it will create one and connect to it. 
+	 * @param HostURI  The URI of this NDEX server. It will be used to construct URIs for the networks that are created in this database.
+	 * @param dbURL   Specify where the database is and what protocol we should use to connect to it.
+	 * @param dbUserName   the account that administrator that backend database.
+	 * @param dbPassword
+	 * @param size
+	 * @return
+	 * @throws NdexException
+	 */
 	public static synchronized NdexDatabase createNdexDatabase (String HostURI, String dbURL, String dbUserName,
 			String dbPassword, int size) throws NdexException {
 		if(INSTANCE == null) {

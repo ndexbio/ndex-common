@@ -98,9 +98,9 @@ public class SifParser implements IParsingEngine {
 		persistenceService.createNewNetwork(ownerName, title, null);
         this.taskDescription = taskDescription;
 
-        UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection());
-        loggedInUser = userDocDAO.getUserByAccountName(ownerName);
-
+        try (UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection())) {
+        	loggedInUser = userDocDAO.getUserByAccountName(ownerName);
+        }
 
 //		addSystemDefaultNamespaces();
 		

@@ -22,6 +22,14 @@ import static org.junit.Assert.*;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+
+
+
+
+
+
+
+
 import org.junit.Test;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
@@ -29,6 +37,13 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Network;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class NdexNetworkCloneServiceTest {
 
@@ -36,6 +51,40 @@ public class NdexNetworkCloneServiceTest {
 	public void test() throws NdexException, ExecutionException {
 		NdexDatabase db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10);
 		ODatabaseDocumentTx connection = db.getAConnection();
+		
+		// tryout the manual index.
+		OIndexManager idxManager = connection.getMetadata().getIndexManager();
+		OIndex myIdx = idxManager.createIndex("mytestIdx", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.STRING),
+				null,null, null);
+		
+		ODocument d1 = new ODocument("support").fields("foo", "1", "bar",11).save();
+		ODocument d2 = new ODocument("support").fields("foo", "2", "bar", 22).save();
+		ODocument d3 = new ODocument("support").fields("foo", "3","bar",33).save();
+		
+		myIdx.put("1", d1);
+		myIdx.put("2", d2);
+		myIdx.put("3", d3);
+		
+		connection.commit();
+		connection.close();
+		
+		connection = db.getAConnection();
+		// tryout read the manual index.
+		idxManager = connection.getMetadata().getIndexManager();
+		myIdx = idxManager.getIndex("mytestIdx");
+		ORID r4 = (ORID)myIdx.get("2");
+		ODocument d4 = new ODocument(r4);
+		d4.reload();
+		System.out.print(d4);
+		
+		d4 = new ODocument((ORID)myIdx.get("1"));
+		System.out.print(d4);
+		d4 = new ODocument((ORID)myIdx.get("3"));
+		System.out.print(d4);
+		d4 = new ODocument((ORID)myIdx.get("4"));
+		System.out.print(d4);
+				
+		
 		NetworkDAO dao = new NetworkDAO ( connection);
 	//	Network network =  dao.getNetworkById(UUID.fromString("4842a831-1e5c-11e4-9f34-90b11c72aefa"));
 		Network network =  dao.getNetworkById(UUID.fromString(
