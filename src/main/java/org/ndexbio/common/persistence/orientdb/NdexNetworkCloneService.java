@@ -31,6 +31,7 @@
 package org.ndexbio.common.persistence.orientdb;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -70,6 +71,8 @@ import org.ndexbio.task.NdexServerQueue;
 
 import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class NdexNetworkCloneService extends PersistenceService {
@@ -260,6 +263,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 			cloneNetworkNode ();
 
 			cloneNetworkElements();
+			
+			cloneNetworkProperties();
 			this.localConnection.commit();
 	}
 	
@@ -313,15 +318,22 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		networkVertex = graph.getVertex(networkDoc);
 		
-		addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties());
-		
-        this.network.getProperties().addAll(srcNetwork.getProperties());
-		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
-
-		
 		logger.info("A new NDex network titled: " +srcNetwork.getName() +" has been created");
 	}
 
+	
+	private void cloneNetworkProperties() throws NdexException, ExecutionException {
+
+
+		Collection<NdexPropertyValuePair> newProps = 
+				addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties(), true);
+		
+		this.network.getProperties().addAll(newProps);
+		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
+
+		
+	}
+	
 	
 	private void cloneNamespaces() throws NdexException, ExecutionException {
 		TreeSet<String> prefixSet = new TreeSet<>();
@@ -335,7 +347,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 				ODocument nsDoc = this.elementIdCache.get(nsId);
 				OrientVertex nsV = graph.getVertex(nsDoc);
 				
-				addPropertiesToVertex(nsV, ns.getProperties(), ns.getPresentationProperties());
+				addPropertiesToVertex(nsV, ns.getProperties(), ns.getPresentationProperties(), false);
 	
 				this.namespaceIdMap.put(ns.getId(), nsId);
 			}
@@ -504,15 +516,17 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
 		
-		this.addPropertiesToVertex(nodeV, node.getProperties(), node.getPresentationProperties());
+		this.addPropertiesToVertex(nodeV, node.getProperties(), node.getPresentationProperties(),false);
 		elementIdCache.put(nodeId, nodeDoc);
         return nodeId;		
 	}
 	
 	
-	@Override
-	protected void addPropertiesToVertex(OrientVertex vertex, Collection<NdexPropertyValuePair> properties, 
-			Collection<SimplePropertyValuePair> presentationProperties ) throws NdexException, ExecutionException {
+	private Collection<NdexPropertyValuePair> addPropertiesToVertex(OrientVertex vertex, Collection<NdexPropertyValuePair> properties, 
+			Collection<SimplePropertyValuePair> presentationProperties, boolean cloneNewProperty ) throws NdexException, ExecutionException {
+		
+		 
+		Collection<NdexPropertyValuePair> addedProperties = cloneNewProperty ? new ArrayList<NdexPropertyValuePair>() : null;
 		
 		if ( properties != null) {
 			for (NdexPropertyValuePair e : properties) {
@@ -522,7 +536,12 @@ public class NdexNetworkCloneService extends PersistenceService {
 				
 				if ( baseTermId == null ) {
 				   logger.warning("Baseterm id " + e.getPredicateId() + " not defined in baseTerm table. Creating new basterm for property name.");
+
+				   baseTermId = this.getBaseTermId(e.getPredicateString());
+				   baseTermIdMap.put(e.getPredicateId(),baseTermId);
+
 				   pV = this.createNdexPropertyVertex(e);
+
 				} else {
 					ODocument bTermDoc = this.elementIdCache.get(baseTermId);
 
@@ -540,11 +559,19 @@ public class NdexNetworkCloneService extends PersistenceService {
 					pV = this.createNdexPropertyVertex(e, baseTermId, bTermDoc);
 				}
                vertex.addEdge(NdexClasses.E_ndexProperties, pV);
+               
+               if ( cloneNewProperty) {
+            	   NdexPropertyValuePair r = new NdexPropertyValuePair (e.getPredicateString(), e.getValue());
+            	   r.setPredicateId(baseTermId);
+            	   r.setDataType(e.getDataType());
+            	   addedProperties.add(r);
+               }
 			}
 		
 		}
 		
 		addPresentationPropertiesToVertex ( vertex, presentationProperties);
+		return addedProperties;
 	}
 	
 	
@@ -614,7 +641,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 		
 		networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
-		this.addPropertiesToVertex(edgeV, edge.getProperties(), edge.getPresentationProperties());
+		this.addPropertiesToVertex(edgeV, edge.getProperties(), edge.getPresentationProperties(),false);
 		elementIdCache.put(edgeId, edgeDoc);
         return edgeId;		
 		
