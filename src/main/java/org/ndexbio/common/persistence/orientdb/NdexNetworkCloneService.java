@@ -302,7 +302,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 		if ( srcNetwork.getVersion() != null) {
 			networkDoc.field(NdexClasses.Network_P_version,srcNetwork.getVersion());
-			network.setDescription(srcNetwork.getVersion());
+			network.setVersion(srcNetwork.getVersion());
 		}
 		
 		NetworkSourceFormat fmt = removeNetworkSourceFormat(srcNetwork);
