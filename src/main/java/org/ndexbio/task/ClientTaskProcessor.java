@@ -2,20 +2,22 @@ package org.ndexbio.task;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.logging.Logger;
 
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.TaskDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
-import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.FileFormat;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.MDC;
+
 
 
 public class ClientTaskProcessor extends NdexTaskProcessor {
 
-    private Logger logger = Logger.getLogger(ClientTaskProcessor.class.getSimpleName());
+	static Logger logger = LoggerFactory.getLogger(ClientTaskProcessor.class);
 	
 	public ClientTaskProcessor () {
 		super();
@@ -36,17 +38,19 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 				return;
 			}
 			
-			try {
-				logger.info("[system]\t[start task]");
+			try {		        
+		        MDC.put("RequestsUniqueId", (String)task.getAttribute("RequestsUniqueId") );
+				logger.info("[start: starting task]");
+				
 				NdexTask t = getNdexTask(task);
 				saveTaskStatus(task.getExternalId().toString(), Status.PROCESSING, null);
 				Task taskObj = t.call();
 				saveTaskStatus(task.getExternalId().toString(), Status.COMPLETED, taskObj.getMessage());
 
-				logger.info("[system]\t[complete task]");
+				logger.info("[end: task completed]");
 
 			} catch (Exception e) {
-				logger.severe("Error occured when executing task " + task.getExternalId());
+				logger.error("Error occured when executing task " + task.getExternalId());
 				e.printStackTrace();
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
@@ -55,7 +59,7 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 					saveTaskStatus(task.getExternalId().toString(), Status.FAILED, e.getMessage() + "\n\n"
 							+ sw.toString());
 				} catch (NdexException e1) {
-					logger.severe("Error occured when saving task " + e1);
+					logger.error("Error occured when saving task " + e1);
 				}
 				
 			} 

@@ -108,7 +108,7 @@ public class Configuration
     /*
      * This method reads Log-Level configuration parameter from /opt/ndex/conf/ndex.properties 
      * and sets the log level.
-     * In case Log-Level is not found in ndex.properties or value of Log-Level is invalid/unrecognozed,
+     * In case Log-Level is not found in ndex.properties or value of Log-Level is invalid/unrecognized,
      * we set log level to 'info'.
      */
     private void setLogLevel() {
