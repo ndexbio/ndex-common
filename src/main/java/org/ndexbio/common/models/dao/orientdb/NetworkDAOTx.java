@@ -39,6 +39,7 @@ import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskAttribute;
 import org.ndexbio.model.object.TaskType;
+import org.slf4j.MDC;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -76,7 +77,8 @@ public class NetworkDAOTx extends OrientdbDAO {
 				createCache.setResource(UUIDstr); 
 				createCache.setStatus(Status.QUEUED);
 				createCache.setAttribute(TaskAttribute.readOnlyCommitId, Long.valueOf(newCommitId));
-				
+                createCache.setAttribute("RequestsUniqueId", MDC.get("RequestsUniqueId"));
+                
 				TaskDAO taskDAO = new TaskDAO(this.db);
 				taskDAO.createTask(userAccountName, createCache);
 				db.commit();
