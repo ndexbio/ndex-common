@@ -209,13 +209,21 @@ public class NdexNetworkCloneService extends PersistenceService {
 		try {
 			// need to keep this order because of the dependency between objects.
 			cloneNamespaces ();
+			logger.info("Finished cloning namespaces");
 			cloneBaseTerms ();
+			logger.info("Finished cloning baseterms");
 			cloneCitations();
+			logger.info("Finished cloning citations");
 			cloneSupports();
+			logger.info("Finished cloning supports");
 			cloneReifiedEdgeTermNodes(); // only clone the vertex itself.
+			logger.info("Finished cloning reifiedEdgeTerms");
 			cloneFunctionTermVertex();
+			logger.info("Finished cloning functionterms");
             cloneNodes(); 			
+            logger.info("Finished cloning nodes");
             cloneEdges();
+            logger.info("Finished cloning edges");
             
 			// process reifiedEdgeTerm and FunctionTerm
             createLinksforRefiedEdgeTerm();
@@ -225,7 +233,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			network.setIsComplete(true);
 		
 
-			logger.info("Updating network " + network.getName() + " is complete.");
+			logger.info("Cloning network " + network.getName() + " is complete.");
 		} finally {
 			this.localConnection.commit();
 		}
