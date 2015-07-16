@@ -311,7 +311,7 @@ public abstract class PersistenceService implements AutoCloseable {
 	}
 
 	
-	protected void addPresentationPropertiesToVertex (OrientVertex vertex, Collection<SimplePropertyValuePair> presentationProperties) {
+/*	protected void addPresentationPropertiesToVertex (OrientVertex vertex, Collection<SimplePropertyValuePair> presentationProperties) {
 
 		if ( presentationProperties !=null ) {
 			for (SimplePropertyValuePair e : presentationProperties) {
@@ -320,29 +320,30 @@ public abstract class PersistenceService implements AutoCloseable {
                vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
 			}
 		}
-	}
+	} */
 	
 
 	 protected OrientVertex createNdexPropertyVertex(NdexPropertyValuePair e) throws NdexException, ExecutionException {
-		 Long baseTermId = this.getBaseTermId(e.getPredicateString());
-		 ODocument btDoc = this.elementIdCache.get(baseTermId);
+//		 Long baseTermId = this.getBaseTermId(e.getPredicateString());
+//		 ODocument btDoc = this.elementIdCache.get(baseTermId);
 		 
-		 return createNdexPropertyVertex(e, baseTermId, btDoc);
+//		 return createNdexPropertyVertex(e, baseTermId, btDoc);
+		 return createNdexPropertyVertex_aux(e);
 		}
 
-	 protected OrientVertex createNdexPropertyVertex(NdexPropertyValuePair e, Long baseTermId, ODocument btDoc)  {
-		 OrientVertex btV = graph.getVertex(btDoc);
+	 protected OrientVertex createNdexPropertyVertex_aux(NdexPropertyValuePair e ) { //, Long baseTermId, ODocument btDoc)  {
+		// OrientVertex btV = graph.getVertex(btDoc);
 		 
  		 ODocument pDoc = new ODocument(NdexClasses.NdexProperty)
-				.fields(//NdexClasses.ndexProp_P_predicateStr,key,
+				.fields(NdexClasses.ndexProp_P_predicateStr,e.getPredicateString(),
 						NdexClasses.ndexProp_P_value, e.getValue(),
 						NdexClasses.ndexProp_P_datatype, e.getDataType())
 			   .save();
  		
  		 OrientVertex pV = graph.getVertex(pDoc);
- 		 pV.addEdge(NdexClasses.ndexProp_E_predicate, btV);
- 		 e.setPredicateId(baseTermId);
- 		 this.elementIdCache.put(baseTermId, btV.getRecord());
+// 		 pV.addEdge(NdexClasses.ndexProp_E_predicate, btV);
+// 		 e.setPredicateId(baseTermId);
+// 		 this.elementIdCache.put(baseTermId, btV.getRecord());
  		 return pV;
 		}
 
@@ -439,19 +440,20 @@ public abstract class PersistenceService implements AutoCloseable {
 			
 			ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
 			  .fields(NdexClasses.BTerm_P_name, localTerm,
-					  NdexClasses.Element_ID, termId)
+					  NdexClasses.Element_ID, termId, 
+					  "nsid", nsId)
 			  .save();
 
 			OrientVertex basetermV = graph.getVertex(btDoc);
 			
-			if ( nsId >= 0) {
+/*			if ( nsId >= 0) {
 
 	  		  ODocument nsDoc = elementIdCache.get(nsId); 
 	  		  
 	  		  OrientVertex nsV = graph.getVertex(nsDoc);
 	  		
 	  		  basetermV.addEdge(NdexClasses.BTerm_E_Namespace, nsV);
-			}
+			} */
 			  
 			networkVertex.getRecord().reload();
 	        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
@@ -470,13 +472,14 @@ public abstract class PersistenceService implements AutoCloseable {
 					NdexClasses.Element_ID, citationId,
 			        NdexClasses.Citation_P_title, title,
 			        NdexClasses.Citation_p_idType, idType,
-			        NdexClasses.Citation_P_identifier, identifier)
-			  .field(NdexClasses.Citation_P_contributors, contributors, OType.EMBEDDEDLIST)
+			        NdexClasses.Citation_P_identifier, identifier,
+			        NdexClasses.ndexProperties, properties)
+			   .field( NdexClasses.Citation_P_contributors, contributors, OType.EMBEDDEDLIST)
 			  .save();
 	        
 			OrientVertex citationV = graph.getVertex(citationDoc);
 			networkVertex.addEdge(NdexClasses.Network_E_Citations, citationV);
-			this.addPropertiesToVertex(citationV, properties, presentationProperties);
+//			this.addPropertiesToVertex(citationV, properties, presentationProperties);
 			elementIdCache.put(citationId, citationV.getRecord());
 			return citationId; 
 		}

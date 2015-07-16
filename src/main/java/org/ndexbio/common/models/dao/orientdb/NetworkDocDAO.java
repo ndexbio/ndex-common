@@ -184,10 +184,12 @@ public class NetworkDocDAO extends OrientdbDAO {
 			network.getNodes().put(objectId, node);
 		}
 
-		getPropertiesFromDocument(e,doc,network);
+		//getPropertiesFromDocument(e,doc,network);
+		e.setProperties((List<NdexPropertyValuePair>)doc.field(NdexClasses.ndexProperties));
 		
 		//populate citations
-    	for (OIdentifiable citationRec : new OTraverse()
+		e.setCitationIds((List<Long>) doc.field(NdexClasses.Citation));
+/*    	for (OIdentifiable citationRec : new OTraverse()
  				.field("out_"+ NdexClasses.Edge_E_citations )
  				.target(doc)
  				.predicate( new OSQLPredicate("$depth <= 1"))) {
@@ -201,7 +203,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 				}
 				e.getCitationIds().add(citationId);
     		}
-    	}
+    	}*/
    		
 		//populate support
     	for (OIdentifiable supportRec : new OTraverse()
@@ -586,8 +588,9 @@ public class NetworkDocDAO extends OrientdbDAO {
 		BaseTerm t = new BaseTerm();
 		t.setId((long)o.field(NdexClasses.Element_ID));
 		t.setName((String)o.field(NdexClasses.BTerm_P_name));
+		t.setNamespaceId((long) o.field("nsid"));
 		
-		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
+/*		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
 		if ( nsDoc != null) {
 			Long nsId = nsDoc.field(NdexClasses.Element_ID);
 			t.setNamespaceId(nsId);
@@ -599,7 +602,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 			}
 		} else
 			t.setNamespaceId(-1);
-		
+*/		
 		return t;
 	}
 	
@@ -684,7 +687,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 					n.getBaseTerms().put(bterm.getId(), bterm);
 			}
 			p.setPredicateString(getBaseTermStrForBaseTerm(bterm,n));
-			p.setPredicateId(bterm.getId());
+			//p.setPredicateId(bterm.getId());
 		}
 		
 		p.setValue((String)propDoc.field(NdexClasses.ndexProp_P_value)) ;
@@ -735,7 +738,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	}
 
     	//Populate presentation properties
-	
+	/*
     	for (OIdentifiable ndexPropertyDoc : new OTraverse()
     			.field("out_"+ NdexClasses.E_ndexPresentationProps )
     			.target(doc)
@@ -747,7 +750,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 				
     			obj.getPresentationProperties().add( Helper.getSimplePropertyFromDoc(propDoc));
     		}
-    	}
+    	} */
     }
     
 	public Network getNetworkById(UUID id) throws NdexException {

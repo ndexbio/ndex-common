@@ -30,12 +30,15 @@
  */
 package org.ndexbio.orientdb;
 
+import java.util.logging.Logger;
+
 import org.apache.log4j.spi.LoggerFactory;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.model.exceptions.NdexException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -59,6 +62,7 @@ public class NdexSchemaManager
     //name for the version field.
     private static final String NdexVField= "n1";
     
+	private static final Logger logger = Logger.getLogger(NdexSchemaManager.class.getName());
 
     //TODO: type property might not be needed because we can get them from the vertex type.
     public synchronized void init(ODatabaseDocumentTx  orientDb) throws NdexException
@@ -81,13 +85,16 @@ public class NdexSchemaManager
         **********************************************************************/
         orientDbGraph.getRawGraph().commit();
 
-        System.out.println("Creating schema in db.");
+        logger.info("Creating schema in db.");
         
-        OClass clsNdxExternalObj = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexExternalObject);
+        OSchema schema = orientDb.getMetadata().getSchema();
+//        OClass  v = schema.getClass("V");
+//        if (v == null) throw new NdexException("Class V not found.");
+        OClass clsNdxExternalObj = schema.getClass(NdexClasses.NdexExternalObject);
         
         if (clsNdxExternalObj == null)
         {
-        	clsNdxExternalObj = orientDbGraph.createVertexType(NdexClasses.NdexExternalObject);
+        	clsNdxExternalObj =  orientDbGraph.createVertexType(NdexClasses.NdexExternalObject);
             clsNdxExternalObj.createProperty(NdexClasses.Network_P_UUID, OType.STRING);
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_cTime, OType.DATETIME);
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_mTime, OType.DATETIME);
@@ -96,11 +103,11 @@ public class NdexSchemaManager
             clsNdxExternalObj.createIndex(NdexClasses.Index_externalID, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
         }
         
-        OClass clsAccount = orientDb.getMetadata().getSchema().getClass(NdexClasses.Account);
+        OClass clsAccount =schema.getClass(NdexClasses.Account);
         
         if (clsAccount == null)
         {
-        	clsAccount = orientDbGraph.createVertexType(NdexClasses.Account, clsNdxExternalObj);
+        	clsAccount =  orientDbGraph.createVertexType(NdexClasses.Account, clsNdxExternalObj);
         //	clsAccount. setAbstract(true);
         	clsAccount.createProperty("backgroundImage", OType.STRING);
         	clsAccount.createProperty("description", OType.STRING);
@@ -115,14 +122,15 @@ public class NdexSchemaManager
 
         }
 
+        logger.info("parent classes created.");
 
         /**********************************************************************
         * Then create inherited types and uninherited types. 
         **********************************************************************/
-        OClass cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Group);  
+        OClass cls = schema.getClass(NdexClasses.Group);  
         if (cls == null)
         {
-            OClass groupClass = orientDbGraph.createVertexType(NdexClasses.Group, clsAccount);
+            OClass groupClass =  orientDbGraph.createVertexType(NdexClasses.Group, clsAccount);
             groupClass.createProperty("organizationName", OType.STRING);
             
 //            groupClass.createIndex("index-group-name", OClass.INDEX_TYPE.UNIQUE, "name");
@@ -132,24 +140,24 @@ public class NdexSchemaManager
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexProperty);  
         if ( cls == null)
         {
-        	cls = orientDbGraph.createVertexType(NdexClasses.NdexProperty);
+        	cls =  orientDbGraph.createVertexType(NdexClasses.NdexProperty);
             cls.createProperty("value", OType.STRING);
             cls.createProperty("dataType", OType.STRING);
         }
 
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.SimpleProperty);  
+/*        cls = schema.getClass(NdexClasses.SimpleProperty);  
         if ( cls == null)
         {
         	cls = orientDbGraph.createVertexType(NdexClasses.SimpleProperty);
             cls.createProperty(NdexClasses.SimpleProp_P_name, OType.STRING);
             cls.createProperty(NdexClasses.SimpleProp_P_value, OType.STRING);
         }
-
+*/
         
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Request);  
+        cls = schema.getClass(NdexClasses.Request);  
         if (cls == null)
         {
-        	cls = orientDbGraph.createVertexType(NdexClasses.Request,clsNdxExternalObj);
+        	cls =  orientDbGraph.createVertexType(NdexClasses.Request,clsNdxExternalObj);
         	cls.createProperty(NdexClasses.Request_P_sourceUUID, OType.STRING);
         	cls.createProperty(NdexClasses.Request_P_sourceName, OType.STRING);
         	cls.createProperty("destinationUUID", OType.STRING);
@@ -163,7 +171,7 @@ public class NdexSchemaManager
         }
 
         
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.Task);  
+        cls = schema.getClass(NdexClasses.Task);  
         if (cls == null)
         {
             OClass taskClass = orientDbGraph.createVertexType(NdexClasses.Task, clsNdxExternalObj);
@@ -178,7 +186,7 @@ public class NdexSchemaManager
             taskClass.createProperty(NdexClasses.Task_P_message, OType.STRING);
         }
 
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.User);  
+        cls = schema.getClass(NdexClasses.User);  
         if (cls == null)
         {
             OClass userClass = orientDbGraph.createVertexType(NdexClasses.User, clsAccount);
@@ -191,10 +199,11 @@ public class NdexSchemaManager
 
         }
         
+        logger.info("supporting classes created.");
         
         // network data schema
         
-        OClass nsClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Namespace);
+        OClass nsClass = schema.getClass(NdexClasses.Namespace);
         if (nsClass == null)
         {
             nsClass = orientDbGraph.createVertexType(NdexClasses.Namespace);
@@ -205,7 +214,7 @@ public class NdexSchemaManager
             nsClass.createIndex("index-namespace-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         }
 
-        OClass bTermClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.BaseTerm);  
+        OClass bTermClass = schema.getClass(NdexClasses.BaseTerm);  
         if ( bTermClass == null)
         {
             bTermClass = orientDbGraph.createVertexType(NdexClasses.BaseTerm);
@@ -221,7 +230,7 @@ public class NdexSchemaManager
             
         }
 
-        OClass citationClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Citation);  
+        OClass citationClass = schema.getClass(NdexClasses.Citation);  
         if (cls == null)
         {
             citationClass = orientDbGraph.createVertexType(NdexClasses.Citation);
@@ -247,7 +256,7 @@ public class NdexSchemaManager
         }
 
         
-        OClass edgeClass = orientDb.getMetadata().getSchema().getClass(NdexClasses.Edge);  
+        OClass edgeClass = schema.getClass(NdexClasses.Edge);  
         if (edgeClass == null)
         {
             edgeClass = orientDbGraph.createVertexType(NdexClasses.Edge);
@@ -260,7 +269,7 @@ public class NdexSchemaManager
             edgeClass.createIndex("index-edge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         }
 
-        cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.FunctionTerm);  
+        cls = schema.getClass(NdexClasses.FunctionTerm);  
         if (cls == null)
         {
             OClass functionTermClass = orientDbGraph.createVertexType(NdexClasses.FunctionTerm);
@@ -345,6 +354,7 @@ public class NdexSchemaManager
             clss.createProperty("properties", OType.EMBEDDEDLIST);
   //          clss.createProperty("presentationProperties", OType.EMBEDDEDLIST);
         }
+        logger.info("All classes created.");
 
 
         orientDb.getMetadata().getSchema().save();
@@ -354,6 +364,8 @@ public class NdexSchemaManager
         
 		// add a system user
         orientDbGraph.commit();
+        logger.info("graph commited.");
+
         // turn on initialized flag
         this.setInitialized(Boolean.TRUE);
     }

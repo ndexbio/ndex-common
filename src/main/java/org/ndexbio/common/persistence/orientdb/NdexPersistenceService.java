@@ -1089,8 +1089,8 @@ public class NdexPersistenceService extends PersistenceService {
         
 		if ( properties != null )
 			this.network.getProperties().addAll(properties);
-		if ( presentationProperties != null ) 
-			this.network.getPresentationProperties().addAll(presentationProperties);
+	//	if ( presentationProperties != null ) 
+	//		this.network.getPresentationProperties().addAll(presentationProperties);
 
 	}
 	
@@ -1184,7 +1184,7 @@ public class NdexPersistenceService extends PersistenceService {
 	public void updateNetworkSummary() throws ObjectNotFoundException, NdexException, ExecutionException {
 	   networkDoc = Helper.updateNetworkProfile(networkDoc, network);
 	   addPropertiesToVertex(this.networkVertex, 
-			   network.getProperties(),network.getPresentationProperties());
+			   network.getProperties(),null /*network.getPresentationProperties()*/);
 	   
 	   networkDoc = this.networkVertex.getRecord();
 	}

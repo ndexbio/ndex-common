@@ -655,7 +655,7 @@ public class NetworkDAO extends NetworkDocDAO {
     	}
 
     	//Populate presentation properties
-	
+	/*
     	for (OIdentifiable ndexPropertyDoc : new OTraverse()
     			.field("out_"+ NdexClasses.E_ndexPresentationProps )
     			.target(doc)
@@ -667,7 +667,7 @@ public class NetworkDAO extends NetworkDocDAO {
 				
     			obj.getPresentationProperties().add( Helper.getSimplePropertyFromDoc(propDoc));
     		}
-    	}
+    	}  */
     }
     
     private static boolean containsProperty(Collection<NdexPropertyValuePair> properties, String predicate) {
@@ -1151,10 +1151,10 @@ public class NetworkDAO extends NetworkDocDAO {
 		.fields(NdexClasses.ndexProp_P_predicateStr,property.getPredicateString(),
 				NdexClasses.ndexProp_P_value, property.getValue(),
 				NdexClasses.ndexProp_P_datatype, property.getDataType());
-		if ( property.getPredicateId() >0) 
+/*		if ( property.getPredicateId() >0) 
 			pDoc = pDoc.field(NdexClasses.ndexProp_P_predicateId, property.getPredicateId());
 		if (property.getValueId() >0)
-			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId());
+			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId()); */
 		return  pDoc.save();
 	}
 

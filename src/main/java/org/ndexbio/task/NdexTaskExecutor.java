@@ -155,7 +155,7 @@ public class NdexTaskExecutor implements Callable<Integer> {
 				
 				throw new NdexException ("Only XBEL, XGMML and BIOPAX exporters are implemented.");
 			}
-			throw new NdexException("Task type: " +task.getType() +" is not supported");
+			throw new NdexException("Task type: " +task.getTaskType() +" is not supported");
 		} catch (IllegalArgumentException | SecurityException | NdexException e) {
 			e.printStackTrace();
 			throw new NdexException ("Error occurred when creating task. " + e.getMessage());

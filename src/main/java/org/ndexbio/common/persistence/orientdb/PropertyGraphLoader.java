@@ -152,7 +152,7 @@ public class PropertyGraphLoader {
 		persistenceService.createNewNetwork(loggedInUser.getAccountName(), title, version);
 		persistenceService.setNetworkTitleAndDescription(title, description);
 
-		persistenceService.setNetworkProperties(otherAttributes, network.getPresentationProperties());
+		persistenceService.setNetworkProperties(otherAttributes, null /*network.getPresentationProperties()*/);
 		
 		insertNetworkElements(network,persistenceService);
 
@@ -224,7 +224,7 @@ public class PropertyGraphLoader {
 			if ( nodeName != null ) 
 				persistenceService.setNodeName(nodeId, nodeName);
 
-			persistenceService.setNodeProperties(nodeId, otherProperties, n.getPresentationProperties());
+			persistenceService.setNodeProperties(nodeId, otherProperties, null /*n.getPresentationProperties() */);
 		}
 		
 		// persist edges
@@ -250,7 +250,7 @@ public class PropertyGraphLoader {
 			}
 			
 			persistenceService.createEdge(subjectNodeId, objectNodeId, termId, 
-					support, citation, otherProperties, e.getPresentationProperties());
+					support, citation, otherProperties, null/*e.getPresentationProperties()*/);
 			
 		}
 		
@@ -299,7 +299,7 @@ public class PropertyGraphLoader {
 	        		NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
 	        
 	        
-			persistenceService.setNetworkProperties(currentNetwork.getProperties(), network.getPresentationProperties());
+			persistenceService.setNetworkProperties(currentNetwork.getProperties(), null /*network.getPresentationProperties()*/);
 
 			persistenceService.networkVertex.getRecord().reload();
 			// redo populate the elements

@@ -283,7 +283,7 @@ public class ReadDataManager {
 	}
 	
 	public List<SimplePropertyValuePair> getGraphicsAttributes(PropertiedObject element) {
-		return element.getPresentationProperties();
+		return null;// element.getPresentationProperties();
 	}
 	
 /*	protected void addGraphicsAttributes(Long elementId, Attributes atts) throws ExecutionException, SAXException {

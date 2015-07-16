@@ -120,7 +120,7 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 				case DELETE_NETWORK_CACHE:
 					return new RemoveNetworkFromCacheTask(task);
 				default:
-					throw new NdexException("Task type: " +task.getType() +" is not supported");
+					throw new NdexException("Task type: " +task.getTaskType() +" is not supported");
 			}		
 		} catch (IllegalArgumentException | SecurityException | NdexException e) {
 			e.printStackTrace();

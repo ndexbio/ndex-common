@@ -263,7 +263,7 @@ public class Helper {
 			p.setPredicateString((String)doc.field(NdexClasses.ndexProp_P_predicateStr));
 		} else {
 			p.setPredicateString(getBaseTermStrFromDocument (baseTermDoc));
-			p.setPredicateId((long)baseTermDoc.field(NdexClasses.Element_ID));
+//			p.setPredicateId((long)baseTermDoc.field(NdexClasses.Element_ID));
 		}
 		
 		p.setValue((String)doc.field(NdexClasses.ndexProp_P_value)) ;

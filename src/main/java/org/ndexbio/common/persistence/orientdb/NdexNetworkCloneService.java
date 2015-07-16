@@ -334,10 +334,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 
 		Collection<NdexPropertyValuePair> newProps = 
-				addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties(), true);
+				addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), null, /*srcNetwork.getPresentationProperties(),*/ true);
 		
 		this.network.getProperties().addAll(newProps);
-		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
+//		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
 
 		
 	}
@@ -353,10 +353,11 @@ public class NdexNetworkCloneService extends PersistenceService {
 				Long nsId = getNamespace( new RawNamespace(ns.getPrefix(), ns.getUri())).getId();
 
 				ODocument nsDoc = this.elementIdCache.get(nsId);
-				OrientVertex nsV = graph.getVertex(nsDoc);
+				nsDoc.field(NdexClasses.ndexProperties, ns.getProperties()).save();
 				
-				addPropertiesToVertex(nsV, ns.getProperties(), ns.getPresentationProperties(), false);
-	
+				//OrientVertex nsV = graph.getVertex(nsDoc);
+				//addPropertiesToVertex(nsV, ns.getProperties(),null, /*ns.getPresentationProperties(),*/ false);
+
 				this.namespaceIdMap.put(ns.getId(), nsId);
 			}
 		}
@@ -382,7 +383,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			for ( Citation citation : srcNetwork.getCitations().values() ) {
 				Long citationId = this.createCitation(citation.getTitle(),
 						citation.getIdType(), citation.getIdentifier(), 
-						citation.getContributors(), citation.getProperties(), citation.getPresentationProperties());
+						citation.getContributors(), citation.getProperties(), null); //citation.getPresentationProperties());
 				
 				this.citationIdMap.put(citation.getId(), citationId);
 			}
@@ -524,11 +525,15 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
 		
-		this.addPropertiesToVertex(nodeV, node.getProperties(), node.getPresentationProperties(),false);
+		this.addPropertiesToVertex(nodeV, node.getProperties(), null,/* node.getPresentationProperties(),*/false);
 		elementIdCache.put(nodeId, nodeDoc);
         return nodeId;		
 	}
 	
+	
+/*	private void addPropertiesToDoc(ODocument doc, Collection<NdexPropertyValuePair> properties) {
+		doc.field(NdexClasses.ndexProperties, properties).save();
+	} */
 	
 	private Collection<NdexPropertyValuePair> addPropertiesToVertex(OrientVertex vertex, Collection<NdexPropertyValuePair> properties, 
 			Collection<SimplePropertyValuePair> presentationProperties, boolean cloneNewProperty ) throws NdexException, ExecutionException {
@@ -538,8 +543,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		if ( properties != null) {
 			for (NdexPropertyValuePair e : properties) {
-				OrientVertex pV = null;
-				
+				OrientVertex pV = this.createNdexPropertyVertex(e); 
+				/*
 				Long baseTermId = baseTermIdMap.get(e.getPredicateId());
 				
 				if ( baseTermId == null ) {
@@ -564,13 +569,13 @@ public class NdexNetworkCloneService extends PersistenceService {
 									" doesn't match with property name " + e.getPredicateString());
 						}
 					}
-					pV = this.createNdexPropertyVertex(e, baseTermId, bTermDoc);
-				}
+					pV = this.createNdexPropertyVertex(e); //, baseTermId, bTermDoc);
+				} */
                vertex.addEdge(NdexClasses.E_ndexProperties, pV);
                
                if ( cloneNewProperty) {
             	   NdexPropertyValuePair r = new NdexPropertyValuePair (e.getPredicateString(), e.getValue());
-            	   r.setPredicateId(baseTermId);
+            //	   r.setPredicateId(baseTermId);
             	   r.setDataType(e.getDataType());
             	   addedProperties.add(r);
                }
@@ -578,7 +583,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		}
 		
-		addPresentationPropertiesToVertex ( vertex, presentationProperties);
+	//	addPresentationPropertiesToVertex ( vertex, presentationProperties);
 		return addedProperties;
 	}
 	
@@ -586,9 +591,19 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 	private void cloneEdges() throws NdexException, ExecutionException {
 		if ( srcNetwork.getEdges() != null) {
-			for ( Edge edge : srcNetwork.getEdges().values()) {
+			int counter = 0;
+			logger.info("start cloning edges");
+			for ( Map.Entry<Long, Edge> e : srcNetwork.getEdges().entrySet()) {
+				if ( counter == 0 ) logger.info("start");
+	//		for ( Edge edge : srcNetwork.getEdges().values()) {
+				Edge edge = e.getValue();
 				Long newEdgeId = createEdge(edge);
 				edgeIdMap.put(edge.getId(), newEdgeId);
+				if ( counter % 20000 == 0 ) {
+					graph.commit();
+					logger.info("committed " + counter + " edges.");
+				}
+				counter ++;
 			}
 		}
 	}
@@ -598,8 +613,20 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		Long edgeId = database.getNextId();
 		
+		Collection<Long> edgeCitations = new ArrayList<> (edge.getCitationIds().size());
+		if ( edge.getCitationIds() != null) {
+			for ( Long citationId : edge.getCitationIds()) {
+				Long newCitationId = citationIdMap.get(citationId);
+				if ( newCitationId == null)
+					throw new NdexException ("Citation id " + citationId + " not found.");
+				edgeCitations.add(newCitationId);
+			}
+		}
+		
 		ODocument edgeDoc = new ODocument(NdexClasses.Edge)
-		   .field(NdexClasses.Element_ID, edgeId)
+		   .fields(NdexClasses.Element_ID, edgeId,
+				   NdexClasses.ndexProperties, edge.getProperties(),
+				   NdexClasses.Citation, edgeCitations )
            .save();
 		
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
@@ -625,6 +652,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	   ODocument termDoc = elementIdCache.get(newPredicateId); 
        edgeV.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(termDoc));
 	   
+       /*
 		if ( edge.getCitationIds() != null) {
 			for ( Long citationId : edge.getCitationIds()) {
 				Long newCitationId = citationIdMap.get(citationId);
@@ -634,7 +662,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 				ODocument citationDoc = elementIdCache.get(newCitationId); 
 				edgeV.addEdge(NdexClasses.Edge_E_citations,	graph.getVertex(citationDoc));
 			}
-		}
+		} */
 		
 		if ( edge.getSupportIds() != null) {
 			for ( Long supportId : edge.getSupportIds()) {
@@ -649,7 +677,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 		
 		networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
-		this.addPropertiesToVertex(edgeV, edge.getProperties(), edge.getPresentationProperties(),false);
+		
+		
+//		this.addPropertiesToVertex(edgeV, edge.getProperties(), null, /*edge.getPresentationProperties(),*/false);
 		elementIdCache.put(edgeId, edgeDoc);
         return edgeId;		
 		

@@ -840,7 +840,7 @@ public class XbelNetworkExporter {
 			org.ndexbio.model.object.network.Citation modelCitation) {
 		Citation xbelCitation = new Citation();
 
-		xbelCitation.setName(modelCitation.getType());
+		xbelCitation.setName(modelCitation.getClass().getSimpleName());
 		String idString = modelCitation.getIdentifier();
 		if ( idString.startsWith(NdexPersistenceService.pmidPrefix))
 			xbelCitation.setReference(idString.substring(5));

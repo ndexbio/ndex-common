@@ -171,6 +171,7 @@ public interface NdexClasses {
     public static final String ndexProp_P_predicateId   = "predicateId";
     public static final String ndexProp_P_valueId	    = "valueId";
     public static final String ndexProp_E_predicate     = "prop";
+    public static final String ndexProperties = "props";
     
     //Group
     

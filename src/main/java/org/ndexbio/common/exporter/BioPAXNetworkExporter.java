@@ -263,7 +263,7 @@ public class BioPAXNetworkExporter {
 		EditorMap editorMap = SimpleEditorMap.L3;
 		for (NdexPropertyValuePair pvp : properties){
 			if ( ! pvp.getPredicateString().equals("ndex:bioPAXType")){
-				String propertyString = getBioPaxProperty(pvp);
+				String propertyString = pvp.getPredicateString();
 				String value = pvp.getValue();
 				PropertyEditor editor = editorMap.getEditorForProperty(propertyString, bioPAXClass);
 				if (editor != null){
@@ -276,13 +276,13 @@ public class BioPAXNetworkExporter {
 		}
 	}
 
-	
+/*	
 	private String getBioPaxProperty(NdexPropertyValuePair prop) {
-		BaseTerm bTerm = network.getBaseTerms().get(prop.getPredicateId());
-		return bTerm.getName();
+		return prop.getPredicateString();
+//		return bTerm.getName();
 	}
 	
-
+*/
 	// Process all Nodes that are *not* XREF nodes
 	// None of these will have a "represents" property
 	private void processNodes(Model bioPAXModel) throws NdexException {
