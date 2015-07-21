@@ -604,6 +604,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 					logger.info("committed " + counter + " edges.");
 				}
 				counter ++;
+				logger.info("cloned " + counter + " edges.");
+				if ( counter > 10) break;
 			}
 		}
 	}
@@ -623,34 +625,42 @@ public class NdexNetworkCloneService extends PersistenceService {
 			}
 		}
 		
-		ODocument edgeDoc = new ODocument(NdexClasses.Edge)
+		Long newPredicateId = baseTermIdMap.get(edge.getPredicateId());
+	 	if ( newPredicateId == null)
+				throw new NdexException ("Base term id " + edge.getPredicateId() + " not found.");
+	//	ODocument termDoc = elementIdCache.get(newPredicateId); 
+	//    edgeV.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(termDoc));
+
+	    ODocument edgeDoc = new ODocument(NdexClasses.Edge)
 		   .fields(NdexClasses.Element_ID, edgeId,
 				   NdexClasses.ndexProperties, edge.getProperties(),
+				   NdexClasses.Edge_P_predicateId, newPredicateId,
 				   NdexClasses.Citation, edgeCitations )
            .save();
 		
+		logger.info("Saved edge doc.");
+
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
+		logger.info("Created vertex.");
 		
-		{
+		
         Long newSubjectId = nodeIdMap.get(edge.getSubjectId());
         if ( newSubjectId == null)
         	   throw new NdexException ("Node id " + edge.getSubjectId() + "not found.");
 	   ODocument subjectDoc = elementIdCache.get(newSubjectId); 
 	   graph.getVertex(subjectDoc).addEdge(NdexClasses.Edge_E_subject, edgeV);
-		}
-	   {
+		
+		logger.info("added sub edge.");
+
+	   
 	   Long newObjectId = nodeIdMap.get(edge.getObjectId());
        if ( newObjectId == null)
     	   throw new NdexException ("Node id " + edge.getObjectId() + "not found.");
        ODocument objectDoc = elementIdCache.get(newObjectId); 
        edgeV.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectDoc));
-	   }
 	   
-	   Long newPredicateId = baseTermIdMap.get(edge.getPredicateId());
- 	   if ( newPredicateId == null)
-			throw new NdexException ("Base term id " + edge.getPredicateId() + " not found.");
-	   ODocument termDoc = elementIdCache.get(newPredicateId); 
-       edgeV.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(termDoc));
+	   
+		logger.info("added obj edge.");
 	   
        /*
 		if ( edge.getCitationIds() != null) {

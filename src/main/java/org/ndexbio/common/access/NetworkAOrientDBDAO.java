@@ -90,7 +90,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	/* (non-Javadoc)
 	 * @see org.ndexbio.common.access.NetworkADAO#queryForSubnetwork(java.lang.String, org.ndexbio.common.models.object.NetworkQueryParameters, int, int)
 	 */
-	
+/*	
 	public Network queryForSubnetwork(final String networkId,
 			final SimplePathQuery parameters
 		//	,final int skipBlocks, final int blockSize
@@ -126,7 +126,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			teardown();
 		}
 	}
-
+*/
 	public PropertyGraphNetwork queryForSubPropertyGraphNetwork(final String networkId,
 			final SimplePathQuery parameters
 			//,final int skipBlocks,	final int blockSize
@@ -436,7 +436,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	    NetworkDAO dao = new NetworkDAO (this._ndexDatabase);
 
 	    // get namespaces from network
-        for ( Namespace ns : NetworkDAO.getNamespacesFromNetworkDoc(networkDoc, network)) {
+        for ( Namespace ns : dao.getNamespacesFromNetworkDoc(networkDoc, network)) {
         	network.getNamespaces().put(ns.getId(),ns);
         }
 

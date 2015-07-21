@@ -100,7 +100,7 @@ public class SearchNetworkByPropertyExecutor {
 				if ( isComplete !=null && isComplete.booleanValue() && !isDeleted.booleanValue()) {
 					if ( NetworkSearchDAO.isSearchable(networkDoc, userRID, adminUserRID, false, true, Permissions.READ) )	{	
 						   if ( networkSatisfyFilter(networkDoc))
-							result.add(NetworkDocDAO.getNetworkSummary(networkDoc));
+							result.add(dao.getNetworkSummary(networkDoc));
 					}
 				}
 			} 

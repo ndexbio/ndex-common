@@ -92,7 +92,10 @@ public class NdexJVMDataModelService implements NdexTaskModelService {
 		} catch (IllegalArgumentException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		} 
+		} catch ( NdexException e2) {
+			logger.error(e2.getMessage());
+			e2.printStackTrace();
+		}
 		return new ArrayList<Citation>();
 	}
 
@@ -162,7 +165,7 @@ public class NdexJVMDataModelService implements NdexTaskModelService {
 		try {
 			return  Iterables.filter(dao.getNetworkNamespaces(networkId), namespacePredicate);
 			
-		} catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException|NdexException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
@@ -200,7 +203,7 @@ public class NdexJVMDataModelService implements NdexTaskModelService {
 			return  Iterables.filter(dao.getNetworkNamespaces(networkId), internalAnnotationPredicate);
 			
 			
-		} catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException|NdexException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
@@ -222,7 +225,7 @@ public class NdexJVMDataModelService implements NdexTaskModelService {
 			return  Iterables.filter(dao.getNetworkNamespaces(networkId), externalAnnotationPredicate);
 			
 			
-		} catch (IllegalArgumentException  e) {
+		} catch (IllegalArgumentException|NdexException  e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
@@ -240,7 +243,7 @@ public class NdexJVMDataModelService implements NdexTaskModelService {
 		
 		try {
 			return dao.getBaseTermsByPrefix( networkId, namespacePrefix);
-		} catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException|NdexException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

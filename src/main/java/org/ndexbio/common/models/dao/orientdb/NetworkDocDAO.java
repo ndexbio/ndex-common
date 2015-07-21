@@ -165,12 +165,12 @@ public class NetworkDocDAO extends OrientdbDAO {
 			network.getNodes().put(subjectId, node);
 		}
 		
-		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
-		Long predicateId = predicateDoc.field(NdexClasses.Element_ID);
+		//ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
+		Long predicateId =  doc.field(NdexClasses.Edge_P_predicateId); //predicateDoc.field(NdexClasses.Element_ID);
 		e.setPredicateId(predicateId);
 		
 		if ( network != null && !network.getBaseTerms().containsKey(predicateId)) {
-    		   BaseTerm t = getBaseTerm(predicateDoc,network);
+    		   BaseTerm t = getBaseTerm(getDocumentByElementId(predicateId),network);
     		   network.getBaseTerms().put(t.getId(), t);
     	   }
 		
@@ -350,8 +350,9 @@ public class NetworkDocDAO extends OrientdbDAO {
 	 *  This function returns the citations in this network.
 	 * @param networkUUID
 	 * @return
+	 * @throws NdexException 
 	 */
-	public Collection<Citation> getNetworkCitations(String networkUUID) {
+	public Collection<Citation> getNetworkCitations(String networkUUID) throws NdexException {
 		ArrayList<Citation> citations = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
@@ -371,7 +372,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	}
 
 
-	public Namespace getNamespace(String prefix, String URI, UUID networkID ) {
+	public Namespace getNamespace(String prefix, String URI, UUID networkID ) throws NdexException {
 		String query = "select from (traverse out_" +
 	    		  NdexClasses.Network_E_Namespace +" from (select from "
 	    		  + NdexClasses.Network + " where " +
@@ -391,7 +392,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	}
 
 
-	public static Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc,Network network) {
+	public  Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc,Network network) throws NdexException {
 		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
 		for (OIdentifiable reifiedTRec : new OTraverse()
@@ -409,7 +410,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	}
 	
 
-    public Support getSupport(String text, long citationId) {
+    public Support getSupport(String text, long citationId) throws NdexException {
 		String query = "select from " + NdexClasses.Citation + " where " + 
 		        NdexClasses.Element_ID + "=" + citationId;
 	    final List<ODocument> citations = db.query(new OSQLSynchQuery<ODocument>(query));
@@ -433,7 +434,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	return null;
     }
     
-    public Collection<BaseTerm> getBaseTermsByPrefix(String networkUUID, String nsPrefix) {
+    public Collection<BaseTerm> getBaseTermsByPrefix(String networkUUID, String nsPrefix) throws NdexException {
 		ArrayList<BaseTerm> baseTerms = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
@@ -584,12 +585,22 @@ public class NetworkDocDAO extends OrientdbDAO {
     
 
 
-	private static BaseTerm getBaseTerm(ODocument o, Network network) {
+	private BaseTerm getBaseTerm(ODocument o, Network network) throws NdexException {
 		BaseTerm t = new BaseTerm();
 		t.setId((long)o.field(NdexClasses.Element_ID));
 		t.setName((String)o.field(NdexClasses.BTerm_P_name));
-		t.setNamespaceId((long) o.field("nsid"));
 		
+		Long nsId = o.field("nsid");
+		if ( nsId !=null)
+		   t.setNamespaceId(nsId);
+
+		if ( nsId >0) {
+			if ( network != null &&
+					 ! network.getNamespaces().containsKey(nsId)) {
+					Namespace ns = getNamespace(getDocumentByElementId(nsId),network);
+					network.getNamespaces().put(nsId, ns);
+				}
+		}
 /*		ODocument nsDoc = o.field("out_"+NdexClasses.BTerm_E_Namespace);
 		if ( nsDoc != null) {
 			Long nsId = nsDoc.field(NdexClasses.Element_ID);
@@ -674,7 +685,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	}
 
 	
-    private static NdexPropertyValuePair getNdexPropertyFromDocument(ODocument propDoc, Network n) {
+    private NdexPropertyValuePair getNdexPropertyFromDocument(ODocument propDoc, Network n) throws NdexException {
 		NdexPropertyValuePair p = new NdexPropertyValuePair();
 		
 		ODocument baseTermDoc = propDoc.field("out_" + NdexClasses.ndexProp_E_predicate);
@@ -711,7 +722,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		return localName;
 	}
 
-    private static Namespace getNamespace(ODocument ns, Network network) {
+    private  Namespace getNamespace(ODocument ns, Network network) throws NdexException {
         Namespace rns = new Namespace();
         rns.setId((long)ns.field("id"));
         rns.setPrefix((String)ns.field(NdexClasses.ns_P_prefix));
@@ -723,7 +734,7 @@ public class NetworkDocDAO extends OrientdbDAO {
      
     
     // set properties in the passed in object by the information stored in a db document. 
-    public static void getPropertiesFromDocument(PropertiedObject obj, ODocument doc, Network n) {
+    public  void getPropertiesFromDocument(PropertiedObject obj, ODocument doc, Network n) throws NdexException {
     	for (OIdentifiable ndexPropertyDoc : new OTraverse()
     			.field("out_"+ NdexClasses.E_ndexProperties )
     			.target(doc)
@@ -762,7 +773,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 
         setNetworkSummary(nDoc, network);
         
-        for ( Namespace ns : NetworkDAO.getNamespacesFromNetworkDoc(nDoc, network)) {
+        for ( Namespace ns : getNamespacesFromNetworkDoc(nDoc, network)) {
         	network.getNamespaces().put(ns.getId(),ns);
         }
 
@@ -815,7 +826,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	
 	
 	// namespaceID < 0 means baseTerm has a local namespace
-	public BaseTerm getBaseTerm(String baseterm, long namespaceID, String networkId) {
+	public BaseTerm getBaseTerm(String baseterm, long namespaceID, String networkId) throws NdexException {
 		List<ODocument> terms;
 		
 		if ( namespaceID >= 0 ) {
@@ -845,7 +856,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	}
 	
 
-	public Collection<BaseTerm> getBaseTerms(String networkUUID) {
+	public Collection<BaseTerm> getBaseTerms(String networkUUID) throws NdexException {
 		ArrayList<BaseTerm> baseTerms = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
@@ -869,7 +880,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	
     }
 	
-	public Collection<Namespace> getNamespaces(String networkUUID) {
+	public Collection<Namespace> getNamespaces(String networkUUID) throws NdexException {
 		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
@@ -890,14 +901,14 @@ public class NetworkDocDAO extends OrientdbDAO {
     	return namespaces;
 	}
 
-    public static NetworkSummary getNetworkSummary(ODocument doc) {
+    public NetworkSummary getNetworkSummary(ODocument doc) throws NdexException {
     	NetworkSummary networkSummary = new NetworkSummary();
     	setNetworkSummary(doc,networkSummary);
     	return networkSummary;
     }
 
 
-	public NetworkSummary getNetworkSummaryById (String networkUUIDStr) {
+	public NetworkSummary getNetworkSummaryById (String networkUUIDStr) throws NdexException {
 		ODocument doc = getNetworkDocByUUIDString(networkUUIDStr);
 		return getNetworkSummary(doc);
 	}
@@ -916,7 +927,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     
 
     
-	private static Citation getCitationFromDoc(ODocument doc, Network network) {
+	private Citation getCitationFromDoc(ODocument doc, Network network) throws NdexException {
 		Citation result = new Citation();
 		result.setId((long)doc.field(NdexClasses.Element_ID));
 		result.setTitle((String)doc.field(NdexClasses.Citation_P_title));
@@ -934,7 +945,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	}
 
 
-    private static Support getSupportFromDoc(ODocument doc, Network network) {
+    private Support getSupportFromDoc(ODocument doc, Network network) throws NdexException {
     	Support s = new Support();
     	s.setText((String)doc.field(NdexClasses.Support_P_text));
     	s.setId((long)doc.field(NdexClasses.Element_ID));
@@ -1026,7 +1037,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	return term;
     }
     
-    private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
+    private  NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) throws NdexException {
     	
 		Helper.populateExternalObjectFromDoc (nSummary, doc);
 

@@ -159,6 +159,7 @@ public interface NdexClasses {
     //edge
     
     public static final String Edge_E_predicate  = "edgePredicate";
+    public static final String Edge_P_predicateId = "prdctId";
     public static final String Edge_E_subject    = "edgeSubject";
     public static final String Edge_E_object     = "edgeObject";
     public static final String Edge_E_citations  = "eCitation";

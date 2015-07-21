@@ -132,7 +132,7 @@ public class NetworkDAO extends NetworkDocDAO {
 
 	    Network network = new Network(blockSize);  //result holder
 
-        NetworkDAO.setNetworkSummary(nDoc, network);
+        setNetworkSummary(nDoc, network);
 
          for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
@@ -679,7 +679,7 @@ public class NetworkDAO extends NetworkDocDAO {
     }
     
 	
-	public Collection<Namespace> getNetworkNamespaces(String networkUUID) {
+	public Collection<Namespace> getNetworkNamespaces(String networkUUID) throws NdexException {
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
 		return getNamespacesFromNetworkDoc(networkDoc, null);
 	}
@@ -750,7 +750,7 @@ public class NetworkDAO extends NetworkDocDAO {
     }
 
  
-    private static NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) {
+    private  NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) throws NdexException {
     	
 		Helper.populateExternalObjectFromDoc (nSummary, doc);
 

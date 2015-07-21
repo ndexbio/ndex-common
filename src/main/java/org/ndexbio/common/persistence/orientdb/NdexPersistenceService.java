@@ -160,7 +160,7 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		this.networkDoc = this.networkDAO.getNetworkDocByUUID(networkID);
 		this.networkVertex = graph.getVertex(this.networkDoc);
-		this.network = NetworkDocDAO.getNetworkSummary(networkDoc);
+		this.network = networkDAO.getNetworkSummary(networkDoc);
 		
 		
 		this.rawCitationMap  = new TreeMap <> ();

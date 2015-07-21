@@ -347,7 +347,7 @@ public class Helper {
     // Added by David Welker
     public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkDAO dao, String networkId) throws NdexException
     {
-        NetworkSummary summary = NetworkDAO.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
+        NetworkSummary summary = dao.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
         populateProvenanceEntity(entity, summary);
     }
 

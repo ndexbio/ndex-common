@@ -70,6 +70,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	    **************************************************************************/
 	public NetworkSearchDAO (ODatabaseDocumentTx dbConnection) {
 		super( dbConnection);
+		
 	}
 	
 	
@@ -105,6 +106,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 
 		int offset = skipBlocks * top;
 		
+		NetworkDAO dao = new NetworkDAO(this.getDBConnection());
 		// has account name
 		if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
 
@@ -138,14 +140,13 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			} else 
 				  traverser = traverser.predicate( new OSQLPredicate("$depth <= 1"));
 
-			
 			final TreeSet<NetworkSummary> foundNetworks = new TreeSet<>(new NetworkResultComparator());
 			
 			if ( userORID != null && userORID.equals(nAccount)) {   // same account
 		   		for (OIdentifiable reifiedTRec : traverser) {
 			    	  ODocument networkDoc = (ODocument)reifiedTRec;
 			    	  if ( networkDoc.getClassName().equals(NdexClasses.Network)) {
-						NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
+						NetworkSummary network =dao.getNetworkSummary(networkDoc); 
 						if ( network.getIsComplete() && !network.getIsDeleted())
 							foundNetworks .add(network);
 			    	  }
@@ -159,7 +160,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))== VisibilityType.PUBLIC :
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))!= VisibilityType.PRIVATE)
     					   || networkIsReadableByAccount(networkDoc, userORID))) {
-							NetworkSummary network =NetworkDAO.getNetworkSummary(networkDoc); 
+							NetworkSummary network =dao.getNetworkSummary(networkDoc); 
 							if ( network.getIsComplete() && !network.getIsDeleted())
 								foundNetworks .add(network);
 					}
@@ -190,7 +191,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 						visibility == VisibilityType.PUBLIC: 
 						visibility != VisibilityType.PRIVATE )
 					|| networkIsReadableByAccount(networkDoc, userORID) )	{	
-						resultHolder.addFirst(NetworkDAO.getNetworkSummary(networkDoc));
+						resultHolder.addFirst(dao.getNetworkSummary(networkDoc));
 				}
 			}
 		} 
@@ -228,7 +229,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 //	    Permissions p = simpleNetworkQuery.getPermission();
 
-	  try {
+	NetworkDAO dao = new NetworkDAO(this.getDBConnection());
+
+	try {
 	
 		
 		// search network first.
@@ -237,6 +240,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		String searchStr = simpleNetworkQuery.getSearchString();
         
 		Collection<OIdentifiable> networkIds =  (Collection<OIdentifiable>) networkIdx.get( searchStr); 
+
 
 		for ( OIdentifiable dId : networkIds) {
 			ODocument doc = dId.getRecord();
@@ -248,7 +252,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 					resultIDSet.add(dId.getIdentity());
 					if ( counter >= offset) {
-						NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+						NetworkSummary network =dao.getNetworkSummary(doc); 
 						if ( network.getIsComplete() && !network.getIsDeleted())
 							resultList .add(network);
 					}
@@ -285,7 +289,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		  						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 							resultIDSet.add(id);
 							if ( counter >= offset) {
-								NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+								NetworkSummary network =dao.getNetworkSummary(doc); 
 								if ( network.getIsComplete())
 									resultList .add(network);
 							}
@@ -321,7 +325,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 									simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) ) {
 								resultIDSet.add(id);
 								if ( counter >= offset) {
-									NetworkSummary network =NetworkDAO.getNetworkSummary(doc); 
+									NetworkSummary network =dao.getNetworkSummary(doc); 
 									if ( network.getIsComplete())
 										resultList .add(network);
 								}
