@@ -225,7 +225,7 @@ public class XGMMLNetworkExporter {
 		Element desc = doc.createElement("dc:description");
 		rdfElement.appendChild(desc);
 		desc.setTextContent(
-				network.getDescription().length() ==0 ? 
+				(network.getDescription() == null || network.getDescription().length() ==0) ? 
 				NA : network.getDescription()	);
 		
 		//network presentation property

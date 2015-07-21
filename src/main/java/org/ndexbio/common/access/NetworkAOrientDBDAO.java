@@ -162,6 +162,14 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		}
 	}
 
+	public PropertyGraphNetwork queryForSubPropertyGraphNetworkV2(final String networkId,
+			final SimplePathQuery parameters
+			//,final int skipBlocks,	final int blockSize
+			) throws IllegalArgumentException, NdexException {
+
+		Network n = queryForSubnetworkV2(networkId, parameters);
+		return new PropertyGraphNetwork ( n);
+	}
 
 
 	private Set<ORID> queryForEdgeRids( ORID networkRid, SimplePathQuery parameters
@@ -300,8 +308,6 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	        // copy the source format
 	        NetworkSourceFormat fmt = Helper.getSourceFormatFromNetworkDoc(networkDoc);
 	        if ( fmt!=null) {
-//	        	if ( fmt == NetworkSourceFormat.BIOPAX)
-//	        		fmt = 
 	        	result.getProperties().add(new NdexPropertyValuePair(NdexClasses.Network_P_source_format, fmt.toString()));
 	        }
 	        	
