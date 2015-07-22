@@ -801,7 +801,7 @@ public class NdexPersistenceService extends PersistenceService {
 		}
 		
 		// persist the citation object in db.
-		citationId = createCitation(title, idType, identifier, contributors, null,null);
+		citationId = createCitation(title, idType, identifier, contributors, null);
 				
 		rawCitationMap.put(rCitation, citationId);
 		return citationId; 
@@ -1016,7 +1016,7 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 
 	
-	public Long getSupportId(String literal, Long citationId) throws ExecutionException {
+	public Long getSupportId(String literal, Long citationId) throws NdexException {
 		
 		RawSupport r = new RawSupport(literal, (citationId !=null ? citationId.longValue(): -1));
 
@@ -1028,7 +1028,6 @@ public class NdexPersistenceService extends PersistenceService {
 		supportId = createSupport(literal, citationId);
 		this.rawSupportMap.put(r, supportId);
 		return supportId; 
-		
 	}
 	
 	public void persistNetwork() throws NdexException {

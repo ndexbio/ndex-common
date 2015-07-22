@@ -202,7 +202,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 
 	private Long supportFromAnnotationGroup(
 			AnnotationGroup annotationGroup, Long citationId)
-			throws ExecutionException {
+			throws  NdexException {
 		if (null == annotationGroup)
 			return null;
 		for (Object object : annotationGroup

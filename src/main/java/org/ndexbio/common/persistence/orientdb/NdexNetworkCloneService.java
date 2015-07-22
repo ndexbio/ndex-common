@@ -50,7 +50,6 @@ import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
-import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePropertyValuePair;
@@ -71,8 +70,6 @@ import org.ndexbio.task.NdexServerQueue;
 
 import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class NdexNetworkCloneService extends PersistenceService {
@@ -113,14 +110,14 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.network = new NetworkSummary();
 
 		this.ownerAccount = ownerAccountName;
-		this.baseTermIdMap    = new HashMap <>(1000);
-		this.namespaceIdMap   = new HashMap <>(1000);
-		this.citationIdMap    = new HashMap <> (1000);
-		this.reifiedEdgeTermIdMap = new HashMap<>(1000);
-		this.nodeIdMap      = new HashMap<>(1000);
-		this.edgeIdMap      = new HashMap<> ();
-		this.supportIdMap   = new HashMap<> (1000);
-		this.functionTermIdMap = new HashMap<>(1000);
+		this.baseTermIdMap    = new HashMap <>(sourceNetwork.getBaseTerms().size());
+		this.namespaceIdMap   = new HashMap <>(sourceNetwork.getNamespaces().size());
+		this.citationIdMap    = new HashMap <> (sourceNetwork.getCitations().size());
+		this.reifiedEdgeTermIdMap = new HashMap<>(sourceNetwork.getReifiedEdgeTerms().size());
+		this.nodeIdMap      = new HashMap<>(sourceNetwork.getNodeCount());
+		this.edgeIdMap      = new HashMap<> (sourceNetwork.getEdgeCount());
+		this.supportIdMap   = new HashMap<> (sourceNetwork.getSupports().size());
+		this.functionTermIdMap = new HashMap<>(sourceNetwork.getFunctionTerms().size());
 		// intialize caches.
 	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
 
@@ -272,7 +269,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 			cloneNetworkElements();
 			
-			cloneNetworkProperties();
+	//		cloneNetworkProperties();
 			this.localConnection.commit();
 	}
 	
@@ -303,7 +300,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 		          NdexClasses.Network_P_isComplete, false,
 		          NdexClasses.Network_P_cacheId, Long.valueOf(-1),
 		          NdexClasses.Network_P_readOnlyCommitId, Long.valueOf(-1),
-		          NdexClasses.Network_P_visibility, 
+		          NdexClasses.ndexProperties, network.getProperties(),
+		          NdexClasses.Network_P_visibility,
 		          ( srcNetwork.getVisibility() == null ? 
 		        		  VisibilityType.PRIVATE.toString()  : 
 		        		  srcNetwork.getVisibility().toString()));
@@ -329,19 +327,19 @@ public class NdexNetworkCloneService extends PersistenceService {
 		logger.info("A new NDex network titled: " +srcNetwork.getName() +" has been created");
 	}
 
-	
+/*	
 	private void cloneNetworkProperties() throws NdexException, ExecutionException {
 
 
 		Collection<NdexPropertyValuePair> newProps = 
-				addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), null, /*srcNetwork.getPresentationProperties(),*/ true);
+				addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), null, srcNetwork.getPresentationProperties(), true);
 		
 		this.network.getProperties().addAll(newProps);
 //		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
 
 		
 	}
-	
+*/	
 	
 	private void cloneNamespaces() throws NdexException, ExecutionException {
 		TreeSet<String> prefixSet = new TreeSet<>();
@@ -383,7 +381,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			for ( Citation citation : srcNetwork.getCitations().values() ) {
 				Long citationId = this.createCitation(citation.getTitle(),
 						citation.getIdType(), citation.getIdentifier(), 
-						citation.getContributors(), citation.getProperties(), null); //citation.getPresentationProperties());
+						citation.getContributors(), citation.getProperties()); 
 				
 				this.citationIdMap.put(citation.getId(), citationId);
 			}

@@ -464,7 +464,7 @@ public abstract class PersistenceService implements AutoCloseable {
 	 
 	 protected Long createCitation(String title, String idType, String identifier, 
 				List<String> contributors, 
-				Collection<NdexPropertyValuePair> properties, Collection<SimplePropertyValuePair> presentationProperties) throws NdexException, ExecutionException {
+				Collection<NdexPropertyValuePair> properties) throws NdexException, ExecutionException {
 			Long citationId = database.getNextId();
 
 			ODocument citationDoc = new ODocument(NdexClasses.Citation)
@@ -485,26 +485,26 @@ public abstract class PersistenceService implements AutoCloseable {
 		}
 
 	 
-	  protected Long createSupport(String literal, Long citationId) throws ExecutionException {
+	  protected Long createSupport(String literal, Long citationId) throws  NdexException {
 			
 			Long supportId =database.getNextId() ;
 
 			ODocument supportDoc = new ODocument(NdexClasses.Support)
 			   .fields(NdexClasses.Element_ID, supportId,
-			           NdexClasses.Support_P_text, literal)	
-			   .save();
+			           NdexClasses.Support_P_text, literal)	;
+			  
+			//TODO: review if we can remove this condition.
+			if ( citationId != null && citationId >= 0 ) {
+				supportDoc.fields(NdexClasses.Citation,citationId);
+			} else {
+				throw new NdexException ("Citation Id is null or <0 for support " + literal);
+			}
+			
+			supportDoc.save();
 
 			OrientVertex supportV = graph.getVertex(supportDoc);
 
 			networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
-
-			if ( citationId != null && citationId >= 0 ) {
-				ODocument citationDoc = elementIdCache.get(citationId);
-	        
-				OrientVertex citationV = graph.getVertex(citationDoc);
-				supportV.addEdge(NdexClasses.Support_E_citation, citationV);
-				elementIdCache.put(citationId, citationV.getRecord());
-			}
 
 			supportDoc = supportV.getRecord();
 			elementIdCache.put(supportId, supportDoc);
