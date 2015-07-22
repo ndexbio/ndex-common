@@ -511,7 +511,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 					throw new NdexException ("Citation id " + citationId + " not found.");
 				newCitations.add(newCitationId);
 			}
-			nodeDoc.field(NdexClasses.Node_E_citations,newCitations);
+			nodeDoc.field(NdexClasses.Citation,newCitations);
 		}
 		
 		List<Long> oldSupports = node.getSupportIds(); 
@@ -524,7 +524,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 				newSupports.add(newSupportId);
 			}
-			nodeDoc.field(NdexClasses.Node_E_supports,newSupports);
+			nodeDoc.field(NdexClasses.Support,newSupports);
 		}
 		
 		nodeDoc.field(NdexClasses.NdexProperty, node.getProperties());
@@ -567,39 +567,54 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		Long edgeId = database.getNextId();
 		
-		Collection<Long> edgeCitations = new ArrayList<> (edge.getCitationIds().size());
-		if ( edge.getCitationIds() != null) {
-			for ( Long citationId : edge.getCitationIds()) {
-				Long newCitationId = citationIdMap.get(citationId);
-				if ( newCitationId == null)
-					throw new NdexException ("Citation id " + citationId + " not found.");
-				edgeCitations.add(newCitationId);
-			}
-		}
-		
 		Long newPredicateId = baseTermIdMap.get(edge.getPredicateId());
 	 	if ( newPredicateId == null)
 				throw new NdexException ("Base term id " + edge.getPredicateId() + " not found.");
-	//	ODocument termDoc = elementIdCache.get(newPredicateId); 
-	//    edgeV.addEdge(NdexClasses.Edge_E_predicate, graph.getVertex(termDoc));
 
 	    ODocument edgeDoc = new ODocument(NdexClasses.Edge)
 		   .fields(NdexClasses.Element_ID, edgeId,
 				   NdexClasses.ndexProperties, edge.getProperties(),
-				   NdexClasses.Edge_P_predicateId, newPredicateId,
-				   NdexClasses.Citation, edgeCitations )
-           .save();
-		
-		logger.info("Saved edge doc.");
+				   NdexClasses.Edge_P_predicateId, newPredicateId );
 
+	    List<Long> oldEdgeCitations = edge.getCitationIds() ; 
+		if ( oldEdgeCitations != null && oldEdgeCitations.size() > 0) {
+			
+			Collection<Long> edgeCitations = new ArrayList<> (oldEdgeCitations.size());
+			if ( edge.getCitationIds() != null) {
+				for ( Long citationId : oldEdgeCitations) {
+					Long newCitationId = citationIdMap.get(citationId);
+					if ( newCitationId == null)
+						throw new NdexException ("Citation id " + citationId + " not found.");
+					edgeCitations.add(newCitationId);
+				}
+			}
+
+			edgeDoc.field(NdexClasses.Citation, edgeCitations );
+		} 
+		
+		List<Long> oldSupports = edge.getSupportIds(); 
+		if (  oldSupports != null && oldSupports.size() > 0 ) {
+			List<Long> newSupports = new ArrayList<> (oldSupports.size());
+			for ( Long supportId : oldSupports) {
+				Long newSupportId = supportIdMap.get(supportId);
+				if ( newSupportId == null)
+					throw new NdexException ("Support id " + supportId + " not found.");
+
+				newSupports.add(newSupportId);
+			}
+
+			edgeDoc.field(NdexClasses.Support, newSupports);
+		}
+		
+        edgeDoc.save();
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
 		logger.info("Created vertex.");
-		
-		
-        Long newSubjectId = nodeIdMap.get(edge.getSubjectId());
+
+		Long newSubjectId = nodeIdMap.get(edge.getSubjectId());
         if ( newSubjectId == null)
         	   throw new NdexException ("Node id " + edge.getSubjectId() + "not found.");
-	   ODocument subjectDoc = elementIdCache.get(newSubjectId); 
+	   
+        ODocument subjectDoc = elementIdCache.get(newSubjectId); 
 	   graph.getVertex(subjectDoc).addEdge(NdexClasses.Edge_E_subject, edgeV);
 		
 		logger.info("added sub edge.");
@@ -614,34 +629,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 	   
 		logger.info("added obj edge.");
 	   
-       /*
-		if ( edge.getCitationIds() != null) {
-			for ( Long citationId : edge.getCitationIds()) {
-				Long newCitationId = citationIdMap.get(citationId);
-				if ( newCitationId == null)
-					throw new NdexException ("Citation id " + citationId + " not found.");
-
-				ODocument citationDoc = elementIdCache.get(newCitationId); 
-				edgeV.addEdge(NdexClasses.Edge_E_citations,	graph.getVertex(citationDoc));
-			}
-		} */
-		
-		if ( edge.getSupportIds() != null) {
-			for ( Long supportId : edge.getSupportIds()) {
-				Long newSupportId = supportIdMap.get(supportId);
-				if ( newSupportId == null)
-					throw new NdexException ("Support id " + supportId + " not found.");
-
-				ODocument supportDoc = elementIdCache.get(newSupportId); 
-				edgeV.addEdge(NdexClasses.Edge_E_supports,	graph.getVertex(supportDoc));
-			}
-			
-		}
-		
 		networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
 		
-		
-//		this.addPropertiesToVertex(edgeV, edge.getProperties(), null, /*edge.getPresentationProperties(),*/false);
 		elementIdCache.put(edgeId, edgeDoc);
         return edgeId;		
 		

@@ -149,8 +149,8 @@ public interface NdexClasses {
     public static final String Node_P_name         = "name";
     public static final String Node_P_representTermType = "repType";
     
-    public static final String Node_E_citations     = "nCitation";
-    public static final String Node_E_supports     = "nSupport";
+//    public static final String Node_E_citations     = "nCitation";
+//    public static final String Node_E_supports     = "nSupport";
     public static final String Node_E_represents   = "represents";
     public static final String Node_E_alias		   = "alias";
     public static final String Node_E_relateTo	   = "relateTo";
@@ -163,8 +163,8 @@ public interface NdexClasses {
     public static final String Edge_P_predicateId = "prdctId";
     public static final String Edge_E_subject    = "edgeSubject";
     public static final String Edge_E_object     = "edgeObject";
-    public static final String Edge_E_citations  = "eCitation";
-    public static final String Edge_E_supports   = "eSupport";
+//    public static final String Edge_E_citations  = "eCitation";
+//    public static final String Edge_E_supports   = "eSupport";
     
     // ndexProperty
     public static final String ndexProp_P_predicateStr  = "predicateStr";
