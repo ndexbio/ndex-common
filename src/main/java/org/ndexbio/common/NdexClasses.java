@@ -147,6 +147,7 @@ public interface NdexClasses {
     
     //node
     public static final String Node_P_name         = "name";
+    public static final String Node_P_representTermType = "repType";
     
     public static final String Node_E_citations     = "nCitation";
     public static final String Node_E_supports     = "nSupport";

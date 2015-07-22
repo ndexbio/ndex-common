@@ -388,7 +388,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 
-	private void cloneSupports() throws NdexException, ExecutionException {
+	private void cloneSupports() throws NdexException {
 		if ( srcNetwork.getSupports()!= null) {
 			for ( Support support : srcNetwork.getSupports().values() ) {
 				Long citationId = -1l;
@@ -454,10 +454,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 		if ( node.getName()!= null) {
 			nodeDoc = nodeDoc.field(NdexClasses.Node_P_name,node.getName());
 		}
-		nodeDoc= nodeDoc.save();
 		
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
-		
+		List<NdexPropertyValuePair> props = node.getProperties(); 		
+		if (  props != null && props.size()>0)
+			nodeDoc = nodeDoc.field(NdexClasses.ndexProperties, props);
 		if ( node.getRepresents() != null ) {
 		   Long newRepId = null;	
 		   String repType = node.getRepresentsTermType();
@@ -470,120 +470,74 @@ public class NdexNetworkCloneService extends PersistenceService {
 		   
 		   if ( newRepId == null)
 			   throw new NdexException ("Term id " + node.getRepresents() + "not found.");
-		   
-   		   ODocument termDoc = elementIdCache.get(newRepId); 
-     	   nodeV.addEdge(NdexClasses.Node_E_represents, graph.getVertex(termDoc));
-		   
+
+		   nodeDoc.fields(NdexClasses.Node_E_represents, newRepId,
+				          NdexClasses.Node_P_representTermType, node.getRepresentsTermType());
 		}
 		
-		if ( node.getAliases() != null) {
-			for ( Long aliasId : node.getAliases()) {
+		List<Long> oldAliases = node.getAliases();
+		if ( oldAliases != null && oldAliases.size() > 0) {
+			List<Long> newAliases = new ArrayList<> (oldAliases.size());
+			
+			for ( Long aliasId : oldAliases) {
 				Long newAliasId = baseTermIdMap.get(aliasId);
 				if ( newAliasId == null)
 					throw new NdexException ("Base term id " + aliasId + " not found.");
-
-				ODocument termDoc = elementIdCache.get(newAliasId); 
-				nodeV.addEdge(NdexClasses.Node_E_alias,	graph.getVertex(termDoc));
+				newAliases.add(newAliasId);
 			}
+			
+			nodeDoc.field(NdexClasses.Node_E_alias, newAliases);
 		}
 		
-		if ( node.getRelatedTerms() != null) {
-			for ( Long relateToId : node.getRelatedTerms()) {
+		List<Long> oldRelatedTerms = node.getRelatedTerms(); 
+		if ( oldRelatedTerms != null && oldRelatedTerms.size() > 0 ) {
+			List<Long> newRelatedTerms = new ArrayList<>(oldRelatedTerms.size());
+			
+			for ( Long relateToId : oldRelatedTerms) {
 				Long newRelateToId = baseTermIdMap.get(relateToId);
 				if ( newRelateToId == null)
 					throw new NdexException ("Base term id " + relateToId + " not found.");
-
-				ODocument termDoc = elementIdCache.get(newRelateToId); 
-				nodeV.addEdge(NdexClasses.Node_E_relateTo,	graph.getVertex(termDoc));
+				newRelatedTerms.add(newRelateToId);
 			}
+			nodeDoc.field(NdexClasses.Node_E_alias, newRelatedTerms);
 		}
 		
-		if ( node.getCitationIds() != null) {
-			for ( Long citationId : node.getCitationIds()) {
+		List<Long> oldCitations = node.getCitationIds(); 
+		if ( oldCitations != null && oldCitations.size() > 0 ) {
+			List<Long> newCitations = new ArrayList<> (oldCitations.size());
+			for ( Long citationId : oldCitations) {
 				Long newCitationId = citationIdMap.get(citationId);
 				if ( newCitationId == null)
 					throw new NdexException ("Citation id " + citationId + " not found.");
-
-				ODocument citationDoc = elementIdCache.get(newCitationId); 
-				nodeV.addEdge(NdexClasses.Node_E_citations,	graph.getVertex(citationDoc));
+				newCitations.add(newCitationId);
 			}
+			nodeDoc.field(NdexClasses.Node_E_citations,newCitations);
 		}
 		
-		if ( node.getSupportIds() != null) {
+		List<Long> oldSupports = node.getSupportIds(); 
+		if ( oldSupports != null) {
+			List<Long> newSupports = new ArrayList<> (oldSupports.size());
 			for ( Long supportId : node.getSupportIds()) {
 				Long newSupportId = supportIdMap.get(supportId);
 				if ( newSupportId == null)
 					throw new NdexException ("Support id " + supportId + " not found.");
 
-				ODocument supportDoc = elementIdCache.get(newSupportId); 
-				nodeV.addEdge(NdexClasses.Node_E_supports,	graph.getVertex(supportDoc));
+				newSupports.add(newSupportId);
 			}
-			
+			nodeDoc.field(NdexClasses.Node_E_supports,newSupports);
 		}
 		
+		nodeDoc.field(NdexClasses.NdexProperty, node.getProperties());
+		
+		nodeDoc= nodeDoc.save();
+		
+		OrientVertex nodeV = graph.getVertex(nodeDoc);
 		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
 		
-		this.addPropertiesToVertex(nodeV, node.getProperties(), null,/* node.getPresentationProperties(),*/false);
 		elementIdCache.put(nodeId, nodeDoc);
         return nodeId;		
 	}
 	
-	
-/*	private void addPropertiesToDoc(ODocument doc, Collection<NdexPropertyValuePair> properties) {
-		doc.field(NdexClasses.ndexProperties, properties).save();
-	} */
-	
-	private Collection<NdexPropertyValuePair> addPropertiesToVertex(OrientVertex vertex, Collection<NdexPropertyValuePair> properties, 
-			Collection<SimplePropertyValuePair> presentationProperties, boolean cloneNewProperty ) throws NdexException, ExecutionException {
-		
-		 
-		Collection<NdexPropertyValuePair> addedProperties = cloneNewProperty ? new ArrayList<NdexPropertyValuePair>() : null;
-		
-		if ( properties != null) {
-			for (NdexPropertyValuePair e : properties) {
-				OrientVertex pV = this.createNdexPropertyVertex(e); 
-				/*
-				Long baseTermId = baseTermIdMap.get(e.getPredicateId());
-				
-				if ( baseTermId == null ) {
-				   logger.warning("Baseterm id " + e.getPredicateId() + " not defined in baseTerm table. Creating new basterm for property name.");
-
-				   baseTermId = this.getBaseTermId(e.getPredicateString());
-				   baseTermIdMap.put(e.getPredicateId(),baseTermId);
-
-				   pV = this.createNdexPropertyVertex(e);
-
-				} else {
-					ODocument bTermDoc = this.elementIdCache.get(baseTermId);
-
-					String name = bTermDoc.field(NdexClasses.BTerm_P_name);
-					
-					String[] qnames = TermUtilities.getNdexQName(e.getPredicateString());
-					
-					if ( ( qnames == null && !name.equals(e.getPredicateString())) || 
-						 ( qnames != null && !name.equals(qnames[1]) ) ) {
-						if ( !name.equals(e.getPredicateString())) {
-							throw new NdexException ("Baseterm name of " + e.getPredicateId() +
-									" doesn't match with property name " + e.getPredicateString());
-						}
-					}
-					pV = this.createNdexPropertyVertex(e); //, baseTermId, bTermDoc);
-				} */
-               vertex.addEdge(NdexClasses.E_ndexProperties, pV);
-               
-               if ( cloneNewProperty) {
-            	   NdexPropertyValuePair r = new NdexPropertyValuePair (e.getPredicateString(), e.getValue());
-            //	   r.setPredicateId(baseTermId);
-            	   r.setDataType(e.getDataType());
-            	   addedProperties.add(r);
-               }
-			}
-		
-		}
-		
-	//	addPresentationPropertiesToVertex ( vertex, presentationProperties);
-		return addedProperties;
-	}
 	
 	
 	
