@@ -255,7 +255,7 @@ public class Helper {
 		return false;
     }
 
-	public static NdexPropertyValuePair getNdexPropertyFromDoc(ODocument doc) {
+/*	public static NdexPropertyValuePair getNdexPropertyFromDoc(ODocument doc) {
 		NdexPropertyValuePair p = new NdexPropertyValuePair();
 		
 		ODocument baseTermDoc = doc.field("out_" + NdexClasses.ndexProp_E_predicate);
@@ -282,7 +282,7 @@ public class Helper {
 		}
 		return localName;
 	}
-	
+*/	
 	public static SimplePropertyValuePair getSimplePropertyFromDoc(ODocument doc) {
 		SimplePropertyValuePair p = new SimplePropertyValuePair();
 		p.setName((String)doc.field(NdexClasses.SimpleProp_P_name));

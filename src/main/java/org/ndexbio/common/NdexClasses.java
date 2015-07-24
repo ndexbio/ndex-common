@@ -130,11 +130,11 @@ public interface NdexClasses {
     public static final String Citation_P_identifier   = "identifier";
     //support
     public static final String Support_P_text     = "text";
-    public static final String Support_E_citation = "citeFrom";
+//    public static final String Support_E_citation = "citeFrom";
     
     //BaseTerm
     public static final String BTerm_P_name        = "name";
-    public static final String BTerm_E_Namespace   = "baseTermNS";
+    public static final String BTerm_NS_ID   = "nsID";
     
     public static final String Index_BTerm_name    = "idx_baseterm_name";
 
@@ -159,7 +159,7 @@ public interface NdexClasses {
     public static final String Index_node_name = "index-node-name";
     //edge
     
-    public static final String Edge_E_predicate  = "edgePredicate";
+//    public static final String Edge_E_predicate  = "edgePredicate";
     public static final String Edge_P_predicateId = "prdctId";
     public static final String Edge_E_subject    = "edgeSubject";
     public static final String Edge_E_object     = "edgeObject";

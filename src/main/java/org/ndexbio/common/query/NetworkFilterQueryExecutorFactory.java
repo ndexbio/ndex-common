@@ -103,7 +103,7 @@ public class NetworkFilterQueryExecutorFactory {
 					for ( ODocument d : bTerms) {
 						String name = d.field(NdexClasses.BTerm_P_name);
 						if ( name !=null && name.equalsIgnoreCase(value)) {
-							odbFilter.addPredicateId(d.getIdentity().toString());
+							odbFilter.addPredicateId((Long)d.field(NdexClasses.Element_ID));
 						}
 					}
 				}
@@ -185,10 +185,13 @@ public class NetworkFilterQueryExecutorFactory {
 			String[] qname =TermUtilities.getNdexQName(propertyName);
 			if ( ! name.equalsIgnoreCase(qname[1]) ) return false;
 			
-			ODocument nsDoc = baseTermDoc.field("out_"+NdexClasses.BTerm_E_Namespace);
-			String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
-			if (prefix !=null && prefix.equalsIgnoreCase(qname[0])) 
-				  return true;	 
+			Long nsId = baseTermDoc.field(NdexClasses.BTerm_NS_ID);
+			try (NetworkDocDAO dao = new NetworkDocDAO()) {
+				ODocument nsDoc = dao.getDocumentByElementId(nsId);
+				String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
+				if (prefix !=null && prefix.equalsIgnoreCase(qname[0])) 
+					  return true;	 
+			}
 			break;
 		case NAME:
 			if ( name.equalsIgnoreCase(propertyName)) 

@@ -30,6 +30,7 @@
  */
 package org.ndexbio.common.persistence.orientdb;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
@@ -184,14 +185,8 @@ public class NdexPersistenceService extends PersistenceService {
 		System.out.println(this.getClass().getName()
 				+ ".abortTransaction has been invoked.");
 
-		//localConnection.rollback();
-//		graph.rollback();
-		
-		// make sure everything relate to the network is deleted.
-		//localConnection.begin();
 		logger.info("Deleting partial network "+ network.getExternalId().toString() + " in order to rollback in response to error");
 		this.networkDAO.logicalDeleteNetwork(network.getExternalId().toString());
-		//localConnection.commit();
 		graph.commit();
 		Task task = new Task();
 		task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
@@ -209,8 +204,8 @@ public class NdexPersistenceService extends PersistenceService {
 			Long b= this.getBaseTermId(alias);
 		    Long repNodeId = this.baseTermNodeIdMap.get(b);
 			if ( repNodeId != null && repNodeId.equals(nodeId)) {
-//		    	logger.warning("Alias '" + alias + "' is also the represented base term of node " + 
-//			    nodeId +". Alias ignored.");
+		    	logger.warning("Alias '" + alias + "' is also the represented base term of node " + 
+			    nodeId +". Alias ignored.");
 		    } else {
 		    	ODocument bDoc = elementIdCache.get(b);
 		    	OrientVertex bV = graph.getVertex(bDoc);
@@ -257,9 +252,9 @@ public class NdexPersistenceService extends PersistenceService {
 		OrientVertex citationV = graph.getVertex(citationRec);
 		
 		if ( className.equals(NdexClasses.Node) ) {
- 	       	nodeV.addEdge(NdexClasses.Node_E_citations, graph.getVertex(citationV));
+ 	       	nodeV.addEdge(NdexClasses.Citation, graph.getVertex(citationV));
 		} else if ( className.equals(NdexClasses.Edge) ) {
-			nodeV.addEdge(NdexClasses.Edge_E_citations, graph.getVertex(citationV));
+			nodeV.addEdge(NdexClasses.Citation, graph.getVertex(citationV));
 		} else {
 			throw new NdexException ("Citation can only be added to node or edges of network, can't added to " + className);
 		}
@@ -270,6 +265,47 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(elementId, o);
 	}
 	
+	public void addCitationsToElement(long elementId, Collection<Long> newCitationIds) throws ExecutionException{
+		
+		if( newCitationIds == null || newCitationIds.size() == 0 ) return;
+		
+		ODocument elementRec = elementIdCache.get(elementId);
+
+		List<Long> citationIds = elementRec.field(NdexClasses.Citation);
+		if ( citationIds == null)
+			citationIds = new ArrayList<>(10);
+		
+		citationIds.addAll(newCitationIds);
+		
+		elementRec.field(NdexClasses.Citation, citationIds).save();
+		
+		elementIdCache.put(elementId, elementRec);
+	}
+
+	
+	public void setReferencesOnNode(Long nodeId, Collection<Long> newCitations, Collection<Long> newRelatedTerms, Collection<Long> newAliases) 
+			throws ExecutionException {
+		
+		ODocument nodeRec = elementIdCache.get(nodeId);
+
+		if( newCitations !=null && newCitations.size()>0) {
+		    nodeRec.field(NdexClasses.Citation, newCitations);
+		}
+		
+		if ( newRelatedTerms !=null && newRelatedTerms.size()> 0 ) {
+			nodeRec.field(NdexClasses.Node_E_relateTo, newRelatedTerms);
+		}
+		
+		if ( newAliases !=null && newAliases.size()>0) 
+			nodeRec.field(NdexClasses.Node_E_alias, newAliases);
+		
+		nodeRec = nodeRec.save();
+		
+		elementIdCache.put(nodeId, nodeRec);
+		
+	}
+	
+/*	
 	public void addSupportToElement(long elementId, Long supportId, String className) throws ExecutionException, NdexException {
 		ODocument elementRec = elementIdCache.get(elementId);
 		OrientVertex nodeV = graph.getVertex(elementRec);
@@ -291,43 +327,46 @@ public class NdexPersistenceService extends PersistenceService {
 		ODocument o = nodeV.getRecord();
 		elementIdCache.put(elementId, o);
 	}
-	
+*/	
 	
 	//TODO: generalize this function so that createEdge(....) can use it.
 	public void addMetaDataToNode (Long subjectNodeId, Long supportId, Long citationId,  Map<String,String> annotations) 
-			throws ExecutionException, NdexException {
+			throws ExecutionException {
         
 		ODocument nodeDoc = this.elementIdCache.get(subjectNodeId);
-    	OrientVertex nodeVertex = graph.getVertex(nodeDoc);
 		        
         if ( supportId != null) {
-			ODocument supportDoc = this.elementIdCache.get(supportId);
-	    	OrientVertex supportV = graph.getVertex(supportDoc);
-	    	nodeVertex.addEdge(NdexClasses.Node_E_supports, supportV);
-	    	this.elementIdCache.put(supportId, supportV.getRecord());
+    		List<Long> supportIds = nodeDoc.field(NdexClasses.Support);
+    		if ( supportIds == null)
+    			supportIds = new ArrayList<>(10);
+    		
+    		supportIds.add(supportId);
+    		nodeDoc.field(NdexClasses.Support,supportIds);
         }
 
 	    if (citationId != null) {
-			ODocument citationDoc = elementIdCache.get(citationId) ;
-	    	OrientVertex citationV = graph.getVertex(citationDoc);
-	    	nodeVertex.addEdge(NdexClasses.Node_E_citations, citationV);
-	    	this.elementIdCache.put(citationId, citationV.getRecord());
-	    	
+    		List<Long> citationIds = nodeDoc.field(NdexClasses.Citation);
+    		if ( citationIds == null)
+    			citationIds = new ArrayList<>(10);
+
+    		citationIds.add(citationId);
+    		nodeDoc.field(NdexClasses.Citation, citationIds);
 	    }
 
 		if ( annotations != null) {
+			List<NdexPropertyValuePair> props =nodeDoc.field(NdexClasses.ndexProperties); 
+			if ( props == null)		
+				props = new ArrayList<>(annotations.size());
+			
 			for (Map.Entry<String, String> e : annotations.entrySet()) {
-                OrientVertex pV = this.createNdexPropertyVertex(new NdexPropertyValuePair(e.getKey(),e.getValue()));
-                nodeVertex.addEdge(NdexClasses.E_ndexProperties, pV);
-                
-/*                NdexPropertyValuePair p = new NdexPropertyValuePair();
-                p.setPredicateString(e.getKey());
-                p.setDataType(e.getValue()); */
+                props.add(new NdexPropertyValuePair(e.getKey(),e.getValue()));
 			}
+			nodeDoc.field(NdexClasses.ndexProperties,props);
 		}
 		
-//		nodeDoc.reload();
-		this.elementIdCache.put(subjectNodeId, nodeVertex.getRecord());
+		nodeDoc.save();
+		
+		this.elementIdCache.put(subjectNodeId, nodeDoc);
 
 	}
 
@@ -412,96 +451,58 @@ public class NdexPersistenceService extends PersistenceService {
 	public Long createEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
 			 Long supportId, Long citationId, Map<String,String> annotation )
 			throws NdexException, ExecutionException {
-		if (null != objectNodeId && null != subjectNodeId && null != predicateId) {
-			
-			Long edgeId = database.getNextId(); 
-			
-			ODocument subjectNodeDoc = elementIdCache.get(subjectNodeId) ;
-			ODocument objectNodeDoc  = elementIdCache.get(objectNodeId) ;
-			ODocument predicateDoc   = elementIdCache.get(predicateId) ;
-			
-			ODocument edgeDoc = new ODocument(NdexClasses.Edge);
-			edgeDoc = edgeDoc.field(NdexClasses.Element_ID, edgeId)
-					.save();
-			OrientVertex edgeVertex = graph.getVertex(edgeDoc);
-			
-			if ( annotation != null) {
-				for (Map.Entry<String, String> e : annotation.entrySet()) {
-                    OrientVertex pV = this.createNdexPropertyVertex(
-                    		new NdexPropertyValuePair(e.getKey(),e.getValue()));
-                    edgeVertex.addEdge(NdexClasses.E_ndexProperties, pV);
-                    
-                    NdexPropertyValuePair p = new NdexPropertyValuePair();
-                    p.setPredicateString(e.getKey());
-                    p.setDataType(e.getValue());
-				}
-			
+
+		List<NdexPropertyValuePair> props = null;
+		if ( annotation != null && annotation.size()>0) {
+			props = new ArrayList<>(annotation.size());
+			for (Map.Entry<String, String> e : annotation.entrySet()) {
+				props.add(new NdexPropertyValuePair(e.getKey(),e.getValue()));
 			}
-
-			networkVertex.addEdge(NdexClasses.Network_E_Edges, edgeVertex);
-			OrientVertex predicateV = graph.getVertex(predicateDoc);
-			edgeVertex.addEdge(NdexClasses.Edge_E_predicate, predicateV);
-			OrientVertex objectV = graph.getVertex(objectNodeDoc);
-			edgeVertex.addEdge(NdexClasses.Edge_E_object, objectV);
-			OrientVertex subjectV = graph.getVertex(subjectNodeDoc);
-			subjectV.addEdge(NdexClasses.Edge_E_subject, edgeVertex);
-
-		    network.setEdgeCount(network.getEdgeCount()+1);
-		    
-		    if (citationId != null) {
-				ODocument citationDoc = elementIdCache.get(citationId) ; 
-				if (citationDoc == null) 
-					throw new NdexException ("Citation Id:" + citationId + " was not found in elementIdCache.");
-		    	OrientVertex citationV = graph.getVertex(citationDoc);
-		    	edgeVertex.addEdge(NdexClasses.Edge_E_citations, citationV);
-	//	    	this.elementIdCache.put(citationId, citationV.getRecord());
-		    }
-		    
-		    if ( supportId != null) {
-				ODocument supportDoc =elementIdCache.get(supportId);
-		    	OrientVertex supportV = graph.getVertex(supportDoc);
-		    	Object e = edgeVertex.addEdge(NdexClasses.Edge_E_supports, supportV);
-		    	if ( e == null) 
-		    		throw new NdexException("Orient db error. Failed to create edge.");
-	//	    	this.elementIdCache.put(supportId, supportV.getRecord());
-		    }
-		    
-		    elementIdCache.put(edgeId, edgeVertex.getRecord());
-		    elementIdCache.put(subjectNodeId, subjectV.getRecord() );
-		    elementIdCache.put(objectNodeId, objectV.getRecord());
-		    elementIdCache.put(predicateId, predicateV.getRecord());
-		    edgeMap.put(new RawEdge(subjectNodeId, predicateId, objectNodeId), edgeId);
-			return edgeId;
 		} 
-		throw new NdexException("Null value for one of the parameter when creating Edge.");
+		
+		return createEdge(subjectNodeId,objectNodeId,predicateId, supportId, citationId, props);
 	}
 	
-	public Edge createEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
-			 Support support, Citation citation, List<NdexPropertyValuePair> properties,
-			 List<SimplePropertyValuePair> presentationProps )
+	public Long createEdge(Long subjectNodeId, Long objectNodeId, Long predicateId, 
+			 Long support, Long citation, List<NdexPropertyValuePair> properties )
 			throws NdexException, ExecutionException {
 		if (null != objectNodeId && null != subjectNodeId && null != predicateId) {
 			
-			Edge edge = new Edge();
+			Long edgeId = database.getNextId();
+/*			Edge edge = new Edge();
 			edge.setId(database.getNextId());
 			edge.setSubjectId(subjectNodeId);
 			edge.setObjectId(objectNodeId);
-			edge.setPredicateId(predicateId);
+			edge.setPredicateId(predicateId); */
 			
 			ODocument subjectNodeDoc = elementIdCache.get(subjectNodeId) ;
 			ODocument objectNodeDoc  = elementIdCache.get(objectNodeId) ;
-			ODocument predicateDoc   = elementIdCache.get(predicateId) ;
 			
 			ODocument edgeDoc = new ODocument(NdexClasses.Edge);
-			edgeDoc = edgeDoc.field(NdexClasses.Element_ID, edge.getId())
-					.save();
+			edgeDoc = edgeDoc.fields(NdexClasses.Element_ID, edgeId,
+									NdexClasses.Edge_P_predicateId,predicateId);
+			
+		    // add citation.
+		    if (citation != null) {
+		    	List<Long> citationList = new ArrayList<> (1);
+		    	citationList.add(citation);
+		    	edgeDoc.field(NdexClasses.Citation, citationList);
+		    }
+		    
+		    if ( support != null) {
+		    	List<Long> supportList = new ArrayList<> (1);
+		    	supportList.add(support);
+		    	edgeDoc.field(NdexClasses.Support, supportList);
+		    }
+		    
+		    if ( properties !=null && properties.size()>0)
+		    	edgeDoc.field(NdexClasses.ndexProperties,properties);
+		    
+		    edgeDoc.save();
+
 			OrientVertex edgeVertex = this.graph.getVertex(edgeDoc);
 			
-			this.addPropertiesToVertex(edgeVertex, properties, presentationProps);
-			
 			this.networkVertex.addEdge(NdexClasses.Network_E_Edges, edgeVertex);
-			OrientVertex predicateV = this.graph.getVertex(predicateDoc);
-			edgeVertex.addEdge(NdexClasses.Edge_E_predicate, predicateV);
 			OrientVertex objectV = this.graph.getVertex(objectNodeDoc);
 			edgeVertex.addEdge(NdexClasses.Edge_E_object, objectV);
 			OrientVertex subjectV = this.graph.getVertex(subjectNodeDoc);
@@ -509,32 +510,10 @@ public class NdexPersistenceService extends PersistenceService {
 
 		    this.network.setEdgeCount(this.network.getEdgeCount()+1);
 		    
-		    // add citation.
-		    if (citation != null) {
-				ODocument citationDoc = this.elementIdCache.get(citation.getId());
-		    	OrientVertex citationV = this.graph.getVertex(citationDoc);
-		    	edgeVertex.addEdge(NdexClasses.Edge_E_citations, citationV);
-		    	
-		    	edge.getCitationIds().add(citation.getId());
-		    	this.elementIdCache.put(citation.getId(),citationV.getRecord());
-		    }
-		    
-		    if ( support != null) {
-				ODocument supportDoc = this.elementIdCache.get(support.getId());
-		    	OrientVertex supportV = this.graph.getVertex(supportDoc);
-		    	edgeVertex.addEdge(NdexClasses.Edge_E_supports, supportV);
-		    	
-		    	edge.getSupportIds().add(support.getId());
-		    	this.elementIdCache.put(support.getId(), supportV.getRecord());
-		    	
-		    }
-		    
-//		    edgeDoc.reload();
-		    elementIdCache.put(edge.getId(), edgeVertex.getRecord());
+		    elementIdCache.put(edgeId, edgeVertex.getRecord());
 		    elementIdCache.put(subjectNodeId, subjectV.getRecord());
 		    elementIdCache.put(objectNodeId, objectV.getRecord());
-		    elementIdCache.put(predicateId, predicateV.getRecord());
-			return edge;
+			return edgeId;
 		} 
 		throw new NdexException("Null value for one of the parameter when creating Edge.");
 	}
@@ -547,17 +526,6 @@ public class NdexPersistenceService extends PersistenceService {
 		getNamespace(r);
 	}
 	
-/*	
-    private ODocument createNdexPropertyDoc(String key, String value) {
-		ODocument pDoc = new ODocument(NdexClasses.NdexProperty);
-		pDoc.field(NdexClasses.ndexProp_P_predicateStr,key)
-		   .field(NdexClasses.ndexProp_P_value, value)
-		   .save();
-		return pDoc;
-		
-
-	}
-*/
     private NetworkSummary createNetwork(String title, String version, UUID uuid){
     	logger.info("Creating network with UUID:" + uuid.toString());
 		this.network = new NetworkSummary();

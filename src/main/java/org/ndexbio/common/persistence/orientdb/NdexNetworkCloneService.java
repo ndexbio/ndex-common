@@ -499,7 +499,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 					throw new NdexException ("Base term id " + relateToId + " not found.");
 				newRelatedTerms.add(newRelateToId);
 			}
-			nodeDoc.field(NdexClasses.Node_E_alias, newRelatedTerms);
+			nodeDoc.field(NdexClasses.Node_E_relateTo, newRelatedTerms);
 		}
 		
 		List<Long> oldCitations = node.getCitationIds(); 
@@ -662,12 +662,11 @@ public class NdexNetworkCloneService extends PersistenceService {
 				Long newFunctionId = this.functionTermIdMap.get(functionTerm.getId());
 				if ( newFunctionId == null )
 					throw new NdexException ("Function term Id " + functionTerm.getId() + " is not found in Term list.");
-				ODocument functionTermDoc = elementIdCache.get(newFunctionId);
-				OrientVertex functionTermV = graph.getVertex(functionTermDoc);
-				
 				Long newFunctionNameId = this.baseTermIdMap.get(functionTerm.getFunctionTermId());
-				ODocument newFunctionNameDoc = elementIdCache.get(newFunctionNameId);
-				functionTermV.addEdge(NdexClasses.FunctionTerm_E_baseTerm, graph.getVertex(newFunctionNameDoc));
+
+				ODocument functionTermDoc = elementIdCache.get(newFunctionId);
+				functionTermDoc = functionTermDoc.field(NdexClasses.FunctionTerm_E_baseTerm, newFunctionNameId).save();
+				OrientVertex functionTermV = graph.getVertex(functionTermDoc);
 				
 				for ( Long argId : functionTerm.getParameterIds()) {
 					Long newId = findTermId(argId);

@@ -222,7 +222,7 @@ public class NdexSchemaManager
 
             bTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
 
-            bTermClass.createProperty(NdexClasses.BTerm_E_Namespace, OType.LINK, nsClass);
+            bTermClass.createProperty(NdexClasses.BTerm_NS_ID, OType.LONG);
             
             bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});
 //            bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
@@ -261,10 +261,10 @@ public class NdexSchemaManager
         {
             edgeClass = orientDbGraph.createVertexType(NdexClasses.Edge);
             edgeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
-            edgeClass.createProperty("properties", OType.EMBEDDEDLIST);
-            edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+            edgeClass.createProperty(NdexClasses.ndexProperties, OType.EMBEDDEDLIST);
+//            edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
 
-            edgeClass.createProperty(NdexClasses.Edge_E_citations, OType.LINKSET, citationClass);
+            edgeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDLIST);
 
             edgeClass.createIndex("index-edge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         }
@@ -299,8 +299,8 @@ public class NdexSchemaManager
             networkClass.createProperty(NdexClasses.Network_P_desc, OType.STRING);
             networkClass.createProperty("edgeCount", OType.INTEGER);
        
-            networkClass.createProperty("properties", OType.EMBEDDEDLIST);
-            networkClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+            networkClass.createProperty(NdexClasses.ndexProperties, OType.EMBEDDEDLIST);
+    //        networkClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
 
             networkClass.createProperty("nodeCount", OType.INTEGER);
       
@@ -323,14 +323,14 @@ public class NdexSchemaManager
             nodeClass.createProperty("properties", OType.EMBEDDEDLIST);
 //            nodeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             
-            nodeClass.createProperty(NdexClasses.Node_E_represents, OType.LINK, bTermClass);
+            nodeClass.createProperty(NdexClasses.Node_E_represents, OType.LONG);
             nodeClass.createProperty(NdexClasses.Edge_E_subject, OType.LINKSET, edgeClass);
             nodeClass.createProperty(NdexClasses.Edge_E_object, OType.LINKSET, edgeClass);
             
-            nodeClass.createProperty(NdexClasses.Node_E_alias, OType.LINKSET, bTermClass);
-            nodeClass.createProperty(NdexClasses.Node_E_relateTo, OType.LINKSET, bTermClass);
-            nodeClass.createProperty(NdexClasses.Node_E_citations, OType.LINKSET, citationClass);
-            nodeClass.createProperty(NdexClasses.Node_E_supports, OType.LINKSET, supportClass);
+            nodeClass.createProperty(NdexClasses.Node_E_alias, OType.EMBEDDEDLIST);
+            nodeClass.createProperty(NdexClasses.Node_E_relateTo, OType.EMBEDDEDLIST);
+            nodeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDLIST);
+            nodeClass.createProperty(NdexClasses.Support, OType.EMBEDDEDLIST);
             
             nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
             nodeClass.createIndex(NdexClasses.Index_node_name, "FULLTEXT",null, null, "LUCENE", new String[] { NdexClasses.Node_P_name});

@@ -139,10 +139,7 @@ public class PropertyGraphLoader {
 				version = p.getValue();
 			} else if ( p.getPredicateString().equals(PropertyGraphNetwork.description) ) {
 				description = p.getValue();
-/*			} else if (p.getPredicateString().equals(PropertyGraphNetwork.supports)) {
-				Support[] supports = mapper.readValue(p.getValue(), Support[].class);
-			} else if (p.getPredicateString().equals(PropertyGraphNetwork.citations)) {
-*/				
+				
 			} else if ( !p.getPredicateString().equals(PropertyGraphNetwork.uuid) &&
 					    !p.getPredicateString().equals(NdexClasses.Network_P_source_format)) {
 				otherAttributes.add(p);
@@ -235,6 +232,7 @@ public class PropertyGraphLoader {
 			Long objectNodeId = persistenceService.findOrCreateNodeIdByExternalId(
 					Long.toString(e.getObjectId()),null);
 			
+			//TODO: citations and supports are not populated.
 			// process the citation , property list ...
 			Support support = null;
 			Citation citation = null;
@@ -250,7 +248,7 @@ public class PropertyGraphLoader {
 			}
 			
 			persistenceService.createEdge(subjectNodeId, objectNodeId, termId, 
-					support, citation, otherProperties, null/*e.getPresentationProperties()*/);
+					null, null, otherProperties);
 			
 		}
 		

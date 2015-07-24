@@ -110,8 +110,8 @@ public class NetworkFilterQueryExecutor {
 		if ( edgeFilter == null) return true;
 		
 		// check the predicates
-		  ODocument predicateRec = edgeDoc.field("out_"+NdexClasses.Edge_E_predicate);
-		  if ( edgeFilter.containsPredicateId(predicateRec.getIdentity().toString()))
+		  Long predicateId = edgeDoc.field(NdexClasses.Edge_P_predicateId);
+		  if ( edgeFilter.containsPredicateId(predicateId))
 			  return true;
 		
 		//check other edgeProperties.

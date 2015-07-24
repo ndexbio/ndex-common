@@ -427,7 +427,7 @@ public class ReadDataManager {
 				this.currentXGMMLEdge.getObjectId(), null);
 		Long predicateTermId = this.networkService.getBaseTermId(this.currentXGMMLEdge.getPredicate());
 		this.networkService.createEdge(subjectNodeId, objectNodeId, predicateTermId, 
-				 null, null,this.currentXGMMLEdge.getProps(),this.currentXGMMLEdge.getPresentationProps() );
+				 null, null,this.currentXGMMLEdge.getProps()/*,this.currentXGMMLEdge.getPresentationProps()*/ );
 	}
 
 	

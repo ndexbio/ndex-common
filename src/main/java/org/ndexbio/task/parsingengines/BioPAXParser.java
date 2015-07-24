@@ -56,7 +56,6 @@ import org.biopax.paxtools.model.level3.RelationshipTypeVocabulary;
 import org.biopax.paxtools.model.level3.RelationshipXref;
 import org.biopax.paxtools.model.level3.UnificationXref;
 import org.biopax.paxtools.model.level3.Xref;
-import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
@@ -68,6 +67,7 @@ import org.ndexbio.model.object.NdexProvenanceEventType;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.User;
+import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.tools.PropertyHelpers;
@@ -303,6 +303,10 @@ public class BioPAXParser implements IParsingEngine {
 		//
 		// iterate over the property editors
 		//
+		List<Long> aliasList = new ArrayList<>();
+		List<Long> relateToList = new ArrayList<> ();
+		List<Long> citationList = new ArrayList<> (); 
+		
 		for (PropertyEditor editor : editors) {
 			//
 			// iterate over the values for each editor:
@@ -329,12 +333,32 @@ public class BioPAXParser implements IParsingEngine {
 				// System.out.println("       Property: " + editor.getProperty()
 				// + " : (" + val.getClass().getName() + ") " + val.toString());
 				if (val instanceof PublicationXref) {
-					processPublicationXrefProperty(predicateId,(PublicationXref) val, nodeId);
+			        Long objectId = this.persistenceService.getNodeIdByBaseTerm(((PublicationXref)val).getRDFId());
+					
+					this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
+					
+					Long citationId = getElementIdByRdfId(((PublicationXref)val).getRDFId());
+					
+					citationList.add(citationId);
+//					processPublicationXrefProperty(predicateId,(PublicationXref) val, nodeId);
 				} else if (val instanceof UnificationXref) {
-					processUnificationXrefProperty(predicateId, (UnificationXref) val,nodeId);
+				     Long objectId = this.persistenceService.getNodeIdByBaseTerm(((UnificationXref)val).getRDFId());
+						
+					 this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
+						
+					 Long termId = getElementIdByRdfId(((UnificationXref)val).getRDFId());
+					 
+					 aliasList.add(termId);
+					 	
+//					processUnificationXrefProperty(predicateId, (UnificationXref) val,nodeId);
 				} else if (val instanceof RelationshipXref) {
-					processRelationshipXrefProperty(predicateId, (RelationshipXref) val,
-							nodeId);
+			        Long objectId = this.persistenceService.getNodeIdByBaseTerm(((RelationshipXref)val).getRDFId());
+					
+					this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
+					
+					Long termId = getElementIdByRdfId(((RelationshipXref)val).getRDFId());
+					
+					relateToList.add(termId);
 				} else if (val instanceof BioPAXElement){
 					// create the edge
 					processEdge(predicateId, (BioPAXElement) val, nodeId);
@@ -360,9 +384,9 @@ public class BioPAXParser implements IParsingEngine {
 			}
 
 		}
-/*		for (NdexPropertyValuePair pvp : literalProperties){
-			System.out.println("        Property: " + nodeId + " | " + pvp.getPredicateString() + " " + pvp.getValue());
-		} */
+		
+		this.persistenceService.setReferencesOnNode(nodeId, citationList, relateToList, aliasList);
+		
 		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", bpe.getModelInterface().getSimpleName()));
 		this.persistenceService.setNodeProperties(nodeId, literalProperties, null);
 
@@ -381,50 +405,9 @@ public class BioPAXParser implements IParsingEngine {
 			BioPAXElement bpe, 
 			Long subjectNodeId) throws NdexException, ExecutionException {
 		Long objectNodeId = getElementIdByRdfId(bpe.getRDFId());
-		this.persistenceService.createEdge(subjectNodeId, objectNodeId, predicateId, null, null, null);		
+		this.persistenceService.createEdge(subjectNodeId, objectNodeId, predicateId, null, null, (List<NdexPropertyValuePair>)null);		
 	}
 	
-	private void processUnificationXrefProperty(
-			Long predicateId,
-			UnificationXref xref, 
-			Long nodeId) throws ExecutionException, NdexException {
-		
-        Long objectId = this.persistenceService.getNodeIdByBaseTerm(xref.getRDFId());
-		
-		this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,null);
-		
-		Long termId = getElementIdByRdfId(xref.getRDFId());
-//		System.out.println("       Alias: " + nodeId + " -> " + termId);
-		this.persistenceService.addAliasToNode(nodeId,termId);	
-	}
-
-	private void processRelationshipXrefProperty(
-			Long predicateId,
-			RelationshipXref xref, 
-			Long nodeId) throws ExecutionException, NdexException {
-		
-        Long objectId = this.persistenceService.getNodeIdByBaseTerm(xref.getRDFId());
-		
-		this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,null);
-		
-		Long termId = getElementIdByRdfId(xref.getRDFId());
-//		System.out.println("       Related: " + nodeId + " -> " + termId);
-		this.persistenceService.addRelatedTermToNode(nodeId, termId);
-	}
-
-	private void processPublicationXrefProperty(Long predicateId,
-			PublicationXref xref, 
-			Long nodeId) throws ExecutionException, NdexException {
-
-        Long objectId = this.persistenceService.getNodeIdByBaseTerm(xref.getRDFId());
-		
-		this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,null);
-		
-		Long citationId = getElementIdByRdfId(xref.getRDFId());
-		
-//		System.out.println("       citation: " + nodeId + " -> " + citationId);
-		this.persistenceService.addCitationToElement(nodeId, citationId, NdexClasses.Node);
-	}
 
 	private void processXREFElement(Xref xref) throws NdexException,
 			ExecutionException {
@@ -473,7 +456,7 @@ public class BioPAXParser implements IParsingEngine {
 		if ( vocabObj != null) {   // add an edge to the vocab entity.
 			Long vocabNodeId = this.persistenceService.getNodeIdByBaseTerm(vocabObj.getRDFId()); 
 			Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix, "relationshipType");
-			this.persistenceService.createEdge(nodeId, vocabNodeId, predicateId, null, null, null, null);
+			this.persistenceService.createEdge(nodeId, vocabNodeId, predicateId, null, null, (List<NdexPropertyValuePair>)null);
 		}
 		
 		this.persistenceService.setNodeProperties(nodeId, literalProperties, null);
@@ -728,59 +711,5 @@ public class BioPAXParser implements IParsingEngine {
 		}
 	}
 
-	
-	// fragments
-	/*
-	 * 
-	 * this.getMsgBuffer().add(e.getMessage());
-	 * 
-	 * ---------
-	 * 
-	 * counter ++; if ( counter % 2000 == 0 ) { logger.info("processed " +
-	 * counter + " lines so far. commit this batch.");
-	 * this.persistenceService.commit(); }
-	 * 
-	 * -----------
-	 * 
-	 * Long citationId = this.persistenceService.getCitationId( "",
-	 * NdexPersistenceService.defaultCitationType,
-	 * NdexPersistenceService.pmidPrefix + pubmedIdTokens[1], null); //
-	 * this.pubmedIdSet.add(pubmedIdTokens[1]);
-	 * this.persistenceService.addCitationToElement(edgeId, citationId,
-	 * NdexClasses.Edge);
-	 * 
-	 * ----------
-	 * 
-	 * Long participantNodeId =
-	 * this.persistenceService.getNodeIdByBaseTerm(participantIdentifier);
-	 * 
-	 * ----------
-	 * 
-	 * if (tokens.length > 3) { String[] unificationAliases =
-	 * tokens[3].split(";");
-	 * this.persistenceService.addAliasToNode(participantNodeId
-	 * ,unificationAliases); if (tokens.length > 4) { String[]
-	 * relationshipAliases = tokens[4].split(";");
-	 * this.persistenceService.addRelatedTermToNode(participantNodeId,
-	 * relationshipAliases); } }
-	 * 
-	 * -------------
-	 * 
-	 * NdexPropertyValuePair p = new NdexPropertyValuePair ("URI", values[2]);
-	 * props.add(p);
-	 * 
-	 * -------------
-	 * 
-	 * 
-	 * this.persistenceService.setNetworkProperties(props, null);
-	 * 
-	 * 
-	 * -------------
-	 * 
-	 * this.persistenceService.createNamespace2("UniProt",
-	 * "http://identifiers.org/uniprot/");
-	 */
-	
-	
 
 }

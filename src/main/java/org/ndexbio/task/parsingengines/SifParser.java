@@ -310,6 +310,8 @@ public class SifParser implements IParsingEngine {
 					}
 					
 					if (pubMedIds != null) {
+						List<Long> citationIds = new ArrayList<> (pubMedIds.length);
+						
 						for (String pubMedId : pubMedIds) {
 							String[] pubmedIdTokens = pubMedId.split(":");
 							if ( pubmedIdTokens.length ==2 ) {
@@ -317,17 +319,15 @@ public class SifParser implements IParsingEngine {
 									Long citationId = this.persistenceService.getCitationId(
 										"", NdexPersistenceService.URICitationType,
 										NdexPersistenceService.pmidPrefix + pubmedIdTokens[1], null);
-								//	this.pubmedIdSet.add(pubmedIdTokens[1]);
-									this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
+									citationIds.add(citationId);
 								
 								} else if ( pubmedIdTokens[0].equals("ISBN")){
 									Long citationId = this.persistenceService.getCitationId(
 											"", NdexPersistenceService.URICitationType, pubMedId, null);
-//										this.pubmedIdSet.add(pubmedIdTokens[1]);
-										this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
+									citationIds.add(citationId);
 								} else {	
-					/*			  logger.warning("Unsupported Pubmed id format: " + 
-							       pubMedId + " found in file.\n line:\n " + line +"\n Ignore this pubmedId.\n" ); */
+								  logger.warning("Unsupported Pubmed id format: " + 
+							       pubMedId + " found in file.\n line:\n " + line +"\n Ignore this pubmedId.\n" ); 
 								}
 							} else if (pubmedIdTokens.length == 1 ) {
 								String pubmedId = pubmedIdTokens[0];
@@ -335,11 +335,12 @@ public class SifParser implements IParsingEngine {
 									Long citationId = this.persistenceService.getCitationId(
 										"", NdexPersistenceService.URICitationType,
 										NdexPersistenceService.pmidPrefix + pubmedIdTokens[0], null);
-									this.persistenceService.addCitationToElement(edgeId, citationId, NdexClasses.Edge);
+									citationIds.add(citationId);
 								}
 							} else 
 								throw new NdexException("Invalid Pubmed format in line: " + line);
 							
+							this.persistenceService.addCitationsToElement(edgeId, citationIds);
 						}
 					}
 

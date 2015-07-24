@@ -65,7 +65,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 public abstract class PersistenceService implements AutoCloseable {
 
 	//TODO: turn this into configuration property
-	private static final long CACHE_SIZE = 200000L;
+	private static final long CACHE_SIZE = 100000L;
 
 	protected NdexDatabase database;
 

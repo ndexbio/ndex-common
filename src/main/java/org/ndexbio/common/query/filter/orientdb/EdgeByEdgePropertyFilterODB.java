@@ -35,22 +35,22 @@ import java.util.TreeSet;
 
 public class EdgeByEdgePropertyFilterODB extends PropertyFilterODB {
 	
-	private Set<String> predicateIds;  //rids of predicates
+	private Set<Long> predicateIds;  //rids of predicates
 	
 	public EdgeByEdgePropertyFilterODB () {
 		super();
-		predicateIds = new TreeSet<String>();
+		predicateIds = new TreeSet<>();
 	}
 
 /*	public Set<String> getPredicateIds() {
 		return predicateIds;
 	} */
 
-	public void addPredicateId(String predicateId) {
+	public void addPredicateId(Long predicateId) {
 		this.predicateIds.add(predicateId);
 	}
 	
-	public boolean containsPredicateId(String id) {
+	public boolean containsPredicateId(Long id) {
 		return predicateIds.contains(id);
 	}
 
