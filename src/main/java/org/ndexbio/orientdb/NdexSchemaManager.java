@@ -306,7 +306,6 @@ public class NdexSchemaManager
       
             networkClass.createProperty(NdexClasses.Network_P_name,    OType.STRING);
             networkClass.createProperty(NdexClasses.Network_P_version, OType.STRING);
-            networkClass.createProperty("highestElementId", OType.INTEGER);
             
             networkClass.createProperty(NdexClasses.Network_E_Namespace, OType.LINKSET, nsClass);
 
@@ -320,15 +319,13 @@ public class NdexSchemaManager
             OClass nodeClass = orientDbGraph.createVertexType(NdexClasses.Node);
             nodeClass.createProperty(NdexClasses.Node_P_name, OType.STRING);
             nodeClass.createProperty(NdexClasses.Element_ID,  OType.LONG);
-            nodeClass.createProperty("properties", OType.EMBEDDEDLIST);
-//            nodeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+            nodeClass.createProperty(NdexClasses.ndexProperties, OType.EMBEDDEDLIST);
             
-            nodeClass.createProperty(NdexClasses.Node_E_represents, OType.LONG);
-            nodeClass.createProperty(NdexClasses.Edge_E_subject, OType.LINKSET, edgeClass);
-            nodeClass.createProperty(NdexClasses.Edge_E_object, OType.LINKSET, edgeClass);
+            nodeClass.createProperty(NdexClasses.Node_P_represents, OType.LONG);
+            nodeClass.createProperty(NdexClasses.Node_P_representTermType, OType.STRING);
             
-            nodeClass.createProperty(NdexClasses.Node_E_alias, OType.EMBEDDEDLIST);
-            nodeClass.createProperty(NdexClasses.Node_E_relateTo, OType.EMBEDDEDLIST);
+            nodeClass.createProperty(NdexClasses.Node_P_alias, OType.EMBEDDEDLIST);
+            nodeClass.createProperty(NdexClasses.Node_P_relateTo, OType.EMBEDDEDLIST);
             nodeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDLIST);
             nodeClass.createProperty(NdexClasses.Support, OType.EMBEDDEDLIST);
             

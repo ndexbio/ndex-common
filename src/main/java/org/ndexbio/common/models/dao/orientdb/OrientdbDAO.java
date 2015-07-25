@@ -105,32 +105,7 @@ public class OrientdbDAO implements AutoCloseable {
 	public ODatabaseDocumentTx getDBConnection() {
 		return db;
 	}
-/*	
-	protected ODocument getRecordByExternalId(UUID id) 
-			throws ObjectNotFoundException, NdexException {
-		
-		try {
-			OIndex<?> Idx;
-			OIdentifiable record = null;
-			
-			Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
-			OIdentifiable temp = (OIdentifiable) Idx.get(id.toString());
-			if((temp != null) )
-					record = temp;
-				
-			if(record == null) 
-				throw new ObjectNotFoundException("Object", id.toString());
-			
-			return (ODocument) record.getRecord();
-			
-		}  catch (Exception e) {
-			logger.severe("Unexpected error on external object retrieval by UUID : " + e.getMessage());
-			e.printStackTrace();
-			throw new NdexException(e.getMessage());
-		}
-		
-	}
-*/	
+
 	
 	public ODocument getRecordByAccountName(String accountName, String orientClass) 
 			throws ObjectNotFoundException, NdexException {

@@ -157,8 +157,8 @@ public class NetworkFilterQueryExecutor {
 				return true;
 		
 		// check on baseTerm
-		ODocument term = nodeDoc.field("out_"+NdexClasses.Node_E_represents);
-		if (term != null && nodeFilter.containsRepresentTermId(term.getIdentity().toString()))
+		Long termId = nodeDoc.field(NdexClasses.Node_P_represents);
+		if (termId != null && nodeFilter.containsRepresentTermId(termId))
 				return true;
 		
 		return elementHasPropertySatisfyFilter(nodeDoc,nodeFilter);

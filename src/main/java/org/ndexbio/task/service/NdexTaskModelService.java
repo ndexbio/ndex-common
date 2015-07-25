@@ -31,10 +31,8 @@
 package org.ndexbio.task.service;
 
 import java.util.Collection;
-import java.util.List;
 
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Namespace;
@@ -60,6 +58,6 @@ public interface NdexTaskModelService {
 	// internal & external annotations are persisted as namespaces
 	public Iterable<Namespace> getInternalAnnotationsByNetworkId(String networkId);
 	public Iterable<Namespace> getExternalAnnotationsByNetworkId(String networkId);
-	public Collection<BaseTerm> getBaseTermsByNamespace(String userId, String namespace, String networkId);
+//	public Collection<BaseTerm> getBaseTermsByNamespace(String userId, String namespace, String networkId);
 
 }

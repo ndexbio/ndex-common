@@ -397,14 +397,12 @@ public class SifParser implements IParsingEngine {
 					//participant.setName(name);
 					this.persistenceService.setNodeName(participantNodeId, name);
 					
-			//		participant.addAlias(participant.getRepresents()); -- removed by cj. This is redundent to the represents edge.
-					
 					if (tokens.length > 3) {
 						String[] unificationAliases = tokens[3].split(";");
 						this.persistenceService.addAliasToNode(participantNodeId,unificationAliases);
 						if (tokens.length > 4) {
 							String[] relationshipAliases = tokens[4].split(";");
-							this.persistenceService.addRelatedTermToNode(participantNodeId, relationshipAliases);
+							this.persistenceService.setRelatedTermsOnNode(participantNodeId, relationshipAliases);
 						}
 					}
 				}

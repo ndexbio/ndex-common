@@ -445,7 +445,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 
-	private Long createNode (Node node) throws NdexException, ExecutionException {
+	private Long createNode (Node node) throws NdexException {
 		Long nodeId = database.getNextId();
 		
 		ODocument nodeDoc = new ODocument(NdexClasses.Node)
@@ -471,7 +471,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		   if ( newRepId == null)
 			   throw new NdexException ("Term id " + node.getRepresents() + "not found.");
 
-		   nodeDoc.fields(NdexClasses.Node_E_represents, newRepId,
+		   nodeDoc.fields(NdexClasses.Node_P_represents, newRepId,
 				          NdexClasses.Node_P_representTermType, node.getRepresentsTermType());
 		}
 		
@@ -486,7 +486,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 				newAliases.add(newAliasId);
 			}
 			
-			nodeDoc.field(NdexClasses.Node_E_alias, newAliases);
+			nodeDoc.field(NdexClasses.Node_P_alias, newAliases);
 		}
 		
 		List<Long> oldRelatedTerms = node.getRelatedTerms(); 
@@ -499,7 +499,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 					throw new NdexException ("Base term id " + relateToId + " not found.");
 				newRelatedTerms.add(newRelateToId);
 			}
-			nodeDoc.field(NdexClasses.Node_E_relateTo, newRelatedTerms);
+			nodeDoc.field(NdexClasses.Node_P_relateTo, newRelatedTerms);
 		}
 		
 		List<Long> oldCitations = node.getCitationIds(); 

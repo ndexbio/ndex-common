@@ -39,6 +39,7 @@ import java.util.concurrent.ExecutionException;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.task.parsingengines.XbelParser;
@@ -384,7 +385,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 			
 			Long subjectNodeId ;
 			if ( isOrphanNode ) {
-				subjectNodeId =	this.networkService.createNodeFromFunctionTermId(representedTermId);
+				subjectNodeId =	this.networkService.createNodeFromTermId(representedTermId, NdexClasses.FunctionTerm);
 				
 			} else {		
 				subjectNodeId =	this.networkService.getNodeIdByFunctionTermId(representedTermId);

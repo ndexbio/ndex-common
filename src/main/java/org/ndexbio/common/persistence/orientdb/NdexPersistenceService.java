@@ -198,7 +198,8 @@ public class NdexPersistenceService extends PersistenceService {
 	// alias is treated as a baseTerm
 	public void addAliasToNode(long nodeId, String[] aliases) throws ExecutionException, NdexException {
 		ODocument nodeDoc = elementIdCache.get(nodeId);
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
+
+		List<Long> newAliases = new ArrayList<>(aliases.length);
 		
 		for (String alias : aliases) {
 			Long b= this.getBaseTermId(alias);
@@ -207,20 +208,23 @@ public class NdexPersistenceService extends PersistenceService {
 		    	logger.warning("Alias '" + alias + "' is also the represented base term of node " + 
 			    nodeId +". Alias ignored.");
 		    } else {
-		    	ODocument bDoc = elementIdCache.get(b);
-		    	OrientVertex bV = graph.getVertex(bDoc);
-		    	nodeV.addEdge(NdexClasses.Node_E_alias, bV);
-		    	elementIdCache.put(b, bV.getRecord());
+		    	newAliases.add(b);
 		    }
-		    
 		}
 		
-		elementIdCache.put(nodeId, nodeV.getRecord());
+		List<Long> oldAliases = nodeDoc.field(NdexClasses.Node_P_alias);
+		if ( oldAliases !=null && oldAliases.size() > 0 )
+			oldAliases.addAll(newAliases);
+		else 
+			oldAliases = newAliases;
+		nodeDoc.field(NdexClasses.Node_P_alias, oldAliases).save();
+		
+		elementIdCache.put(nodeId, nodeDoc);
 	}
 
 	
 	// alias is treated as a baseTerm
-	public void addAliasToNode(long nodeId, long baseTermId) throws ExecutionException, NdexException {
+/*	public void addAliasToNode(long nodeId, long baseTermId) throws ExecutionException, NdexException {
 		ODocument nodeDoc = elementIdCache.get(nodeId);
 
 	    Long repNodeId = this.baseTermNodeIdMap.get(baseTermId);
@@ -242,7 +246,7 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeV.getRecord());
 		elementIdCache.put(baseTermId, bV.getRecord());
 	}
-	
+*/	
 				
 	public void addCitationToElement(long elementId, Long citationId, String className) throws ExecutionException, NdexException{
 		ODocument elementRec = elementIdCache.get(elementId);
@@ -293,41 +297,17 @@ public class NdexPersistenceService extends PersistenceService {
 		}
 		
 		if ( newRelatedTerms !=null && newRelatedTerms.size()> 0 ) {
-			nodeRec.field(NdexClasses.Node_E_relateTo, newRelatedTerms);
+			nodeRec.field(NdexClasses.Node_P_relateTo, newRelatedTerms);
 		}
 		
 		if ( newAliases !=null && newAliases.size()>0) 
-			nodeRec.field(NdexClasses.Node_E_alias, newAliases);
+			nodeRec.field(NdexClasses.Node_P_alias, newAliases);
 		
 		nodeRec = nodeRec.save();
 		
 		elementIdCache.put(nodeId, nodeRec);
 		
 	}
-	
-/*	
-	public void addSupportToElement(long elementId, Long supportId, String className) throws ExecutionException, NdexException {
-		ODocument elementRec = elementIdCache.get(elementId);
-		OrientVertex nodeV = graph.getVertex(elementRec);
-		
-		ODocument supportRec = elementIdCache.get(supportId);
-		OrientVertex supportV = graph.getVertex(supportRec);
-		
-		if ( className.equals(NdexClasses.Node) ) {
-			nodeV.addEdge(NdexClasses.Node_E_supports, graph.getVertex(supportV));
- 	       	
-		} else if ( className.equals(NdexClasses.Edge) ) {
-			nodeV.addEdge(NdexClasses.Edge_E_supports, graph.getVertex(supportV));
-		} else {
-			throw new NdexException ("Support can only be added to node or edges of network, can't added to " + className);
-		}
-		
-		elementIdCache.put(supportId, supportV.getRecord());
-		
-		ODocument o = nodeV.getRecord();
-		elementIdCache.put(elementId, o);
-	}
-*/	
 	
 	//TODO: generalize this function so that createEdge(....) can use it.
 	public void addMetaDataToNode (Long subjectNodeId, Long supportId, Long citationId,  Map<String,String> annotations) 
@@ -381,39 +361,33 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 
 	// related term is assumed to be a base term
-	public void addRelatedTermToNode(long nodeId, String[] relatedTerms) throws ExecutionException, NdexException {
+	public void setRelatedTermsOnNode(long nodeId, String[] relatedTerms) throws ExecutionException, NdexException {
 		ODocument nodeDoc = elementIdCache.get(nodeId);
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		
+		List<Long> newRelateToIds = new ArrayList<> (relatedTerms.length);
 		
 		for (String rT : relatedTerms) {
 			Long bID= this.getBaseTermId(rT);
 		
-			addRelatedTermToNode( nodeV, bID);
+		    Long repNodeId = this.baseTermNodeIdMap.get(bID);
+			if ( repNodeId != null && repNodeId.equals(nodeId)) {
+		    	logger.warning("Related term '" + rT + "' is also the represented base term of node " + 
+			    nodeId +". This related term will be ignored.");
+		    } else {
+		    	newRelateToIds.add(bID);
+		    }
 		}
 		
-		elementIdCache.put(nodeId, nodeV.getRecord());
+/*		List<Long> relateTos = nodeDoc.field(NdexClasses.Node_P_relateTo);
+		if ( relateTos !=null && relateTos.size() > 0 )
+			relateTos.addAll(newRelateToIds);
+		else 
+			relateTos = newRelateToIds; */
+		nodeDoc.field(NdexClasses.Node_P_relateTo, newRelateToIds).save();
+
+		elementIdCache.put(nodeId, nodeDoc);
 	}
 
-	// related term is assumed to be a base term
-	public void addRelatedTermToNode(long nodeId, long baseTermId ) throws ExecutionException {
-		ODocument nodeDoc = elementIdCache.get(nodeId);
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
-		
-		addRelatedTermToNode( nodeV, baseTermId );
-		
-		elementIdCache.put(nodeId, nodeV.getRecord());
-	}
-	
-	// related term is assumed to be a base term but its not clear that 
-	// we actually constrain the type of the related term
-	private void addRelatedTermToNode(OrientVertex nodeV, long baseTermId ) throws ExecutionException {
-		ODocument bDoc = elementIdCache.get(baseTermId);
-		OrientVertex bV = graph.getVertex(bDoc);
-		nodeV.addEdge(NdexClasses.Node_E_relateTo, bV);
-		elementIdCache.put(baseTermId, bV.getRecord());
-	}
-	
-	
 	/**
 	 *  Look up in the current context, if an edge with the same subject,predicate and object exists, return that edge,
 	 *  otherwise create a new edge and return the id of the new edge.  
@@ -659,33 +633,16 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 	
-	public Long getNodeIdByBaseTermId(Long bTermId) throws ExecutionException {
+	public Long getNodeIdByBaseTermId(Long bTermId) {
 		Long nodeId = this.baseTermNodeIdMap.get(bTermId);
 		
 		if (nodeId != null) 
 			return nodeId;
 		
 		// otherwise insert Node.
-		nodeId = database.getNextId();
+		
+		nodeId = createNodeFromTermId(bTermId, NdexClasses.BaseTerm);
 
-		ODocument termDoc = elementIdCache.get(bTermId); 
-		
-		ODocument nodeDoc = new ODocument(NdexClasses.Node);
-
-		nodeDoc =nodeDoc.field(NdexClasses.Element_ID, nodeId)
-		   .save();
-		
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
-		
-		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
-		OrientVertex bTermV = graph.getVertex(termDoc);
-		nodeV.addEdge(NdexClasses.Node_E_represents, bTermV);
-		
-		network.setNodeCount(network.getNodeCount()+1);
-		
-		nodeDoc = nodeV.getRecord();
-		elementIdCache.put(nodeId, nodeDoc);
-		elementIdCache.put(bTermId, bTermV.getRecord());
 		this.baseTermNodeIdMap.put(bTermId, nodeId);
 		return nodeId;
 	}
@@ -718,35 +675,6 @@ public class NdexPersistenceService extends PersistenceService {
 		return null;
 	}
 
-	/*
-	 @Override
-	protected Long createBaseTerm(String localTerm, long nsId) throws ExecutionException {
-
-			Long termId = database.getNextId();
-			
-			ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
-			  .fields(NdexClasses.BTerm_P_name, localTerm,
-					  NdexClasses.Element_ID, termId)
-			  .save();
-
-			OrientVertex basetermV = graph.getVertex(btDoc);
-			
-			if ( nsId >= 0) {
-
-	  		  ODocument nsDoc = elementIdCache.get(nsId); 
-	  		  
-	  		  OrientVertex nsV = graph.getVertex(nsDoc);
-	  		
-	  		  basetermV.addEdge(NdexClasses.BTerm_E_Namespace, nsV);
-			}
-			  
-	        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
-	        elementIdCache.put(termId, btDoc);
-			return termId;
-	 }
-
-*/
-	
 	
 	public Long getBaseTermId (Namespace namespace, String localTerm) throws NdexException, ExecutionException {
 		if ( namespace.getPrefix() != null ) {
@@ -812,13 +740,13 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 
 
-	public Long getNodeIdByFunctionTermId(Long funcTermId) throws ExecutionException {
+	public Long getNodeIdByFunctionTermId(Long funcTermId) {
 		Long nodeId = this.functionTermIdNodeIdMap.get(funcTermId) ;
 		
 		if (nodeId != null) return nodeId;
 		
 		// otherwise insert Node.
-		nodeId = createNodeFromFunctionTermId(funcTermId);
+		nodeId = createNodeFromTermId(funcTermId, NdexClasses.FunctionTerm);
 		
 		this.functionTermIdNodeIdMap.put(funcTermId, nodeId);
 		return nodeId;
@@ -832,21 +760,19 @@ public class NdexPersistenceService extends PersistenceService {
 	 * @return
 	 */
 	
-	public Long createNodeFromFunctionTermId(Long funcTermId) throws ExecutionException {
+	public Long createNodeFromTermId(Long funcTermId, String representTermType)  {
 		Long nodeId = database.getNextId();
 
-		ODocument termDoc = elementIdCache.get(funcTermId); 
-		
 		ODocument nodeDoc = new ODocument(NdexClasses.Node);
 
-		nodeDoc = nodeDoc.field(NdexClasses.Element_ID, nodeId)
+		nodeDoc = nodeDoc.fields(NdexClasses.Element_ID, nodeId,
+					NdexClasses.Node_P_represents, funcTermId,
+					NdexClasses.Node_P_representTermType, representTermType)
 				.save();
 		
 		OrientVertex nodeV = graph.getVertex(nodeDoc);
 		
 		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
-		OrientVertex termV = graph.getVertex(termDoc);
-		nodeV.addEdge(NdexClasses.Node_E_represents, termV);
 		
 		network.setNodeCount(network.getNodeCount()+1);
 
@@ -856,47 +782,6 @@ public class NdexPersistenceService extends PersistenceService {
 		
 	}
 	
-/*
-	public Long createNodeFromFunctionTermId(Long funcTermId, Long citationId, Long supportId) throws ExecutionException {
-		Long nodeId = database.getNextId();
-
-		ODocument termDoc = elementIdCache.get(funcTermId); 
-		
-		ODocument nodeDoc = new ODocument(NdexClasses.Node);
-
-		nodeDoc = nodeDoc.field(NdexClasses.Element_ID, nodeId)
-				.save();
-		
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
-		
-		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
-		OrientVertex termV = graph.getVertex(termDoc);
-		nodeV.addEdge(NdexClasses.Node_E_represents, termV);
-		
-		network.setNodeCount(network.getNodeCount()+1);
-
-		// adding support
-		ODocument supportRec = elementIdCache.get(supportId);
-		OrientVertex supportV = graph.getVertex(supportRec);
-		
-		nodeV.addEdge(NdexClasses.Node_E_supports, graph.getVertex(supportV));
-		
-		elementIdCache.put(supportId, supportV.getRecord());
-
-		// adding citation
-		ODocument citationRec = elementIdCache.get(citationId);
-		OrientVertex citationV = graph.getVertex(citationRec);
-		
-	    nodeV.addEdge(NdexClasses.Node_E_ciations, graph.getVertex(citationV));
-		
-		elementIdCache.put(citationId, citationV.getRecord());
-
-		
-		elementIdCache.put(nodeId, nodeV.getRecord());
-		return nodeId;
-		
-	}
-*/	
 	
 	public Long getNodeIdByName(String key) {
 		Long nodeId = this.namedNodeMap.get(key);
@@ -926,32 +811,14 @@ public class NdexPersistenceService extends PersistenceService {
 	}
 
 	
-	public Long getNodeIdByReifiedEdgeTermId(Long reifiedEdgeTermId) throws ExecutionException {
+	public Long getNodeIdByReifiedEdgeTermId(Long reifiedEdgeTermId)  {
 		Long nodeId = this.reifiedEdgeTermIdNodeIdMap.get(reifiedEdgeTermId); 
 
 		if (nodeId != null) 
 			return nodeId;
 		
 		// otherwise insert Node.
-		nodeId = database.getNextId();
-
-		ODocument termDoc = elementIdCache.get(reifiedEdgeTermId); 
-		
-		ODocument nodeDoc = new ODocument(NdexClasses.Node);
-
-		nodeDoc = nodeDoc.field(NdexClasses.Element_ID, nodeId)
-		   .save();
-		
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
-		
-		networkVertex.addEdge(NdexClasses.Network_E_Nodes,nodeV);
-		OrientVertex termV = graph.getVertex(termDoc);
-		nodeV.addEdge(NdexClasses.Node_E_represents, termV);
-		
-		network.setNodeCount(network.getNodeCount()+1);
-		
-		elementIdCache.put(nodeId, nodeV.getRecord());
-		elementIdCache.put(reifiedEdgeTermId, termV.getRecord());
+		nodeId = createNodeFromTermId(reifiedEdgeTermId, NdexClasses.ReifiedEdgeTerm);
 		this.reifiedEdgeTermIdNodeIdMap.put(reifiedEdgeTermId, nodeId);
 		return nodeId;
 	}
@@ -1135,17 +1002,12 @@ public class NdexPersistenceService extends PersistenceService {
 	 * @param termId
 	 * @throws ExecutionException 
 	 */
-	public void setNodeRepresentTerm(long nodeId, long termId) throws ExecutionException {
+	public void setNodeRepresentBaseTerm(long nodeId, long termId) throws ExecutionException {
 		ODocument nodeDoc = this.elementIdCache.get(nodeId);
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
+		nodeDoc = nodeDoc.fields(NdexClasses.Node_P_represents,termId,
+				                 NdexClasses.Node_P_representTermType,NdexClasses.BaseTerm).save();
 		
-		ODocument termDoc = this.elementIdCache.get(termId);
-		OrientVertex termV = graph.getVertex(termDoc);
-		
-		nodeV.addEdge(NdexClasses.Node_E_represents, termV);
-		
-		this.elementIdCache.put(nodeId, nodeV.getRecord());
-		this.elementIdCache.put(termId, termV.getRecord());
+		this.elementIdCache.put(nodeId, nodeDoc);
 	}
 	
 	public void updateNetworkSummary() throws ObjectNotFoundException, NdexException, ExecutionException {

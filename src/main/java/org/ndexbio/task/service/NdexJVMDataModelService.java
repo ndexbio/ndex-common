@@ -235,7 +235,7 @@ public class NdexJVMDataModelService implements NdexTaskModelService {
      * return a list of BaseTerms associated with a specified namespace
      * needed to resolve internal annotations
      */
-	@Override
+/*	@Override
 	public Collection<BaseTerm> getBaseTermsByNamespace(String userId, String namespacePrefix,String networkId) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId), "A userId is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(namespacePrefix), "A namespace is required");
@@ -251,7 +251,7 @@ public class NdexJVMDataModelService implements NdexTaskModelService {
 		List<BaseTerm> btList = Lists.newArrayList();
 		return btList;
 	}
-
+*/
 	@Override
 	public Network getNoCitationSubnetwork(String networkId) throws NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId), 

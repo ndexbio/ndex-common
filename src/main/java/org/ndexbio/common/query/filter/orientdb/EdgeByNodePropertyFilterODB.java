@@ -40,7 +40,7 @@ public class EdgeByNodePropertyFilterODB extends PropertyFilterODB {
 	
 	private SpecMatchMode mode;
 	private Set<String>   nodeNames;
-	private Set<String>   representTermIDs;  // Orient rids
+	private Set<Long>   representTermIDs;  // term elementIds
 //	private String[]   functionTermIDs;  //Orient rids
 	
 	public EdgeByNodePropertyFilterODB () { super();
@@ -68,11 +68,11 @@ public class EdgeByNodePropertyFilterODB extends PropertyFilterODB {
 		return representTermIDs;
 	}
 */
-	public void addRepresentTermID( String termID) {
+	public void addRepresentTermID( Long termID) {
 		this.representTermIDs.add(termID);
 	}
 
-	public boolean containsRepresentTermId(String representTermId) {
+	public boolean containsRepresentTermId(Long representTermId) {
 		return representTermIDs.contains(representTermId);
 	}
 	

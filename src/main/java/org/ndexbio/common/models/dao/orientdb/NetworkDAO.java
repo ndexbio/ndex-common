@@ -470,6 +470,7 @@ public class NetworkDAO extends NetworkDocDAO {
 		Long edgeId = doc.field(NdexClasses.Element_ID);
 		e.setId(edgeId.longValue());
 
+		Long predicateId = doc.field(NdexClasses.Edge_P_predicateId);
 		ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
 		e.setPredicate(getBaseTermStringFromDoc(predicateDoc, termStringMap));
 

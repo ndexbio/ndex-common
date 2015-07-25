@@ -216,7 +216,7 @@ public class PropertyGraphLoader {
 					Long.toString(n.getId()),null);
 			if (baseTerm != null) {
 				Long termId =  persistenceService.getBaseTermId(baseTerm);
-				persistenceService.setNodeRepresentTerm(nodeId, termId);
+				persistenceService.setNodeRepresentBaseTerm(nodeId, termId);
 			}
 			if ( nodeName != null ) 
 				persistenceService.setNodeName(nodeId, nodeName);

@@ -409,7 +409,7 @@ public class ReadDataManager {
 		
 		Long nodeId = this.networkService.findOrCreateNodeIdByExternalId(id, null);
         
-		this.networkService.setNodeRepresentTerm(nodeId, baseTermId);
+		this.networkService.setNodeRepresentBaseTerm(nodeId, baseTermId);
 		
 		return null;
 	}
