@@ -750,7 +750,7 @@ public class NetworkDAO extends NetworkDocDAO {
        	return null;
     }
 
- 
+/* 
     private  NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) throws NdexException {
     	
 		Helper.populateExternalObjectFromDoc (nSummary, doc);
@@ -777,9 +777,6 @@ public class NetworkDAO extends NetworkDocDAO {
         if ( ROCacheId !=null)
         	nSummary.setReadOnlyCacheId(ROCacheId);
         
-/*        ODocument ud = doc.field("in_" + NdexClasses.E_admin);
-        nSummary.setOwner((String)ud.field(NdexClasses.account_P_accountName));
-*/        
         nSummary.setIsLocked((boolean)doc.field(NdexClasses.Network_P_isLocked));
         nSummary.setURI(NdexDatabase.getURIPrefix()+ "/network/" + nSummary.getExternalId().toString());
 
@@ -797,7 +794,7 @@ public class NetworkDAO extends NetworkDocDAO {
 		
         return nSummary;
     }
-    
+*/    
     
     private static final String functionTermQuery = "select from (traverse in_" + 
             NdexClasses.FunctionTerm_E_baseTerm + " from (select from "+ NdexClasses.BaseTerm + " where " +

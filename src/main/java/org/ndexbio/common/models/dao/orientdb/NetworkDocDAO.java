@@ -777,7 +777,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	return namespaces;
 	}
 
-    public NetworkSummary getNetworkSummary(ODocument doc)  {
+    public static NetworkSummary getNetworkSummary(ODocument doc)  {
     	NetworkSummary networkSummary = new NetworkSummary();
     	setNetworkSummary(doc,networkSummary);
     	return networkSummary;
@@ -916,7 +916,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	return term;
     }
     
-    private static  NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary)  {
+    protected static  NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary)  {
     	
 		Helper.populateExternalObjectFromDoc (nSummary, doc);
 
