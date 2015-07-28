@@ -278,8 +278,9 @@ public class ReadDataManager {
 	 * @param attValue The value of the attribute
 	 * @throws ExecutionException 
 	 */
+	//TODO:Change this to CX aspact 
 	protected void addGraphicsAttribute(Long elementId, String attName, String attValue) throws ExecutionException {
-		this.networkService.addElementPresentationProperty(elementId, attName, attValue);
+		//this.networkService.addElementPresentationProperty(elementId, attName, attValue);
 	}
 	
 	public List<SimplePropertyValuePair> getGraphicsAttributes(PropertiedObject element) {
@@ -302,7 +303,7 @@ public class ReadDataManager {
 		}
 	} */
 
-	protected void addNetworkGraphicsAttributes( Attributes atts) throws ExecutionException, SAXException {
+	protected void addNetworkGraphicsAttributes( Attributes atts)  {
 		final int attrLength = atts.getLength();
 
 		ArrayList<SimplePropertyValuePair> plist = new ArrayList<> ();
@@ -310,11 +311,8 @@ public class ReadDataManager {
 			SimplePropertyValuePair p = new SimplePropertyValuePair( atts.getLocalName(i), atts.getValue(i));
 			plist.add(p);
 		}
-		try {
 			this.networkService.setNetworkProperties(null, plist);
-		}catch (NdexException e) {
-			throw new SAXException ("Ndex error: " + e.getMessage());
-		}
+		
 	}
 	
 	protected void appendCurrentGraphicsString(String s) {
@@ -536,7 +534,7 @@ public class ReadDataManager {
 		this.networkDesc = description;
 	}
 	
-	public void saveNetworkSummary() throws ObjectNotFoundException, NdexException, ExecutionException {
+	public void saveNetworkSummary()  {
 	  if ( !saved) {
 		  this.networkService.getCurrentNetwork().setName(this.networkTitle);
 		this.networkService.getCurrentNetwork().setDescription(this.networkDesc);

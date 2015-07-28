@@ -31,6 +31,8 @@
 package org.ndexbio.common.query;
 
 
+import java.util.List;
+
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
@@ -40,6 +42,7 @@ import org.ndexbio.common.query.filter.orientdb.EdgeCollectionQueryODB;
 import org.ndexbio.common.query.filter.orientdb.PropertyFilterODB;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Edge;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.Network;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -87,11 +90,13 @@ public class NetworkFilterQueryExecutor {
 		
 	}
 	
-
+   // TODO: need to make this case insensitive.
 	private static boolean elementHasPropertySatisfyFilter(ODocument elementDoc, PropertyFilterODB filter) {
 
-		for (ODocument propDoc : Helper.getDocumentLinks(elementDoc, "out_", NdexClasses.E_ndexProperties )) {
-			if ( filter.containsPropertyId(propDoc.getIdentity().toString()) ) {
+		List<NdexPropertyValuePair> props = elementDoc.field(NdexClasses.ndexProperties);
+		if ( props !=null )
+		for (NdexPropertyValuePair property : props) {
+			if ( filter.containsPropertyName(property.getPredicateString()) ) {
 					return true;
 			}
 		}

@@ -108,7 +108,8 @@ public class NetworkFilterQueryExecutorFactory {
 					}
 				}
 			} else {  // normal properties
-				for ( ODocument baseTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
+				//TODO: need to reimplement this
+/*				for ( ODocument baseTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
 					if (propertyNameMatchesBaseterm(propName, baseTermDoc) ) {
 					   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
 							   String v = prop.field(NdexClasses.ndexProp_P_value);
@@ -117,7 +118,7 @@ public class NetworkFilterQueryExecutorFactory {
 							   }
 					   }
 					}
-				}
+				} */
 			}
 		}
 		
@@ -141,20 +142,22 @@ public class NetworkFilterQueryExecutorFactory {
 					for ( ODocument d : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
 							String name = d.field(NdexClasses.BTerm_P_name);
 							if ( name !=null && name.equalsIgnoreCase(value)) {
-								odbFilter.addRepresentTermID(d.getIdentity().toString());
+								odbFilter.addRepresentTermID((Long)d.field(NdexClasses.Element_ID));
 							}
 					}
 			} else if (propName.equalsIgnoreCase(nodePropertyFunctionTermType)) {
-					for ( ODocument funcTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_FunctionTerms)) {
-						ODocument fBTerm = funcTermDoc.field("out_"+NdexClasses.FunctionTerm_E_baseTerm);
+				//TODO: need to reimplement this
+				/*	for ( ODocument funcTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_FunctionTerms)) {
+						Long fBTermId = funcTermDoc.field(NdexClasses.BaseTerm);
 						String name = fBTerm.field(NdexClasses.BTerm_P_name);
 						if ( name !=null && name.equalsIgnoreCase(value)) {
 							odbFilter.addRepresentTermID(funcTermDoc.getIdentity().toString());
 						}
-					}
+					} */
 			} else {  // normal property
 				for ( ODocument baseTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
-					
+					//TODO: need to reimplement this.
+					/*	
 					if (propertyNameMatchesBaseterm(propName, baseTermDoc)) {
 					   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
 						   String v = prop.field(NdexClasses.ndexProp_P_value);
@@ -162,7 +165,7 @@ public class NetworkFilterQueryExecutorFactory {
 								   odbFilter.addPropertyId(prop.getIdentity().toString());
 						   }
 					   }
-					}
+					}  */
 				}
 			}
 		}

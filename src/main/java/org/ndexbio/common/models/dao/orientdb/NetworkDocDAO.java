@@ -912,15 +912,15 @@ public class NetworkDocDAO extends OrientdbDAO {
 
     	// get the functionTerm 
     	
-    	ODocument baseTermDoc =doc.field("out_"+ NdexClasses.FunctionTerm_E_baseTerm);
-    	BaseTerm functionNameTerm = getBaseTerm(baseTermDoc, network);
-    	Long key = Long.valueOf(functionNameTerm.getId());
-    	if ( network != null ) {
-    		if ( !network.getBaseTerms().containsKey(key))
-    			network.getBaseTerms().put(key, functionNameTerm);
+    	Long baseTermId =doc.field(NdexClasses.BaseTerm);
+    	
+    	if ( network !=null && !network.getBaseTerms().containsKey(baseTermId)) {
+    		ODocument baseTermDoc = getDocumentByElementId(NdexClasses.BaseTerm, baseTermId);
+    		BaseTerm bt = getBaseTerm(baseTermDoc, network);
+   			network.getBaseTerms().put(baseTermId, bt);
     	}
     	
-    	term.setFunctionTermId(functionNameTerm.getId());
+    	term.setFunctionTermId(baseTermId);
     	// traverse for the argument
     	boolean isFirst= true; 
     	for (OIdentifiable parameterRec : new OTraverse()

@@ -288,7 +288,7 @@ public abstract class PersistenceService implements AutoCloseable {
 
     }
     
-
+/*
 	protected void addPropertiesToVertex (OrientVertex vertex, Collection<NdexPropertyValuePair> properties , 
 			Collection<SimplePropertyValuePair> presentationProperties ) throws NdexException, ExecutionException {
 
@@ -309,7 +309,7 @@ public abstract class PersistenceService implements AutoCloseable {
 			}
 		} 
 	}
-
+*/
 	
 /*	protected void addPresentationPropertiesToVertex (OrientVertex vertex, Collection<SimplePropertyValuePair> presentationProperties) {
 
@@ -517,13 +517,14 @@ public abstract class PersistenceService implements AutoCloseable {
 			Long functionTermId = database.getNextId(); 
 			
 		    ODocument fTerm = new ODocument(NdexClasses.FunctionTerm)
-		       .field(NdexClasses.Element_ID, functionTermId)
+		       .fields(NdexClasses.Element_ID, functionTermId,
+		    		   NdexClasses.BaseTerm, baseTermId)
 		       .save();
 		    
 	        OrientVertex fTermV = graph.getVertex(fTerm);
 	        
-	        ODocument bTermDoc = elementIdCache.get(baseTermId); 
-	        fTermV.addEdge(NdexClasses.FunctionTerm_E_baseTerm, graph.getVertex(bTermDoc));
+//	        ODocument bTermDoc = elementIdCache.get(baseTermId); 
+//	        fTermV.addEdge(NdexClasses.FunctionTerm_E_baseTerm, graph.getVertex(bTermDoc));
 	        
 	        for (Long id : termList) {
 	        	ODocument o = elementIdCache.get(id);

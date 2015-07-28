@@ -36,21 +36,21 @@ import java.util.TreeSet;
 public class PropertyFilterODB {
 
 	
-	private Set<String> _propertyIdSet;
+	private Set<String> _propertyNameSet;
 	
 	public PropertyFilterODB () {
-		_propertyIdSet = new TreeSet<>();
+		_propertyNameSet = new TreeSet<>();
 	}
 	
 /*	public List<String> getPropertySpecList() {
 		return _propertyList;
 	}
 */	
-	public void addPropertyId(String propertyId) {
-		this._propertyIdSet.add( propertyId);
+	public void addPropertyName(String propertyName) {
+		this._propertyNameSet.add( propertyName);
 	}
 
-	public boolean containsPropertyId(String propertyRid) {
-		return _propertyIdSet.contains(propertyRid);
+	public boolean containsPropertyName(String propertyName) {
+		return _propertyNameSet.contains(propertyName);
 	}
 }

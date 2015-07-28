@@ -1042,8 +1042,7 @@ public class NetworkDAO extends NetworkDocDAO {
 		return counter;
 	}
 */
-	//TODO: need to modify this to create baseterm and namespace first.
-	private static ODocument createNdexPropertyDoc( //OrientBaseGraph graph,
+/*	private static ODocument createNdexPropertyDoc( //OrientBaseGraph graph,
 			NdexPropertyValuePair property) {
 		
 	//	ODatabaseDocumentTx db = graph.getRawGraph();
@@ -1051,13 +1050,13 @@ public class NetworkDAO extends NetworkDocDAO {
 		.fields(NdexClasses.ndexProp_P_predicateStr,property.getPredicateString(),
 				NdexClasses.ndexProp_P_value, property.getValue(),
 				NdexClasses.ndexProp_P_datatype, property.getDataType());
-/*		if ( property.getPredicateId() >0) 
+		if ( property.getPredicateId() >0) 
 			pDoc = pDoc.field(NdexClasses.ndexProp_P_predicateId, property.getPredicateId());
 		if (property.getValueId() >0)
-			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId()); */
+			pDoc = pDoc.field(NdexClasses.ndexProp_P_valueId, property.getValueId()); 
 		return  pDoc.save();
 	}
-
+*/
 	/**
 	 * Get all the node and edges that has neither citations nor supports as a subnetwork. This is a 
 	 * utitlity function for xbel export.

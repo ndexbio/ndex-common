@@ -142,7 +142,7 @@ public interface NdexClasses {
     public static final String ReifiedEdge_E_edge  ="reify";
     
     //FunctionTerm
-    public static final String FunctionTerm_E_baseTerm = "FuncBaseTerm";
+//    public static final String FunctionTerm_E_baseTerm = "FuncBaseTerm";
     public static final String FunctionTerm_E_paramter = "FuncArguments";
     
     //node

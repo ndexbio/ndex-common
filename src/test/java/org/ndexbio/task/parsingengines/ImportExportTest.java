@@ -44,13 +44,12 @@ import org.ndexbio.common.exporter.BioPAXNetworkExporter;
 import org.ndexbio.common.exporter.XGMMLNetworkExporter;
 import org.ndexbio.common.exporter.XbelNetworkExporter;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.task.event.NdexNetworkState;
-import org.ndexbio.task.service.NdexJVMDataModelService;
-import org.ndexbio.task.service.NdexTaskModelService;
 import org.xml.sax.SAXException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -157,17 +156,14 @@ public class ImportExportTest {
 			  }	  
 		  }
 		  else if ( m.srcFormat == NetworkSourceFormat.BEL) {
-				NdexTaskModelService  modelService = new NdexJVMDataModelService(conn);
+				NetworkDocDAO  dao = new NetworkDocDAO(conn);
 
 				// initiate the network state
-				initiateStateForMonitoring(modelService,networkID.toString());
 				XbelNetworkExporter exporter = 
-						new XbelNetworkExporter(AllTests.testUser, networkID.toString(), 
-					modelService,networkID.toString());
+						new XbelNetworkExporter(AllTests.testUser, networkID.toString(),dao,networkID.toString());
 			//
 				exporter.exportNetwork();
 			  
-			  //  parser = new XbelParser(testFile,AllTests.testUser, AllTests.db);
 		  } 
 
 	}
@@ -254,13 +250,6 @@ public class ImportExportTest {
 		 }
    
     }
-    
-	private static void initiateStateForMonitoring(NdexTaskModelService  modelService, 
-			String networkId) {
-		NdexNetworkState.INSTANCE.setNetworkId(networkId);
-		NdexNetworkState.INSTANCE.setNetworkName(modelService.getNetworkById( networkId).getName());
-		
-		
-	}
+ 
 
 }

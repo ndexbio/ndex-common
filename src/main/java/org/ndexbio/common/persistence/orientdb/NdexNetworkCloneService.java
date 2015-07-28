@@ -665,7 +665,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 				Long newFunctionNameId = this.baseTermIdMap.get(functionTerm.getFunctionTermId());
 
 				ODocument functionTermDoc = elementIdCache.get(newFunctionId);
-				functionTermDoc = functionTermDoc.field(NdexClasses.FunctionTerm_E_baseTerm, newFunctionNameId).save();
+				functionTermDoc = functionTermDoc.field(NdexClasses.BaseTerm, newFunctionNameId).save();
 				OrientVertex functionTermV = graph.getVertex(functionTermDoc);
 				
 				for ( Long argId : functionTerm.getParameterIds()) {

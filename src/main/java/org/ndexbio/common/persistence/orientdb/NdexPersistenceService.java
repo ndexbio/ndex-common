@@ -44,7 +44,6 @@ import java.util.logging.Logger;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
-import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.object.network.RawCitation;
 import org.ndexbio.common.models.object.network.RawEdge;
@@ -57,12 +56,9 @@ import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
-import org.ndexbio.model.object.network.Citation;
-import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.task.NdexServerQueue;
 
@@ -350,7 +346,7 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 
-	
+/*	
 	private OrientVertex addPropertyToVertex(OrientVertex v, NdexPropertyValuePair p) 
 			throws ExecutionException, NdexException {
 
@@ -358,7 +354,7 @@ public class NdexPersistenceService extends PersistenceService {
         
        	v.addEdge(NdexClasses.E_ndexProperties, pV);
        	return v;
-	}
+	}  */
 
 	// related term is assumed to be a base term
 	public void setRelatedTermsOnNode(long nodeId, String[] relatedTerms) throws ExecutionException, NdexException {
@@ -917,12 +913,15 @@ public class NdexPersistenceService extends PersistenceService {
 		logger.info("Connection to orientdb database closed");
 	}
 	
+	//Add a collection of properties to a network.
+	
 	public void setNetworkProperties(Collection<NdexPropertyValuePair> properties, 
-			Collection<SimplePropertyValuePair> presentationProperties) throws NdexException, ExecutionException {
-		addPropertiesToVertex ( networkVertex, properties, presentationProperties);
-        
-		if ( properties != null )
+			Collection<SimplePropertyValuePair> presentationProperties) {
+		if ( properties != null ) {
 			this.network.getProperties().addAll(properties);
+			this.networkDoc.field(NdexClasses.ndexProperties, this.network.getProperties()).save();
+		}
+	
 	//	if ( presentationProperties != null ) 
 	//		this.network.getPresentationProperties().addAll(presentationProperties);
 
@@ -957,18 +956,21 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 
-	public void addElementProperty(Long elementId, String key, String value, String type) throws ExecutionException, NdexException {
+	public void addElementProperty(Long elementId, String key, String value, String type) throws ExecutionException {
 		ODocument elementDoc = this.elementIdCache.get(elementId);
-		OrientVertex v = graph.getVertex(elementDoc);
+		
+		List<NdexPropertyValuePair> props = elementDoc.field(NdexClasses.ndexProperties);
+		if ( props == null )
+			props = new ArrayList<>(1);
 		
 		NdexPropertyValuePair p = new NdexPropertyValuePair(key,value);
 		p.setDataType(type);
-		v = this.addPropertyToVertex(v, p);
-        elementDoc = v.getRecord();
-        this.elementIdCache.put(elementId, elementDoc);
+		props.add(p);
+		elementDoc.save();
+
 	}
 	
-	public void addElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
+/*	public void addElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
 		ODocument elementDoc = this.elementIdCache.get(elementId);
 		OrientVertex v = graph.getVertex(elementDoc);
 		
@@ -978,23 +980,23 @@ public class NdexPersistenceService extends PersistenceService {
         v.addEdge(NdexClasses.E_ndexPresentationProps, pV);
         elementDoc = v.getRecord();
         this.elementIdCache.put(elementId, elementDoc);
-	}
+	} */
 	
 	public void setNodeProperties(Long nodeId, Collection<NdexPropertyValuePair> properties, 
-			Collection<SimplePropertyValuePair> presentationProperties) throws ExecutionException, NdexException {
-		ODocument nodeDoc = this.elementIdCache.get(nodeId);
-		OrientVertex v = graph.getVertex(nodeDoc);
-		addPropertiesToVertex ( v, properties, presentationProperties);
-		this.elementIdCache.put(nodeId, v.getRecord());
+			Collection<SimplePropertyValuePair> presentationProperties) throws ExecutionException {
+		setElementProperties(nodeId, properties);
 	}
 	
 	public void setCitationProperties(Long citationId, Collection<NdexPropertyValuePair> properties, 
-			Collection<SimplePropertyValuePair> presentationProperties) throws ExecutionException, NdexException {
-		ODocument nodeDoc = this.elementIdCache.get(citationId);
-		OrientVertex v = graph.getVertex(nodeDoc);
-		addPropertiesToVertex ( v, properties, presentationProperties);
-		this.elementIdCache.put(citationId, v.getRecord());
+			Collection<SimplePropertyValuePair> presentationProperties) throws ExecutionException {
+		setElementProperties(citationId, properties);
 	}
+	
+	private void setElementProperties(Long elementId, Collection<NdexPropertyValuePair> properties) throws ExecutionException {
+		ODocument elementDoc = this.elementIdCache.get(elementId);
+		
+		elementDoc.field(NdexClasses.ndexProperties, properties).save();
+	} 
 	
 	/**
 	 *  create a represent edge from a node to a term.
@@ -1010,12 +1012,10 @@ public class NdexPersistenceService extends PersistenceService {
 		this.elementIdCache.put(nodeId, nodeDoc);
 	}
 	
-	public void updateNetworkSummary() throws ObjectNotFoundException, NdexException, ExecutionException {
+	public void updateNetworkSummary() {
 	   networkDoc = Helper.updateNetworkProfile(networkDoc, network);
-	   addPropertiesToVertex(this.networkVertex, 
-			   network.getProperties(),null /*network.getPresentationProperties()*/);
+	   networkDoc.field(NdexClasses.ndexProperties, network.getProperties());
 	   
-	   networkDoc = this.networkVertex.getRecord();
 	}
 	
 	
