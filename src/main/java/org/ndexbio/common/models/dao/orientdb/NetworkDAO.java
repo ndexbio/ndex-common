@@ -85,8 +85,8 @@ public class NetworkDAO extends NetworkDocDAO {
 	
     private static final String[] networkElementType = {NdexClasses.Network_E_BaseTerms, NdexClasses.Network_E_Nodes, NdexClasses.Network_E_Citations,
     		NdexClasses.Network_E_Edges, NdexClasses.Network_E_FunctionTerms, NdexClasses.Network_E_Namespace,
-    		NdexClasses.Network_E_ReifiedEdgeTerms, NdexClasses.Network_E_Supports,
-    		NdexClasses.E_ndexPresentationProps, NdexClasses.E_ndexProperties
+    		NdexClasses.Network_E_ReifiedEdgeTerms, NdexClasses.Network_E_Supports
+  //  		,	NdexClasses.E_ndexPresentationProps, NdexClasses.E_ndexProperties
     		};
 	
 	static Logger logger = Logger.getLogger(NetworkDAO.class.getName());
@@ -207,8 +207,8 @@ public class NetworkDAO extends NetworkDocDAO {
 		int counter = currentCount;
 		if (!doc.getClassName().equals(NdexClasses.NdexProperty) && 
 				!doc.getClassName().equals(NdexClasses.SimpleProperty)) { // not NdexProperty or SimpleProperty Vertex
-			counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexProperties, counter);  // cleanup Properties
-			counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexPresentationProps, counter); 
+		//	counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexProperties, counter);  // cleanup Properties
+		//	counter = cleanupElementsByEdge(doc, NdexClasses.E_ndexPresentationProps, counter); 
 		}
 		doc.reload();
 
@@ -268,9 +268,12 @@ public class NetworkDAO extends NetworkDocDAO {
 	 * delete all ndex and presentation properties from a network record.
 	 * Properities on network elements won't be deleted.
 	 */
-	public void deleteNetworkProperties(ODocument networkDoc) {
+	public static void deleteNetworkProperties(ODocument networkDoc) {
 
-        for (OIdentifiable propertyDoc : new OTraverse()
+		networkDoc.removeField(NdexClasses.ndexProperties);
+		networkDoc.save();
+
+/*		for (OIdentifiable propertyDoc : new OTraverse()
     	.field("out_"+ NdexClasses.E_ndexProperties )
     	.target(networkDoc)
     	.predicate( new OSQLPredicate("$depth <= 1"))) {
@@ -282,7 +285,7 @@ public class NetworkDAO extends NetworkDocDAO {
         	}
         }
 
-        for (OIdentifiable propertyDoc : new OTraverse()
+       for (OIdentifiable propertyDoc : new OTraverse()
     	.field("out_"+ NdexClasses.E_ndexPresentationProps )
     	.target(networkDoc)
     	.predicate( new OSQLPredicate("$depth <= 1"))) {
@@ -292,7 +295,7 @@ public class NetworkDAO extends NetworkDocDAO {
         	if ( doc.getClassName().equals(NdexClasses.SimpleProperty) ) {
         		graph.removeVertex(graph.getVertex(doc));
         	}
-        }
+        } */
 	}
 	
 	
@@ -990,37 +993,9 @@ public class NetworkDAO extends NetworkDocDAO {
 
 		
 		ODocument rec = this.getRecordByUUID(networkId, null);
-		OrientVertex networkV = graph.getVertex(rec);
-		String traverseField = "out_" + NdexClasses.E_ndexProperties; 
 		
-    	for (OIdentifiable ndexPropertyDoc : new OTraverse()
-			.field(traverseField)
-			.target(rec)
-			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-    		ODocument propDoc = (ODocument) ndexPropertyDoc;
-
-    		if ( propDoc.getClassName().equals(NdexClasses.NdexProperty)) {
-    			OrientVertex v = graph.getVertex(propDoc);
-    			v.remove();
-    		}
-    	}
-
-    	networkV.getRecord().reload();
-		int counter = 0 ;
-		for (NdexPropertyValuePair e : properties) {
-			if ( !e.getPredicateString().equals(NdexClasses.Network_P_source_format)) {
-				ODocument pDoc = createNdexPropertyDoc(e);
-				OrientVertex pV = graph.getVertex(pDoc);
-				networkV.addEdge(NdexClasses.E_ndexProperties, pV);
-				counter ++;
-			}
-		}
-
-
-        rec.field(NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
-
-		return counter;
+		rec.field(NdexClasses.ndexProperties, properties).save();
+		return properties.size();
 	}
 
 	/**
@@ -1032,7 +1007,7 @@ public class NetworkDAO extends NetworkDocDAO {
 	 * @throws ObjectNotFoundException
 	 * @throws NdexException
 	 */
-	public int setNetworkPresentationProperties (UUID networkId, 
+/*	public int setNetworkPresentationProperties (UUID networkId, 
 				Collection<SimplePropertyValuePair> properties
 			 ) throws ObjectNotFoundException, NdexException {
 
@@ -1066,7 +1041,7 @@ public class NetworkDAO extends NetworkDocDAO {
 
 		return counter;
 	}
-
+*/
 	//TODO: need to modify this to create baseterm and namespace first.
 	private static ODocument createNdexPropertyDoc( //OrientBaseGraph graph,
 			NdexPropertyValuePair property) {

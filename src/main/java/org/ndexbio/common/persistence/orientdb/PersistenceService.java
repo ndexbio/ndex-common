@@ -289,8 +289,8 @@ public abstract class PersistenceService implements AutoCloseable {
     }
     
 
-	protected void addPropertiesToVertex (OrientVertex vertex, Collection<NdexPropertyValuePair> properties, 
-			Collection<SimplePropertyValuePair> presentationProperties) throws NdexException, ExecutionException {
+	protected void addPropertiesToVertex (OrientVertex vertex, Collection<NdexPropertyValuePair> properties , 
+			Collection<SimplePropertyValuePair> presentationProperties ) throws NdexException, ExecutionException {
 
 		if ( properties != null) {
 			for (NdexPropertyValuePair e : properties) {
@@ -307,7 +307,7 @@ public abstract class PersistenceService implements AutoCloseable {
                OrientVertex pV = graph.getVertex(pDoc);
                vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
 			}
-		}
+		} 
 	}
 
 	
