@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -50,7 +51,9 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
+import org.ndexbio.common.util.NetworkUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.Edge;
@@ -68,7 +71,6 @@ import org.ndexbio.task.audit.NdexAuditServiceFactory;
 import org.ndexbio.task.audit.NdexAuditUtils;
 import org.ndexbio.task.audit.network.NdexObjectAuditor;
 import org.ndexbio.task.parsingengines.XbelParser;
-import org.ndexbio.task.service.NdexTaskModelService;
 import org.ndexbio.xbel.model.AnnotationDefinitionGroup;
 import org.ndexbio.xbel.model.AnnotationGroup;
 import org.ndexbio.xbel.model.Annotation;
@@ -94,13 +96,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 
 public class XbelNetworkExporter {
-	private final NdexTaskModelService modelService;
+	
+//	private final NdexTaskModelService modelService;
+	private NetworkDocDAO dao;
 	private final String networkId;
 	private final String userId;
 	private final Network network;
@@ -110,7 +115,7 @@ public class XbelNetworkExporter {
 	private XbelMarshaller xm;
 	private final ObjectFactory xbelFactory = new ObjectFactory();
 	// incorporate operation auditing
-	private NdexAuditService auditService;
+/*	private NdexAuditService auditService;
 
 	private final NdexObjectAuditor<Edge> edgeAuditor = new NdexObjectAuditor<>(
 			Edge.class);
@@ -124,29 +129,78 @@ public class XbelNetworkExporter {
 			FunctionTerm.class);
 	private final NdexObjectAuditor<Support> supportAuditor = new NdexObjectAuditor<>(
 			Support.class);
-
+*/
 	private static final Logger logger = LoggerFactory
 			.getLogger(XbelNetworkExporter.class);
 
-	public XbelNetworkExporter(String userId, String networkId, NdexTaskModelService service,
-			String exportFilename) {
+	
+	/*
+	 * Predicate for filtering invalid namespaces from Namespace query
+	 */
+	Predicate<Namespace> namespacePredicate = new Predicate<Namespace>(){
+		@Override
+		public boolean apply(Namespace ns) {
+			return ns.getProperties().isEmpty();
+		}
+		
+	};
+	
+	/*
+	 * Predicate to find xbel internal annotations from namespace query
+	 */
+	Predicate<Namespace> internalAnnotationPredicate = new Predicate<Namespace>() {
+		@Override
+		public boolean apply(Namespace ns) {
+			for ( NdexPropertyValuePair p : ns.getProperties() ) {
+				if ( p.getPredicateString().equals(AnnotationDefinitionGroupSplitter.property_Type)
+						&& p.getValue().equals(AnnotationDefinitionGroupSplitter.internal_annotation_def))
+              return true;
+			}
+			return false;
+		}
+		
+	};
+	
+	/*
+	 * Predicate to find xbel external annotations from namespace query
+	 */
+	Predicate<Namespace> externalAnnotationPredicate = new Predicate<Namespace>() {
+
+		@Override
+		public boolean apply(Namespace ns) {
+			for ( NdexPropertyValuePair p : ns.getProperties()) {
+				if ( p.getPredicateString().equals(AnnotationDefinitionGroupSplitter.property_Type)
+						&& p.getValue().equals(AnnotationDefinitionGroupSplitter.external_annotation_def))
+					return true;
+			}
+	
+			return false;
+		}
+		
+	};
+	
+	
+
+	
+	public XbelNetworkExporter(String userId, String networkId, NetworkDocDAO networkdocDao,
+			String exportFilename) throws NdexException {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(userId),
 				"A userId id is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId),
 				"A network id is required");
-		Preconditions.checkArgument(null != service,
-				"A NdexDataModelService object is required");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(exportFilename),"A filename is required");
 		this.userId = userId;
 		this.networkId = networkId;
-		this.modelService = service;
+		//this.modelService = service;
+		this.dao = networkdocDao;
+		
 		xm = new XbelMarshaller(exportFilename);
-		this.network = this.modelService.getNetworkById(this.networkId);
+		this.network = this.dao.getNetworkById(UUID.fromString(this.networkId));
 
 		this.xbelTermStack = new XbelStack<>(
 				"XBEL Term", Boolean.FALSE);
 		
-		this.initiateAuditService(network.getName());
+//		this.initiateAuditService(network.getName());
 		System.out.println("XBEL network id " +this.networkId 
 				+" will be exported to " +exportFilename
 				+" for user id " +this.userId
@@ -155,7 +209,7 @@ public class XbelNetworkExporter {
 	}
 	
 
-	private void initiateAuditService(String networkName) {
+/*	private void initiateAuditService(String networkName) {
 		Optional<NdexAuditService> optService = NdexAuditServiceFactory.INSTANCE
 				.getAuditServiceByOperation(networkName, NdexAuditUtils.AuditOperation.NETWORK_EXPORT);
 		if (optService.isPresent()) {
@@ -189,7 +243,7 @@ public class XbelNetworkExporter {
 		logger.info("Expected values set in Audit Service");
 
 	}
-
+*/
 	/*
 	 * public method to initiate export of the specified network uses an
 	 * instance of an inner class to control marshalling of JAXB objects to an
@@ -204,8 +258,9 @@ public class XbelNetworkExporter {
 		// export the header
 		this.createHeader();
 		// export the namespaces
-		Iterable<Namespace> namespaces = this.modelService
-				.getNamespacesByNetworkId(networkId);
+		Iterable<Namespace> namespaces = Iterables.filter(
+				this.network.getNamespaces().values(), namespacePredicate);  
+
 		this.addNamespaceGroup(namespaces);
 		// process the annotation definition group
 				this.processAnnotationDefinitionGroup();
@@ -217,7 +272,7 @@ public class XbelNetworkExporter {
 		this.processCitationSubnetworks();
 		
 		// output the observed metrics
-		this.auditService.registerComment(this.edgeAuditor
+/*		this.auditService.registerComment(this.edgeAuditor
 				.displayUnprocessedNdexObjects());
 		this.auditService.registerComment(this.nodeAuditor
 				.displayUnprocessedNdexObjects());
@@ -227,7 +282,7 @@ public class XbelNetworkExporter {
 				.displayUnprocessedNdexObjects());
 		System.out.println(this.auditService.displayObservedValues());
 		System.out.println(this.auditService.displayExpectedValues());
-		System.out.println(this.auditService.displayDeltaValues());
+		System.out.println(this.auditService.displayDeltaValues()); */
 		// close the XML document
 //		System.out.println("Closing export file.");
 		xm.close();
@@ -256,7 +311,11 @@ public class XbelNetworkExporter {
 	 * 		private method to add external annotation definitions to the annotation definition group
 	 */
 	private void processExternalAnnotations(AnnotationDefinitionGroup adg) {
-		for (Namespace ns : this.modelService.getExternalAnnotationsByNetworkId(networkId)){
+		for (Namespace ns : 
+			Iterables.filter(this.network.getNamespaces().values(), externalAnnotationPredicate) )
+			
+		//	this.modelService.getExternalAnnotationsByNetworkId(networkId))
+		{
 			ExternalAnnotationDefinition ead = this.xbelFactory.createExternalAnnotationDefinition();
 			ead.setId(ns.getPrefix());
 			ead.setUrl(ns.getUri());
@@ -268,7 +327,8 @@ public class XbelNetworkExporter {
 	 * 		private method to add internal annotation definitions to the annotation definition group
 	 */
 	private void processInternalAnnotations(AnnotationDefinitionGroup adg) {
-		for (Namespace ns : this.modelService.getInternalAnnotationsByNetworkId(networkId)){
+		for (Namespace ns : 
+				Iterables.filter(this.network.getNamespaces().values(), internalAnnotationPredicate)){
 			InternalAnnotationDefinition iad = this.xbelFactory.createInternalAnnotationDefinition();
 			adg.getInternalAnnotationDefinition().add(iad);
 			iad.setId(ns.getPrefix());
@@ -303,19 +363,24 @@ public class XbelNetworkExporter {
 	 * for the NDEx objects that belong to that Citation
 	 */
 	private void processCitationSubnetworks() throws NdexException{
-		Collection<org.ndexbio.model.object.network.Citation> modelCitations = this
-				.getCitationsByNetworkId();
-
+		//Collection<org.ndexbio.model.object.network.Citation> modelCitations = this.network.getCitations().values();
+		
+		Map<Long, Collection<Long>> edgeGrps = NetworkUtilities.groupEdgesByCitationsFromNetwork (this.network);
+		
 	  try {	
-		for (org.ndexbio.model.object.network.Citation citation : modelCitations) {
-
-			this.subNetwork = this.modelService.getSubnetworkByCitationId(
+		for (Map.Entry<Long, Collection<Long>> entry : edgeGrps.entrySet()) {
+			
+			org.ndexbio.model.object.network.Citation citation = network.getCitations().get(entry.getKey());
+			
+			this.subNetwork = NetworkUtilities.getSubNetworkByEdgeIds(network, entry.getValue());
+			
+/*			this.subNetwork = this.modelService.getSubnetworkByCitationId(
 					this.networkId, citation.getId());
 			if (null == subNetwork) {
 				continue;
-			}
+			}  */
 			
-			System.out.println(" Citation " + citation.getTitle()
+/*			System.out.println(" Citation " + citation.getTitle()
 					+ " has a subnetwork with  " + subNetwork.getEdgeCount()
 					+ " edges and " + subNetwork.getCitations().size()
 					+ " citations");
@@ -327,7 +392,7 @@ public class XbelNetworkExporter {
 			this.termAuditor.registerJdexIds(subNetwork.getBaseTerms());
 			this.functionTermAuditor.registerJdexIds(subNetwork.getFunctionTerms());
 			this.reifiedTermAuditor.registerJdexIds(subNetwork.getReifiedEdgeTerms());
-			this.supportAuditor.registerJdexIds(subNetwork.getSupports());
+			this.supportAuditor.registerJdexIds(subNetwork.getSupports());  */
 			StatementGroup sg = this.processCitationStatementGroup(citation);
 	//		this.processCitationSupports(citation);
 
@@ -336,13 +401,14 @@ public class XbelNetworkExporter {
 		}
 		
 		// process orphan supports
-		this.subNetwork = this.modelService.getOrphanSupportNetwork(this.networkId);
+		this.subNetwork = NetworkUtilities.getOrphanSupportsSubNetwork(network); // this.modelService.getOrphanSupportNetwork(this.networkId);
 		StatementGroup stmtGrp = this.processOrphanSupportsStatementGroup();
 		xm.writeStatementGroup(stmtGrp);
 		
 		
 		// process the remainder ( statements that are not under any citation)
-		this.subNetwork = this.modelService.getNoCitationSubnetwork(this.networkId);
+		this.subNetwork = NetworkUtilities.getOrphanStatementsSubnetwork(network);
+		                                     //this.modelService.getNoCitationSubnetwork(this.networkId);
 		if ( this.subNetwork.getNodeCount()>0 && this.subNetwork.getEdgeCount()>0 ) {
 			StatementGroup sg = this.processUnCitedStatementGroup();
 	  	    xm.writeStatementGroup(sg);
@@ -384,7 +450,7 @@ public class XbelNetworkExporter {
 		for ( Edge e : this.subNetwork.getEdges().values()) {
 			if(  e.getSupportIds().size() == 0 && (! reifiedEdgeIds.contains(e.getId())) ) {
 				this.processSupportEdge(sg, e, processedNodeIds);
-				this.edgeAuditor.removeProcessedNdexObject(e);
+//				this.edgeAuditor.removeProcessedNdexObject(e);
 			}
 		}
 		
@@ -398,12 +464,12 @@ public class XbelNetworkExporter {
 					// we've identified a node that belongs to this support
 				this.processSupportNode(sg, node);
 					
-				this.nodeAuditor.removeProcessedNdexObject(node);
+//				this.nodeAuditor.removeProcessedNdexObject(node);
 			}
 		}
 
 		// increment the audit citation count
-		this.auditService.incrementObservedMetricValue("citation count");
+//		this.auditService.incrementObservedMetricValue("citation count");
 		
 		return sg;
 	}
@@ -434,15 +500,15 @@ public class XbelNetworkExporter {
 		   processNameNCommentOnStatementGroup(isg, support);
 
 		   // increment audit support count
-		   this.auditService.incrementObservedMetricValue("support count");
+//		   this.auditService.incrementObservedMetricValue("support count");
 			
 		   // add support annotations
 //		   this.processSupportAnnotations(iag, support);
 
 		   isg.setAnnotationGroup(iag);
 		   sg.getStatementGroup().add(isg);
-		   this.auditService.incrementObservedMetricValue("support count");
-		   this.supportAuditor.removeProcessedNdexObject(support);
+//		   this.auditService.incrementObservedMetricValue("support count");
+//		   this.supportAuditor.removeProcessedNdexObject(support);
 		   
 		   processSupportStatementGroup(isg, support.getId(), reifiedEdgeIds, processedNodeIds);
 		}
@@ -495,14 +561,14 @@ public class XbelNetworkExporter {
 				String evidence = Objects.firstNonNull(support.getText(), " ");
 				ag.getAnnotationOrEvidenceOrCitation().add(evidence);
 				// increment audit support count
-				this.auditService.incrementObservedMetricValue("support count");
+//				this.auditService.incrementObservedMetricValue("support count");
 
 				supportStatementGroup.setAnnotationGroup(ag);
 				outerSG.getStatementGroup().add(supportStatementGroup);
 //				sgStack.peek().getStatementGroup().add(supportStatementGroup);
 				// increment audit support count
-				this.auditService.incrementObservedMetricValue("support count");
-				this.supportAuditor.removeProcessedNdexObject(support);
+//				this.auditService.incrementObservedMetricValue("support count");
+//				this.supportAuditor.removeProcessedNdexObject(support);
 
 				this.processSupportStatementGroup(supportStatementGroup, support.getId(), reifiedEdgeIds, processedNodeIds);
 			}
@@ -529,7 +595,7 @@ public class XbelNetworkExporter {
 			if ( (!reifiedEdgeIds.contains(edge.getId()))) {
 				// we've identified an Edge that belongs to this support
 				this.processSupportEdge(statementGroup, edge,processedNodes);
-				this.edgeAuditor.removeProcessedNdexObject(edge);
+//				this.edgeAuditor.removeProcessedNdexObject(edge);
 			}
 		}
 
@@ -541,7 +607,7 @@ public class XbelNetworkExporter {
 						// we've identified a node that belongs to this support
 					this.processSupportNode(statementGroup, node);
 						
-					this.nodeAuditor.removeProcessedNdexObject(node);
+//					this.nodeAuditor.removeProcessedNdexObject(node);
 				}
 			}
 		
@@ -576,7 +642,7 @@ public class XbelNetworkExporter {
 			if ( (!reifiedEdgeIds.contains(edge.getId())) && edge.getSupportIds().contains(supportId)) {
 				// we've identified an Edge that belongs to this support
 				this.processSupportEdge(sg, edge, processedNodeIds);
-				this.edgeAuditor.removeProcessedNdexObject(edge);
+//				this.edgeAuditor.removeProcessedNdexObject(edge);
 			}
 		}
 
@@ -588,7 +654,7 @@ public class XbelNetworkExporter {
 				// we've identified a node that belongs to this support
 				this.processSupportNode(sg, node);
 				processedNodeIds.add(node.getId());
-				this.nodeAuditor.removeProcessedNdexObject(node);
+//				this.nodeAuditor.removeProcessedNdexObject(node);
 			}
 		}
 
@@ -634,7 +700,7 @@ public class XbelNetworkExporter {
 	private void processNodeStatement(Statement stmt, Node node) {
 
 		// increment the audit edge count
-		this.auditService.incrementObservedMetricValue("node count");
+//		this.auditService.incrementObservedMetricValue("node count");
 	
 		XbelNetworkExporter.processStatementAnnotations(stmt, node);
 
@@ -644,7 +710,7 @@ public class XbelNetworkExporter {
 	private void processStatement(Statement stmt, Edge edge) {
 
 		// increment the audit edge count
-		this.auditService.incrementObservedMetricValue("edge count");
+//		this.auditService.incrementObservedMetricValue("edge count");
 		// put this new Statement into the Statement stack
 //		this.stmtStack.push(stmt);
 		// process statement annotations
@@ -698,7 +764,7 @@ public class XbelNetworkExporter {
 		Subject subject = new Subject();
 		if (null != node && node.getRepresents() != null) {
 			// increment audit node count
-			this.auditService.incrementObservedMetricValue("node count");
+//			this.auditService.incrementObservedMetricValue("node count");
 			// get initial function term
 			Term term = this.getSubNetworkTerm(node.getRepresents());
 			if (null != term && term instanceof FunctionTerm) {
@@ -707,7 +773,7 @@ public class XbelNetworkExporter {
 				subject.setTerm(this.processFunctionTerm((FunctionTerm) term));
 			}
 			stmt.setSubject(subject);
-			this.nodeAuditor.removeProcessedNdexObject(node);
+//			this.nodeAuditor.removeProcessedNdexObject(node);
 		}
 	}
 
@@ -753,7 +819,7 @@ public class XbelNetworkExporter {
 				object.setTerm(this.processFunctionTerm((FunctionTerm) term));
 			}
 			outerStmt.setObject(object);
-			this.nodeAuditor.removeProcessedNdexObject(node);
+//			this.nodeAuditor.removeProcessedNdexObject(node);
 		}
 	}
 
@@ -772,9 +838,9 @@ public class XbelNetworkExporter {
 				ft.getFunctionTermId());
 		this.xbelTermStack.peek().setFunction(Function.fromValue(bt.getName()));
 		// increment audit base term count
-		this.auditService.incrementObservedMetricValue("base term count");
+//		this.auditService.incrementObservedMetricValue("base term count");
 		// remove base term from list of unprocess terms
-		this.termAuditor.removeProcessedNdexObject(bt);
+//		this.termAuditor.removeProcessedNdexObject(bt);
 		// now process any parameters (either base terms or inner function
 		// terms)
 		// the function terms parameters map to XBEL parameter elements
@@ -791,10 +857,10 @@ public class XbelNetworkExporter {
 						.getParameterOrTerm()
 						.add(this.processFunctionTerm((FunctionTerm) parameter));
 				// increment audit function term count
-				this.auditService
-						.incrementObservedMetricValue("function term count");
+//				this.auditService
+//						.incrementObservedMetricValue("function term count");
 				// remove function term from unprocessed Term collection
-				this.functionTermAuditor.removeProcessedNdexObject(ft);
+//				this.functionTermAuditor.removeProcessedNdexObject(ft);
 			} else if (parameter instanceof BaseTerm) {
 				BaseTerm parameterBt = (BaseTerm) parameter;
 				Namespace ns = this.subNetwork.getNamespaces().get(
@@ -812,7 +878,7 @@ public class XbelNetworkExporter {
 				xbelParameter.setValue(parameterBt.getName());
 				this.xbelTermStack.peek().getParameterOrTerm()
 				.add(xbelParameter);
-				this.auditService.incrementObservedMetricValue("base term count");
+//				this.auditService.incrementObservedMetricValue("base term count");
 			}
 
 		} // end of parameter processing
@@ -831,7 +897,7 @@ public class XbelNetworkExporter {
 			stmt.setRelationship(
 					Relationship.fromValue(bt.getName()));
 			// increment the audit base term count
-			this.auditService.incrementObservedMetricValue("base term count");
+//			this.auditService.incrementObservedMetricValue("base term count");
 		}
 
 	}
@@ -940,6 +1006,7 @@ public class XbelNetworkExporter {
 
 	}
 
+/*	
 	private Collection<org.ndexbio.model.object.network.Citation> getCitationsByNetworkId() {
 		Collection<org.ndexbio.model.object.network.Citation> modelCitations = this.modelService
 						.getCitationsByNetworkId(networkId);
@@ -948,7 +1015,7 @@ public class XbelNetworkExporter {
 		return modelCitations;
 
 	}
-
+*/
 	/*
 	 * An inner class to keep track of processed edges
 	 */

@@ -106,64 +106,6 @@ public class NetworkDAO extends NetworkDocDAO {
 	}
 
 		
-	/**
-	 * Returns a subnetwork based on a block of edges selected from the network specified by networkUUID 
-	 *     based on the specified blockSize and number of blocks to skip. It is intended to be used to 
-	 *     incrementally "page" through a network by edges and forms the basis for operations like incremental copy. 
-	 *     The returned network is fully poplulated and 'self-sufficient', including all nodes, terms, supports, 
-	 *     citations, and namespaces referenced by the edges. 
-	 *     The query selects a number of edges specified by the 'blockSize' parameter, 
-	 *     starting at an offset specified by the 'skipBlocks' parameter. 
-	 * @param networkID
-	 * @param skipBlocks
-	 * @param blockSize
-	 * @return the subnetwork as a Network Object.   
-	 * @throws NdexException 
-	 */
-	public Network getNetwork (UUID networkID, int skipBlocks, int blockSize) throws NdexException {
-		ODocument nDoc = getNetworkDocByUUID(networkID);
-		
-	    if (nDoc == null) return null;
-
-	    
-	    int startPosition = skipBlocks * blockSize;
-	    int counter = 0;
-	    int endPosition = skipBlocks * blockSize + blockSize;
-
-	    Network network = new Network(blockSize);  //result holder
-
-        setNetworkSummary(nDoc, network);
-
-         for (OIdentifiable nodeDoc : new OTraverse()
-      	              	.field("out_"+ NdexClasses.Network_E_Edges )
-      	              	.target(nDoc)
-                      	.predicate( new OSQLPredicate("$depth <= 1"))) {
-  
-
-            ODocument doc = (ODocument) nodeDoc;
-         
-            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
-
-            	if ( counter >= endPosition) break;
-
-                counter ++;
-            	
-            	if ( counter >= startPosition )  {
-              	   Edge e = getEdgeFromDocument(doc,network);
-              	   network.getEdges().put(e.getId(), e);
-            	               
-                }
-            }
-            
-        }
-        
-        network.setEdgeCount(network.getEdges().size());
-        network.setNodeCount(network.getNodes().size());
-        
-		 return network; 
-	}
-	
-
 	
 	public int deleteNetwork (String UUID) throws ObjectNotFoundException, NdexException {
 		int counter = 0, cnt = 0;
@@ -355,7 +297,7 @@ public class NetworkDAO extends NetworkDocDAO {
 	
 	
 	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) throws NdexException {
-		ODocument nDoc = getNetworkDocByUUID(networkID);
+/*		ODocument nDoc = getNetworkDocByUUID(networkID);
 		
 	    if (nDoc == null) return null;
 	    
@@ -388,15 +330,15 @@ public class NetworkDAO extends NetworkDocDAO {
             	  fetchPropertyGraphEdgeToNetwork(doc,network, termStringMap);
                 }
             } 	
-        }
-   	    return network; 
+        } */
+   	    return new PropertyGraphNetwork( getNetwork(networkID,skipBlocks,blockSize)); 
 	}
 
     
     
 	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
 		
-		ODocument networkDoc = getNetworkDocByUUID(id);
+/*		ODocument networkDoc = getNetworkDocByUUID(id);
 		
 		if (networkDoc == null) return null;
 
@@ -435,11 +377,11 @@ public class NetworkDAO extends NetworkDocDAO {
           
                   this.fetchPropertyGraphEdgeToNetwork(doc, network, termStringMap);
               }
-         }
+         }  */
          
-		 return network; 
+		 return new PropertyGraphNetwork(this.getNetworkById(id)); 
 	}
-	
+/*	
 	private static void populatePropetyGraphNetworkFromDoc(PropertyGraphNetwork network, ODocument doc) {
         network.getProperties().add(new NdexPropertyValuePair(
         		PropertyGraphNetwork.uuid, doc.field(NdexClasses.Network_P_UUID).toString()));
@@ -655,20 +597,6 @@ public class NetworkDAO extends NetworkDocDAO {
     		}
     	}
 
-    	//Populate presentation properties
-	/*
-    	for (OIdentifiable ndexPropertyDoc : new OTraverse()
-    			.field("out_"+ NdexClasses.E_ndexPresentationProps )
-    			.target(doc)
-    			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-    		ODocument propDoc = (ODocument) ndexPropertyDoc;
-  
-    		if ( propDoc.getClassName().equals(NdexClasses.SimpleProperty)) {
-				
-    			obj.getPresentationProperties().add( Helper.getSimplePropertyFromDoc(propDoc));
-    		}
-    	}  */
     }
     
     private static boolean containsProperty(Collection<NdexPropertyValuePair> properties, String predicate) {
@@ -686,9 +614,8 @@ public class NetworkDAO extends NetworkDocDAO {
 	}
 	
 		
-    private static final String nodeQuery = "select from (traverse in_" + 
-         NdexClasses.Node_E_represents + " from (select from "+ NdexClasses.BaseTerm + " where " +
-         NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
+    private static final String nodeQuery = "select from " + NdexClasses.Node + " where " +  
+         NdexClasses.Node_P_represents + " = ? " ;
     
     public Node findNodeByBaseTermId(long baseTermID) throws NdexException {
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(nodeQuery);
@@ -704,9 +631,9 @@ public class NetworkDAO extends NetworkDocDAO {
     		"select from (traverse in_" + NdexClasses.Node_E_represents + 
     		" from (select from "+ NdexClasses.FunctionTerm + " where " +
             NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
-       
+      
     public Node findNodeByFunctionTermId(long functionTermID) throws NdexException {
-   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(functionTermNodeQuery);
+   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(nodeQuery);
    		List<ODocument> nodes = db.command(query).execute( functionTermID);
        	
    		if (nodes.isEmpty())
@@ -718,19 +645,19 @@ public class NetworkDAO extends NetworkDocDAO {
     private static final String reifiedEdgeTermNodeQuery = 
     		"select from (traverse in_" + NdexClasses.Node_E_represents + 
     		" from (select from "+ NdexClasses.ReifiedEdgeTerm + " where " +
-            NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'";
+            NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.Node +"'"; 
 
     public Node findNodeByReifiedEdgeTermId (long reifiedEdgeTermId) throws NdexException {
-   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(reifiedEdgeTermNodeQuery);
+   		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(nodeQuery);
    		List<ODocument> nodes = db.command(query).execute( reifiedEdgeTermId);
        	
    		if (nodes.isEmpty())
    			return null;
    		
        	return getNode(nodes.get(0),null);
-    }
+    } */
     
-    private static final String refiedEdgeTermQuery = 
+/*    private static final String refiedEdgeTermQuery = 
     		"select from (traverse in_" + NdexClasses.ReifiedEdge_E_edge + 
     		" from (select from "+ NdexClasses.Edge + " where " +
             NdexClasses.Element_ID + " = ?)) where @class='"+ 
@@ -749,7 +676,7 @@ public class NetworkDAO extends NetworkDocDAO {
 
        	return null;
     }
-
+*/
 /* 
     private  NetworkSummary setNetworkSummary(ODocument doc, NetworkSummary nSummary) throws NdexException {
     	
@@ -796,7 +723,7 @@ public class NetworkDAO extends NetworkDocDAO {
     }
 */    
     
-    private static final String functionTermQuery = "select from (traverse in_" + 
+ /*   private static final String functionTermQuery = "select from (traverse in_" + 
             NdexClasses.FunctionTerm_E_baseTerm + " from (select from "+ NdexClasses.BaseTerm + " where " +
             NdexClasses.Element_ID + " = ?)) where @class='"+ NdexClasses.FunctionTerm +"'";
 
@@ -845,7 +772,7 @@ public class NetworkDAO extends NetworkDocDAO {
    		
    		return null;
     }
-    
+ */   
 /*    public FunctionTerm getFunctionTermFromDoc(ODocument doc) {
     	FunctionTerm result = new FunctionTerm();
     	result.setId((long)doc.field(NdexClasses.Element_ID));
@@ -861,7 +788,7 @@ public class NetworkDAO extends NetworkDocDAO {
      * @return
      * @throws NdexException 
      */
-    public List<Node> findNodesByName(String name, String networkId) throws NdexException {
+/*    public List<Node> findNodesByName(String name, String networkId) throws NdexException {
     	String query = "select from (traverse out_" + NdexClasses.Network_E_Nodes +
 				" from (select from " + NdexClasses.Network + " where " +
 		  		  NdexClasses.Network_P_UUID + "= '" + networkId + "')) where @class='"+  NdexClasses.Node + "' and " + 
@@ -881,7 +808,7 @@ public class NetworkDAO extends NetworkDocDAO {
 	    return results;
     }
     
-
+*/
     
 	/**************************************************************************
 	    * getNetworkUserMemberships
@@ -1163,7 +1090,7 @@ public class NetworkDAO extends NetworkDocDAO {
 	 * @return
 	 * @throws NdexException
 	 */
-    public Network getOrphanStatementsSubnetwork(String networkUUID) throws NdexException {
+/*    public Network getOrphanStatementsSubnetwork(String networkUUID) throws NdexException {
     	
     	ODocument networkDoc = getRecordByUUID(UUID.fromString(networkUUID), NdexClasses.Network);
     	
@@ -1213,7 +1140,7 @@ public class NetworkDAO extends NetworkDocDAO {
     	
     	return result;
     }
-
+*/
 
 }
 

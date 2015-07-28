@@ -410,7 +410,7 @@ public class NetworkDocDAO extends OrientdbDAO {
      * @return
      * @throws NdexException
      */
-    public Network getSubnetworkByCitation(String networkUUID, Long citationId) throws NdexException {
+/*    public Network getSubnetworkByCitation(String networkUUID, Long citationId) throws NdexException {
 //    	ODocument networkDoc = this.getRecordById(UUID.fromString(networkUUID), NdexClasses.Network);
     	Network result = new Network();
     	
@@ -511,7 +511,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	return result;
     }
     
-
+*/
 
 	private BaseTerm getBaseTerm(ODocument o, Network network) throws NdexException {
 		BaseTerm t = new BaseTerm();
@@ -704,6 +704,64 @@ public class NetworkDocDAO extends OrientdbDAO {
         return network;
 	}
 	
+	/**
+	 * Returns a subnetwork based on a block of edges selected from the network specified by networkUUID 
+	 *     based on the specified blockSize and number of blocks to skip. It is intended to be used to 
+	 *     incrementally "page" through a network by edges and forms the basis for operations like incremental copy. 
+	 *     The returned network is fully poplulated and 'self-sufficient', including all nodes, terms, supports, 
+	 *     citations, and namespaces referenced by the edges. 
+	 *     The query selects a number of edges specified by the 'blockSize' parameter, 
+	 *     starting at an offset specified by the 'skipBlocks' parameter. 
+	 * @param networkID
+	 * @param skipBlocks
+	 * @param blockSize
+	 * @return the subnetwork as a Network Object.   
+	 * @throws NdexException 
+	 */
+	public Network getNetwork (UUID networkID, int skipBlocks, int blockSize) throws NdexException {
+		ODocument nDoc = getNetworkDocByUUID(networkID);
+		
+	    if (nDoc == null) return null;
+
+	    
+	    int startPosition = skipBlocks * blockSize;
+	    int counter = 0;
+	    int endPosition = skipBlocks * blockSize + blockSize;
+
+	    Network network = new Network(blockSize);  //result holder
+
+        setNetworkSummary(nDoc, network);
+
+         for (OIdentifiable nodeDoc : new OTraverse()
+      	              	.field("out_"+ NdexClasses.Network_E_Edges )
+      	              	.target(nDoc)
+                      	.predicate( new OSQLPredicate("$depth <= 1"))) {
+  
+
+            ODocument doc = (ODocument) nodeDoc;
+         
+            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
+
+            	if ( counter >= endPosition) break;
+
+                counter ++;
+            	
+            	if ( counter >= startPosition )  {
+              	   Edge e = getEdgeFromDocument(doc,network);
+              	   network.getEdges().put(e.getId(), e);
+            	               
+                }
+            }
+            
+        }
+        
+        network.setEdgeCount(network.getEdges().size());
+        network.setNodeCount(network.getNodes().size());
+        
+		 return network; 
+	}
+	
+
 	
 	// namespaceID < 0 means baseTerm has a local namespace
 /*	public BaseTerm getBaseTerm(String baseterm, long namespaceID, String networkId) throws NdexException {

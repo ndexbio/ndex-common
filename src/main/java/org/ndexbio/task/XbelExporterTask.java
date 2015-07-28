@@ -34,12 +34,11 @@ import java.io.File;
 
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.exporter.XbelNetworkExporter;
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.task.event.NdexTaskEventHandler;
-import org.ndexbio.task.service.NdexJVMDataModelService;
-import org.ndexbio.task.service.NdexTaskModelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,14 +108,13 @@ public class XbelExporterTask extends NdexTask {
 	
 		ODatabaseDocumentTx db = null; 
 		try {
-			db = NdexDatabase.getInstance().getAConnection();
-			NdexTaskModelService modelService = new NdexJVMDataModelService(db);
-			XbelNetworkExporter exporter = new XbelNetworkExporter(this.getTask().getTaskOwnerId().toString(),
-				this.networkId,
-				 modelService, exportFilename);
-			exporter.exportNetwork();
-			this.taskStatus = Status.COMPLETED;
-			this.updateTaskStatus(this.taskStatus);
+			try ( NetworkDocDAO dao = new NetworkDocDAO (NdexDatabase.getInstance().getAConnection())) {
+				XbelNetworkExporter exporter = new XbelNetworkExporter(this.getTask().getTaskOwnerId().toString(),
+						this.networkId,dao, exportFilename);
+				exporter.exportNetwork();
+				this.taskStatus = Status.COMPLETED;
+				this.updateTaskStatus(this.taskStatus);
+			}
 		} finally { 
 			if ( db !=null ) db.close();
 		}

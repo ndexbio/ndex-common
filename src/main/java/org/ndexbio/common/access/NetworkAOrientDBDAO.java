@@ -126,7 +126,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			teardown();
 		}
 	}
-*/
+
 	public PropertyGraphNetwork queryForSubPropertyGraphNetwork(final String networkId,
 			final SimplePathQuery parameters
 			//,final int skipBlocks,	final int blockSize
@@ -161,7 +161,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			teardown();
 		}
 	}
-
+*/
 	public PropertyGraphNetwork queryForSubPropertyGraphNetworkV2(final String networkId,
 			final SimplePathQuery parameters
 			//,final int skipBlocks,	final int blockSize
@@ -172,6 +172,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	}
 
 
+/*	
 	private Set<ORID> queryForEdgeRids( ORID networkRid, SimplePathQuery parameters
 		//	,int skipBlocks,int blockSize
 			) throws NdexException {
@@ -261,9 +262,9 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	  }
 	}
 
+*/	
 	
-	
-	private Collection<ORID> getBaseTermRidsFromNamesV2(ORID networkRid, int nodeLimit,
+	private static Collection<ORID> getBaseTermRidsFromNamesV2(ORID networkRid, int nodeLimit,
 			String searchString,NetworkDocDAO networkdao) throws NdexException {
 
 		Set<ORID> result = new TreeSet<>();
@@ -403,7 +404,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	}
 	
 	
-	private Set<ORID> getNeighborHood(Set<ORID> nodeRIDs,NetworkDocDAO dao, Network resultNetwork, int edgeLimit ,boolean upstream, Set<ORID> traversedEdges) throws NdexException {
+	private static Set<ORID> getNeighborHood(Set<ORID> nodeRIDs,NetworkDocDAO dao, Network resultNetwork, int edgeLimit ,boolean upstream, Set<ORID> traversedEdges) throws NdexException {
 		Set<ORID> newNodes = new TreeSet<>();
 		for ( ORID nodeRID: nodeRIDs) {
 			ODocument nodeDoc = new ODocument(nodeRID);
@@ -435,6 +436,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		return newNodes;
 	}
 
+/*	
 	private Network getSubnetworkByEdgeRids( Set<ORID> edgeRids, ODocument networkDoc) throws Exception {
 		
 	    Network network = new Network(edgeRids.size());  //result holder
@@ -626,7 +628,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		
 	}	
 	
-
+*/
 	
 	
 	/*
@@ -652,7 +654,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			throw new NdexException(
 					"Number of results to return is less than 1.");
 	}
-*/
+
 	private static ORID stringToRid(String ridString) throws NdexException {
 		final Matcher m = Pattern.compile("^.*(#\\d+:\\d+).*$").matcher(
 				ridString.trim());
@@ -676,4 +678,5 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		return resultString;
 	}
 
+  */
 }
