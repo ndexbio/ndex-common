@@ -330,6 +330,7 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Support, OType.EMBEDDEDLIST);
             
             nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            nodeClass.createIndex(NdexClasses.Index_node_rep_id, OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Node_P_represents);
             nodeClass.createIndex(NdexClasses.Index_node_name, "FULLTEXT",null, null, "LUCENE", new String[] { NdexClasses.Node_P_name});
 
          //   nodeClass.createIndex(NdexClasses.Index_node_name, OClass.INDEX_TYPE.NOTUNIQUE, 		NdexClasses.Node_P_name);

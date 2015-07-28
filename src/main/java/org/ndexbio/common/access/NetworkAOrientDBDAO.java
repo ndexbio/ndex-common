@@ -264,6 +264,32 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 */	
 	
+
+	private static Set<ORID> getNodeORIDsFromNames(ORID networkRid, int nodeLimit,
+			String searchString,NetworkDocDAO networkdao) throws NdexException {
+
+		Set<ORID> result = new TreeSet<>();
+
+		OIndex<?> basetermIdx =  networkdao.getDBConnection().getMetadata().getIndexManager().getIndex(NdexClasses.Index_BTerm_name);
+		OIndex<?> nodeRepIdx =  networkdao.getDBConnection().getMetadata().getIndexManager().getIndex(NdexClasses.Index_node_rep_id);
+		
+		for (OIdentifiable termOID : (Collection<OIdentifiable>) basetermIdx.get( searchString)) {
+			ODocument termDoc = (ODocument) termOID.getRecord();
+			OIdentifiable tnId = termDoc.field("in_" + NdexClasses.Network_E_BaseTerms);
+			if ( tnId != null && tnId.getIdentity().equals(networkRid)) {
+				Long bTermId = termDoc.field(NdexClasses.Element_ID);
+				for (OIdentifiable nodeOID : (Collection<OIdentifiable>) nodeRepIdx.get(bTermId )) {
+					if (nodeLimit >0 && result.size() > nodeLimit)
+						throw new NdexException(resultOverLimitMsg);
+					result.add(nodeOID.getIdentity());
+				}
+			}
+		}
+		
+		return result;
+	}
+
+	
 	private static Collection<ORID> getBaseTermRidsFromNamesV2(ORID networkRid, int nodeLimit,
 			String searchString,NetworkDocDAO networkdao) throws NdexException {
 
@@ -342,14 +368,16 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	private Set<ORID> getNodeRidsFromSearchString(ORID networkRID,String searchString, int nodeLimit, boolean includeAliases, 
 			NetworkDocDAO networkdao ,Network resultNetwork) throws NdexException {
 		
-		Set<ORID> result = new TreeSet<>();
+		Set<ORID> result = getNodeORIDsFromNames(networkRID,  nodeLimit, searchString,networkdao);
 		
 	  try {	
 		OTraverse traverser = new OTraverse()
-  			.fields("in_" + NdexClasses.FunctionTerm_E_paramter, "in_" + NdexClasses.Node_E_represents)
+  			.fields("in_" + NdexClasses.FunctionTerm_E_paramter)
   			.target(getBaseTermRidsFromNamesV2(networkRID, nodeLimit, searchString, networkdao));
-		if ( includeAliases)
-			traverser.field("in_" + NdexClasses.Node_E_alias);
+		
+		//TODO: commented out for now. Will put it back when we implment the Solr search.
+/*		if ( includeAliases)
+			traverser.field("in_" + NdexClasses.Node_E_alias); */
 		
 		for (OIdentifiable nodeRec : traverser) {
  

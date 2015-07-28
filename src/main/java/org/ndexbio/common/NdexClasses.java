@@ -115,8 +115,8 @@ public interface NdexClasses {
     public static final String Index_network_name_desc = "idx_network-name-desc";
     
     // propertiedObject
-    public static final String E_ndexProperties        = "ndexProps";
-    public static final String E_ndexPresentationProps = "ndexPresProp";
+ //   public static final String E_ndexProperties        = "ndexProps";
+ //   public static final String E_ndexPresentationProps = "ndexPresProp";
     
     
     // namespace 
@@ -157,6 +157,7 @@ public interface NdexClasses {
     
     public static final String Index_node_id = "index-node-id";
     public static final String Index_node_name = "index-node-name";
+    public static final String Index_node_rep_id = "index-node-rep-id";
     //edge
     
 //    public static final String Edge_E_predicate  = "edgePredicate";
