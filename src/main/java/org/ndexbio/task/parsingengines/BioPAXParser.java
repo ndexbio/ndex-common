@@ -244,7 +244,7 @@ public class BioPAXParser implements IParsingEngine {
 				// Process all Other Elements to create Node objects
 				this.processElementToNode(bpe);
 			}
-			if ( entityCount % 3000 == 0 ) {
+			if ( entityCount % 10000 == 0 ) {
 				logger.info("Commiting " + entityCount + " entities in BioPAX loader.");
 				this.persistenceService.commit();
 			}
@@ -260,7 +260,7 @@ public class BioPAXParser implements IParsingEngine {
 				// Process all other Elements
 				this.processElementProperties(bpe);
 				counter ++;
-				if ( counter % 2000 == 0 ) {
+				if ( counter % 5000 == 0 ) {
 					logger.info("Commiting " + counter + " properities in BioPAX loader.");
 					this.persistenceService.commit();
 				}
@@ -520,9 +520,9 @@ public class BioPAXParser implements IParsingEngine {
 	 * @param value
 	 * @param propertyList
 	 */
-	private void addBPPropertyToList(String propertyName, String value, List<NdexPropertyValuePair> propertyList) {
+	private static void addBPPropertyToList(String propertyName, String value, List<NdexPropertyValuePair> propertyList) {
 		if (value != null) {
-			PropertyHelpers.addNdexProperty(this.bioPaxPrefix + ":"+ propertyName, value, propertyList);
+			PropertyHelpers.addNdexProperty(/*this.bioPaxPrefix + ":"+*/ propertyName, value, propertyList);
 		}
 	}
 	
@@ -597,8 +597,8 @@ public class BioPAXParser implements IParsingEngine {
 
 		
 		for ( NdexPropertyValuePair prop : nodeProperties) {
-			if ( !prop.getPredicateString().equals(this.bioPaxPrefix+":"+"db") &&
-					!prop.getPredicateString().equals(this.bioPaxPrefix+":"+"id")) {
+			if ( !prop.getPredicateString().equals(/*this.bioPaxPrefix+":"+*/"db") &&
+					!prop.getPredicateString().equals(/*this.bioPaxPrefix+":"+*/"id")) {
 				citationProperties.add(prop);
 			}
 		}

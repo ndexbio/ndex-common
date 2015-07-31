@@ -966,6 +966,7 @@ public class NdexPersistenceService extends PersistenceService {
 		NdexPropertyValuePair p = new NdexPropertyValuePair(key,value);
 		p.setDataType(type);
 		props.add(p);
+		elementDoc.field(NdexClasses.ndexProperties, props);
 		elementDoc.save();
 
 	}

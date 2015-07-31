@@ -35,6 +35,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -46,6 +47,7 @@ import org.ndexbio.common.exporter.XbelNetworkExporter;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
@@ -211,7 +213,7 @@ public class ImportExportTest {
 				 for(String si : s) { 
 				   System.out.println(i + "\t" + si);
 				   i++;
-				 } */  
+				 } */
 				 assertEquals(n.getBaseTerms().size(), m.basetermCnt);
 			 } 
 			 if ( m.citationCnt >= 0 )

@@ -209,7 +209,7 @@ public class BioPAXNetworkExporter {
 	private void processXREFNodes(Model bioPAXModel) throws NdexException {
 		for (Entry<Long, Node> e : network.getNodes().entrySet()){
 			Node node = e.getValue();
-			Long nodeId = e.getKey();
+//			Long nodeId = e.getKey();
 
 			String bioPAXType = PropertyHelpers.getNodePropertyValueString(network, node, "ndex:bioPAXType");
 			if (bioPAXType != null){
@@ -255,7 +255,7 @@ public class BioPAXNetworkExporter {
 		
 	}
 
-	private void processProperties(BioPAXElement bpe,
+	private static void processProperties(BioPAXElement bpe,
 			List<NdexPropertyValuePair> properties, 
 			Class<? extends BioPAXElement> bioPAXClass
 			) throws NdexException {
