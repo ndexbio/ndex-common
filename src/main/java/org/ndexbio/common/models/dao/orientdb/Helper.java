@@ -46,13 +46,17 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.*;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class Helper {
-
+	
+	static Logger logger = LoggerFactory.getLogger(Helper.class);
+	
 	private static final Collection<ODocument> emptyDocs = new LinkedList<ODocument>();
 	
 	/**
@@ -354,7 +358,9 @@ public class Helper {
     //Added by David Welker
     public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkSummary summary) throws NdexException
     {
-
+		logger.info("[start: populating provenance for network {}]", 
+				((null != summary) ? summary.getExternalId() : ""));
+		
         List<SimplePropertyValuePair> entityProperties = new ArrayList<>();
 
         entityProperties.add( new SimplePropertyValuePair("edge count", Integer.toString( summary.getEdgeCount() )) );
@@ -370,11 +376,14 @@ public class Helper {
             entityProperties.add( new SimplePropertyValuePair("version", summary.getVersion()) );
 
         entity.setProperties(entityProperties);
+		logger.info("[end: poulated provenance for network {}]", ((null != summary) ? summary.getExternalId() : ""));
     }
 
     //Added by David Welker
     public static void addUserInfoToProvenanceEventProperties(List<SimplePropertyValuePair> eventProperties, User user)
     {
+		logger.info("[start: adding user info to provenance]");
+		
         String firstName = user.getFirstName();
         String lastName = user.getLastName();
         if( firstName != null || lastName != null )
@@ -391,6 +400,8 @@ public class Helper {
 
         if( user.getAccountName() != null )
             eventProperties.add( new SimplePropertyValuePair("account name", user.getAccountName()) );
+        
+		logger.info("[end: added user info to provenance]");
     }
 
 
