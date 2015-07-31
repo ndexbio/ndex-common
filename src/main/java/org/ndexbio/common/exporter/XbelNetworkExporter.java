@@ -66,10 +66,6 @@ import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.Support;
 import org.ndexbio.model.object.network.Term;
 import org.ndexbio.model.object.network.BaseTerm;
-import org.ndexbio.task.audit.NdexAuditService;
-import org.ndexbio.task.audit.NdexAuditServiceFactory;
-import org.ndexbio.task.audit.NdexAuditUtils;
-import org.ndexbio.task.audit.network.NdexObjectAuditor;
 import org.ndexbio.task.parsingengines.XbelParser;
 import org.ndexbio.xbel.model.AnnotationDefinitionGroup;
 import org.ndexbio.xbel.model.AnnotationGroup;
@@ -114,6 +110,9 @@ public class XbelNetworkExporter {
 	
 	private XbelMarshaller xm;
 	private final ObjectFactory xbelFactory = new ObjectFactory();
+	private Set<Long> processedNodes ;
+	private Set<Long> processedEdges;
+	
 	// incorporate operation auditing
 /*	private NdexAuditService auditService;
 
@@ -199,6 +198,10 @@ public class XbelNetworkExporter {
 
 		this.xbelTermStack = new XbelStack<>(
 				"XBEL Term", Boolean.FALSE);
+		
+		processedNodes = new TreeSet<>();
+		processedEdges = new TreeSet<>();
+
 		
 //		this.initiateAuditService(network.getName());
 		System.out.println("XBEL network id " +this.networkId 
@@ -398,20 +401,27 @@ public class XbelNetworkExporter {
 
 			xm.writeStatementGroup(sg);
 
+			this.processedEdges.addAll(subNetwork.getEdges().keySet());
+			this.processedNodes.addAll(subNetwork.getNodes().keySet());
+
 		}
 		
 		// process orphan supports
-		this.subNetwork = NetworkUtilities.getOrphanSupportsSubNetwork(network); // this.modelService.getOrphanSupportNetwork(this.networkId);
-		StatementGroup stmtGrp = this.processOrphanSupportsStatementGroup();
-		xm.writeStatementGroup(stmtGrp);
-		
+		this.subNetwork = NetworkUtilities.getOrphanSupportsSubNetwork(network, this.processedEdges, this.processedNodes); // this.modelService.getOrphanSupportNetwork(this.networkId);
+		if( subNetwork.getNodeCount()>0 && subNetwork.getEdgeCount()>0) {
+			StatementGroup stmtGrp = this.processOrphanSupportsStatementGroup();
+			xm.writeStatementGroup(stmtGrp);
+			this.processedEdges.addAll(subNetwork.getEdges().keySet());
+			this.processedNodes.addAll(subNetwork.getNodes().keySet());
+		}
 		
 		// process the remainder ( statements that are not under any citation)
-		this.subNetwork = NetworkUtilities.getOrphanStatementsSubnetwork(network);
+		this.subNetwork = NetworkUtilities.getOrphanStatementsSubnetwork(network, this.processedEdges, this.processedNodes);
 		                                     //this.modelService.getNoCitationSubnetwork(this.networkId);
 		if ( this.subNetwork.getNodeCount()>0 && this.subNetwork.getEdgeCount()>0 ) {
 			StatementGroup sg = this.processUnCitedStatementGroup();
 	  	    xm.writeStatementGroup(sg);
+
 		}
 	  } catch (JAXBException e) {
 			e.printStackTrace();
@@ -1160,6 +1170,9 @@ public class XbelNetworkExporter {
 		}
 
 	}
+	
+	
+	
 
 	/*
 	 * an inner class that encapsulates a regular stack supports a VERBOSE

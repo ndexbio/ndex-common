@@ -3,6 +3,7 @@ package org.ndexbio.common.util;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.ndexbio.common.NdexClasses;
@@ -164,7 +165,7 @@ public class NetworkUtilities {
     // returns a subnetwork that contains all the orphan supports (supports that have no citation links) 
 	// and other network elements that are related to these supports 
 
-	public static Network getOrphanSupportsSubNetwork(Network network) {
+	public static Network getOrphanSupportsSubNetwork(Network network, Set<Long> excludingEdgeIds, Set<Long> excludingNodeIds) {
 		Network result = new Network();
 		for (Support support: network.getSupports().values()) {
 			if ( support.getCitationId() < 0 ) {
@@ -173,7 +174,7 @@ public class NetworkUtilities {
 		}
 		
 		for (Node node: network.getNodes().values() ) {
-			if ( !node.getSupportIds().isEmpty()) {
+			if (  !node.getSupportIds().isEmpty() && !excludingNodeIds.contains(node.getId()) ) {
 				boolean nodeOnlyHasOrphenSupports = true;
 				for ( Long supportId :  node.getSupportIds()) {
 					if ( !result.getSupports().containsKey(supportId)) {
@@ -187,7 +188,7 @@ public class NetworkUtilities {
 		}
 		
 		for (Edge edge: network.getEdges().values() ) {
-			if ( !edge.getSupportIds().isEmpty()) {
+			if ( !edge.getSupportIds().isEmpty() && !excludingEdgeIds.contains(edge.getId())) {
 				boolean nodeOnlyHasOrphenSupports = true;
 				for ( Long supportId :  edge.getSupportIds()) {
 					if ( !result.getSupports().containsKey(supportId)) {
@@ -211,17 +212,19 @@ public class NetworkUtilities {
 	 * utitlity function for xbel export.
 	 * @return
 	 */
-    public static Network getOrphanStatementsSubnetwork(Network network) {
+    public static Network getOrphanStatementsSubnetwork(Network network,Set<Long> excludingEdgeIds, Set<Long> excludingNodeIds) {
 		Network result = new Network();
 		
 		for (Node node: network.getNodes().values() ) {
-			if ( node.getSupportIds().isEmpty() && node.getCitationIds().isEmpty()) {
+			if ( node.getSupportIds().isEmpty() && node.getCitationIds().isEmpty() 
+					&& !excludingNodeIds.contains(node.getId())) {
 					addNodeToNetwork(result,node.getId(), network);
 			}
 		}
 		
 		for (Edge edge: network.getEdges().values() ) {
-			if ( edge.getSupportIds().isEmpty() && edge.getCitationIds().isEmpty()) {
+			if ( edge.getSupportIds().isEmpty() && edge.getCitationIds().isEmpty() 
+					&& !excludingEdgeIds.contains(edge.getId()) ) {
 					addEdgeToNetwork(result,edge.getId(), network);
 			}
 		}
@@ -232,5 +235,5 @@ public class NetworkUtilities {
     	
     }
 
-	
+
 }

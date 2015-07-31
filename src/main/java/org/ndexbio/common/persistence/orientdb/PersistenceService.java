@@ -485,7 +485,7 @@ public abstract class PersistenceService implements AutoCloseable {
 		}
 
 	 
-	  protected Long createSupport(String literal, Long citationId) throws  NdexException {
+	  protected Long createSupport(String literal, Long citationId) {
 			
 			Long supportId =database.getNextId() ;
 
@@ -493,12 +493,9 @@ public abstract class PersistenceService implements AutoCloseable {
 			   .fields(NdexClasses.Element_ID, supportId,
 			           NdexClasses.Support_P_text, literal)	;
 			  
-			//TODO: review if we can remove this condition.
 			if ( citationId != null && citationId >= 0 ) {
 				supportDoc.fields(NdexClasses.Citation,citationId);
-			} else {
-				throw new NdexException ("Citation Id is null or <0 for support " + literal);
-			}
+			} 
 			
 			supportDoc.save();
 
