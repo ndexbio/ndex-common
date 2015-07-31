@@ -919,7 +919,7 @@ public class NdexPersistenceService extends PersistenceService {
 			Collection<SimplePropertyValuePair> presentationProperties) {
 		if ( properties != null ) {
 			this.network.getProperties().addAll(properties);
-			this.networkDoc.field(NdexClasses.ndexProperties, this.network.getProperties()).save();
+			this.networkDoc.field(NdexClasses.ndexProperties, properties).save();
 		}
 	
 	//	if ( presentationProperties != null ) 
