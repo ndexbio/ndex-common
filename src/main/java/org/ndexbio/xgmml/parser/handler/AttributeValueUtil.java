@@ -210,8 +210,6 @@ public class AttributeValueUtil {
 					final Long curElementId = manager.getCurrentElementId();
 					manager.setElementProperty(curElementId, name, value, type);
 				}
-			} catch ( NdexException e) {
-				throw new SAXParseException ("Ndex error: " + e.getMessage(),null);
 			} catch (SAXException e) {
 				throw new SAXParseException ("SAXException: " + e.getMessage(),null);
 			}

@@ -93,7 +93,7 @@ public class XGMMLNetworkExporter {
 	}
 
 	public void exportNetwork(UUID networkId, OutputStream output) throws NdexException, 
-		TransformerException, ClassCastException, SAXException, IOException {
+		TransformerException, ClassCastException {
 		Network network = dao.getNetworkById(networkId);
 		
 		Document doc = buildXMLDocument(network);
@@ -120,7 +120,7 @@ public class XGMMLNetworkExporter {
 		transformer.transform(source, result); 
 	}
 	
-	private Document buildXMLDocument(Network network) throws SAXException, IOException {
+	private Document buildXMLDocument(Network network) {
 
 		// a flags for the RDF block. We assume there was no RDF block if dc:date is missing in the network attribute.
 		boolean hasDate=false;
@@ -286,7 +286,7 @@ public class XGMMLNetworkExporter {
 		
 	}
 
-	private String getBaseTermStr(Network n, long termId) {
+	private static String getBaseTermStr(Network n, long termId) {
 		BaseTerm bt = n.getBaseTerms().get(termId);
 		if (bt.getNamespaceId() >0 ) {
 			Namespace ns = n.getNamespaces().get(bt.getNamespaceId());
@@ -298,7 +298,7 @@ public class XGMMLNetworkExporter {
 		
 	}
 	
-	private void addPropertiesToElement(PropertiedObject obj, Element parent, Document doc) throws SAXException, IOException {
+	private static void addPropertiesToElement(PropertiedObject obj, Element parent, Document doc) {
 		for ( NdexPropertyValuePair p : obj.getProperties() ) {
 		  if ( ! p.getPredicateString().equals(labelAttr)) {
 			Element metaData = doc.createElement(attTag);
@@ -306,7 +306,7 @@ public class XGMMLNetworkExporter {
 			metaData.setAttribute("label", p.getPredicateString());
 			metaData.setAttribute("name", p.getPredicateString());
 		    metaData.setAttribute("type", p.getDataType());
-	        if ( !p.getDataType().equals("list")) { 
+	        if ( p.getDataType() !=null && !p.getDataType().equals("list")) { 
 				metaData.setAttribute("value", p.getValue());
 	        } else {
 	        	
@@ -356,14 +356,14 @@ public class XGMMLNetworkExporter {
 		return rdfDesc;
 	}
 	
-	
+/*	
 	private org.w3c.dom.Node getElementFromString(Document doc, String xmlString) throws SAXException, IOException {
 		Element e= this.docBuilder.parse(new ByteArrayInputStream(xmlString.getBytes())).getDocumentElement();
 		org.w3c.dom.Node e2 = doc.importNode(e, true);
 		
 		return e2;
 	}
-	
+*/	
 /*	
 	public static  void main (String[] args) throws NdexException, ParserConfigurationException, TransformerException, ClassCastException, SAXException, IOException {
 		ODatabaseDocumentTx db = NdexAOrientDBConnectionPool.getInstance().acquire();

@@ -323,7 +323,7 @@ public abstract class PersistenceService implements AutoCloseable {
 	} */
 	
 
-	 protected OrientVertex createNdexPropertyVertex(NdexPropertyValuePair e) throws NdexException, ExecutionException {
+	 protected OrientVertex createNdexPropertyVertex(NdexPropertyValuePair e) {
 //		 Long baseTermId = this.getBaseTermId(e.getPredicateString());
 //		 ODocument btDoc = this.elementIdCache.get(baseTermId);
 		 
@@ -434,27 +434,20 @@ public abstract class PersistenceService implements AutoCloseable {
 
 	
 	
-	 protected Long createBaseTerm(String localTerm, long nsId) throws ExecutionException {
+	 protected Long createBaseTerm(String localTerm, long nsId) {
 
 			Long termId = database.getNextId();
 			
 			ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
 			  .fields(NdexClasses.BTerm_P_name, localTerm,
-					  NdexClasses.Element_ID, termId, 
-					  "nsid", nsId)
-			  .save();
+					  NdexClasses.Element_ID, termId); 
 
-			OrientVertex basetermV = graph.getVertex(btDoc);
-			
-/*			if ( nsId >= 0) {
-
-	  		  ODocument nsDoc = elementIdCache.get(nsId); 
-	  		  
-	  		  OrientVertex nsV = graph.getVertex(nsDoc);
-	  		
-	  		  basetermV.addEdge(NdexClasses.BTerm_E_Namespace, nsV);
-			} */
+			if ( nsId > 0) {
+				btDoc.field(NdexClasses.BTerm_NS_ID, nsId);
+			} 
 			  
+			btDoc.save();
+			OrientVertex basetermV = graph.getVertex(btDoc);
 			networkVertex.getRecord().reload();
 	        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
 	        elementIdCache.put(termId, basetermV.getRecord());
@@ -464,7 +457,7 @@ public abstract class PersistenceService implements AutoCloseable {
 	 
 	 protected Long createCitation(String title, String idType, String identifier, 
 				List<String> contributors, 
-				Collection<NdexPropertyValuePair> properties) throws NdexException, ExecutionException {
+				Collection<NdexPropertyValuePair> properties) {
 			Long citationId = database.getNextId();
 
 			ODocument citationDoc = new ODocument(NdexClasses.Citation)
@@ -627,7 +620,7 @@ public abstract class PersistenceService implements AutoCloseable {
 		}
 			
 		
-		private Long createBaseTerm(String termString) throws NdexException, ExecutionException {
+		private Long createBaseTerm(String termString) throws NdexException {
 			// case 1 : termString is a URI
 			// example: http://identifiers.org/uniprot/P19838
 			// treat the last element in the URI as the identifier and the rest as
@@ -715,7 +708,7 @@ public abstract class PersistenceService implements AutoCloseable {
 		}
 	
 		
-		private Long createBaseTerm (String prefix, String localName) throws ExecutionException {
+		private Long createBaseTerm (String prefix, String localName) {
 			Namespace namespace = this.prefixMap.get(prefix);
 			Long id= createBaseTerm(localName, namespace.getId());
 	        this.baseTermStrMap.put(prefix+":"+localName, id);
@@ -755,7 +748,7 @@ public abstract class PersistenceService implements AutoCloseable {
 		
 		
 	  public void setNetworkSourceFormat(NetworkSourceFormat fmt) {
-		  this.networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString());
+		  this.networkDoc.field(NdexClasses.Network_P_source_format, fmt.toString()).save();
 		  NdexPropertyValuePair p = new NdexPropertyValuePair (NdexClasses.Network_P_source_format, fmt.toString());
 		  this.network.getProperties().add(p);
 	  }

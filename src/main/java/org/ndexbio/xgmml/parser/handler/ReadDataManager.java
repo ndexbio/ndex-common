@@ -498,7 +498,7 @@ public class ReadDataManager {
 	} */
 	
 	protected void setElementProperty ( Long elementId, String key, String value,
-			String type) throws ExecutionException, NdexException {
+			String type) throws ExecutionException {
 		this.networkService.addElementProperty(elementId, key, value,type);
 	}
 

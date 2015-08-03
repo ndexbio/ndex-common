@@ -1,13 +1,15 @@
 package org.ndexbio.common.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -21,30 +23,66 @@ import org.ndexbio.model.object.network.Support;
 public class NetworkUtilities {
 
 	
-	public static Map<Long, Collection<Long>> groupEdgesByCitationsFromNetwork (Network network) {
-		Map<Long, Collection<Long>> citationEdgeGroups = new TreeMap<> ();
+	public static Map<Long, List<Collection<Long>> > groupEdgesByCitationsFromNetwork (Network network) {
+		
+		Set<Long> processedNodes = new TreeSet<>();
+		
+		Map<Long, List<Collection<Long>>> citationEdgeNodeGroups = new TreeMap<> ();
 		
 		for ( Edge e : network.getEdges().values()) {
 			if (e.getCitationIds() != null && !e.getCitationIds().isEmpty()) {
 				for ( Long citationId : e.getCitationIds()) {
-					Collection<Long> edgeGroup = citationEdgeGroups.get(citationId);
-					if ( edgeGroup == null) {
-						edgeGroup = new LinkedList<>();
-						citationEdgeGroups.put(citationId, edgeGroup);
+					List<Collection<Long>> edgeNodeGroup = citationEdgeNodeGroups.get(citationId);
+					if ( edgeNodeGroup == null) {
+						edgeNodeGroup = new ArrayList<>(2);
+						
+						edgeNodeGroup.add(new LinkedList<Long>());
+						edgeNodeGroup.add(new LinkedList<Long>());
+						citationEdgeNodeGroups.put(citationId, edgeNodeGroup);
 					} 
-					edgeGroup.add(e.getId());	
+					edgeNodeGroup.get(0).add(e.getId());
+					processedNodes.add(e.getSubjectId());
+					processedNodes.add(e.getObjectId());
 				}
 			}
 		}
 		
-		return citationEdgeGroups;
+		// go through the nodes to pick up orphan nodes.
+		for ( Node n : network.getNodes().values()) {
+			if (n.getCitationIds() != null && !n.getCitationIds().isEmpty()
+					&& !processedNodes.contains(n.getId())) {
+				for ( Long citationId : n.getCitationIds()) {
+					List<Collection<Long>> edgeNodeGroup = citationEdgeNodeGroups.get(citationId);
+					if ( edgeNodeGroup == null) {
+						edgeNodeGroup = new ArrayList<>(2);
+						
+						edgeNodeGroup.add(new LinkedList<Long>());
+						edgeNodeGroup.add(new LinkedList<Long>());
+						citationEdgeNodeGroups.put(citationId, edgeNodeGroup);
+					} 
+					edgeNodeGroup.get(1).add(n.getId());
+				}
+			}
+		}
+		return citationEdgeNodeGroups;
 	}
 
 	
-	public static Network getSubNetworkByEdgeIds(Network network, Collection<Long> edgeIds) {
+	/**
+	 * Create subn
+	 * @param network
+	 * @param edgeIds
+	 * @param nodeIds
+	 * @return
+	 */
+	public static Network getSubNetworkByEdgeNodeIds(Network network, Collection<Long> edgeIds, Collection<Long> nodeIds) {
 		Network result = new Network();
 		for ( Long edgeId : edgeIds) {
 			addEdgeToNetwork(result, edgeId, network);
+		}
+		
+		for (Long nodeId : nodeIds) {
+			addNodeToNetwork(result,nodeId, network);
 		}
 		
     	result.setEdgeCount(result.getEdges().size());

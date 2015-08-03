@@ -260,7 +260,7 @@ public class StatementGroupSplitter extends XBelSplitter {
 		for (Statement statement : statementList) {
 			processStatement(statement, supportId, citationId, annotations, 0, name, comment);
 			counter ++;
-			if ( counter %2000 == 0 ) {
+			if ( counter %5000 == 0 ) {
 				logger.info("processed " + counter + " edges so far. commit this batch.");
 				this.networkService.commit();
 			}

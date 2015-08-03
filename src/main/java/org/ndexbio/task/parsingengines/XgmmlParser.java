@@ -89,8 +89,9 @@ public class XgmmlParser implements IParsingEngine {
 		this.networkTitle = defaultNetworkName;
         this.description = description;
 
-        UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection());
-        loggedInUser = userDocDAO.getUserByAccountName(ownerName);
+        try (UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection())) {
+        	loggedInUser = userDocDAO.getUserByAccountName(ownerName);
+        }
     }
 	
 	private static void log (String string){
@@ -114,6 +115,7 @@ public class XgmmlParser implements IParsingEngine {
 				setNetwork();
 				readXGMML(xgmmlFileStream);
 
+				// set the source format
 				this.networkService.setNetworkSourceFormat(NetworkSourceFormat.XGMML);
 
 				//add provenance to network
@@ -121,11 +123,6 @@ public class XgmmlParser implements IParsingEngine {
 			
 				String uri = NdexDatabase.getURIPrefix();
 
-				// set the source format
-			
-
-
-            
 				// close database connection
 				this.networkService.persistNetwork();
 

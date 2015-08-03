@@ -112,6 +112,7 @@ public class XbelNetworkExporter {
 	private final ObjectFactory xbelFactory = new ObjectFactory();
 	private Set<Long> processedNodes ;
 	private Set<Long> processedEdges;
+	private Set <Long> processedFunctionTerms;
 	
 	// incorporate operation auditing
 /*	private NdexAuditService auditService;
@@ -201,7 +202,7 @@ public class XbelNetworkExporter {
 		
 		processedNodes = new TreeSet<>();
 		processedEdges = new TreeSet<>();
-
+		processedFunctionTerms = new TreeSet<> ();
 		
 //		this.initiateAuditService(network.getName());
 		System.out.println("XBEL network id " +this.networkId 
@@ -368,14 +369,14 @@ public class XbelNetworkExporter {
 	private void processCitationSubnetworks() throws NdexException{
 		//Collection<org.ndexbio.model.object.network.Citation> modelCitations = this.network.getCitations().values();
 		
-		Map<Long, Collection<Long>> edgeGrps = NetworkUtilities.groupEdgesByCitationsFromNetwork (this.network);
+		Map<Long, List<Collection<Long>>> edgeGrps = NetworkUtilities.groupEdgesByCitationsFromNetwork (this.network);
 		
 	  try {	
-		for (Map.Entry<Long, Collection<Long>> entry : edgeGrps.entrySet()) {
+		for (Map.Entry<Long, List<Collection<Long>>> entry : edgeGrps.entrySet()) {
 			
 			org.ndexbio.model.object.network.Citation citation = network.getCitations().get(entry.getKey());
 			
-			this.subNetwork = NetworkUtilities.getSubNetworkByEdgeIds(network, entry.getValue());
+			this.subNetwork = NetworkUtilities.getSubNetworkByEdgeNodeIds(network, entry.getValue().get(0), entry.getValue().get(1));
 			
 /*			this.subNetwork = this.modelService.getSubnetworkByCitationId(
 					this.networkId, citation.getId());
@@ -403,6 +404,7 @@ public class XbelNetworkExporter {
 
 			this.processedEdges.addAll(subNetwork.getEdges().keySet());
 			this.processedNodes.addAll(subNetwork.getNodes().keySet());
+			processedFunctionTerms.addAll(subNetwork.getFunctionTerms().keySet());
 
 		}
 		
@@ -413,6 +415,7 @@ public class XbelNetworkExporter {
 			xm.writeStatementGroup(stmtGrp);
 			this.processedEdges.addAll(subNetwork.getEdges().keySet());
 			this.processedNodes.addAll(subNetwork.getNodes().keySet());
+			processedFunctionTerms.addAll(subNetwork.getFunctionTerms().keySet());
 		}
 		
 		// process the remainder ( statements that are not under any citation)
@@ -422,7 +425,28 @@ public class XbelNetworkExporter {
 			StatementGroup sg = this.processUnCitedStatementGroup();
 	  	    xm.writeStatementGroup(sg);
 
+	  //	    this.processedEdges.addAll(subNetwork.getEdges().keySet());
+	//		this.processedNodes.addAll(subNetwork.getNodes().keySet());
+			processedFunctionTerms.addAll(subNetwork.getFunctionTerms().keySet());
+
 		}
+		
+		//These were only for testing.
+/*		for ( Long nodeId : network.getNodes().keySet()) {
+			if (!processedNodes.contains(nodeId))
+				System.out.println("Node ID " + nodeId + " was not exported. Check the exporter!");
+		}
+		for ( Long edgeId : network.getEdges().keySet()) {
+			if (!processedEdges.contains(edgeId))
+				System.out.println("Edge ID " + edgeId + " was not exported. Check the exporter!");
+		}
+
+		for ( Long ftId : network.getFunctionTerms().keySet()) {
+			if (!processedFunctionTerms.contains(ftId))
+				System.out.println("functionTerm ID " + ftId + " was not exported. Check the exporter!");
+		}
+*/
+		
 	  } catch (JAXBException e) {
 			e.printStackTrace();
 			String msg = "Error occured when writing statement group: " + e.getMessage();
@@ -596,7 +620,7 @@ public class XbelNetworkExporter {
 
 //		processUnCitedStatementGroupInner(supportStatementGroup, reifiedEdgeIds);
 				
-		TreeSet<Long> processedNodes = new TreeSet<>();
+		TreeSet<Long> localProcessedNodes = new TreeSet<>();
 				
 		//edges
 		for (Map.Entry<Long, Edge> entry : this.subNetwork.getEdges()
@@ -604,7 +628,7 @@ public class XbelNetworkExporter {
 			Edge edge = entry.getValue();
 			if ( (!reifiedEdgeIds.contains(edge.getId()))) {
 				// we've identified an Edge that belongs to this support
-				this.processSupportEdge(statementGroup, edge,processedNodes);
+				this.processSupportEdge(statementGroup, edge,localProcessedNodes);
 //				this.edgeAuditor.removeProcessedNdexObject(edge);
 			}
 		}
@@ -613,7 +637,7 @@ public class XbelNetworkExporter {
 		for (Map.Entry<Long, Node> entry : this.subNetwork.getNodes()
 						.entrySet()) {
 			Node node = entry.getValue();
-				if ( !processedNodes.contains(entry.getKey())) {
+				if ( !localProcessedNodes.contains(entry.getKey())) {
 						// we've identified a node that belongs to this support
 					this.processSupportNode(statementGroup, node);
 						

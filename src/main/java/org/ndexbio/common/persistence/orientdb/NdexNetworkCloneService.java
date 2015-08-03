@@ -52,7 +52,6 @@ import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
-import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.BaseTerm;
@@ -274,7 +273,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 	
 	
-	private void cloneNetworkNode() throws NdexException, ExecutionException  {
+	private void cloneNetworkNode()  {
 
 		this.network.setExternalId( NdexUUIDFactory.INSTANCE.getNDExUUID());	
 		
@@ -361,7 +360,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 	
-	private void cloneBaseTerms() throws ExecutionException, NdexException {
+	private void cloneBaseTerms() throws NdexException {
 		if ( srcNetwork.getBaseTerms()!= null) {
 			for ( BaseTerm term : srcNetwork.getBaseTerms().values() ) {
 				Long nsId = (long)-1 ;
@@ -376,7 +375,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 
-	private void cloneCitations() throws NdexException, ExecutionException {
+	private void cloneCitations() {
 		if ( srcNetwork.getCitations()!= null) {
 			for ( Citation citation : srcNetwork.getCitations().values() ) {
 				Long citationId = this.createCitation(citation.getTitle(),
@@ -436,7 +435,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		}
 	}
 
-	private void cloneNodes() throws NdexException, ExecutionException {
+	private void cloneNodes() throws NdexException {
 		if ( srcNetwork.getNodes()!= null) {
 			for ( Node node : srcNetwork.getNodes().values() ) {
 				Long newNodeId = createNode(node);

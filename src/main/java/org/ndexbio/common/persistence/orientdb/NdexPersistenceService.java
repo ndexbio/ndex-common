@@ -548,7 +548,7 @@ public class NdexPersistenceService extends PersistenceService {
 	 * contents.
 	 */
 
-	public void createNewNetwork(String ownerName, String networkTitle, String version) throws NdexException  {
+	public void createNewNetwork(String ownerName, String networkTitle, String version)  {
 		Preconditions.checkNotNull(ownerName,"A network owner name is required");
 		Preconditions.checkNotNull(networkTitle,"A network title is required");
 		
@@ -1015,7 +1015,14 @@ public class NdexPersistenceService extends PersistenceService {
 	
 	public void updateNetworkSummary() {
 	   networkDoc = Helper.updateNetworkProfile(networkDoc, network);
-	   networkDoc.field(NdexClasses.ndexProperties, network.getProperties());
+	   
+	   List<NdexPropertyValuePair> props = new ArrayList<> (network.getProperties().size());
+	   for ( NdexPropertyValuePair p : network.getProperties()) {
+		   if ( !p.getPredicateString().equals(NdexClasses.Network_P_source_format)) {
+			   props.add(p);
+		   }
+	   }
+	   networkDoc.field(NdexClasses.ndexProperties, props);
 	   
 	}
 	
