@@ -46,14 +46,19 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.*;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class Helper {
+	
+	
+	static Logger logger = LoggerFactory.getLogger(Helper.class);
 
-	private static final Collection<ODocument> emptyDocs = new LinkedList<ODocument>();
+	private static final Collection<ODocument> emptyDocs = new LinkedList<>();
 	
 	/**
 	 * Populate a NdexExternalObject using data from an ODocument object.
