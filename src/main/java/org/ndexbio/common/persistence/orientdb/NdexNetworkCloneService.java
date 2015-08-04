@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
@@ -71,6 +70,10 @@ import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 public class NdexNetworkCloneService extends PersistenceService {
 
 	private Network   srcNetwork;
@@ -92,6 +95,8 @@ public class NdexNetworkCloneService extends PersistenceService {
     private Map<Long, Long>  citationIdMap;
     private Map<Long, Long>  supportIdMap;
     private Map<Long, Long>  edgeIdMap;
+    
+	static Logger logger = LoggerFactory.getLogger(NdexNetworkCloneService.class);
     
     /*
      * Currently, the procces flow of this class is:
@@ -118,7 +123,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.supportIdMap   = new HashMap<> (sourceNetwork.getSupports().size());
 		this.functionTermIdMap = new HashMap<>(sourceNetwork.getFunctionTerms().size());
 		// intialize caches.
-	    logger = Logger.getLogger(NdexPersistenceService.class.getName());
+	    //logger = Logger.getLogger(NdexPersistenceService.class.getName());
 
 	}
 
@@ -203,6 +208,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 	private void cloneNetworkElements() throws NdexException, ExecutionException {
 		try {
+			logger.info("[start: cloning network; name='{}']", network.getName());
 			// need to keep this order because of the dependency between objects.
 			cloneNamespaces ();
 			logger.info("Finished cloning namespaces");
@@ -232,13 +238,14 @@ public class NdexNetworkCloneService extends PersistenceService {
 			logger.info("Cloning network " + network.getName() + " is complete.");
 		} finally {
 			this.localConnection.commit();
+			logger.info("[end: cloned network name='{}']", network.getName());
 		}
 		
 	}
 
 	public NetworkSummary cloneNetwork() throws NdexException, ExecutionException {
 		try {
-			
+			logger.info("[start: cloning network]");
 			cloneNetworkCore();
 			
 			networkDoc.field(NdexClasses.Network_P_isComplete,true)
@@ -253,7 +260,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 			return this.network;
 		} finally {
-			logger.info("Network "+ network.getName() + " with UUID:"+ network.getExternalId() +" has been saved. ");
+			logger.info("[end: network name='{}' has been saved; UUID='{}']", network.getName(), network.getExternalId());
 		}
 	}
 	
@@ -361,6 +368,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 	
 	private void cloneBaseTerms() throws NdexException {
+		logger.info("[start: cloning baseterms; size={} baseterms]", 
+				((srcNetwork.getBaseTerms() != null) ? srcNetwork.getBaseTerms().size() : 0));
+		
 		if ( srcNetwork.getBaseTerms()!= null) {
 			for ( BaseTerm term : srcNetwork.getBaseTerms().values() ) {
 				Long nsId = (long)-1 ;
@@ -373,9 +383,14 @@ public class NdexNetworkCloneService extends PersistenceService {
 				this.baseTermIdMap.put(term.getId(), baseTermId);
 			}
 		}
+		logger.info("[end: cloned baseterms; size={} baseterms]", 
+				((srcNetwork.getBaseTerms() != null) ? srcNetwork.getBaseTerms().size() : 0));
 	}
 
 	private void cloneCitations() {
+		logger.info("[start: cloning citations; size={} citations]", 
+				((srcNetwork.getCitations() != null) ? srcNetwork.getCitations().size() : 0));
+
 		if ( srcNetwork.getCitations()!= null) {
 			for ( Citation citation : srcNetwork.getCitations().values() ) {
 				Long citationId = this.createCitation(citation.getTitle(),
@@ -385,9 +400,15 @@ public class NdexNetworkCloneService extends PersistenceService {
 				this.citationIdMap.put(citation.getId(), citationId);
 			}
 		}
+		
+		logger.info("[end: cloned citations; size={} citations]", 
+				((srcNetwork.getCitations() != null) ? srcNetwork.getCitations().size() : 0));		
 	}
 
 	private void cloneSupports() throws NdexException {
+		logger.info("[start: cloning supports; size={} supports]", 
+				((srcNetwork.getSupports() != null) ? srcNetwork.getSupports().size() : 0));
+		
 		if ( srcNetwork.getSupports()!= null) {
 			for ( Support support : srcNetwork.getSupports().values() ) {
 				Long citationId = -1l;
@@ -400,6 +421,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 				this.supportIdMap.put(support.getId(), supportId);
 			}
 		}
+		logger.info("[end: cloned supports; size={} supports]", 
+				((srcNetwork.getSupports() != null) ? srcNetwork.getSupports().size() : 0));
 	}
 
 	// we only clone the nodes itself. We added the edges in the second rournd
@@ -420,6 +443,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 
 	private void cloneFunctionTermVertex() {
+		logger.info("[start: cloning term vertex; size={} term vertex]", 
+				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0)); 
+		
 		if ( srcNetwork.getFunctionTerms()!= null) {
 			for ( FunctionTerm functionTerm : srcNetwork.getFunctionTerms().values() ) {
 				Long newFunctionTermId = this.database.getNextId();
@@ -433,15 +459,22 @@ public class NdexNetworkCloneService extends PersistenceService {
 					
 			}
 		}
+		logger.info("[end: cloned term vertex; size={} term vertex]", 
+				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0)); 		
 	}
 
 	private void cloneNodes() throws NdexException {
+		logger.info("[start: cloning nodes; size={} nodes]", 
+				((srcNetwork.getNodes() != null) ? srcNetwork.getNodes().size() : 0));
+		
 		if ( srcNetwork.getNodes()!= null) {
 			for ( Node node : srcNetwork.getNodes().values() ) {
 				Long newNodeId = createNode(node);
 				this.nodeIdMap.put(node.getId(), newNodeId);
 			}
 		}
+		logger.info("[end: cloned nodes; size={} nodes]", 
+				((srcNetwork.getNodes() != null) ? srcNetwork.getNodes().size() : 0));
 	}
 
 	private Long createNode (Node node) throws NdexException {
@@ -541,6 +574,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 	
 	private void cloneEdges() throws NdexException, ExecutionException {
+		logger.info("[start: cloning edges; size={} edges]", 
+				((srcNetwork.getEdges() != null) ? srcNetwork.getEdges().size() : 0));
+		
 		if ( srcNetwork.getEdges() != null) {
 			int counter = 0;
 			logger.info("start cloning edges");
@@ -559,6 +595,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 				if ( counter > 10) break;
 			}
 		}
+		logger.info("[end: cloned edges; size={} edges]", 
+				((srcNetwork.getEdges() != null) ? srcNetwork.getEdges().size() : 0));		
 	}
 	
 	
@@ -656,6 +694,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 
 	private void createLinksFunctionTerm() throws NdexException, ExecutionException {
+		logger.info("[start: create links function terms; size={} terms]", 
+				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0)); 
+		
 		if ( srcNetwork.getFunctionTerms()!= null) {
 			for ( FunctionTerm functionTerm : srcNetwork.getFunctionTerms().values() ) {
 				Long newFunctionId = this.functionTermIdMap.get(functionTerm.getId());
@@ -676,6 +717,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 				}
 			}
 		}
+		logger.info("[end: created links function terms; size={} terms]", 
+				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0));
 	}
 	
 	
