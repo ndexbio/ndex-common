@@ -213,7 +213,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 	private void cloneNetworkElements() throws NdexException, ExecutionException {
 		try {
-			logger.info("[start: cloning network '{}'", network.getName());
+			logger.info("[start: cloning network; name='{}']", network.getName());
 			// need to keep this order because of the dependency between objects.
 			cloneNamespaces ();
 			//logger.info("Finished cloning namespaces");
@@ -241,7 +241,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 		} finally {
 			this.localConnection.commit();
-			logger.info("[end: cloned network '{}'", network.getName());
+			logger.info("[end: cloned network name='{}']", network.getName());
 		}
 		
 	}
@@ -263,7 +263,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 			return this.network;
 		} finally {
-			logger.info("[end: Network '{}' with UUID {} has been saved.]", network.getName(), network.getExternalId());
+			logger.info("[end: network name='{}' has been saved; UUID='{}']", network.getName(), network.getExternalId());
 		}
 	}
 	
@@ -334,7 +334,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		networkVertex = graph.getVertex(networkDoc);
 		
 		//logger.info("A new NDex network titled: " +srcNetwork.getName() +" has been created");
-		logger.info("[end: cloned network node; network '{}' has been created]", srcNetwork.getName());
+		logger.info("[end: cloned network node; network name='{}' has been created]", srcNetwork.getName());
 	}
 
 	
