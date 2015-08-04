@@ -358,7 +358,7 @@ public class Helper {
     //Added by David Welker
     public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkSummary summary) throws NdexException
     {
-		logger.info("[start: populating provenance for network {}]", 
+		logger.info("[start: populating provenance for network UUID='{}']", 
 				((null != summary) ? summary.getExternalId() : ""));
 		
         List<SimplePropertyValuePair> entityProperties = new ArrayList<>();
@@ -376,7 +376,7 @@ public class Helper {
             entityProperties.add( new SimplePropertyValuePair("version", summary.getVersion()) );
 
         entity.setProperties(entityProperties);
-		logger.info("[end: poulated provenance for network {}]", ((null != summary) ? summary.getExternalId() : ""));
+		logger.info("[end: poulated provenance for network UUID='{}']", ((null != summary) ? summary.getExternalId() : ""));
     }
 
     //Added by David Welker
