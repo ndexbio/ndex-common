@@ -285,7 +285,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 	private void cloneNetworkNode() throws NdexException, ExecutionException  {
 		
-		logger.info("[start: cloning network node]");
+//		logger.info("[start: cloning network node]");
 		this.network.setExternalId( NdexUUIDFactory.INSTANCE.getNDExUUID());	
 		
 //		logger.info("using network prefix: " + NdexDatabase.getURIPrefix() );
@@ -334,13 +334,13 @@ public class NdexNetworkCloneService extends PersistenceService {
 		networkVertex = graph.getVertex(networkDoc);
 		
 		//logger.info("A new NDex network titled: " +srcNetwork.getName() +" has been created");
-		logger.info("[end: cloned network node; network name='{}' has been created]", srcNetwork.getName());
+//		logger.info("[end: cloned network node; network name='{}' has been created]", srcNetwork.getName());
 	}
 
 	
 	private void cloneNetworkProperties() throws NdexException, ExecutionException {
 
-		logger.info("[start: cloning network properties]");
+//		logger.info("[start: cloning network properties]");
 		
 		Collection<NdexPropertyValuePair> newProps = 
 				addPropertiesToVertex(networkVertex, srcNetwork.getProperties(), srcNetwork.getPresentationProperties(), true);
@@ -348,13 +348,13 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.network.getProperties().addAll(newProps);
 		this.network.getPresentationProperties().addAll(srcNetwork.getPresentationProperties());
 
-		logger.info("[end: cloned network properties]");
+//		logger.info("[end: cloned network properties]");
 	}
 	
 	
 	private void cloneNamespaces() throws NdexException, ExecutionException {		
-		logger.info("[start: cloning namespaces; size={} namespaces]", 
-				((srcNetwork.getNamespaces() != null) ? srcNetwork.getNamespaces().size() : 0));
+/*		logger.info("[start: cloning namespaces; size={} namespaces]", 
+				((srcNetwork.getNamespaces() != null) ? srcNetwork.getNamespaces().size() : 0)); */
 		
 		TreeSet<String> prefixSet = new TreeSet<>();
 
@@ -372,8 +372,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 				this.namespaceIdMap.put(ns.getId(), nsId);
 			}
 		}
-		logger.info("[end: cloned namespaces; size={} namespaces]",  
-				((srcNetwork.getNamespaces() != null) ? srcNetwork.getNamespaces().size() : 0));
+/*		logger.info("[end: cloned namespaces; size={} namespaces]",  
+				((srcNetwork.getNamespaces() != null) ? srcNetwork.getNamespaces().size() : 0)); */
 	}
 	
 	private void cloneBaseTerms() throws ExecutionException, NdexException {
@@ -436,8 +436,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 
 	// we only clone the nodes itself. We added the edges in the second rournd
 	private void cloneReifiedEdgeTermNodes() {
-		logger.info("[start: cloning edge term nodes; size={} term nodes]", 
-				((srcNetwork.getReifiedEdgeTerms() != null) ? srcNetwork.getReifiedEdgeTerms().size() : 0));
+/*		logger.info("[start: cloning edge term nodes; size={} term nodes]", 
+				((srcNetwork.getReifiedEdgeTerms() != null) ? srcNetwork.getReifiedEdgeTerms().size() : 0)); */
 
 		if ( srcNetwork.getReifiedEdgeTerms()!= null) {
 			for ( ReifiedEdgeTerm reifiedTerm : srcNetwork.getReifiedEdgeTerms().values() ) {
@@ -451,14 +451,14 @@ public class NdexNetworkCloneService extends PersistenceService {
 				this.reifiedEdgeTermIdMap.put(reifiedTerm.getId(), reifiedEdgeTermId);
 			}
 		}
-		logger.info("[end: cloned edge term nodes; size={} term nodes]", 
-				((srcNetwork.getReifiedEdgeTerms() != null) ? srcNetwork.getReifiedEdgeTerms().size() : 0));
+/*		logger.info("[end: cloned edge term nodes; size={} term nodes]", 
+				((srcNetwork.getReifiedEdgeTerms() != null) ? srcNetwork.getReifiedEdgeTerms().size() : 0)); */
 	}
 
 
 	private void cloneFunctionTermVertex() {
 		logger.info("[start: cloning term vertex; size={} term vertex]", 
-				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0));
+				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0)); 
 		
 		if ( srcNetwork.getFunctionTerms()!= null) {
 			for ( FunctionTerm functionTerm : srcNetwork.getFunctionTerms().values() ) {
@@ -473,7 +473,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			}
 		}
 		logger.info("[end: cloned term vertex; size={} term vertex]", 
-				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0));		
+				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0)); 		
 	}
 
 	private void cloneNodes() throws NdexException, ExecutionException {
@@ -706,8 +706,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 	
 	private void createLinksforRefiedEdgeTerm() throws NdexException, ExecutionException {
-		logger.info("[start: create links for reified edge terms; size={} terms]", 
-				((srcNetwork.getReifiedEdgeTerms() != null) ? srcNetwork.getReifiedEdgeTerms().size() : 0));
+/*		logger.info("[start: create links for reified edge terms; size={} terms]", 
+				((srcNetwork.getReifiedEdgeTerms() != null) ? srcNetwork.getReifiedEdgeTerms().size() : 0)); */
 		
 		if ( srcNetwork.getReifiedEdgeTerms()!= null) {
 			for ( ReifiedEdgeTerm reifiedTerm : srcNetwork.getReifiedEdgeTerms().values() ) {
@@ -729,13 +729,13 @@ public class NdexNetworkCloneService extends PersistenceService {
 						NdexClasses.ReifiedEdge_E_edge, graph.getVertex(edgeDoc));
 			}
 		}
-		logger.info("[end: created links for reified edge terms; size={} terms]", 
-				((srcNetwork.getReifiedEdgeTerms() != null) ? srcNetwork.getReifiedEdgeTerms().size() : 0));
+/*		logger.info("[end: created links for reified edge terms; size={} terms]", 
+				((srcNetwork.getReifiedEdgeTerms() != null) ? srcNetwork.getReifiedEdgeTerms().size() : 0)); */
 	}
 
 	private void createLinksFunctionTerm() throws NdexException, ExecutionException {
 		logger.info("[start: create links function terms; size={} terms]", 
-				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0));
+				((srcNetwork.getFunctionTerms() != null) ? srcNetwork.getFunctionTerms().size() : 0)); 
 		
 		if ( srcNetwork.getFunctionTerms()!= null) {
 			for ( FunctionTerm functionTerm : srcNetwork.getFunctionTerms().values() ) {
