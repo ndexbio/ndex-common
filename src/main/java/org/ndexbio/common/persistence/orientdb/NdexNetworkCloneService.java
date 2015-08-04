@@ -417,7 +417,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 				    citationId = citationIdMap.get(srcCitationId);
 				if ( citationId == null )
 					throw new NdexException ("Citation Id " + support.getCitationId() + " is not found in citation list.");
-				Long supportId = createSupport(support.getText(),citationId);
+				Long supportId = createSupport(support.getText(),citationId, support.getProperties());
 				this.supportIdMap.put(support.getId(), supportId);
 			}
 		}

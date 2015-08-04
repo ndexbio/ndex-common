@@ -856,7 +856,7 @@ public class NdexPersistenceService extends PersistenceService {
 		if ( supportId != null ) return supportId;
 		
 		// persist the support object in db.
-		supportId = createSupport(literal, citationId);
+		supportId = createSupport(literal, citationId,null);
 		this.rawSupportMap.put(r, supportId);
 		return supportId; 
 	}

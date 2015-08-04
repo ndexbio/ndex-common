@@ -465,10 +465,15 @@ public abstract class PersistenceService implements AutoCloseable {
 					NdexClasses.Element_ID, citationId,
 			        NdexClasses.Citation_P_title, title,
 			        NdexClasses.Citation_p_idType, idType,
-			        NdexClasses.Citation_P_identifier, identifier,
-			        NdexClasses.ndexProperties, properties)
-			   .field( NdexClasses.Citation_P_contributors, contributors, OType.EMBEDDEDLIST)
-			  .save();
+			        NdexClasses.Citation_P_identifier, identifier)
+			        
+			   .field( NdexClasses.Citation_P_contributors, contributors, OType.EMBEDDEDLIST);
+			   
+			if(properties!=null && properties.size()>0) {
+				citationDoc.field(NdexClasses.ndexProperties, properties);
+			}
+			
+			citationDoc.save();
 	        
 			OrientVertex citationV = graph.getVertex(citationDoc);
 			networkVertex.addEdge(NdexClasses.Network_E_Citations, citationV);
@@ -478,7 +483,7 @@ public abstract class PersistenceService implements AutoCloseable {
 		}
 
 	 
-	  protected Long createSupport(String literal, Long citationId) {
+	  protected Long createSupport(String literal, Long citationId, List<NdexPropertyValuePair> props) {
 			
 			Long supportId =database.getNextId() ;
 
@@ -490,6 +495,9 @@ public abstract class PersistenceService implements AutoCloseable {
 				supportDoc.fields(NdexClasses.Citation,citationId);
 			} 
 			
+			if ( props !=null && props.size()>0) {
+				supportDoc.field(NdexClasses.ndexProperties, props);
+			}
 			supportDoc.save();
 
 			OrientVertex supportV = graph.getVertex(supportDoc);
