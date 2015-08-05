@@ -593,7 +593,6 @@ public class BioPAXParser implements IParsingEngine {
 		String rdfId = xref.getRDFId();
 		Long nodeId = this.persistenceService.getNodeIdByBaseTerm(rdfId);
 
-
 		List<NdexPropertyValuePair> nodeProperties = getXRefProperties( xref,false);  // properties for node 
 		List<NdexPropertyValuePair> citationProperties = new ArrayList<>();           // properties for citation.
 

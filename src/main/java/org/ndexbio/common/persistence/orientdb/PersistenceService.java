@@ -555,7 +555,7 @@ public abstract class PersistenceService implements AutoCloseable {
 				    if ( fragment == null ) {
 						    String path = termStringURI.getPath();
 						    if (path != null && path.indexOf("/") != -1) {
-							   fragment = termStringRaw.substring(path.lastIndexOf('/') + 1);
+							   fragment = termStringRaw.substring(termStringRaw.lastIndexOf('/') + 1);
 							   uriPrefix = termStringRaw.substring(0,
 									   termStringRaw.lastIndexOf('/') + 1);
 						    } else
@@ -647,7 +647,7 @@ public abstract class PersistenceService implements AutoCloseable {
 				    if ( fragment == null ) {
 					    String path = termStringURI.getPath();
 					    if (path != null && path.indexOf("/") != -1) {
-						   fragment = termString.substring(path.lastIndexOf('/') + 1);
+						   fragment = termString.substring(termString.lastIndexOf('/') + 1);
 //						   String decodedURI = termStringURI.toString();
 						   prefix = termString.substring(0,
 								   termString.lastIndexOf('/') + 1);
