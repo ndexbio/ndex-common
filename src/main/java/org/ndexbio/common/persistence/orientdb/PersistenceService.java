@@ -555,9 +555,9 @@ public abstract class PersistenceService implements AutoCloseable {
 				    if ( fragment == null ) {
 						    String path = termStringURI.getPath();
 						    if (path != null && path.indexOf("/") != -1) {
-							   fragment = path.substring(path.lastIndexOf('/') + 1);
+							   fragment = termStringRaw.substring(path.lastIndexOf('/') + 1);
 							   uriPrefix = termStringRaw.substring(0,
-									termStringRaw.lastIndexOf('/') + 1);
+									   termStringRaw.lastIndexOf('/') + 1);
 						    } else
 						       throw new NdexException ("Unsupported URI format in term: " + termStringRaw);
 				    } else {
@@ -647,9 +647,10 @@ public abstract class PersistenceService implements AutoCloseable {
 				    if ( fragment == null ) {
 					    String path = termStringURI.getPath();
 					    if (path != null && path.indexOf("/") != -1) {
-						   fragment = path.substring(path.lastIndexOf('/') + 1);
+						   fragment = termString.substring(path.lastIndexOf('/') + 1);
+//						   String decodedURI = termStringURI.toString();
 						   prefix = termString.substring(0,
-								termString.lastIndexOf('/') + 1);
+								   termString.lastIndexOf('/') + 1);
 					    } else
 					       throw new NdexException ("Unsupported URI format in term: " + termString);
 				    } else {

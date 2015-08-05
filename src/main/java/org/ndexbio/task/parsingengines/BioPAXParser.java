@@ -50,6 +50,7 @@ import org.biopax.paxtools.controller.SimpleEditorMap;
 import org.biopax.paxtools.io.BioPAXIOHandler;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.BioPAXElement;
+import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.PublicationXref;
 import org.biopax.paxtools.model.level3.RelationshipTypeVocabulary;
@@ -211,7 +212,8 @@ public class BioPAXParser implements IParsingEngine {
 	private void processBioPAX(File f) throws IOException, NdexException, ExecutionException  {
 		try ( FileInputStream fin = new FileInputStream(f) ) 
 		{
-			BioPAXIOHandler handler = new SimpleIOHandler();
+			SimpleIOHandler handler = new SimpleIOHandler(BioPAXLevel.L3);
+			handler.mergeDuplicates(false);
 			Model model = handler.convertFromOWL(fin);
 			
 			loadBioPAXModel(model);
@@ -443,7 +445,7 @@ public class BioPAXParser implements IParsingEngine {
 	private void processRelationshipXref(RelationshipXref xref) throws NdexException, ExecutionException {
 		
 		String rdfId = xref.getRDFId();
-
+		
 		// Create a node to hold the mapping of the rdfId to a biopax type
 		Long nodeId = this.persistenceService.getNodeIdByBaseTerm(rdfId);
 

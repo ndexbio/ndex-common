@@ -425,7 +425,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 				((srcNetwork.getSupports() != null) ? srcNetwork.getSupports().size() : 0));
 	}
 
-	// we only clone the nodes itself. We added the edges in the second rournd
+	// we only clone the nodes itself. We added the edges in the second round
 	private void cloneReifiedEdgeTermNodes() {
 		if ( srcNetwork.getReifiedEdgeTerms()!= null) {
 			for ( ReifiedEdgeTerm reifiedTerm : srcNetwork.getReifiedEdgeTerms().values() ) {

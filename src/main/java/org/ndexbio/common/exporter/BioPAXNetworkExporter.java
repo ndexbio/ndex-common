@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -78,6 +79,8 @@ public class BioPAXNetworkExporter {
 	private Map<Long, UnificationXref> termIdToUnificationXrefMap;
 	private Map<Long, RelationshipXref> termIdToRelationshipXrefMap;
 	
+//	private Map<String, Long> rdfIdToElementTable;
+	
 	private Network network;
 
 	public BioPAXNetworkExporter (ODatabaseDocumentTx db) {
@@ -85,6 +88,7 @@ public class BioPAXNetworkExporter {
 		bioPAXFactory = BioPAXLevel.L3.getDefaultFactory();
 		bioPAXIOHandler = new SimpleIOHandler();
 
+//		rdfIdToElementTable = new TreeMap<String,Long> ();
 	}
 
 	public void exportNetwork(UUID networkId, OutputStream output) throws NdexException, ClassCastException {
@@ -211,8 +215,9 @@ public class BioPAXNetworkExporter {
 			Node node = e.getValue();
 //			Long nodeId = e.getKey();
 
+
 			String bioPAXType = PropertyHelpers.getNodePropertyValueString(network, node, "ndex:bioPAXType");
-			if (bioPAXType != null){
+			if (bioPAXType != null){				
 				if (bioPAXType.equals("UnificationXref")){
 					processUnificationXREFNode(bioPAXModel, node);
 				} else if(bioPAXType.equals("RelationshipXref")){
