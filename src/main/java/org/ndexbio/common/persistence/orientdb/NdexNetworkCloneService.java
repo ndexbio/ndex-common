@@ -211,21 +211,13 @@ public class NdexNetworkCloneService extends PersistenceService {
 			logger.info("[start: cloning network; name='{}']", network.getName());
 			// need to keep this order because of the dependency between objects.
 			cloneNamespaces ();
-			logger.info("Finished cloning namespaces");
 			cloneBaseTerms ();
-			logger.info("Finished cloning baseterms");
 			cloneCitations();
-			logger.info("Finished cloning citations");
 			cloneSupports();
-			logger.info("Finished cloning supports");
 			cloneReifiedEdgeTermNodes(); // only clone the vertex itself.
-			logger.info("Finished cloning reifiedEdgeTerms");
 			cloneFunctionTermVertex();
-			logger.info("Finished cloning functionterms");
             cloneNodes(); 			
-            logger.info("Finished cloning nodes");
             cloneEdges();
-            logger.info("Finished cloning edges");
             
 			// process reifiedEdgeTerm and FunctionTerm
             createLinksforRefiedEdgeTerm();
@@ -579,10 +571,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		if ( srcNetwork.getEdges() != null) {
 			int counter = 0;
-			logger.info("start cloning edges");
 			for ( Map.Entry<Long, Edge> e : srcNetwork.getEdges().entrySet()) {
-				if ( counter == 0 ) logger.info("start");
-	//		for ( Edge edge : srcNetwork.getEdges().values()) {
 				Edge edge = e.getValue();
 				Long newEdgeId = createEdge(edge);
 				edgeIdMap.put(edge.getId(), newEdgeId);
@@ -591,9 +580,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 					logger.info("committed " + counter + " edges.");
 				}
 				counter ++;
-				logger.info("cloned " + counter + " edges.");
-				if ( counter > 10) break;
-			}
+ 			}
 		}
 		logger.info("[end: cloned edges; size={} edges]", 
 				((srcNetwork.getEdges() != null) ? srcNetwork.getEdges().size() : 0));		
@@ -645,7 +632,6 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
         edgeDoc.save();
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
-		logger.info("Created vertex.");
 
 		Long newSubjectId = nodeIdMap.get(edge.getSubjectId());
         if ( newSubjectId == null)
@@ -654,17 +640,12 @@ public class NdexNetworkCloneService extends PersistenceService {
         ODocument subjectDoc = elementIdCache.get(newSubjectId); 
 	   graph.getVertex(subjectDoc).addEdge(NdexClasses.Edge_E_subject, edgeV);
 		
-		logger.info("added sub edge.");
-
 	   
 	   Long newObjectId = nodeIdMap.get(edge.getObjectId());
        if ( newObjectId == null)
     	   throw new NdexException ("Node id " + edge.getObjectId() + "not found.");
        ODocument objectDoc = elementIdCache.get(newObjectId); 
        edgeV.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectDoc));
-	   
-	   
-		logger.info("added obj edge.");
 	   
 		networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
 		

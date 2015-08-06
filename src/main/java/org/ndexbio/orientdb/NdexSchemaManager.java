@@ -286,7 +286,7 @@ public class NdexSchemaManager
             functionTermClass.createProperty(NdexClasses.BaseTerm, OType.LONG);
             
             functionTermClass.createIndex("index-function-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            functionTermClass.createIndex("idx-func-bterm",OClass.INDEX_TYPE.NOTUNIQUE);
+            functionTermClass.createIndex("idx-func-bterm",OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.BaseTerm);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.ReifiedEdgeTerm);  

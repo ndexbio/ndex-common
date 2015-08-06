@@ -248,7 +248,7 @@ public class TaskDocDAO extends OrientdbDAO {
     public Collection<Task> getUnfinishedTasks() { 
     	List<Task> result = new LinkedList<>();
     	OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
-  			"SELECT FROM task where (not isDeleted) and ( status = 'QUEUED' or status = 'PROCESSING') ");
+  			"SELECT FROM task where ( isDeleted=false) and ( status = 'QUEUED' or status = 'PROCESSING') ");
     	List<ODocument> records = db.command(query).execute();
     	for ( ODocument doc : records ) {
     		result.add(getTaskFromDocument(doc));

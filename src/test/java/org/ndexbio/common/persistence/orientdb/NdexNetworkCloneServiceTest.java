@@ -67,8 +67,8 @@ public class NdexNetworkCloneServiceTest {
 		
 		// tryout the manual index.
 		OIndexManager idxManager = connection.getMetadata().getIndexManager();
-		OIndex myIdx = idxManager.createIndex("mytestIdx", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.STRING),
-				null,null, null);
+	/*	OIndex myIdx = idxManager.createIndex("mytestIdx", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.STRING),
+				null,null, null); 
 		
 		ODocument d1 = new ODocument("support").fields("foo", "1", "bar",11).save();
 		ODocument d2 = new ODocument("support").fields("foo", "2", "bar", 22).save();
@@ -76,7 +76,7 @@ public class NdexNetworkCloneServiceTest {
 		
 		myIdx.put("1", d1);
 		myIdx.put("2", d2);
-		myIdx.put("3", d3);
+		myIdx.put("3", d3); 
 		
 		connection.commit();
 		connection.close();
@@ -96,7 +96,7 @@ public class NdexNetworkCloneServiceTest {
 		System.out.print(d4);
 		d4 = new ODocument((ORID)myIdx.get("4"));
 		System.out.print(d4);
-				
+				*/
 		
 		NetworkDAO dao = new NetworkDAO ( connection);
 	//	Network network =  dao.getNetworkById(UUID.fromString("4842a831-1e5c-11e4-9f34-90b11c72aefa"));
