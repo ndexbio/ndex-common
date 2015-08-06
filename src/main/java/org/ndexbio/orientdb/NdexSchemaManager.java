@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import org.apache.log4j.spi.LoggerFactory;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.network.FunctionTerm;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -57,7 +58,7 @@ public class NdexSchemaManager
     
     private Boolean initialized = Boolean.FALSE;
     
-    private static final String NdexDbVersion = "1.0";
+    private static final String NdexDbVersion = "1.1";
     private static final String NdexDbVersionKey = "NdexDbVer";
     //name for the version field.
     private static final String NdexVField= "n1";
@@ -227,6 +228,7 @@ public class NdexSchemaManager
             bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});
 //            bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
             bTermClass.createIndex("index-baseterm-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            bTermClass.createIndex("index-baseterm-ns", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.BTerm_NS_ID);
             
         }
 
@@ -250,8 +252,10 @@ public class NdexSchemaManager
             supportClass = orientDbGraph.createVertexType(NdexClasses.Support);
             supportClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             supportClass.createProperty("text", OType.STRING);
+            supportClass.createProperty(NdexClasses.Citation, OType.LONG);
             
-            supportClass.createIndex("index-support-id", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
+            supportClass.createIndex("index-support-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            supportClass.createIndex("idx-support-citation", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Citation);
             
         }
 
@@ -263,10 +267,12 @@ public class NdexSchemaManager
             edgeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             edgeClass.createProperty(NdexClasses.ndexProperties, OType.EMBEDDEDLIST);
 //            edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+            edgeClass.createProperty(NdexClasses.Edge_P_predicateId, OType.LONG);
 
             edgeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDLIST);
 
             edgeClass.createIndex("index-edge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            edgeClass.createIndex("idx-edge-predicate", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Edge_P_predicateId);
         }
 
         cls = schema.getClass(NdexClasses.FunctionTerm);  
@@ -277,9 +283,10 @@ public class NdexSchemaManager
             functionTermClass.createProperty("functionTermOrderedParameters", OType.EMBEDDEDLIST);
             //functionTermClass.createProperty("textParameters", OType.EMBEDDEDSET);
             //functionTermClass.createIndex("functionTermLinkParametersIndex", OClass.INDEX_TYPE.NOTUNIQUE, "termParameters by value");
+            functionTermClass.createProperty(NdexClasses.BaseTerm, OType.LONG);
             
             functionTermClass.createIndex("index-function-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            
+            functionTermClass.createIndex("idx-func-bterm",OClass.INDEX_TYPE.NOTUNIQUE);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.ReifiedEdgeTerm);  
