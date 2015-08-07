@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -144,8 +145,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			
 			if ( userORID != null && userORID.equals(nAccount)) {   // same account
 		   		for (OIdentifiable reifiedTRec : traverser) {
-			    	  ODocument networkDoc = (ODocument)reifiedTRec;
-			    	  if ( networkDoc.getClassName().equals(NdexClasses.Network)) {
+		   			  if ( reifiedTRec instanceof ORecordId) {
+			    	    ODocument networkDoc = new ODocument((ORecordId)reifiedTRec);
+			    	  //if ( networkDoc.getClassName().equals(NdexClasses.Network)) {
 						NetworkSummary network =dao.getNetworkSummary(networkDoc); 
 						if ( network.getIsComplete() && !network.getIsDeleted())
 							foundNetworks .add(network);
@@ -154,8 +156,9 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			} else {     // different account 
 		    
 				for (OIdentifiable reifiedTRec : traverser) {
-					ODocument networkDoc = (ODocument)reifiedTRec;
-					if ( networkDoc.getClassName().equals(NdexClasses.Network) &&
+		   			if ( reifiedTRec instanceof ORecordId) {
+				       ODocument networkDoc = new ODocument((ORecordId)reifiedTRec);
+					   if ( //networkDoc.getClassName().equals(NdexClasses.Network) &&
 		    			  (  (simpleNetworkQuery.getCanRead() ? 
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))== VisibilityType.PUBLIC :
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))!= VisibilityType.PRIVATE)
@@ -163,7 +166,8 @@ public class NetworkSearchDAO extends OrientdbDAO{
 							NetworkSummary network =dao.getNetworkSummary(networkDoc); 
 							if ( network.getIsComplete() && !network.getIsDeleted())
 								foundNetworks .add(network);
-					}
+					  }
+		   			}
 				}
 			}   
 
