@@ -54,7 +54,7 @@ public interface NdexClasses {
 	
 	public static final String BaseTerm			  = "baseTerm";
 	public static final String Citation			  = "citation";
-	public static final String Edge				  = "edge";
+	public static final String Edge				  = "CXedge";
 	public static final String FunctionTerm 	  = "functionTerm";
 	public static final String ReifiedEdgeTerm    = "reifiedEdgeTerm";
 	public static final String Namespace          = "namespace";

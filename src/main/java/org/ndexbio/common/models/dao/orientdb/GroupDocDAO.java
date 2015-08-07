@@ -166,7 +166,7 @@ public class GroupDocDAO extends OrientdbDAO {
 			  				+ " " + traverseRID
 			  				+ " WHILE $depth <=1)"
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
-			  			+ " AND (not " + NdexClasses.ExternalObj_isDeleted + ")" 
+			  			+ " AND ( " + NdexClasses.ExternalObj_isDeleted + " = false)" 
 			  			+ " AND (accountName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%'"
 						+ " OR organizationName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%')"
 						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
@@ -185,7 +185,7 @@ public class GroupDocDAO extends OrientdbDAO {
 			query = new OSQLSynchQuery<>("SELECT FROM"
 						+ " " + NdexClasses.Group
 						+ " WHERE "
-			  			+ " (not " + NdexClasses.ExternalObj_isDeleted + ")" 
+			  			+ " ( " + NdexClasses.ExternalObj_isDeleted + " = false )" 
 						+ " AND (accountName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%'"
 						+ " OR organizationName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%')"
 						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
@@ -252,7 +252,7 @@ public class GroupDocDAO extends OrientdbDAO {
 		  			+ " (TRAVERSE "+ NdexClasses.Group +".out_"+ permission.name().toString().toLowerCase() +" FROM"
 		  				+ " " + groupRID
 		  				+ "  WHILE $depth <=1)"
-		  			+ " WHERE @class = '" + NdexClasses.Network + "' and (not " + NdexClasses.ExternalObj_isDeleted + ") "
+		  			+ " WHERE @class = '" + NdexClasses.Network + "' and ( " + NdexClasses.ExternalObj_isDeleted + " = false) "
 		 			+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP " + startIndex
 		 			+ " LIMIT " + blockSize);
 			
@@ -319,7 +319,7 @@ public class GroupDocDAO extends OrientdbDAO {
 		  			+ " (TRAVERSE "+ NdexClasses.Group +".in_"+ permission.name().toString().toLowerCase() +" FROM"
 		  				+ " " + groupRID
 		  				+ "  WHILE $depth <=1)"
-		  			+ " WHERE @class = '" + NdexClasses.User + "' AND (not " + NdexClasses.ExternalObj_isDeleted + ") "
+		  			+ " WHERE @class = '" + NdexClasses.User + "' AND ( " + NdexClasses.ExternalObj_isDeleted + " = false) "
 		 			+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP " + startIndex
 		 			+ " LIMIT " + blockSize);
 			

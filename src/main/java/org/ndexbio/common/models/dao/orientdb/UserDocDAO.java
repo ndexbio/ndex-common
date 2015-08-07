@@ -282,7 +282,7 @@ public class UserDocDAO extends OrientdbDAO {
 						+ " WHILE $depth <=1)"
 						+ " WHERE @class = '"
 						+ NdexClasses.User
-						+ "' and (not " + NdexClasses.ExternalObj_isDeleted + ")"
+						+ "' and ( " + NdexClasses.ExternalObj_isDeleted + "= false)"
 						+ " AND (accountName.toLowerCase() LIKE '%"
 						+ searchStr
 						+ "%'"
@@ -320,8 +320,8 @@ public class UserDocDAO extends OrientdbDAO {
 				
 			query = new OSQLSynchQuery<>("SELECT FROM "
 						+ NdexClasses.User + " "
-						+ "WHERE (not "+ NdexClasses.ExternalObj_isDeleted 
-						+ ") and ( accountName.toLowerCase() LIKE '%"
+						+ "WHERE ( "+ NdexClasses.ExternalObj_isDeleted 
+						+ " = false ) and ( accountName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
 						+ "  OR lastName.toLowerCase() LIKE '%"
 						+ searchStr + "%'"
@@ -619,7 +619,7 @@ public class UserDocDAO extends OrientdbDAO {
 							+ ", out_"
 							+ permission.name().toString().toLowerCase()
 							+ " FROM" + " " + userRID + "  WHILE $depth <=2)"
-							+ " WHERE @class = '" + NdexClasses.Network + "' and ( not " + NdexClasses.ExternalObj_isDeleted +") "
+							+ " WHERE @class = '" + NdexClasses.Network + "' and ( " + NdexClasses.ExternalObj_isDeleted +" = false) "
 							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + blockSize);
 
@@ -688,7 +688,7 @@ public class UserDocDAO extends OrientdbDAO {
 					"SELECT FROM" + " (TRAVERSE " + NdexClasses.User + ".out_"
 							+ permission.name().toString().toLowerCase()
 							+ " FROM" + " " + userRID + "  WHILE $depth <=1)"
-							+ " WHERE @class = '" + NdexClasses.Group + "' and ( not " + NdexClasses.ExternalObj_isDeleted +") "
+							+ " WHERE @class = '" + NdexClasses.Group + "' and ( " + NdexClasses.ExternalObj_isDeleted +" = false) "
 							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " + " SKIP "
 							+ startIndex + " LIMIT " + blockSize);
 
@@ -910,7 +910,7 @@ public class UserDocDAO extends OrientdbDAO {
 					"SELECT FROM" + " (TRAVERSE in_ownedBy FROM" + " "
 							+ user.getIdentity().toString()
 							+ "  WHILE $depth <=1)"
-							+ " WHERE @class = '" + NdexClasses.Task + "' and ( not " + NdexClasses.ExternalObj_isDeleted +") " 
+							+ " WHERE @class = '" + NdexClasses.Task + "' and ( " + NdexClasses.ExternalObj_isDeleted +" = false) " 
 							+ statusFilter
 							+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 							+ " SKIP " + startIndex 

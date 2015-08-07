@@ -141,7 +141,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	
 	public ODocument getNetworkDocByUUIDString(String id) {
 	     String query = "select from " + NdexClasses.Network + " where UUID='"
-                +id+"' and (not isDeleted)";
+                +id+"' and (isDeleted = false)";
         final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
  
         if (networks.isEmpty())
@@ -388,16 +388,17 @@ public class NetworkDocDAO extends OrientdbDAO {
 	public  Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc,Network network)  {
 		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
-		for (OIdentifiable reifiedTRec : new OTraverse()
+		for ( ODocument doc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_Namespace)) {
+	/*	for (OIdentifiable reifiedTRec : new OTraverse()
  			.field("out_"+ NdexClasses.Network_E_Namespace)
  			.target(networkDoc)
  			.predicate( new OSQLPredicate("$depth <= 1"))) {
 
     		ODocument doc = (ODocument) reifiedTRec;
 
-    		if ( doc.getClassName().equals(NdexClasses.Namespace)) {
+    		if ( doc.getClassName().equals(NdexClasses.Namespace)) { */
     			namespaces.add(getNamespace(doc,network));
-    		}
+    	//	}
     	}
     	return namespaces;
 	}
@@ -658,47 +659,49 @@ public class NetworkDocDAO extends OrientdbDAO {
         }
 
         // get all baseTerms
-        for (OIdentifiable bTermDoc : new OTraverse()
+        for ( ODocument doc : Helper.getNetworkElements(nDoc, NdexClasses.Network_E_BaseTerms) ) {
+      /*  for (OIdentifiable bTermDoc : new OTraverse()
     			.field("out_"+ NdexClasses.Network_E_BaseTerms )
     			.target(nDoc)
     			.predicate( new OSQLPredicate("$depth <= 1"))) {
 
         	ODocument doc = (ODocument) bTermDoc;
 
-        	if ( doc.getClassName().equals(NdexClasses.BaseTerm) ) {
+        	if ( doc.getClassName().equals(NdexClasses.BaseTerm) ) { */
         		BaseTerm term = getBaseTerm(doc,network);
         		network.getBaseTerms().put(term.getId(), term);
 
-        	}
+     //   	}
         }
 
-        
-        for (OIdentifiable nodeDoc : new OTraverse()
+        for ( ODocument doc : Helper.getNetworkElements(nDoc,NdexClasses.Network_E_Nodes)) {
+    /*    for (OIdentifiable nodeDoc : new OTraverse()
         	.field("out_"+ NdexClasses.Network_E_Nodes )
         	.target(nDoc)
         	.predicate( new OSQLPredicate("$depth <= 1"))) {
 
         	ODocument doc = (ODocument) nodeDoc;
 
-        	if ( doc.getClassName().equals(NdexClasses.Node) ) {
+        	if ( doc.getClassName().equals(NdexClasses.Node) ) { */
         		Node node = getNode(doc,network);
         		network.getNodes().put(node.getId(), node);
  
-        	}
+       // 	}
         }
 
-        for (OIdentifiable nodeDoc : new OTraverse()
+        for ( ODocument doc: Helper.getNetworkElements(nDoc, NdexClasses.Network_E_Edges)) {
+       /* for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
                       	.predicate( new OSQLPredicate("$depth <= 1"))) {
 
             ODocument doc = (ODocument) nodeDoc;
          
-            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
+            if ( doc.getClassName().equals(NdexClasses.Edge) ) { */
               	   Edge e = getEdgeFromDocument(doc,network);
               	   network.getEdges().put(e.getId(), e);
             	 
-            }
+        //    }
         }
         
         return network;
@@ -732,15 +735,17 @@ public class NetworkDocDAO extends OrientdbDAO {
 
         setNetworkSummary(nDoc, network);
 
-         for (OIdentifiable nodeDoc : new OTraverse()
+        
+        for ( ODocument doc : Helper.getNetworkElements(nDoc, NdexClasses.Network_E_Edges) ){ 
+    /*     for (OIdentifiable nodeDoc : new OTraverse()
       	              	.field("out_"+ NdexClasses.Network_E_Edges )
       	              	.target(nDoc)
-                      	.predicate( new OSQLPredicate("$depth <= 1"))) {
+                      	.predicate( new OSQLPredicate("$depth <= 1"))) { */
   
 
-            ODocument doc = (ODocument) nodeDoc;
+         //   ODocument doc = (ODocument) nodeDoc;
          
-            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
+      //      if ( doc.getClassName().equals(NdexClasses.Edge) ) {
 
             	if ( counter >= endPosition) break;
 
@@ -751,7 +756,7 @@ public class NetworkDocDAO extends OrientdbDAO {
               	   network.getEdges().put(e.getId(), e);
             	               
                 }
-            }
+      //      }
             
         }
         
@@ -923,14 +928,16 @@ public class NetworkDocDAO extends OrientdbDAO {
     	term.setFunctionTermId(baseTermId);
     	// traverse for the argument
     	boolean isFirst= true; 
-    	for (OIdentifiable parameterRec : new OTraverse()
+    	
+    	for ( ODocument parameterDoc : Helper.getDocumentLinks(doc, "out_", NdexClasses.FunctionTerm_E_paramter))  {
+   /* 	for (OIdentifiable parameterRec : new OTraverse()
  				.field("out_"+ NdexClasses.FunctionTerm_E_paramter )
  				.target(doc)
- 				.predicate( new OSQLPredicate("$depth <= 1"))) {
-    		ODocument parameterDoc = (ODocument) parameterRec;
-    		if (isFirst ) {
-    			isFirst = false;
-    		} else {
+ 				.predicate( new OSQLPredicate("$depth <= 1"))) { */
+    	//	ODocument parameterDoc = (ODocument) parameterRec;
+    //		if (isFirst ) {
+   // 			isFirst = false;
+   // 		} else {
     		   if ( network != null) { 
     		     if ( parameterDoc.getClassName().equals(NdexClasses.BaseTerm)) {
     			    BaseTerm t = getBaseTerm(parameterDoc, network);
@@ -951,7 +958,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     		   }
      		   Long argElementId = parameterDoc.field(NdexClasses.Element_ID);
      		   term.getParameterIds().add(argElementId);	
-    		}
+    	//	}
     	}
     	return term;
     }

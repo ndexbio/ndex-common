@@ -150,6 +150,7 @@ public class NdexDatabase {
         	internalCounterBase = vdoc.field(seqField);
     	    batchCounter = 0 ;
             vdoc = vdoc.field(seqField, internalCounterBase + blockSize).save();
+            this.ndexDatabase.activateOnCurrentThread();
             dictionary.put(sequenceKey, vdoc);
         	commit();
        // 	System.out.println("New batch in id sequence:" + internalCounterBase );
