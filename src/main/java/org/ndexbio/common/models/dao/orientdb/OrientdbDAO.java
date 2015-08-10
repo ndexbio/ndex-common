@@ -78,7 +78,7 @@ public class OrientdbDAO implements AutoCloseable {
 			OIndex<?> Idx;
 			OIdentifiable record = null;
 			
-			Idx = this.db.getMetadata().getIndexManager().getIndex("index-external-id");
+			Idx = this.db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_UUID);
 			OIdentifiable temp = (OIdentifiable) Idx.get(id);
 			if((temp != null) )
 				record = temp;
@@ -88,12 +88,7 @@ public class OrientdbDAO implements AutoCloseable {
 			
 			return (ODocument) record.getRecord();
 			
-		}  catch (ObjectNotFoundException e) {
-			logger.severe("Object with UUID " + id + " not found : " + e.getMessage());
-			e.printStackTrace();
-			throw new ObjectNotFoundException(e.getMessage());
-			
-		}  catch (Exception e) {
+		}   catch (Exception e) {
 			logger.severe("Unexpected error on external object retrieval by UUID : " + e.getMessage());
 			e.printStackTrace();
 			throw new NdexException(e.getMessage());

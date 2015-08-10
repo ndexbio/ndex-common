@@ -58,7 +58,7 @@ public class Helper {
 	
 	static Logger logger = LoggerFactory.getLogger(Helper.class);
 
-	private static final Collection<ODocument> emptyDocs = new LinkedList<>();
+	protected static final Collection<ODocument> emptyDocs = new LinkedList<>();
 	
 	/**
 	 * Populate a NdexExternalObject using data from an ODocument object.

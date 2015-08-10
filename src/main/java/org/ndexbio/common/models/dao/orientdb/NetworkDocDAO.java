@@ -350,16 +350,8 @@ public class NetworkDocDAO extends OrientdbDAO {
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
 		
-    	for (OIdentifiable reifiedTRec : new OTraverse()
- 			.field("out_"+ NdexClasses.Network_E_Citations )
- 			.target(networkDoc)
- 			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-    		ODocument doc = (ODocument) reifiedTRec;
-
-    		if ( doc.getClassName().equals(NdexClasses.Citation)) {
+		for ( ODocument doc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_Citations)) {
     			citations.add(getCitationFromDoc(doc));
-    		}
     	}
     	return citations;
 	}
@@ -621,7 +613,7 @@ public class NetworkDocDAO extends OrientdbDAO {
      } 
      
     
-    private static void getPropertiesFromDoc(ODocument doc, PropertiedObject obj) {
+    protected static void getPropertiesFromDoc(ODocument doc, PropertiedObject obj) {
     	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
     	if (props != null && props.size()> 0) 
     		obj.setProperties(props);
@@ -801,20 +793,12 @@ public class NetworkDocDAO extends OrientdbDAO {
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
 		
 		
-        	for (OIdentifiable reifiedTRec : new OTraverse()
-     			.field("in_"+ NdexClasses.Network_E_BaseTerms)
-     			.target(networkDoc)
-     			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-        		ODocument doc = (ODocument) reifiedTRec;
-
-        		if ( doc.getClassName().equals(NdexClasses.BaseTerm)) {
+		for ( ODocument doc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
+        
         			BaseTerm t = getBaseTerm(doc,null);
         			baseTerms.add(t);
-        		}
-        	}
+        }
     	  	
-    	
     	return baseTerms;
     	
     }
@@ -824,18 +808,10 @@ public class NetworkDocDAO extends OrientdbDAO {
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
 		
-		
-        	for (OIdentifiable reifiedTRec : new OTraverse()
-     			.field("out_"+ NdexClasses.Network_E_Namespace)
-     			.target(networkDoc)
-     			.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-        		ODocument doc = (ODocument) reifiedTRec;
-
-        		if ( doc.getClassName().equals(NdexClasses.Namespace)) {
+		for ( ODocument doc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_Namespace)) {
+ 
         			Namespace n = getNamespace(doc,null);
         			namespaces.add(n);
-        		}
         	}
     	return namespaces;
 	}

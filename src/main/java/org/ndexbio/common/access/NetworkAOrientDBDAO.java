@@ -380,11 +380,12 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			traverser.field("in_" + NdexClasses.Node_E_alias); */
 		
 		for (OIdentifiable nodeRec : traverser) {
- 
-			if  ( nodeRec instanceof ORecordId) {
-			   ODocument doc = new ODocument((ORecordId)nodeRec);
-  
-		//	if ( doc.getClassName().equals(NdexClasses.Node)) {
+            ODocument doc = null;
+			if  ( nodeRec instanceof ORecordId) 
+			    doc = new ODocument((ORecordId)nodeRec);
+			else if ( ((ODocument)nodeRec).getClassName().equals(NdexClasses.Node)) 
+				doc = (ODocument)nodeRec;
+			if ( doc !=null) {
 				ORID rid = nodeRec.getIdentity();
 				if ( !result.contains(rid) ) {
 					result.add(rid);

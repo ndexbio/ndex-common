@@ -84,7 +84,7 @@ public interface NdexClasses {
     public static final String ExternalObj_isDeleted = "isDeleted";
 
 
-    public static final String Index_externalID = "index-external-id";
+//    public static final String Index_externalID = "index-external-id";
     
 	// network properties and edges.
     public static final String Network_P_UUID       = ExternalObj_ID;
@@ -158,6 +158,8 @@ public interface NdexClasses {
     public static final String Index_node_id = "index-node-id";
     public static final String Index_node_name = "index-node-name";
     public static final String Index_node_rep_id = "index-node-rep-id";
+    public static final String Index_UUID = "index-external-id";
+    
     //edge
     
 //    public static final String Edge_E_predicate  = "edgePredicate";
@@ -187,7 +189,7 @@ public interface NdexClasses {
 //    public static final String user_E_grp_admin	      = "grpAdmin";
     public static final String User_P_oldEmailAddress = "oldEmail";
     public static final String User_P_emailAddress   = "emailAddress";
-    
+        
     // task
     public static final String Task_P_description = "description";
     public static final String Task_P_status = "status";

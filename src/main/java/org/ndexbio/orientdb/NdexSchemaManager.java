@@ -100,8 +100,6 @@ public class NdexSchemaManager
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_cTime, OType.DATETIME);
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_mTime, OType.DATETIME);
             clsNdxExternalObj.createProperty(NdexClasses.ExternalObj_isDeleted, OType.BOOLEAN);
-            
-            clsNdxExternalObj.createIndex(NdexClasses.Index_externalID, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
         }
         
         OClass clsAccount =schema.getClass(NdexClasses.Account);
@@ -117,10 +115,6 @@ public class NdexSchemaManager
         	clsAccount.createProperty("password", OType.STRING);
         	clsAccount.createProperty("website", OType.STRING);
         	clsAccount.createProperty(NdexClasses.account_P_oldAcctName, OType.STRING);
-        	clsAccount.createIndex(NdexClasses.Index_accountName, 
-        			OClass.INDEX_TYPE.UNIQUE, 
-        			NdexClasses.account_P_accountName);
-
         }
 
         logger.info("parent classes created.");
@@ -133,11 +127,9 @@ public class NdexSchemaManager
         {
             OClass groupClass =  orientDbGraph.createVertexType(NdexClasses.Group, clsAccount);
             groupClass.createProperty("organizationName", OType.STRING);
-            
-//            groupClass.createIndex("index-group-name", OClass.INDEX_TYPE.UNIQUE, "name");
         }
         
- 
+/* 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.NdexProperty);  
         if ( cls == null)
         {
@@ -145,16 +137,7 @@ public class NdexSchemaManager
             cls.createProperty("value", OType.STRING);
             cls.createProperty("dataType", OType.STRING);
         }
-
-/*        cls = schema.getClass(NdexClasses.SimpleProperty);  
-        if ( cls == null)
-        {
-        	cls = orientDbGraph.createVertexType(NdexClasses.SimpleProperty);
-            cls.createProperty(NdexClasses.SimpleProp_P_name, OType.STRING);
-            cls.createProperty(NdexClasses.SimpleProp_P_value, OType.STRING);
-        }
-*/
-        
+*/        
         cls = schema.getClass(NdexClasses.Request);  
         if (cls == null)
         {
@@ -187,17 +170,14 @@ public class NdexSchemaManager
             taskClass.createProperty(NdexClasses.Task_P_message, OType.STRING);
         }
 
-        cls = schema.getClass(NdexClasses.User);  
-        if (cls == null)
+        OClass userClass = schema.getClass(NdexClasses.User);  
+        if (userClass == null)
         {
-            OClass userClass = orientDbGraph.createVertexType(NdexClasses.User, clsAccount);
+            userClass = orientDbGraph.createVertexType(NdexClasses.User, clsAccount);
 
             userClass.createProperty("firstName", OType.STRING);
             userClass.createProperty("lastName", OType.STRING);
             userClass.createProperty(NdexClasses.User_P_emailAddress, OType.STRING);
-
-            userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
-
         }
         
         logger.info("supporting classes created.");
@@ -212,7 +192,6 @@ public class NdexSchemaManager
             nsClass.createProperty(NdexClasses.ns_P_prefix, OType.STRING);
             nsClass.createProperty(NdexClasses.ns_P_uri, OType.STRING);
             
-            nsClass.createIndex("index-namespace-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         }
 
         OClass bTermClass = schema.getClass(NdexClasses.BaseTerm);  
@@ -224,12 +203,6 @@ public class NdexSchemaManager
             bTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
 
             bTermClass.createProperty(NdexClasses.BTerm_NS_ID, OType.LONG);
-            
-            bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});
-//            bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-            bTermClass.createIndex("index-baseterm-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            bTermClass.createIndex("index-baseterm-ns", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.BTerm_NS_ID);
-            
         }
 
         OClass citationClass = schema.getClass(NdexClasses.Citation);  
@@ -243,7 +216,6 @@ public class NdexSchemaManager
             citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             citationClass.createProperty("title", OType.STRING);
             
-            citationClass.createIndex("index-citation-id", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
         }
 
         OClass supportClass = orientDbGraph.getVertexType(NdexClasses.Support);
@@ -253,9 +225,6 @@ public class NdexSchemaManager
             supportClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             supportClass.createProperty("text", OType.STRING);
             supportClass.createProperty(NdexClasses.Citation, OType.LONG);
-            
-            supportClass.createIndex("index-support-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            supportClass.createIndex("idx-support-citation", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Citation);
             
         }
 
@@ -271,8 +240,6 @@ public class NdexSchemaManager
 
             edgeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDLIST);
 
-            edgeClass.createIndex("index-edge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            edgeClass.createIndex("idx-edge-predicate", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Edge_P_predicateId);
         }
 
         cls = schema.getClass(NdexClasses.FunctionTerm);  
@@ -307,7 +274,6 @@ public class NdexSchemaManager
             networkClass.createProperty("edgeCount", OType.INTEGER);
        
             networkClass.createProperty(NdexClasses.ndexProperties, OType.EMBEDDEDLIST);
-    //        networkClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
 
             networkClass.createProperty("nodeCount", OType.INTEGER);
       
@@ -321,9 +287,10 @@ public class NdexSchemaManager
 
         }
 
-        if (orientDbGraph.getVertexType(NdexClasses.Node) == null)
+        OClass nodeClass = orientDbGraph.getVertexType(NdexClasses.Node);
+        if (nodeClass == null)
         {
-            OClass nodeClass = orientDbGraph.createVertexType(NdexClasses.Node);
+            nodeClass = orientDbGraph.createVertexType(NdexClasses.Node);
             nodeClass.createProperty(NdexClasses.Node_P_name, OType.STRING);
             nodeClass.createProperty(NdexClasses.Element_ID,  OType.LONG);
             nodeClass.createProperty(NdexClasses.ndexProperties, OType.EMBEDDEDLIST);
@@ -336,14 +303,10 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDLIST);
             nodeClass.createProperty(NdexClasses.Support, OType.EMBEDDEDLIST);
             
-            nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-            nodeClass.createIndex(NdexClasses.Index_node_rep_id, OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Node_P_represents);
-            nodeClass.createIndex(NdexClasses.Index_node_name, "FULLTEXT",null, null, "LUCENE", new String[] { NdexClasses.Node_P_name});
-
          //   nodeClass.createIndex(NdexClasses.Index_node_name, OClass.INDEX_TYPE.NOTUNIQUE, 		NdexClasses.Node_P_name);
         }
         
-        if (orientDbGraph.getVertexType(NdexClasses.Provenance) == null)
+/*        if (orientDbGraph.getVertexType(NdexClasses.Provenance) == null)
         {
            // OClass clss = 
             		orientDbGraph.createVertexType(NdexClasses.Provenance);
@@ -358,9 +321,36 @@ public class NdexSchemaManager
             clss.createProperty("name", OType.STRING);
             clss.createProperty("properties", OType.EMBEDDEDLIST);
   //          clss.createProperty("presentationProperties", OType.EMBEDDEDLIST);
-        }
-        logger.info("All classes created.");
+        } */
+        logger.info("All classes created. creating indexes ...");
 
+        clsNdxExternalObj.createIndex(NdexClasses.Index_UUID, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Network_P_UUID);
+    	clsAccount.createIndex(NdexClasses.Index_accountName, 
+    			OClass.INDEX_TYPE.UNIQUE, 
+    			NdexClasses.account_P_accountName);
+
+       userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
+        nsClass.createIndex("index-namespace-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+        
+        bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});
+//      bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+       bTermClass.createIndex("index-baseterm-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+       bTermClass.createIndex("index-baseterm-ns", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.BTerm_NS_ID);
+
+       citationClass.createIndex("index-citation-id", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
+      
+       supportClass.createIndex("index-support-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+       supportClass.createIndex("idx-support-citation", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Citation);
+      
+       edgeClass.createIndex("index-edge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+       edgeClass.createIndex("idx-edge-predicate", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Edge_P_predicateId);
+
+       nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+       nodeClass.createIndex(NdexClasses.Index_node_rep_id, OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Node_P_represents);
+       nodeClass.createIndex(NdexClasses.Index_node_name, "FULLTEXT",null, null, "LUCENE", new String[] { NdexClasses.Node_P_name});
+
+
+        logger.info("All indexes are created.");
 
         orientDb.getMetadata().getSchema().save();
         

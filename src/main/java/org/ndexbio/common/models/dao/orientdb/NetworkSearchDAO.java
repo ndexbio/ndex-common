@@ -111,7 +111,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		// has account name
 		if(!Strings.isNullOrEmpty(simpleNetworkQuery.getAccountName())) {
 
-			OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex("index-user-username");
+			OIndex<?> accountNameIdx = this.db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_accountName);
 			OIdentifiable nAccount = (OIdentifiable) accountNameIdx.get(simpleNetworkQuery.getAccountName()); // account to traverse by
 				
 			if(nAccount == null) 
@@ -144,11 +144,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			final TreeSet<NetworkSummary> foundNetworks = new TreeSet<>(new NetworkResultComparator());
 			
 			if ( userORID != null && userORID.equals(nAccount)) {   // same account
-		   		for (OIdentifiable reifiedTRec : traverser) {
-		   			  if ( reifiedTRec instanceof ORecordId) {
-			    	    ODocument networkDoc = new ODocument((ORecordId)reifiedTRec);
-			    	  //if ( networkDoc.getClassName().equals(NdexClasses.Network)) {
-						NetworkSummary network =dao.getNetworkSummary(networkDoc); 
+				ODocument networkDoc = null;
+				for (OIdentifiable reifiedTRec : traverser) {
+		   			  if ( reifiedTRec instanceof ORecordId ) 
+			    	    networkDoc = new ODocument((ORecordId)reifiedTRec);
+			    	  else if ( ((ODocument)reifiedTRec).getClassName().endsWith(NdexClasses.Network))
+			    		networkDoc = (ODocument)reifiedTRec;
+			    	  if ( networkDoc !=null) {
+						NetworkSummary network =NetworkDocDAO.getNetworkSummary(networkDoc); 
 						if ( network.getIsComplete() && !network.getIsDeleted())
 							foundNetworks .add(network);
 			    	  }
@@ -273,75 +276,59 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 		Collection<OIdentifiable> bTermIds =  (Collection<OIdentifiable>) basetermIdx.get( searchStr); 
 
-		
-		  for (OIdentifiable networkRec : new OTraverse()
-		  				.field(	"in_" + NdexClasses.Network_E_BaseTerms)
-						.target(bTermIds)
-						.predicate( new OSQLPredicate("$depth <= 1"))) {
-			   
-			  ORID id = networkRec.getIdentity();
-			  if ( ! resultIDSet.contains(id)) {
-				
-				  ODocument doc = (ODocument) networkRec;
-			    
-				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-					Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
-					Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
-		            if ( isComplete !=null && isComplete.booleanValue() && 
-		            	 (	isDeleted == null || !isDeleted.booleanValue() ) && 
-		            	  isSearchable(doc, userRID, adminUserRID,simpleNetworkQuery.getCanRead(), 
-		  						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
-							resultIDSet.add(id);
-							if ( counter >= offset) {
-								NetworkSummary network =dao.getNetworkSummary(doc); 
-								if ( network.getIsComplete())
-									resultList .add(network);
-							}
-							counter ++;
-							if ( resultList.size()>= top)
-								return resultList;
-					}
-				   }
-			   }
-		  }
+		 for ( OIdentifiable btid : bTermIds ) {
+	 			ODocument bTermDoc = btid.getRecord();
+	 			ODocument doc = bTermDoc.field("in_" + NdexClasses.Network_E_BaseTerms);
+	 			
+				ORID id = doc.getIdentity();
+				Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
+				Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+	            if ( isComplete !=null && isComplete.booleanValue() && 
+	            	 (	isDeleted == null || !isDeleted.booleanValue() ) && 
+	            	  isSearchable(doc, userRID, adminUserRID,simpleNetworkQuery.getCanRead(), 
+	  						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
+						resultIDSet.add(id);
+						if ( counter >= offset) {
+							NetworkSummary network =dao.getNetworkSummary(doc); 
+							if ( network.getIsComplete())
+								resultList .add(network);
+						}
+						counter ++;
+						if ( resultList.size()>= top)
+							return resultList;
+				}
 
+		 }
+        		
 		  // search node.name
  		  OIndex<?> nodeNameIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_node_name);
 			
  		  Collection<OIdentifiable> nodeIds =  (Collection<OIdentifiable>) nodeNameIdx.get( searchStr); 
 
-		  for (OIdentifiable networkRec : new OTraverse()
-			  				.field(	"in_" + NdexClasses.Network_E_Nodes)
-							.target(nodeIds)
-							.predicate( new OSQLPredicate("$depth <= 1"))) {
-				   
-			  ORID id = networkRec.getIdentity();
-			  if ( ! resultIDSet.contains(id)) {
-					
-			  ODocument doc = (ODocument) networkRec;
-				    
-				   if ( doc.getClassName().equals(NdexClasses.Network)) {
-					    Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
-						Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
-			            if( isComplete !=null && isComplete.booleanValue() &&
-			                (isDeleted == null || !isDeleted.booleanValue() ) &&		
-			               (isSearchable(doc, userRID,adminUserRID,simpleNetworkQuery.getCanRead(), 
-									simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) ) {
-								resultIDSet.add(id);
-								if ( counter >= offset) {
-									NetworkSummary network =dao.getNetworkSummary(doc); 
-									if ( network.getIsComplete())
-										resultList .add(network);
-								}
-								counter ++;
-								if ( resultList.size()>= top)
-									return resultList;
+ 		  for ( OIdentifiable nid : nodeIds ) {
+ 			ODocument nodeDoc = nid.getRecord();
+ 			ODocument doc = nodeDoc.field("in_" + NdexClasses.Network_E_Nodes);
+ 			
+			ORID id = doc.getIdentity();
+			if ( ! resultIDSet.contains(id)) {
+			    Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
+				Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+	            if( isComplete !=null && isComplete.booleanValue() &&
+	                (isDeleted == null || !isDeleted.booleanValue() ) &&		
+	               (isSearchable(doc, userRID,adminUserRID,simpleNetworkQuery.getCanRead(), 
+							simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) ) {
+						resultIDSet.add(id);
+						if ( counter >= offset) {
+							NetworkSummary network =NetworkDocDAO.getNetworkSummary(doc); 
+							if ( network.getIsComplete())
+								resultList .add(network);
 						}
-				   }
-			   }
+						counter ++;
+						if ( resultList.size()>= top)
+							return resultList;
+				}
 			}
-  
-		
+ 		  }
 		return resultList;
 	  } catch (OIndexException e1) {
 		  throw new NdexException ("Invalid search string. " + e1.getCause().getMessage());

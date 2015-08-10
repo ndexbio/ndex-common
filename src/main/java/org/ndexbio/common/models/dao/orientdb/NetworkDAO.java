@@ -273,67 +273,11 @@ public class NetworkDAO extends NetworkDocDAO {
 		networkDoc.removeField(NdexClasses.ndexProperties);
 		networkDoc.save();
 
-/*		for (OIdentifiable propertyDoc : new OTraverse()
-    	.field("out_"+ NdexClasses.E_ndexProperties )
-    	.target(networkDoc)
-    	.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-        	ODocument doc = (ODocument) propertyDoc;
-
-        	if ( doc.getClassName().equals(NdexClasses.NdexProperty) ) {
-        		graph.removeVertex(graph.getVertex(doc));
-        	}
-        }
-
-       for (OIdentifiable propertyDoc : new OTraverse()
-    	.field("out_"+ NdexClasses.E_ndexPresentationProps )
-    	.target(networkDoc)
-    	.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-        	ODocument doc = (ODocument) propertyDoc;
-
-        	if ( doc.getClassName().equals(NdexClasses.SimpleProperty) ) {
-        		graph.removeVertex(graph.getVertex(doc));
-        	}
-        } */
 	}
 	
 	
 	public PropertyGraphNetwork getProperytGraphNetworkById (UUID networkID, int skipBlocks, int blockSize) throws NdexException {
-/*		ODocument nDoc = getNetworkDocByUUID(networkID);
-		
-	    if (nDoc == null) return null;
-	    
-	    PropertyGraphNetwork network = new PropertyGraphNetwork();
-	    
-		populatePropetyGraphNetworkFromDoc(network, nDoc);
-	    
-	    int startPosition = skipBlocks * blockSize;
-	    int counter = 0;
-	    int endPosition = skipBlocks * blockSize + blockSize;
-	    
-        
-        TreeMap <ORID, String> termStringMap = new TreeMap<> ();
 
-        for (OIdentifiable nodeDoc : new OTraverse()
-      	              	.field("out_"+ NdexClasses.Network_E_Edges )
-      	              	.target(nDoc)
-                      	.predicate( new OSQLPredicate("$depth <= 1"))) {
-  
-
-            ODocument doc = (ODocument) nodeDoc;
-         
-            if ( doc.getClassName().equals(NdexClasses.Edge) ) {
-
-            	if ( counter >= endPosition) break;
-
-                counter ++;
-            	
-            	if ( counter >= startPosition )  {
-            	  fetchPropertyGraphEdgeToNetwork(doc,network, termStringMap);
-                }
-            } 	
-        } */
    	    return new PropertyGraphNetwork( getNetwork(networkID,skipBlocks,blockSize)); 
 	}
 
@@ -341,47 +285,7 @@ public class NetworkDAO extends NetworkDocDAO {
     
 	public PropertyGraphNetwork getProperytGraphNetworkById(UUID id) throws NdexException {
 		
-/*		ODocument networkDoc = getNetworkDocByUUID(id);
-		
-		if (networkDoc == null) return null;
 
-		PropertyGraphNetwork network = new PropertyGraphNetwork();
-
-		NetworkDAO.populatePropetyGraphNetworkFromDoc(network, networkDoc);
-		
-		TreeMap<ORID, String> termStringMap = new TreeMap<>();
-		
-        Map<Long,PropertyGraphNode> nodeList = network.getNodes();
-         for (OIdentifiable nodeDoc : new OTraverse()
-       	    .field("out_"+ NdexClasses.Network_E_Nodes )
-            .target(networkDoc)
-            .predicate( new OSQLPredicate("$depth <= 1"))) {
-
-              ODocument doc = (ODocument) nodeDoc;
-          
-              if ( doc.getClassName().equals(NdexClasses.Node)) {
-          
-                  PropertyGraphNode nd = getPropertyGraphNode(doc,network, termStringMap);
-                  if ( nd != null)
-                	  nodeList.put(nd.getId(),nd);
-                  else
-                	  throw new NdexException("Error occurred when getting node information from db "+ doc);
-              }
-         }
-         
-         for (OIdentifiable nodeDoc : new OTraverse()
-       	    .field("out_"+ NdexClasses.Network_E_Edges )
-            .target(networkDoc)
-            .predicate( new OSQLPredicate("$depth <= 1"))) {
-
-              ODocument doc = (ODocument) nodeDoc;
-          
-              if ( doc.getClassName().equals(NdexClasses.Edge)) {
-          
-                  this.fetchPropertyGraphEdgeToNetwork(doc, network, termStringMap);
-              }
-         }  */
-         
 		 return new PropertyGraphNetwork(this.getNetworkById(id)); 
 	}
 /*	
