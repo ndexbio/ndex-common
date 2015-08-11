@@ -21,11 +21,11 @@ public class NamespaceIterator extends NetworkElementIterator<Namespace> {
 
     private  Namespace getNamespace(ODocument ns)  {
         Namespace rns = new Namespace();
-        rns.setId((long)ns.field("id"));
+        rns.setId((long)ns.field(NdexClasses.Element_ID));
         rns.setPrefix((String)ns.field(NdexClasses.ns_P_prefix));
         rns.setUri((String)ns.field(NdexClasses.ns_P_uri));
         
-        NetworkDocDAO.getPropertiesFromDoc(ns, rns);
+        SingleNetworkDAO.getPropertiesFromDoc(ns, rns);
         
         return rns;
      } 

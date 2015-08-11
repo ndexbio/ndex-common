@@ -110,8 +110,8 @@ public class NetworkDAOTest {
 		
 		properties.add(new NdexPropertyValuePair ("something", "good"));
 		
-		dao.setNetworkProperties(UUID.fromString(
-				"bee7d26d-37a6-11e4-8cf5-90b11c72aefa"), properties);
+	//	dao.setNetworkProperties(UUID.fromString(
+	//			"bee7d26d-37a6-11e4-8cf5-90b11c72aefa"), properties);
 		
 		
 		boolean s =Helper.canRemoveAdmin(db, "473d36ff-28d0-11e4-a48c-90b11c72aefa", "9e97e66f-28c9-11e4-a01a-90b11c72aefa");

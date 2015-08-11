@@ -1,11 +1,15 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.Iterator;
+import java.util.List;
 
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.PropertiedObject;
+import org.ndexbio.model.object.network.CXEdge;
 import org.ndexbio.model.object.network.Namespace;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -39,7 +43,7 @@ public class SingleNetworkDAO implements AutoCloseable {
 			return (ODocument) record.getRecord();
 	}
 	
-    public Iterable<ODocument> getNetworkElements(String elementEdgeString) {	
+    private Iterable<ODocument> getNetworkElements(String elementEdgeString) {	
     	
     	Object f = networkDoc.field("out_"+ elementEdgeString);
     	
@@ -57,11 +61,26 @@ public class SingleNetworkDAO implements AutoCloseable {
 		return new NamespaceIterator(getNetworkElements(NdexClasses.Network_E_Namespace));
 	}
 	
+	public Iterator<String>  getNodeSIDs () {
+		return new NodeSIDIterator(getNetworkElements(NdexClasses.Network_E_Nodes));
+	}
+	
+	
+	public Iterator<CXEdge>  geCXEdges () {
+		return new CXEdgeIterator(getNetworkElements(NdexClasses.Network_E_Edges));
+	}
 	
 	@Override
 	public void close() throws Exception {
 		db.commit();
 		db.close();
 	}
+	
+    
+    protected static void getPropertiesFromDoc(ODocument doc, PropertiedObject obj) {
+    	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
+    	if (props != null && props.size()> 0) 
+    		obj.setProperties(props);
+    }
 
 }

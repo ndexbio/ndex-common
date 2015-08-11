@@ -111,6 +111,7 @@ public interface NdexClasses {
     public static final String Network_E_ReifiedEdgeTerms = "reifiedETerms";    
     // element 
     public static final String Element_ID  = "id";
+    public static final String Element_SID = "sid";
     
     public static final String Index_network_name_desc = "idx_network-name-desc";
     
