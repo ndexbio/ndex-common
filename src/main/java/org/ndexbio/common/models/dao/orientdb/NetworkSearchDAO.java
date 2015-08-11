@@ -277,10 +277,11 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		Collection<OIdentifiable> bTermIds =  (Collection<OIdentifiable>) basetermIdx.get( searchStr); 
 
 		 for ( OIdentifiable btid : bTermIds ) {
-	 			ODocument bTermDoc = btid.getRecord();
-	 			ODocument doc = bTermDoc.field("in_" + NdexClasses.Network_E_BaseTerms);
+	 		ODocument bTermDoc = btid.getRecord();
+	 		ODocument doc = bTermDoc.field("in_" + NdexClasses.Network_E_BaseTerms);
 	 			
-				ORID id = doc.getIdentity();
+			ORID id = doc.getIdentity();
+			if ( !resultIDSet.contains(id))	{
 				Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
 				Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
 	            if ( isComplete !=null && isComplete.booleanValue() && 
@@ -289,15 +290,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 	  						simpleNetworkQuery.getIncludeGroups(), simpleNetworkQuery.getPermission())) {
 						resultIDSet.add(id);
 						if ( counter >= offset) {
-							NetworkSummary network =dao.getNetworkSummary(doc); 
-							if ( network.getIsComplete())
-								resultList .add(network);
+							NetworkSummary network =NetworkDocDAO.getNetworkSummary(doc); 
+							resultList .add(network);
 						}
 						counter ++;
 						if ( resultList.size()>= top)
 							return resultList;
 				}
-
+			}
 		 }
         		
 		  // search node.name

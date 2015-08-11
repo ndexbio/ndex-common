@@ -106,15 +106,8 @@ public class UserDAO extends UserDocDAO {
 //			boolean safe = true;
 
 			// check if there is any network or group dependency
-	        for (OIdentifiable networkDoc : new OTraverse()
-	    		.field("out_"+ NdexClasses.E_admin )
-	    		.target(userDoc)
-	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	        	ODocument doc = (ODocument) networkDoc;
-
-	        	if ( doc.getClassName().equals(NdexClasses.Network) ) {
-	        		Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
+			for ( ODocument doc : Helper.getDocumentLinks(userDoc,"out_", NdexClasses.E_admin )) {
+		        	Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
 	        		if ( isDeleted == null || !isDeleted.booleanValue()) {
 	        			String networkUUID = doc.field(NdexClasses.ExternalObj_ID);
 	        			if ( !Helper.canRemoveAdmin(db, networkUUID, id.toString())) {
@@ -123,17 +116,10 @@ public class UserDAO extends UserDocDAO {
 	        				
 	        		}
 	        		
-	        	}
 	        }
-
-	        for (OIdentifiable grpDoc : new OTraverse()
-	    		.field("out_"+ NdexClasses.GRP_E_admin )
-	    		.target(userDoc)
-	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	        	ODocument doc = (ODocument) grpDoc;
-
-	        	if ( doc.getClassName().equals(NdexClasses.Group) ) {
+            
+			for ( ODocument doc : Helper.getDocumentLinks(userDoc, "out_", NdexClasses.GRP_E_admin )) {
+	    
 	        		Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
 	        		if ( isDeleted == null || !isDeleted.booleanValue()) {
 	        			String grpUUID = doc.field(NdexClasses.ExternalObj_ID);
@@ -142,21 +128,14 @@ public class UserDAO extends UserDocDAO {
 	        			}
 	        				
 	        		}
-	        		
-	        	}
+
 	        }
 
 	        OrientVertex userV = graph.getVertex(userDoc);
 
 	        //remove the group and network links
-	        for (OIdentifiable networkDoc : new OTraverse()
-	    		.field("out_"+ NdexClasses.E_admin )
-	    		.target(userDoc)
-	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	        	ODocument doc = (ODocument) networkDoc;
-
-	        	if ( doc.getClassName().equals(NdexClasses.Network) ) {
+	        for ( ODocument doc : Helper.getDocumentLinks(userDoc, "out_", NdexClasses.E_admin)) {
+	        
 	        		Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
 	        		if ( isDeleted == null || !isDeleted.booleanValue()) {
 	        			OrientVertex networkV = graph.getVertex(doc);
@@ -164,17 +143,10 @@ public class UserDAO extends UserDocDAO {
 	        				e.remove();
 	        			}
 	        		}
-	        	}
 	        }
 
-	        for (OIdentifiable grpDoc : new OTraverse()
-	    		.field("out_"+ NdexClasses.GRP_E_admin )
-	    		.target(userDoc)
-	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	        	ODocument doc = (ODocument) grpDoc;
-
-	        	if ( doc.getClassName().equals(NdexClasses.Group) ) {
+	        for ( ODocument doc : Helper.getDocumentLinks(userDoc,"out_", NdexClasses.GRP_E_admin )) {
+	  
 	        		Boolean isDeleted = doc.field(NdexClasses.ExternalObj_isDeleted);
 	        		if ( isDeleted == null || !isDeleted.booleanValue()) {
 	        			OrientVertex grpV = graph.getVertex(doc);
@@ -182,18 +154,9 @@ public class UserDAO extends UserDocDAO {
 	        				e.remove();
 	        			}
 	        		}
-	        	}
 	        }
 	        
-	        // delete tasks an remove links
-	        for (OIdentifiable taskDoc : new OTraverse()
-	    		.field("in_"+ NdexClasses.Task_E_owner )
-	    		.target(userDoc)
-	    		.predicate( new OSQLPredicate("$depth <= 1"))) {
-
-	        	ODocument doc = (ODocument) taskDoc;
-
-	        	if ( doc.getClassName().equals(NdexClasses.Task) ) {
+	        for ( ODocument doc : Helper.getDocumentLinks(userDoc,"in_", NdexClasses.Task_E_owner)) {
         			OrientVertex taskV = graph.getVertex(doc);
 	        		for ( Edge e : userV.getEdges(taskV, Direction.IN, NdexClasses.Task_E_owner)) {
 	        			e.remove();
@@ -201,7 +164,6 @@ public class UserDAO extends UserDocDAO {
 	        		taskV.reload();
 	        		taskV.getRecord().field(NdexClasses.ExternalObj_isDeleted);
 	        		taskV.save();
-	        	}
 	        }
 
 			String accName = userDoc.field (NdexClasses.account_P_accountName);
