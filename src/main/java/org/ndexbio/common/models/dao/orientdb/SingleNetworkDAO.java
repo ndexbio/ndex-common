@@ -5,10 +5,8 @@ import java.io.OutputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.cxio.aspects.datamodels.EdgesElement;
 import org.cxio.aspects.datamodels.NodesElement;
@@ -22,7 +20,6 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.PropertiedObject;
-import org.ndexbio.model.object.network.CXEdge;
 import org.ndexbio.model.object.network.Namespace;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
