@@ -1,8 +1,21 @@
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import org.cxio.aspects.datamodels.EdgesElement;
+import org.cxio.aspects.datamodels.NodesElement;
+import org.cxio.core.CxWriter;
+import org.cxio.core.interfaces.AspectElement;
+import org.cxio.core.interfaces.AspectFragmentWriter;
+import org.cxio.util.Util;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
@@ -61,14 +74,44 @@ public class SingleNetworkDAO implements AutoCloseable {
 		return new NamespaceIterator(getNetworkElements(NdexClasses.Network_E_Namespace));
 	}
 	
-	public Iterator<String>  getNodeSIDs () {
-		return new NodeSIDIterator(getNetworkElements(NdexClasses.Network_E_Nodes));
+	public Iterable<NodesElement>  getCXNodes () {
+		return new CXNodeCollection(getNetworkElements(NdexClasses.Network_E_Nodes));
 	}
 	
 	
-	public Iterator<CXEdge>  geCXEdges () {
-		return new CXEdgeIterator(getNetworkElements(NdexClasses.Network_E_Edges));
+	public Iterable<EdgesElement>  getCXEdges () {
+		return new CXEdgeCollection(getNetworkElements(NdexClasses.Network_E_Edges));
 	}
+	
+	
+	public void writeNetworkInCX(OutputStream out, final boolean use_default_pretty_printer) throws IOException {
+        CxWriter cxwtr = CxWriter.createInstance(out, use_default_pretty_printer);
+        
+        Timestamp foo = new Timestamp(Calendar.getInstance().getTimeInMillis());
+        for (AspectFragmentWriter afw : Util.getAllAvailableAspectFragmentWriters(foo.toString()) ) {
+        	cxwtr.addAspectFragmentWriter(afw);
+        }
+        
+        cxwtr.start();
+        
+        List<AspectElement> aspect_elements = new ArrayList<AspectElement>(1);
+        
+        for ( EdgesElement edge : getCXEdges()) {
+        	aspect_elements.add(edge);
+        	cxwtr.writeAspectElements(aspect_elements);
+        	aspect_elements.remove(0);
+        }
+
+        for ( NodesElement edge : getCXNodes()) {
+        	aspect_elements.add(edge);
+        	cxwtr.writeAspectElements(aspect_elements);
+        	aspect_elements.remove(0);
+        }
+        
+        cxwtr.end();
+
+	}
+	
 	
 	@Override
 	public void close() throws Exception {
