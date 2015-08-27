@@ -31,8 +31,10 @@
 package org.ndexbio.task;
 
 import java.io.File;
+import java.text.DecimalFormat;
 
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.util.MemoryUtilization;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
@@ -58,8 +60,7 @@ public class FileUploadTask extends NdexTask {
 			.getLogger(FileUploadTask.class);
 
 	private Status taskStatus;
-    private NdexDatabase db;
-	
+    private NdexDatabase db;	
 	
 	public FileUploadTask(Task itask, NdexDatabase ndexDb) throws IllegalArgumentException,
 			SecurityException, NdexException {
@@ -90,7 +91,8 @@ public class FileUploadTask extends NdexTask {
 	}
 
 	private void processFile() throws Exception {
-		logger.info("Processing file: " + this.getFilename());
+		logger.info("[start: Processing file='{}']", this.getFilename());
+		//logger.info("[memory: {}]", MemoryUtilization.getMemoryUtiliztaion());
 		this.taskStatus = Status.PROCESSING;
 		this.startTask();
 		File file = new File(this.getFilename());
@@ -118,7 +120,7 @@ public class FileUploadTask extends NdexTask {
 						file.getAbsolutePath(), this.getTaskOwnerAccount(),db, getTask().getDescription());
 
 			if (!((XbelParser)parser).getValidationState().isValid()) {
-					logger.info("XBel validation failed");
+					logger.info("[end: XBel validation failed]");
 					this.taskStatus = Status.COMPLETED_WITH_ERRORS;
 					throw new NdexException(
 							"XBEL file fails XML schema validation - one or more elements do not meet XBEL specification.");
@@ -130,17 +132,20 @@ public class FileUploadTask extends NdexTask {
 						file.getAbsolutePath(), this.getTaskOwnerAccount(),db);
 			break;
 		default:		
-			String message = "The uploaded file type is not supported; must be SIF, XGMML, XBEL, XLS or XLSX."; 
+			String message = "[end: The uploaded file type is not supported; must be SIF, XGMML, XBEL, XLS or XLSX.]"; 
 			logger.error(message);
 			throw new NdexException (message);
 
 		}
 		parser.parseFile();
-		this.taskStatus = Status.COMPLETED;
-		logger.info("Network upload file: " + file.getName() +" deleted from staging area");			
+		this.taskStatus = Status.COMPLETED;		
+		long fileSize = file.length();
 		file.delete(); // delete the file from the staging area
 		this.addTaskAttribute("networkUUID", parser.getUUIDOfUploadedNetwork().toString());
 		this.updateTaskStatus(this.taskStatus);
+		//logger.info("[memory: {}]", MemoryUtilization.getMemoryUtiliztaion());
+		logger.info("[end: Network upload finished; UUID='{}' fileSize={}]", 
+				parser.getUUIDOfUploadedNetwork().toString(), fileSize);
 	}
 
 }

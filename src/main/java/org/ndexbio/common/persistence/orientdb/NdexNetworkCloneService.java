@@ -216,21 +216,13 @@ public class NdexNetworkCloneService extends PersistenceService {
 			logger.info("[start: cloning network; name='{}']", network.getName());
 			// need to keep this order because of the dependency between objects.
 			cloneNamespaces ();
-			//logger.info("Finished cloning namespaces");
 			cloneBaseTerms ();
-			//logger.info("Finished cloning baseterms");
 			cloneCitations();
-			//logger.info("Finished cloning citations");
 			cloneSupports();
-			//logger.info("Finished cloning supports");
 			cloneReifiedEdgeTermNodes(); // only clone the vertex itself.
-			//logger.info("Finished cloning reifiedEdgeTerms");
 			cloneFunctionTermVertex();
-			//logger.info("Finished cloning functionterms");
             cloneNodes(); 			
-            //logger.info("Finished cloning nodes");
             cloneEdges();
-            //logger.info("Finished cloning edges");
             
 			// process reifiedEdgeTerm and FunctionTerm
             createLinksforRefiedEdgeTerm();

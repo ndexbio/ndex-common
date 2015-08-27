@@ -61,9 +61,9 @@ public class AddNetworkToCacheTask extends NdexTask {
 	
 	@Override
 	public Task call() throws Exception {
-		logger.info("creating cache.");
+		logger.info("[start: creating cache.]");
 		this.createNetworkCache();
-		logger.info("finished creating cache.");
+		logger.info("[end: finished creating cache.]");
 		return this.getTask();
 	}
 

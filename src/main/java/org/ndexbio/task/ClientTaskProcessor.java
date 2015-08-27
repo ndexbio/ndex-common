@@ -59,6 +59,7 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 			Task task = null;
 			try {
 				task = NdexServerQueue.INSTANCE.takeNextUserTask();
+		        MDC.put("RequestsUniqueId", (String)task.getAttribute("RequestsUniqueId") );
 				if ( task == NdexServerQueue.endOfQueue) {
 					logger.info("End of queue signal received. Shutdown processor.");
 					return;
@@ -69,7 +70,6 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 			}
 			
 			try {		        
-		        MDC.put("RequestsUniqueId", (String)task.getAttribute("RequestsUniqueId") );
 				logger.info("[start: starting task]");
 				
 				NdexTask t = getNdexTask(task);
