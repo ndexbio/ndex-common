@@ -98,7 +98,8 @@ public class NetworkDAOTx extends OrientdbDAO {
 			deleteCache.setResource(UUIDstr); 
 			deleteCache.setStatus(Status.QUEUED);
 			deleteCache.setAttribute(TaskAttribute.readOnlyCommitId, commitId);
-			
+			deleteCache.setAttribute("RequestsUniqueId", MDC.get("RequestsUniqueId"));
+            
 			TaskDAO taskDAO = new TaskDAO(this.db);
 			taskDAO.createTask(userAccountName, deleteCache);
 			db.commit();
