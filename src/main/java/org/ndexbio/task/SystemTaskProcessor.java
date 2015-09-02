@@ -33,7 +33,6 @@ package org.ndexbio.task;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.logging.Logger;
 
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
@@ -48,9 +47,13 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.MDC;
+
 public class SystemTaskProcessor extends NdexTaskProcessor {
 
-    private Logger logger = Logger.getLogger(SystemTaskProcessor.class.getSimpleName());
+	static Logger logger = LoggerFactory.getLogger(SystemTaskProcessor.class);
 	
 	public SystemTaskProcessor () {
 		super();
@@ -62,6 +65,7 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 			Task task = null;
 			try {
 				task = NdexServerQueue.INSTANCE.takeNextSystemTask();
+		        MDC.put("RequestsUniqueId", (String)task.getAttribute("RequestsUniqueId") );
 				if ( task == NdexServerQueue.endOfQueue) {
 					logger.info("End of queue signal received. Shutdown processor.");
 					return;
@@ -76,10 +80,10 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 				try {
 				    cleanupDeletedNetwork(task);
 				} catch (NdexException e) {
-					logger.severe("Error when executing system task: " + e.getMessage());
+					logger.error("Error when executing system task: " + e.getMessage());
 					e.printStackTrace();
 				} catch ( Exception e2) {
-					logger.severe("Error when executing system task: " + e2.getMessage());
+					logger.error("Error when executing system task: " + e2.getMessage());
 					e2.printStackTrace();
 				}
 			} else if ( type == TaskType.SYSTEM_DATABASE_BACKUP ) {
@@ -87,18 +91,18 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 					backupDatabase(task);
 				} catch (NdexException e) {
 					// TODO Auto-generated catch block
-					logger.severe("Error when export backup system task: " + e);
+					logger.error("Error when export backup system task: " + e);
 					e.printStackTrace();
 				}
 			} else {
-					logger.severe("Unsupported system task type " + type + ". Task ignored.");
+					logger.error("Unsupported system task type " + type + ". Task ignored.");
 			}
 		}
 	}
 	
 	
 	private void cleanupDeletedNetwork (Task task) throws NdexException  {
-		logger.info( "Cleanup deleted network " + task.getResource());
+		logger.info( "[start: physically deleting network UUID='{}']", task.getResource());
 
 		task.setStartTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 		try (NetworkDAO networkDao = new NetworkDAO(NdexDatabase.getInstance().getAConnection()); ) {
@@ -107,11 +111,13 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 			task.setFinishTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			task.setStatus(Status.COMPLETED);
 			if ( cnt >=0 ) {
-				logger.info("Network " + task.getResource() + " cleanup finished.");
+				logger.info( "[end: network UUID='{}' physically deleted]", task.getResource());
 				task.setMessage(cnt + " vertices deleted.");
 			} else {  // only partially deleted.
 				String message ="cleanup stoppped after " +( -1 * cnt )+ " vertices deleted.";
-				logger.info("Network " + task.getResource() + message);
+				//logger.info("Network " + task.getResource() + message);
+				logger.info( "[end: network UUID='{}' cleanup stopped after {} vertices deleted]", 
+						task.getResource(), ( -1 * cnt ));
 				task.setMessage(message);
 			}
 			try (TaskDAO taskdao = new TaskDAO (NdexDatabase.getInstance().getAConnection())) {
@@ -157,7 +163,7 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
        			} catch (Exception e) {
        				task.setMessage(e.getMessage());
        				task.setStatus(Status.FAILED);
-					logger.severe("IO exception when backing up database. " + e.getMessage());
+					logger.error("IO exception when backing up database. " + e.getMessage());
 					e.printStackTrace();
 				} 
 
