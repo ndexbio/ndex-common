@@ -90,7 +90,8 @@ public class FileUploadTask extends NdexTask {
 	}
 
 	private void processFile() throws Exception {
-		logger.info("Processing file: " + this.getFilename());
+		logger.info("[start: Processing file='{}']", this.getFilename());
+		//logger.info("[memory: {}]", MemoryUtilization.getMemoryUtiliztaion());
 		this.taskStatus = Status.PROCESSING;
 		this.startTask();
 		File file = new File(this.getFilename());
@@ -137,10 +138,13 @@ public class FileUploadTask extends NdexTask {
 		}
 		parser.parseFile();
 		this.taskStatus = Status.COMPLETED;
-		logger.info("Network upload file: " + file.getName() +" deleted from staging area");			
+		long fileSize = file.length();
 		file.delete(); // delete the file from the staging area
+		logger.info("Network upload file: " + file.getName() +" deleted from staging area");
 		this.addTaskAttribute("networkUUID", parser.getUUIDOfUploadedNetwork().toString());
 		this.updateTaskStatus(this.taskStatus);
+		//logger.info("[memory: {}]", MemoryUtilization.getMemoryUtiliztaion());
+        logger.info("[end: Network upload finished; UUID='{}' fileSize={}]", parser.getUUIDOfUploadedNetwork().toString(), fileSize);
 	}
 
 }
