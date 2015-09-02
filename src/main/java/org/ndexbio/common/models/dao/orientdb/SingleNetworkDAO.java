@@ -84,8 +84,7 @@ public class SingleNetworkDAO implements AutoCloseable {
 	public void writeNetworkInCX(OutputStream out, final boolean use_default_pretty_printer) throws IOException {
         CxWriter cxwtr = CxWriter.createInstance(out, use_default_pretty_printer);
         
-        Timestamp foo = new Timestamp(Calendar.getInstance().getTimeInMillis());
-        for (AspectFragmentWriter afw : Util.getAllAvailableAspectFragmentWriters(foo.toString()) ) {
+        for (AspectFragmentWriter afw : Util.getAllAvailableAspectFragmentWriters() ) {
         	cxwtr.addAspectFragmentWriter(afw);
         }
         
