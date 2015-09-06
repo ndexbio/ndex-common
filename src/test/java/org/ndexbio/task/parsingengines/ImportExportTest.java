@@ -51,7 +51,6 @@ import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.Node;
-import org.ndexbio.task.event.NdexNetworkState;
 import org.xml.sax.SAXException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

@@ -39,7 +39,6 @@ import org.ndexbio.common.exporter.BioPAXNetworkExporter;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
-import org.ndexbio.task.event.NdexTaskEventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +58,6 @@ public class BioPAXExporterTask extends NdexTask {
 	private static final String NETWORK_EXPORT_PATH = "/opt/ndex/exported-networks/";
 	private static final String FILE_EXTENSION = ".owl";
 
-	private NdexTaskEventHandler eventHandler;
 	private Status taskStatus;
 	
 	
@@ -80,11 +78,7 @@ public class BioPAXExporterTask extends NdexTask {
 		} catch (InterruptedException e) {
 			logger.info(this.getClass().getName() +" interupted");
 			return null;
-		} finally {
-			if (null != this.eventHandler) {
-				this.eventHandler.shutdown();
-			}
-		}
+		} 
 	}
 	
 	/*

@@ -48,7 +48,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.ndexbio.common.NetworkSourceFormat;
-import org.ndexbio.common.access.NdexAOrientDBConnectionPool;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.task.Configuration;
@@ -68,7 +67,7 @@ public class AllTests {
 			"/opt/ndex/conf/ndex.properties";
 	static String testFileDirectory = 
 			//"C:/Users/chenjing/Dropbox/Network_test_files/";
-			"/home/chenjing/Dropbox/Network_test_files/";
+			"/Users/chenjing/Dropbox/Network_test_files/";
 	public static Configuration confituration;
 	public static NdexDatabase db ;
 	public static String testUser = "cjtest";

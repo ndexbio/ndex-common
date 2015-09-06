@@ -38,7 +38,6 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
-import org.ndexbio.task.event.NdexTaskEventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,12 +55,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 public class XbelExporterTask extends NdexTask {
 	
 	private String networkId;
-//	private static final String NETWORK_EXPORT_PATH = "/opt/ndex/exported-networks/";
-//	private static final String NETWORK_EXPORT_EVENT_PATH = "/opt/ndex/exported-networks-events/";
+
 	private static final String XBEL_FILE_EXTENSION = ".xbel";
-	private static final String EVENT_FILE_EXTENSION = ".csv";
-//	private final NdexTaskModelService modelService;
-	private NdexTaskEventHandler eventHandler;
+//	private static final String EVENT_FILE_EXTENSION = ".csv";
+
 	private Status taskStatus;
 	
 	
@@ -89,11 +86,7 @@ public class XbelExporterTask extends NdexTask {
 		} catch (InterruptedException e) {
 			logger.info(this.getClass().getName() +" interupted");
 			return null;
-		} finally {
-			if (null != this.eventHandler) {
-				this.eventHandler.shutdown();
-			}
-		}
+		} 
 	}
 	
 	/*
@@ -104,7 +97,7 @@ public class XbelExporterTask extends NdexTask {
 		this.startTask();
 		String exportFilename = this.resolveFilename(
 				Configuration.getInstance().getNdexRoot() + "/exported-networks/", 
-				this.XBEL_FILE_EXTENSION);
+				XbelExporterTask.XBEL_FILE_EXTENSION);
 	
 		ODatabaseDocumentTx db = null; 
 		try {
@@ -144,9 +137,9 @@ public class XbelExporterTask extends NdexTask {
 	protected String getNetworkId() {
 		return networkId;
 	}
-
+/*
 	private void setNetworkId(String networkId) {
 		this.networkId = networkId;
-	}
+	}  */
 
 }

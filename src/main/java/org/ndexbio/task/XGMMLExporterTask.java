@@ -39,7 +39,6 @@ import org.ndexbio.common.exporter.XGMMLNetworkExporter;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.Status;
-import org.ndexbio.task.event.NdexTaskEventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +60,7 @@ public class XGMMLExporterTask extends NdexTask {
 	private static final String XGMML_FILE_EXTENSION = ".xgmml";
 //	private static final String EVENT_FILE_EXTENSION = ".csv";
 
-	private NdexTaskEventHandler eventHandler;
+//	private NdexTaskEventHandler eventHandler;
 	private Status taskStatus;
 	
 	
@@ -86,11 +85,7 @@ public class XGMMLExporterTask extends NdexTask {
 		} catch (InterruptedException e) {
 			logger.info(this.getClass().getName() +" interupted");
 			return null;
-		} finally {
-			if (null != this.eventHandler) {
-				this.eventHandler.shutdown();
-			}
-		}
+		} 
 	}
 	
 	/*
