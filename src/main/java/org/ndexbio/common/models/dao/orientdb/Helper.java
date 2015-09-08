@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.*;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
@@ -425,5 +426,29 @@ public class Helper {
     	return ((Iterable<ODocument>)f);
     	     
     }
+    
+    
+	public static void createUserIfnotExist(UserDocDAO dao, String accountName, String email, String password) throws NdexException {
+		try {
+			User u = dao.getUserByAccountName(accountName);
+			if ( u!= null) return;
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+			throw new NdexException ("Failed to create new user after creating database. " + e.getMessage());
+		} catch ( ObjectNotFoundException e2) {
+			
+		}
+		
+		NewUser newUser = new NewUser();
+        newUser.setEmailAddress(email);
+        newUser.setPassword(password);
+        newUser.setAccountName(accountName);
+        newUser.setFirstName("");
+        newUser.setLastName("");
+        dao.createNewUser(newUser);
+        
+
+	}
+	
 
 }
