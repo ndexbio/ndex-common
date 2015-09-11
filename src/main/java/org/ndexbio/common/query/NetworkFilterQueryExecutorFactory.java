@@ -190,7 +190,7 @@ public class NetworkFilterQueryExecutorFactory {
 			
 			Long nsId = baseTermDoc.field(NdexClasses.BTerm_NS_ID);
 			try (NetworkDocDAO dao = new NetworkDocDAO()) {
-				ODocument nsDoc = dao.getDocumentByElementId(nsId);
+				ODocument nsDoc = dao.getDocumentByElementId(NdexClasses.Namespace,nsId);
 				String prefix = nsDoc.field(NdexClasses.ns_P_prefix);
 				if (prefix !=null && prefix.equalsIgnoreCase(qname[0])) 
 					  return true;	 

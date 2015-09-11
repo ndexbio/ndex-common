@@ -169,7 +169,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		e.setPredicateId(predicateId);
 		
 		if ( network != null && !network.getBaseTerms().containsKey(predicateId)) {
-    		   BaseTerm t = getBaseTerm(getDocumentByElementId(predicateId),network);
+    		   BaseTerm t = getBaseTerm(getDocumentByElementId(NdexClasses.BaseTerm, predicateId),network);
     		   network.getBaseTerms().put(t.getId(), t);
     	   }
 		
@@ -191,7 +191,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 			if ( network != null) {
 				for ( Long citationId : citationIds) {
 					if (! network.getCitations().containsKey(citationId)) {
-						ODocument citationDoc = this.getDocumentByElementId(citationId);
+						ODocument citationDoc = this.getDocumentByElementId(NdexClasses.Citation,citationId);
 						Citation t = getCitationFromDoc(citationDoc);
 						network.getCitations().put(citationId, t);
 					}
@@ -208,7 +208,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 			if ( network != null) {
 				for ( Long supportId : supportIds) {
 					if (! network.getSupports().containsKey(supportId)) {
-						ODocument supportDoc = this.getDocumentByElementId(supportId);
+						ODocument supportDoc = this.getDocumentByElementId(NdexClasses.Support,supportId);
 						Support t = getSupportFromDoc(supportDoc,network);
 						network.getSupports().put(supportId, t);
 					}
@@ -247,19 +247,19 @@ public class NetworkDocDAO extends OrientdbDAO {
     			// populate objects in network
     			if ( termType.equals(NdexClasses.BaseTerm)) {
     				if ( !network.getBaseTerms().containsKey(representsId) ) {
-    	    			ODocument o = this.getDocumentByElementId(representsId);
+    	    			ODocument o = this.getDocumentByElementId(NdexClasses.BaseTerm,representsId);
     					BaseTerm bTerm = getBaseTerm(o, network);
     					network.getBaseTerms().put(representsId, bTerm);
     				}
     			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm)) {
     				if ( !network.getReifiedEdgeTerms().containsKey(representsId)) {
-    	    			ODocument o = this.getDocumentByElementId(representsId);
+    	    			ODocument o = this.getDocumentByElementId(NdexClasses.ReifiedEdgeTerm,representsId);
     					ReifiedEdgeTerm reTerm = getReifiedEdgeTermFromDoc(o,network);
     					network.getReifiedEdgeTerms().put(representsId, reTerm);
     				}
     			} else if (termType.equals(NdexClasses.FunctionTerm)) {
     				if ( !network.getFunctionTerms().containsKey(representsId)) {
-    	    			ODocument o = this.getDocumentByElementId(representsId);
+    	    			ODocument o = this.getDocumentByElementId(NdexClasses.FunctionTerm,representsId);
     					FunctionTerm funcTerm = getFunctionTermfromDoc(o, network);
     					network.getFunctionTerms().put(representsId, funcTerm);
     				}
@@ -277,7 +277,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     		if ( network != null) {
     			for ( Long alias : aliases) {
     				if (! network.getBaseTerms().containsKey(alias)) {
-    					ODocument doc = this.getDocumentByElementId(alias);
+    					ODocument doc = this.getDocumentByElementId(NdexClasses.BaseTerm,alias);
     					BaseTerm t = getBaseTerm(doc,network);
     					network.getBaseTerms().put(alias, t);
     				}
@@ -293,7 +293,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 			if ( network != null) {
 				for ( Long relatedTermId : relateTos) {
 					if (! network.getBaseTerms().containsKey(relatedTermId)) {
-						ODocument doc = this.getDocumentByElementId(relatedTermId);
+						ODocument doc = this.getDocumentByElementId(NdexClasses.BaseTerm,relatedTermId);
 						BaseTerm t = getBaseTerm(doc,network);
 						network.getBaseTerms().put(relatedTermId, t);
 					}
@@ -309,7 +309,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 			if ( network != null) {
 				for ( Long citationId : citations) {
 					if (! network.getCitations().containsKey(citationId)) {
-						ODocument doc = this.getDocumentByElementId(citationId);
+						ODocument doc = this.getDocumentByElementId(NdexClasses.Citation, citationId);
 						Citation t = getCitationFromDoc(doc);
 						network.getCitations().put(citationId, t);
 					}
@@ -325,7 +325,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 			if ( network != null) {
 				for ( Long supportId : supports) {
 					if (! network.getSupports().containsKey(supportId)) {
-						ODocument doc = this.getDocumentByElementId(supportId);
+						ODocument doc = this.getDocumentByElementId(NdexClasses.Support,supportId);
 						Support t = getSupportFromDoc(doc,network);
 						network.getSupports().put(supportId, t);
 					}
@@ -405,7 +405,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		   if ( nsId >0) {
 			   if ( network != null &&
 					 ! network.getNamespaces().containsKey(nsId)) {
-					Namespace ns = getNamespace(getDocumentByElementId(nsId),network);
+					Namespace ns = getNamespace(getDocumentByElementId(NdexClasses.Namespace, nsId),network);
 					network.getNamespaces().put(nsId, ns);
 				}
 		   }
@@ -463,17 +463,8 @@ public class NetworkDocDAO extends OrientdbDAO {
 	}
 	
 	
-	private ODocument getDocumentByElementId(String NdexClassName, long elementID) {
-		String query = "select from " + NdexClassName + " where " + 
-		        NdexClasses.Element_ID + "=" +elementID;
-            db.activateOnCurrentThread();
-	        final List<ODocument> nss = db.query(new OSQLSynchQuery<ODocument>(query));
-	  
-	        if (!nss.isEmpty())
-	  	       return nss.get(0);
-	         
-
-	         return null;
+	public ODocument getDocumentByElementId(String NdexClassName, long elementID) {
+		return Helper.getDocumentByElementId(db, elementID, NdexClassName);
 	}
 
 /*	private static String getBaseTermStrForBaseTerm(BaseTerm bterm, Network n) {
@@ -669,7 +660,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	
     		if ( network !=null && 
             		! network.getCitations().containsKey(citationId)) {
-    			ODocument citationDoc = this.getDocumentByElementId(citationId);
+    			ODocument citationDoc = this.getDocumentByElementId(NdexClasses.Citation, citationId);
             	Citation citation = getCitationFromDoc(citationDoc);
             	network.getCitations().put(citationId, citation);
             }

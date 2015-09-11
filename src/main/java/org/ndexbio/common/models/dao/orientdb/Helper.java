@@ -100,6 +100,16 @@ public class Helper {
     	
     	return null;
     }
+    
+    public static ODocument getDocumentByElementId(ODatabaseDocumentTx db, long id, String className) {
+    		String query = "select from " + className + " where " + 
+    		        NdexClasses.Element_ID + "=" + id;
+    	    final List<ODocument> nss = db.query(new OSQLSynchQuery<ODocument>(query));
+    	  
+    	    if (!nss.isEmpty())
+    	  	       return nss.get(0);
+    	    return null;
+    }
 
     public static Permissions getNetworkPermissionFromOutPath(String path) {
 	    Pattern pattern = Pattern.compile("out_([a-z]+)");

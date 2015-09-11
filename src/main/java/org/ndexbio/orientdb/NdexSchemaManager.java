@@ -330,17 +330,16 @@ public class NdexSchemaManager
     			NdexClasses.account_P_accountName);
 
        userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
-        nsClass.createIndex("index-namespace-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+        nsClass.createIndex(NdexClasses.Index_ns_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         
         bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});
-//      bTermClass.createIndex("index-term-name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-       bTermClass.createIndex("index-baseterm-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+       bTermClass.createIndex(NdexClasses.Index_bterm_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
        bTermClass.createIndex("index-baseterm-ns", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.BTerm_NS_ID);
 
        citationClass.createIndex("index-citation-id", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
       
        supportClass.createIndex("index-support-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
-       supportClass.createIndex("idx-support-citation", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Citation);
+       supportClass.createIndex(NdexClasses.Index_support_citation, OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Citation);
       
        edgeClass.createIndex("index-edge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
        edgeClass.createIndex("idx-edge-predicate", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Edge_P_predicateId);
