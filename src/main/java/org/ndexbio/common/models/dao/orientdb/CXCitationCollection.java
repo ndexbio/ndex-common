@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.cx.aspect.CitationElement;
 import org.ndexbio.model.cx.CXSupport;
+import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Support;
 

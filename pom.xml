@@ -32,11 +32,7 @@
 
 	<dependencies>
 
-		<dependency>
-           	<groupId>org.cxio</groupId>
-  			<artifactId>cxio</artifactId>
-  			<version>0.0.1</version>
-		</dependency>
+	
 		
 		<dependency>
            	<groupId>org.ndexbio</groupId>
