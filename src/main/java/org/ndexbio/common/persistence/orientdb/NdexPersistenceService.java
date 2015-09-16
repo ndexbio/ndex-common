@@ -34,8 +34,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -271,9 +273,9 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		ODocument elementRec = elementIdCache.get(elementId);
 
-		List<Long> citationIds = elementRec.field(NdexClasses.Citation);
+		Set<Long> citationIds = elementRec.field(NdexClasses.Citation);
 		if ( citationIds == null)
-			citationIds = new ArrayList<>(10);
+			citationIds = new HashSet<>(100);
 		
 		citationIds.addAll(newCitationIds);
 		
@@ -312,18 +314,18 @@ public class NdexPersistenceService extends PersistenceService {
 		ODocument nodeDoc = this.elementIdCache.get(subjectNodeId);
 		        
         if ( supportId != null) {
-    		List<Long> supportIds = nodeDoc.field(NdexClasses.Support);
+    		Set<Long> supportIds = nodeDoc.field(NdexClasses.Support);
     		if ( supportIds == null)
-    			supportIds = new ArrayList<>(10);
+    			supportIds = new HashSet<>(10);
     		
     		supportIds.add(supportId);
     		nodeDoc.field(NdexClasses.Support,supportIds);
         }
 
 	    if (citationId != null) {
-    		List<Long> citationIds = nodeDoc.field(NdexClasses.Citation);
+    		Set<Long> citationIds = nodeDoc.field(NdexClasses.Citation);
     		if ( citationIds == null)
-    			citationIds = new ArrayList<>(10);
+    			citationIds = new HashSet<>(10);
 
     		citationIds.add(citationId);
     		nodeDoc.field(NdexClasses.Citation, citationIds);
@@ -454,15 +456,15 @@ public class NdexPersistenceService extends PersistenceService {
 			
 		    // add citation.
 		    if (citation != null) {
-		    	List<Long> citationList = new ArrayList<> (1);
+		    	Set<Long> citationList = new HashSet<> (1);
 		    	citationList.add(citation);
 		    	edgeDoc.field(NdexClasses.Citation, citationList);
 		    }
 		    
 		    if ( support != null) {
-		    	List<Long> supportList = new ArrayList<> (1);
-		    	supportList.add(support);
-		    	edgeDoc.field(NdexClasses.Support, supportList);
+		    	Set<Long> supportSet = new HashSet<> (1);
+		    	supportSet.add(support);
+		    	edgeDoc.field(NdexClasses.Support, supportSet);
 		    }
 		    
 		    if ( properties !=null && properties.size()>0)

@@ -8,6 +8,8 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
@@ -20,6 +22,7 @@ import org.cxio.util.Util;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentWriter;
+import org.ndexbio.model.cx.CXSupport;
 import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
@@ -81,18 +84,9 @@ public class SingleNetworkDAO implements AutoCloseable {
 	public Iterator<Namespace> getNamespaces() {
 		return new NamespaceIterator(getNetworkElements(NdexClasses.Network_E_Namespace));
 	}
-	
-	public Iterable<NodesElement>  getCXNodes () {
-		return new CXNodeCollection(getNetworkElements(NdexClasses.Network_E_Nodes));
-	}
-	
+		
 	public Iterable<CitationElement>  getCXCitations () {
 		return new CXCitationCollection(getNetworkElements(NdexClasses.Network_E_Citations),db);
-	}
-		
-	
-	public Iterable<EdgesElement>  getCXEdges () {
-		return new CXEdgeCollection(getNetworkElements(NdexClasses.Network_E_Edges));
 	}
 	
 	
@@ -108,10 +102,13 @@ public class SingleNetworkDAO implements AutoCloseable {
         cxwtr.addAspectFragmentWriter(cfw);
         cxwtr.start();
         
+        Map<Long,String> citationIdMap = new TreeMap<> ();
+        Map<Long,String> supportIdMap = new TreeMap<> ();
+        
         List<AspectElement> aspect_elements = new ArrayList<AspectElement>(1);
         
         for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Edges)) {
-        	writeEdgeInCX(doc,cxwtr, aspect_elements);
+        	writeEdgeInCX(doc,cxwtr, aspect_elements,citationIdMap, supportIdMap);
         }
         
         for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Nodes)) {
@@ -128,7 +125,8 @@ public class SingleNetworkDAO implements AutoCloseable {
 
 	}
 	
-	private void writeEdgeInCX(ODocument doc, CxWriter cxwtr, List<AspectElement> aspect_elements) throws ObjectNotFoundException, IOException {
+	private void writeEdgeInCX(ODocument doc, CxWriter cxwtr, List<AspectElement> aspect_elements, Map<Long,String> citationIdMap,
+			    Map<Long,String> supportIdMap) throws ObjectNotFoundException, IOException {
 		String SID = doc.field(NdexClasses.Element_SID);
 		
 		if ( SID ==null) {
@@ -202,7 +200,57 @@ public class SingleNetworkDAO implements AutoCloseable {
 
 	}
 	
+	private void writeCitationInCX(ODocument doc, CxWriter cxwtr, List<AspectElement> aspect_elements) throws ObjectNotFoundException, IOException {
 	
+		CitationElement result = new CitationElement();
+		
+		
+		Long citationID = doc.field(NdexClasses.Element_ID);
+
+	/*	String SID = doc.field(NdexClasses.Element_SID);   -- only useful if citations has ids.
+		
+		if ( SID ==null) {
+			 SID = citationId.toString();
+		} */
+
+		result.setTitle((String)doc.field(NdexClasses.Citation_P_title));
+		result.setCitationType((String)doc.field(NdexClasses.Citation_p_idType));
+		result.setIdentifier((String)doc.field(NdexClasses.Citation_P_identifier));
+		
+		List<String> o = doc.field(NdexClasses.Citation_P_contributors);
+		
+		if ( o!=null && !o.isEmpty())
+			result.setContributor(o);
+		
+    /*	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
+    	if ( props !=null && props.size() > 0 )
+    		result.setProperties(props);
+*/
+		// get the supports
+		
+		OIndex<?> citationIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_support_citation);
+		Collection<OIdentifiable> cIds =  (Collection<OIdentifiable>) citationIdx.get( citationID ); // account to traverse by
+		
+		if ( !cIds.isEmpty()) {
+			Collection<CXSupport> ss = new ArrayList<> (cIds.size());
+			for ( OIdentifiable od : cIds ) {
+				ODocument sDoc = od.getRecord();
+				CXSupport s = new CXSupport();
+				s.setText((String)sDoc.field(NdexClasses.Support_P_text));
+				ss.add(s);
+			}
+			result.setSupports(ss);
+		}
+		
+	  	aspect_elements.add(result);
+    	cxwtr.writeAspectElements(aspect_elements);
+    	aspect_elements.remove(0);
+    	
+    	// write properties
+    	writeDocPropertiesAsCX(doc, cxwtr);
+
+	}
+
 
 	@Override
 	public void close() throws Exception {

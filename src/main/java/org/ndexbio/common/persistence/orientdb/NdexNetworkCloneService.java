@@ -36,8 +36,10 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -499,9 +501,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 				          NdexClasses.Node_P_representTermType, node.getRepresentsTermType());
 		}
 		
-		List<Long> oldAliases = node.getAliases();
+		Collection<Long> oldAliases = node.getAliases();
 		if ( oldAliases != null && oldAliases.size() > 0) {
-			List<Long> newAliases = new ArrayList<> (oldAliases.size());
+			Set<Long> newAliases = new HashSet<> (oldAliases.size());
 			
 			for ( Long aliasId : oldAliases) {
 				Long newAliasId = baseTermIdMap.get(aliasId);
@@ -513,9 +515,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 			nodeDoc.field(NdexClasses.Node_P_alias, newAliases);
 		}
 		
-		List<Long> oldRelatedTerms = node.getRelatedTerms(); 
+		Collection<Long> oldRelatedTerms = node.getRelatedTerms(); 
 		if ( oldRelatedTerms != null && oldRelatedTerms.size() > 0 ) {
-			List<Long> newRelatedTerms = new ArrayList<>(oldRelatedTerms.size());
+			Set<Long> newRelatedTerms = new HashSet<>(oldRelatedTerms.size());
 			
 			for ( Long relateToId : oldRelatedTerms) {
 				Long newRelateToId = baseTermIdMap.get(relateToId);
@@ -526,9 +528,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 			nodeDoc.field(NdexClasses.Node_P_relateTo, newRelatedTerms);
 		}
 		
-		List<Long> oldCitations = node.getCitationIds(); 
+		Collection<Long> oldCitations = node.getCitationIds(); 
 		if ( oldCitations != null && oldCitations.size() > 0 ) {
-			List<Long> newCitations = new ArrayList<> (oldCitations.size());
+			Set<Long> newCitations = new HashSet<> (oldCitations.size());
 			for ( Long citationId : oldCitations) {
 				Long newCitationId = citationIdMap.get(citationId);
 				if ( newCitationId == null)
@@ -538,9 +540,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 			nodeDoc.field(NdexClasses.Citation,newCitations);
 		}
 		
-		List<Long> oldSupports = node.getSupportIds(); 
+		Collection<Long> oldSupports = node.getSupportIds(); 
 		if ( oldSupports != null) {
-			List<Long> newSupports = new ArrayList<> (oldSupports.size());
+			Collection<Long> newSupports = new HashSet<> (oldSupports.size());
 			for ( Long supportId : node.getSupportIds()) {
 				Long newSupportId = supportIdMap.get(supportId);
 				if ( newSupportId == null)
@@ -600,10 +602,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 				   NdexClasses.ndexProperties, edge.getProperties(),
 				   NdexClasses.Edge_P_predicateId, newPredicateId );
 
-	    List<Long> oldEdgeCitations = edge.getCitationIds() ; 
+	    Collection<Long> oldEdgeCitations = edge.getCitationIds() ; 
 		if ( oldEdgeCitations != null && oldEdgeCitations.size() > 0) {
 			
-			Collection<Long> edgeCitations = new ArrayList<> (oldEdgeCitations.size());
+			Collection<Long> edgeCitations = new HashSet<> (oldEdgeCitations.size());
 			if ( edge.getCitationIds() != null) {
 				for ( Long citationId : oldEdgeCitations) {
 					Long newCitationId = citationIdMap.get(citationId);
@@ -616,9 +618,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 			edgeDoc.field(NdexClasses.Citation, edgeCitations );
 		} 
 		
-		List<Long> oldSupports = edge.getSupportIds(); 
+		Collection<Long> oldSupports = edge.getSupportIds(); 
 		if (  oldSupports != null && oldSupports.size() > 0 ) {
-			List<Long> newSupports = new ArrayList<> (oldSupports.size());
+			Set<Long> newSupports = new HashSet<> (oldSupports.size());
 			for ( Long supportId : oldSupports) {
 				Long newSupportId = supportIdMap.get(supportId);
 				if ( newSupportId == null)

@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -184,7 +185,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		}
 
 		//populate citations
-		List<Long> citationIds = doc.field(NdexClasses.Citation);
+		Set<Long> citationIds = doc.field(NdexClasses.Citation);
 		if ( citationIds !=null && citationIds.size()>0) {
 			e.setCitationIds(citationIds);
 
@@ -201,7 +202,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		} 
 		
 		//populate support
-		List<Long> supportIds = doc.field(NdexClasses.Support);
+		Set<Long> supportIds = doc.field(NdexClasses.Support);
 		if ( supportIds !=null && supportIds.size()>0) {
 			e.setSupportIds(supportIds);
 
@@ -270,7 +271,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	}
 		
     	//populate aliases
-    	List<Long> aliases = nodeDoc.field(NdexClasses.Node_P_alias);
+    	Set<Long> aliases = nodeDoc.field(NdexClasses.Node_P_alias);
     	if ( aliases !=null && aliases.size() > 0 ) {
     		n.setAliases(aliases);
     	
@@ -286,7 +287,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	}
     	
     	//populate related terms
-		List<Long> relateTos = nodeDoc.field(NdexClasses.Node_P_relateTo);
+		Set<Long> relateTos = nodeDoc.field(NdexClasses.Node_P_relateTo);
 		if ( relateTos !=null && relateTos.size()> 0 ) {
 			n.setRelatedTerms(relateTos);
 		
@@ -302,7 +303,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		}
     	
 		//populate citations
-		List<Long> citations = nodeDoc.field(NdexClasses.Citation);
+		Set<Long> citations = nodeDoc.field(NdexClasses.Citation);
 		if ( citations != null && citations.size() >0 ) { 
 			n.setCitationIds(citations);
 		
@@ -318,7 +319,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		}
 			
 		//populate support
-		List<Long> supports = nodeDoc.field(NdexClasses.Support);
+		Set<Long> supports = nodeDoc.field(NdexClasses.Support);
 		if ( supports !=null && supports.size() > 0 ) { 
 			n.setSupportIds(supports);
 		

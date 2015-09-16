@@ -88,7 +88,7 @@ public class AllTests {
 			
 	    	testList = new ArrayList<> (100);
 
-	    	try (Reader in = new FileReader(testFileDirectory + "network_test_file_list.csv")) {
+	    	try (Reader in = new FileReader(testFileDirectory + "network_test_file_list_1.3.csv")) {
 	    	  CSVParser parser = CSVFormat.EXCEL.parse(in);
 	    	  for (CSVRecord record : parser) {
 	    		if ( parser.getCurrentLineNumber() > 1 && Boolean.valueOf(record.get(15).toLowerCase()) ) {

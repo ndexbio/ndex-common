@@ -213,7 +213,7 @@ public class NdexSchemaManager
             citationClass.createProperty("contributors", OType.EMBEDDEDLIST, OType.STRING);
             citationClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             citationClass.createProperty("properties", OType.EMBEDDEDLIST);
-            citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
+ //           citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             citationClass.createProperty("title", OType.STRING);
             
         }
@@ -238,7 +238,8 @@ public class NdexSchemaManager
 //            edgeClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             edgeClass.createProperty(NdexClasses.Edge_P_predicateId, OType.LONG);
 
-            edgeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDLIST);
+            edgeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDSET);
+            edgeClass.createProperty(NdexClasses.Support,OType.EMBEDDEDSET);
 
         }
 
@@ -298,10 +299,10 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_P_represents, OType.LONG);
             nodeClass.createProperty(NdexClasses.Node_P_representTermType, OType.STRING);
             
-            nodeClass.createProperty(NdexClasses.Node_P_alias, OType.EMBEDDEDLIST);
-            nodeClass.createProperty(NdexClasses.Node_P_relateTo, OType.EMBEDDEDLIST);
-            nodeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDLIST);
-            nodeClass.createProperty(NdexClasses.Support, OType.EMBEDDEDLIST);
+            nodeClass.createProperty(NdexClasses.Node_P_alias, OType.EMBEDDEDSET);
+            nodeClass.createProperty(NdexClasses.Node_P_relateTo, OType.EMBEDDEDSET);
+            nodeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDSET);
+            nodeClass.createProperty(NdexClasses.Support, OType.EMBEDDEDSET);
             
          //   nodeClass.createIndex(NdexClasses.Index_node_name, OClass.INDEX_TYPE.NOTUNIQUE, 		NdexClasses.Node_P_name);
         }
