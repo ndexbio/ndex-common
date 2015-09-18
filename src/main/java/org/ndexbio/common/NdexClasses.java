@@ -156,9 +156,16 @@ public interface NdexClasses {
     public static final String Node_P_alias		   = "alias";
     public static final String Node_P_relateTo	   = "relateTo";
     
+    // index on primary keys.
     public static final String Index_ns_id = "index-namespace-id";
     public static final String Index_bterm_id = "index-baseterm-id";
+    public static final String Index_citation_id = "index-citation-id";
+    public static final String Index_support_id = "index-support-id";
     public static final String Index_node_id = "index-node-id";
+    public static final String Index_edge_id = "index-edge-id";
+    public static final String Index_function_id = "index-function-id";
+    public static final String Index_reifiededge_id = "index-reifiedEdge-id";
+    
     public static final String Index_node_name = "index-node-name";
     public static final String Index_node_rep_id = "index-node-rep-id";
     public static final String Index_UUID = "index-external-id";

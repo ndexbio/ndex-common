@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.model.cx.CXSupport;
+import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Support;
@@ -69,14 +69,14 @@ public class CXCitationCollection implements Iterable<CitationElement> {
 				Collection<OIdentifiable> cIds =  (Collection<OIdentifiable>) citationIdx.get( citationID ); // account to traverse by
 				
 				if ( !cIds.isEmpty()) {
-					Collection<CXSupport> ss = new ArrayList<> (cIds.size());
+					Collection<SupportElement> ss = new ArrayList<> (cIds.size());
 					for ( OIdentifiable od : cIds ) {
 						ODocument sDoc = od.getRecord();
-						CXSupport s = new CXSupport();
+						SupportElement s = new SupportElement();
 						s.setText((String)sDoc.field(NdexClasses.Support_P_text));
 						ss.add(s);
 					}
-					result.setSupports(ss);
+	//				result.setSupports(ss);
 				}
 				
 				

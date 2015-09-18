@@ -253,17 +253,17 @@ public class NdexSchemaManager
             //functionTermClass.createIndex("functionTermLinkParametersIndex", OClass.INDEX_TYPE.NOTUNIQUE, "termParameters by value");
             functionTermClass.createProperty(NdexClasses.BaseTerm, OType.LONG);
             
-            functionTermClass.createIndex("index-function-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            functionTermClass.createIndex(NdexClasses.Index_function_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
             functionTermClass.createIndex("idx-func-bterm",OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.BaseTerm);
         }
 
         cls = orientDb.getMetadata().getSchema().getClass(NdexClasses.ReifiedEdgeTerm);  
-        if (orientDbGraph.getVertexType("reifiedEdgeTerm") == null)
+        if (orientDbGraph.getVertexType(NdexClasses.ReifiedEdgeTerm) == null)
         {
             OClass reifiedEdgeTermClass = orientDbGraph.createVertexType(NdexClasses.ReifiedEdgeTerm);
             reifiedEdgeTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
 
-            reifiedEdgeTermClass.createIndex("index-reifiedEdge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+            reifiedEdgeTermClass.createIndex(NdexClasses.Index_reifiededge_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
 
         }
         
@@ -337,12 +337,12 @@ public class NdexSchemaManager
        bTermClass.createIndex(NdexClasses.Index_bterm_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
        bTermClass.createIndex("index-baseterm-ns", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.BTerm_NS_ID);
 
-       citationClass.createIndex("index-citation-id", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Element_ID);
+       citationClass.createIndex(NdexClasses.Index_citation_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
       
-       supportClass.createIndex("index-support-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+       supportClass.createIndex(NdexClasses.Index_support_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
        supportClass.createIndex(NdexClasses.Index_support_citation, OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Citation);
       
-       edgeClass.createIndex("index-edge-id", OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
+       edgeClass.createIndex(NdexClasses.Index_edge_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
        edgeClass.createIndex("idx-edge-predicate", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Edge_P_predicateId);
 
        nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
