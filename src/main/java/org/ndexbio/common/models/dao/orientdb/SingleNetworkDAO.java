@@ -133,17 +133,18 @@ public class SingleNetworkDAO implements AutoCloseable {
         
         
         //write namespaces
-        Map<String,String> prefixtab = new HashMap<> ();
+        NamespacesElement prefixtab = new NamespacesElement();
         
         for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Namespace))  {
            String prefix = doc.field(NdexClasses.ns_P_prefix);
            if ( prefix !=null ) {
         	   String uri = doc.field(NdexClasses.ns_P_uri);
+        	   prefixtab.put(prefix, uri);
            }
         }
          
         if ( prefixtab .size() >0) {
-        	writeNdexAspectElementAsAspectFragment(cxwtr, new NamespacesElement(prefixtab));
+        	writeNdexAspectElementAsAspectFragment(cxwtr, prefixtab);
         }
         
         Map<Long,String> citationIdMap = new TreeMap<> ();
