@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -21,6 +22,8 @@ import org.cxio.aspects.datamodels.NodesElement;
 import org.cxio.core.CxWriter;
 import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentWriter;
+import org.cxio.metadata.MetaData;
+import org.cxio.metadata.MetaDataElement;
 import org.cxio.util.Util;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
@@ -28,6 +31,7 @@ import org.ndexbio.common.cx.aspect.GeneralAspectFragmentWriter;
 import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.cx.FunctionTermsElement;
 import org.ndexbio.model.cx.NamespacesElement;
+import org.ndexbio.model.cx.NdexNetworkStatus;
 import org.ndexbio.model.cx.NodeCitationLinksElement;
 import org.ndexbio.model.cx.NodeSupportLinksElement;
 import org.ndexbio.model.cx.CitationElement;
@@ -40,6 +44,8 @@ import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.network.Namespace;
+import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -110,7 +116,7 @@ public class SingleNetworkDAO implements AutoCloseable {
 	}
 	
 	
-	public void writeNetworkInCX(OutputStream out, final boolean use_default_pretty_printer) throws IOException, ObjectNotFoundException {
+	private CxWriter getNdexCXWriter(OutputStream out, boolean use_default_pretty_printer) throws IOException {
         CxWriter cxwtr = CxWriter.createInstance(out, use_default_pretty_printer);
         
         GeneralAspectFragmentWriter cfw = new GeneralAspectFragmentWriter(CitationElement.NAME);
@@ -128,9 +134,71 @@ public class SingleNetworkDAO implements AutoCloseable {
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(FunctionTermsElement.NAME));
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NamespacesElement.NAME));
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(ReifiedEdgeElement.NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NdexNetworkStatus.NAME));
+        
+        return cxwtr;
+	}
+	
+	public void writeNetworkInCX(OutputStream out, final boolean use_default_pretty_printer) throws IOException, NdexException {
+        CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);
+        
+        MetaData md= new MetaData();
+        
+        MetaDataElement node_meta = new MetaDataElement();
+
+        Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
+        int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
+        int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
+        
+        node_meta.setName(NodesElement.NAME);
+        node_meta.setVersion("1.0");
+      //  node_meta.setIdCounter();
+        node_meta.setLastUpdate(lastUpdate.getTime());
+        node_meta.setElementCount(nodecount);
+        node_meta.setConsistencyGroup(1l);
+
+        md.addMetaDataElement(node_meta);
+
+        MetaDataElement citation_meta = new MetaDataElement();
+
+        citation_meta.setName(CitationElement.NAME);
+        citation_meta.setVersion("1.0");
+        citation_meta.setLastUpdate(lastUpdate.getTime());
+        citation_meta.setConsistencyGroup(1l);
+
+        md.addMetaDataElement(citation_meta);
+        
+        MetaDataElement edge_meta = new MetaDataElement();
+
+        edge_meta.setName(EdgesElement.NAME);
+        edge_meta.setVersion("1.0");
+        edge_meta.setLastUpdate(lastUpdate.getTime());
+        edge_meta.setConsistencyGroup(1l);
+        edge_meta.setElementCount(edgecount);
+
+        md.addMetaDataElement(edge_meta);
+        
         
         cxwtr.start();
+        cxwtr.writeMetaData(md);
         
+        //write NdexStatus
+        
+        NdexNetworkStatus nstatus = new NdexNetworkStatus();
+        
+        nstatus.setCreationTime(new Timestamp(((Date)networkDoc.field(NdexClasses.ExternalObj_cTime)).getTime()));
+        nstatus.setEdgeCount(edgecount);
+        nstatus.setNodeCount(nodecount);
+        nstatus.setExternalId((String)networkDoc.field(NdexClasses.ExternalObj_ID));
+        nstatus.setModificationTime(lastUpdate);
+        nstatus.setNdexServerURI(Configuration.getInstance().getHostURI());
+        nstatus.setOwner((String)networkDoc.field(NdexClasses.Network_P_owner));
+        //nstatus.setPublished(isPublished);
+        nstatus.setVersion((String)networkDoc.field(NdexClasses.Network_P_version));
+        nstatus.setVisibility(
+        		VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility)));
+        
+        writeNdexAspectElementAsAspectFragment(cxwtr, nstatus);
         
         //write namespaces
         NamespacesElement prefixtab = new NamespacesElement();
