@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_TYPE;
 import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
 import org.cxio.aspects.datamodels.NodeAttributesElement;
@@ -396,7 +397,7 @@ public class SingleNetworkDAO implements AutoCloseable {
         	for ( Long id : aliases) {
         		terms.add(getBaseTermStringById(id));
         	}
-        	writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_alias,terms));
+        	writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_alias,terms, ATTRIBUTE_TYPE.STRING));
     	}
     	    	
     	Set<Long> relatedTerms = doc.field(NdexClasses.Node_P_relateTo);
@@ -405,7 +406,7 @@ public class SingleNetworkDAO implements AutoCloseable {
         	for ( Long id : relatedTerms) {
         		terms.add(getBaseTermStringById(id));
         	}
-        	writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_relateTo,terms));
+        	writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_relateTo,terms,ATTRIBUTE_TYPE.STRING));
     	}
       	
     	// write properties

@@ -507,6 +507,7 @@ public class NdexPersistenceService extends PersistenceService {
 		this.network.setVisibility(VisibilityType.PRIVATE);
 		this.network.setIsLocked(false);
 		this.network.setIsComplete(false);
+		this.network.setOwner(this.ownerAccount);
 
         
 		this.networkDoc = new ODocument (NdexClasses.Network)
@@ -520,8 +521,9 @@ public class NdexPersistenceService extends PersistenceService {
 		  	NdexClasses.Network_P_isComplete, this.network.getIsComplete(),
 		  	NdexClasses.Network_P_visibility, this.network.getVisibility().toString(),
 		  	NdexClasses.Network_P_cacheId, this.network.getReadOnlyCacheId(),
-		  	NdexClasses.Network_P_readOnlyCommitId, this.network.getReadOnlyCommitId());
-
+		  	NdexClasses.Network_P_readOnlyCommitId, this.network.getReadOnlyCommitId(),
+		  	NdexClasses.Network_P_owner,  this.ownerAccount);
+		
 		if ( version != null) {
 			this.network.setVersion(version);
 			this.networkDoc.field(NdexClasses.Network_P_version, version);

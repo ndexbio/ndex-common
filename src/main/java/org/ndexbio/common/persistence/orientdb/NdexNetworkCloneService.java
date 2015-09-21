@@ -126,6 +126,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 		this.functionTermIdMap = new HashMap<>(sourceNetwork.getFunctionTerms().size());
 		// intialize caches.
 	    //logger = Logger.getLogger(NdexPersistenceService.class.getName());
+		
+		network.setOwner(ownerAccountName);
 
 	}
 
@@ -243,6 +245,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			cloneNetworkCore();
 			
 			networkDoc.field(NdexClasses.Network_P_isComplete,true)
+			.field(NdexClasses.Network_P_owner, this.ownerAccount)
 			.save();
 
 			// find the network owner in the database
