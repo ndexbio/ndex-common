@@ -287,47 +287,9 @@ public abstract class PersistenceService implements AutoCloseable {
 			    });
 
     }
-    
-/*
-	protected void addPropertiesToVertex (OrientVertex vertex, Collection<NdexPropertyValuePair> properties , 
-			Collection<SimplePropertyValuePair> presentationProperties ) throws NdexException, ExecutionException {
-
-		if ( properties != null) {
-			for (NdexPropertyValuePair e : properties) {
-				OrientVertex pV = this.createNdexPropertyVertex(e);
-               vertex.addEdge(NdexClasses.E_ndexProperties, pV);
-			}
-//            this.network.getProperties().addAll(properties);
-		
-		}
-
-		if ( presentationProperties !=null ) {
-			for (SimplePropertyValuePair e : presentationProperties) {
-				ODocument pDoc = createSimplePropertyDoc(e.getName(),e.getValue());
-               OrientVertex pV = graph.getVertex(pDoc);
-               vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
-			}
-		} 
-	}
-*/
-	
-/*	protected void addPresentationPropertiesToVertex (OrientVertex vertex, Collection<SimplePropertyValuePair> presentationProperties) {
-
-		if ( presentationProperties !=null ) {
-			for (SimplePropertyValuePair e : presentationProperties) {
-				ODocument pDoc = createSimplePropertyDoc(e.getName(),e.getValue());
-               OrientVertex pV = graph.getVertex(pDoc);
-               vertex.addEdge(NdexClasses.E_ndexPresentationProps, pV);
-			}
-		}
-	} */
-	
-
+/*	
 	 protected OrientVertex createNdexPropertyVertex(NdexPropertyValuePair e) {
-//		 Long baseTermId = this.getBaseTermId(e.getPredicateString());
-//		 ODocument btDoc = this.elementIdCache.get(baseTermId);
-		 
-//		 return createNdexPropertyVertex(e, baseTermId, btDoc);
+
 		 return createNdexPropertyVertex_aux(e);
 		}
 
@@ -346,7 +308,7 @@ public abstract class PersistenceService implements AutoCloseable {
 // 		 this.elementIdCache.put(baseTermId, btV.getRecord());
  		 return pV;
 		}
-
+*/
 	 
 	 protected static ODocument createSimplePropertyDoc(String key, String value) {
 			ODocument pDoc = new ODocument(NdexClasses.SimpleProperty)

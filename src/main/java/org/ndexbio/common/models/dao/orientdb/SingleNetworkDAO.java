@@ -155,7 +155,7 @@ public class SingleNetworkDAO implements AutoCloseable {
         node_meta.setVersion("1.0");
       //  node_meta.setIdCounter();
         node_meta.setLastUpdate(lastUpdate.getTime());
-        node_meta.setElementCount(nodecount);
+        node_meta.setElementCount(new Long(nodecount));
         node_meta.setConsistencyGroup(1l);
 
         md.addMetaDataElement(node_meta);
@@ -175,7 +175,7 @@ public class SingleNetworkDAO implements AutoCloseable {
         edge_meta.setVersion("1.0");
         edge_meta.setLastUpdate(lastUpdate.getTime());
         edge_meta.setConsistencyGroup(1l);
-        edge_meta.setElementCount(edgecount);
+        edge_meta.setElementCount(new Long(edgecount));
 
         md.addMetaDataElement(edge_meta);
         
