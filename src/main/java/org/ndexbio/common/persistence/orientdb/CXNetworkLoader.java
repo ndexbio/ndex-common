@@ -74,7 +74,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Map<String, Long> supportSIDMap;
 	private Map<String, Long> namespaceMap;
 	private Map<String, Long> baseTermMap;
-	private Set<String> undefinedNodeId;
+	private Set<Long> undefinedNodeId;
 	
 	private NamespacesElement ns;
 	
@@ -133,19 +133,23 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 		for ( AspectElement elmt : cxreader ) {
 			String aspectName = elmt.getAspectName();
-			if ( aspectName.equals(NodesElement.NAME)) {
-			    // Do something with a NodesElement...
+			if ( aspectName.equals(NodesElement.NAME)) {       //Node
 			    NodesElement ne = (NodesElement) elmt;
 			    String nid = ne.getId();
-			    createCXNodeBySID(nid);
-			       
-			} else if (aspectName.equals(NdexNetworkStatus.NAME)) {
+			    Long nodeId = nodeSIDMap.get(nid);
+			    if ( nodeId == null) 
+			       createCXNodeBySID(nid);
+			    else {
+			       if ( !undefinedNodeId.remove(nodeId))  // it has been defined more than once
+			    	 throw new DuplicateObjectException(NodesElement.NAME, nid);
+			    }
+			} else if (aspectName.equals(NdexNetworkStatus.NAME)) {    //ndexStatus
 				netStatus = (NdexNetworkStatus) elmt;
 				saveNetworkStatus(netStatus);
-			} else if ( aspectName.equals(EdgesElement.NAME)) {
+			} else if ( aspectName.equals(EdgesElement.NAME)) {        // Edge
 				EdgesElement ee = (EdgesElement) elmt;
 				createCXEdge(ee);
-			} else if ( aspectName.equals(NamespacesElement.NAME)) {
+			} else if ( aspectName.equals(NamespacesElement.NAME)) {    // namespace
 				this.ns = (NamespacesElement) elmt;
 				createCXContext(ns);
 			}
@@ -253,31 +257,31 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   .save();
 	    
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
-/*
 		
-		Long newSubjectId = nodeIdMap.get(edge.getSubjectId());
-        if ( newSubjectId == null)
-        	   throw new NdexException ("Node id " + edge.getSubjectId() + "not found.");
+		Long newSubjectId = nodeSIDMap.get(ee.getSource());
+        if ( newSubjectId == null) {
+        	Long sId = createCXNodeBySID(ee.getSource());
+        	undefinedNodeId.add(sId);
+        }
 	   
-        ODocument subjectDoc = elementIdCache.get(newSubjectId); 
+        ODocument subjectDoc = this.getNodeDocById(newSubjectId); 
+        
 	   graph.getVertex(subjectDoc).addEdge(NdexClasses.Edge_E_subject, edgeV);
 		
 	   
-	   Long newObjectId = nodeIdMap.get(edge.getObjectId());
-       if ( newObjectId == null)
-    	   throw new NdexException ("Node id " + edge.getObjectId() + "not found.");
-       ODocument objectDoc = elementIdCache.get(newObjectId); 
-       edgeV.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectDoc)); */
+	   Long newObjectId = nodeSIDMap.get(ee.getTarget());
+       if ( newObjectId == null) {
+    	   Long tId = createCXNodeBySID(ee.getTarget());
+    	   undefinedNodeId.add(tId);
+       }
+       
+       ODocument objectDoc = getNodeDocById(newObjectId); 
+       edgeV.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectDoc)); 
 	   
-		networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
+	   networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
 		
 		return edgeId;
 	}
-	
-//	private Long createCXEdgeBySID(String sid) {
-		
-//	}
-	
 	
 	
 	
