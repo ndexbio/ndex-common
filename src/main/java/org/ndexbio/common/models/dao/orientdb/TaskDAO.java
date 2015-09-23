@@ -65,7 +65,7 @@ public class TaskDAO extends TaskDocDAO {
 	public UUID createTask(String accountName, Task newTask) throws ObjectNotFoundException, NdexException {
 		
 		if (newTask.getExternalId() == null)
-			newTask.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
+			newTask.setExternalId(NdexUUIDFactory.INSTANCE.createNewNDExUUID());
 		
 		ODocument taskDoc = new ODocument(NdexClasses.Task)
 				.fields(NdexClasses.ExternalObj_ID, newTask.getExternalId().toString(),

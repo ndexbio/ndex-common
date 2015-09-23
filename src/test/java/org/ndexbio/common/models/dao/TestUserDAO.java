@@ -338,7 +338,7 @@ public class TestUserDAO {
 	@Test(expected = ObjectNotFoundException.class)
 	public void deleteUser_nonExistant() throws NdexException, ObjectNotFoundException {
 
-       dao.deleteUserById(NdexUUIDFactory.INSTANCE.getNDExUUID());
+       dao.deleteUserById(NdexUUIDFactory.INSTANCE.createNewNDExUUID());
             
 	} 
 	

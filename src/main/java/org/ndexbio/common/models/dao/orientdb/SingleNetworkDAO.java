@@ -54,28 +54,13 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class SingleNetworkDAO implements AutoCloseable {
+public class SingleNetworkDAO extends BasicNetworkDAO {
 		
-	private ODatabaseDocumentTx db;
 	private ODocument networkDoc;
-	private OIndex<?> btermIdIdx;
-    private OIndex<?> nsIdIdx;
-    private OIndex<?> citationIdIdx;
-    private OIndex<?> supportIdIdx;
-    private OIndex<?> funcIdIdx;
-    private OIndex<?> reifiedEdgeIdIdx;
-    
-    
     
 	public SingleNetworkDAO ( String UUID) throws NdexException {
-		db  = NdexDatabase.getInstance().getAConnection();	
+		super();
 		networkDoc = getRecordByUUIDStr(UUID);
-    	btermIdIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_bterm_id);
-    	nsIdIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_ns_id);
-    	citationIdIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_citation_id);
-    	supportIdIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_support_id);
-        funcIdIdx  = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_function_id);
-        reifiedEdgeIdIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_reifiededge_id);
 	}
 
 	private ODocument getRecordByUUIDStr(String id) 
@@ -529,73 +514,7 @@ public class SingleNetworkDAO implements AutoCloseable {
     //	writeDocPropertiesAsCX(doc, cxwtr);
     	return SID;
 	}
-
-
-
-	@Override
-	public void close() throws Exception {
-		db.commit();
-		db.close();
-	}
-	
-    
-    protected static void getPropertiesFromDoc(ODocument doc, PropertiedObject obj) {
-    	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
-    	if (props != null && props.size()> 0) 
-    		obj.setProperties(props);
-    }
-
-    private ODocument getBasetermDocById (long id) throws ObjectNotFoundException {
-    	ORecordId rid =   (ORecordId)btermIdIdx.get( id ); 
-        
-    	if ( rid != null) {
-    		return rid.getRecord();
-    	}
-  
-    	throw new ObjectNotFoundException(NdexClasses.BaseTerm, id);
-    }
-    
-    private ODocument getFunctionDocById (long id) throws ObjectNotFoundException {
-    	ORecordId rid =   (ORecordId)funcIdIdx.get( id ); 
-        
-    	if ( rid != null) {
-    		return rid.getRecord();
-    	}
-  
-    	throw new ObjectNotFoundException(NdexClasses.FunctionTerm, id);
-    }
-    
-    private ODocument getReifiedEdgeDocById (long id) throws ObjectNotFoundException {
-    	ORecordId rid =   (ORecordId)reifiedEdgeIdIdx.get( id ); 
-        
-    	if ( rid != null) {
-    		return rid.getRecord();
-    	}
-  
-    	throw new ObjectNotFoundException(NdexClasses.ReifiedEdgeTerm, id);
-    }
-    
-    private ODocument getCitationDocById (long id) throws ObjectNotFoundException {
-    	ORecordId rid =   (ORecordId)citationIdIdx.get( id ); 
-        
-    	if ( rid != null) {
-    		return rid.getRecord();
-    	}
-  
-    	throw new ObjectNotFoundException(NdexClasses.Citation, id);
-    }
-    
-    private ODocument getSupportDocById (long id) throws ObjectNotFoundException {
-    	ORecordId rid =   (ORecordId)supportIdIdx.get( id ); 
-        
-    	if ( rid != null) {
-    		return rid.getRecord();
-    	}
-  
-    	throw new ObjectNotFoundException(NdexClasses.Citation, id);
-    }
-    
-    
+     
     private String getBaseTermStringById(long id) throws ObjectNotFoundException {
     	ODocument doc = getBasetermDocById(id);
     	return  getBaseTermStringFromDoc(doc);
@@ -617,15 +536,7 @@ public class SingleNetworkDAO implements AutoCloseable {
     	return nsdoc.field(NdexClasses.ns_P_uri) + name;
     }
     
-    private ODocument getNamespaceDocById(long id) throws ObjectNotFoundException {
-    	ORecordId cIds =  (ORecordId) nsIdIdx.get( id ); 
 
-    	if ( cIds !=null)
-    		return cIds.getRecord();
-    	
-    	throw new ObjectNotFoundException(NdexClasses.Namespace, id);
-    }
-    
     private void writeNdexAspectElementAsAspectFragment (CxWriter cxwtr, AspectElement element ) throws IOException {
     	cxwtr.startAspectFragment(element.getAspectName());
 		cxwtr.writeAspectElement(element);

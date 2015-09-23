@@ -167,7 +167,7 @@ public class UserDocDAO extends OrientdbDAO {
 			               "lastName", newUser.getLastName(),
 			               NdexClasses.account_P_accountName, newUser.getAccountName(),
 			               "password", Security.hashText(newUser.getPassword()),
-			               NdexClasses.ExternalObj_ID, NdexUUIDFactory.INSTANCE.getNDExUUID(),
+			               NdexClasses.ExternalObj_ID, NdexUUIDFactory.INSTANCE.createNewNDExUUID(),
 			               NdexClasses.ExternalObj_cTime, new Date(),
 			               NdexClasses.ExternalObj_mTime, new Date(),
 			               NdexClasses.ExternalObj_isDeleted, false);

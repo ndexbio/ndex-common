@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -168,6 +169,7 @@ public class NdexDatabase {
     public static synchronized void close () {
     	if ( INSTANCE != null ) {
     		logger.info("Closing database.");
+    		ODatabaseRecordThreadLocal.INSTANCE.set(INSTANCE.ndexDatabase);
     		INSTANCE.ndexDatabase.commit();
     		INSTANCE.ndexDatabase.close();
     		INSTANCE.pool.close();

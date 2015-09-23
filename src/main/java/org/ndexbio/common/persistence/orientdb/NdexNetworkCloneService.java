@@ -160,7 +160,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			//move the UUID from old network to new network, set new one's isComplete and set the old one to isDeleted.
 			
 			localConnection.begin();
-			UUID newUUID = NdexUUIDFactory.INSTANCE.getNDExUUID();
+			UUID newUUID = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
 
 			srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
 					  NdexClasses.ExternalObj_isDeleted,true).save();
@@ -279,7 +279,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 	private void cloneNetworkNode()  {
 
-		this.network.setExternalId( NdexUUIDFactory.INSTANCE.getNDExUUID());	
+		this.network.setExternalId( NdexUUIDFactory.INSTANCE.createNewNDExUUID());	
 		
 //		logger.info("using network prefix: " + NdexDatabase.getURIPrefix() );
 //		logger.info("Configuration is HostURI=" + Configuration.getInstance().getProperty("HostURI") );

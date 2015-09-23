@@ -220,31 +220,6 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 
-	
-	// alias is treated as a baseTerm
-/*	public void addAliasToNode(long nodeId, long baseTermId) throws ExecutionException, NdexException {
-		ODocument nodeDoc = elementIdCache.get(nodeId);
-
-	    Long repNodeId = this.baseTermNodeIdMap.get(baseTermId);
-		if ( repNodeId != null && repNodeId.equals(nodeId)) {
-	    	logger.info("Base term ID " + baseTermId  + " is also the represented base term of node " + 
-		    nodeId +". Alias ignored.");
-	    	return;
-	    } 
-		
-		OrientVertex nodeV = graph.getVertex(nodeDoc);
-		
-		ODocument bTermDoc = elementIdCache.get(baseTermId);
-		if(!bTermDoc.getClassName().equals(NdexClasses.BaseTerm))
-			throw new NdexException ("Element " + baseTermId + " is not an instance of  baseTerm. It is " + 
-							bTermDoc.getClassName() );
-    	OrientVertex bV = graph.getVertex(bTermDoc);
-		nodeV.addEdge(NdexClasses.Node_E_alias, bV);
-
-		elementIdCache.put(nodeId, nodeV.getRecord());
-		elementIdCache.put(baseTermId, bV.getRecord());
-	}
-*/	
 				
 	public void addCitationToElement(long elementId, Long citationId, String className) throws ExecutionException, NdexException{
 		ODocument elementRec = elementIdCache.get(elementId);
@@ -557,16 +532,10 @@ public class NdexPersistenceService extends PersistenceService {
 		Preconditions.checkNotNull(networkTitle,"A network title is required");
 		
 
-		UUID uuid = NdexUUIDFactory.INSTANCE.getNDExUUID() ;
+		UUID uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID() ;
 		// find the network owner in the database
 		this.ownerAccount = ownerName;
 
-/*		ownerDoc =  findUserByAccountName(ownerName);
-		if( null == ownerDoc){
-			String message = "Account " +ownerName +" is not registered in the database"; 
-			logger.severe(message);
-			throw new NdexException(message);
-		} */
 				
 		createNetwork(networkTitle,version, uuid);
 
@@ -575,28 +544,7 @@ public class NdexPersistenceService extends PersistenceService {
 		
 	}
 
-/*
-	public void networkProgressLogCheck() {
-		commitCounter++;
-		if (commitCounter % 1000 == 0) {
-			logger.info("Checkpoint: Number of edges " + this.edgeCache.size());
-		}
 
-	}
-*/
-
-	/**
-	 * performing delete the current network but not commiting it.
-	 */
-/*	public void deleteNetwork() {
-		// TODO Implement deletion of network
-		System.out
-		.println("deleteNetwork called. Not yet implemented");
-		
-		
-	} */
-
-	
 	/**
 	 * 
 	 * @param id the node id that was assigned by external source. 
@@ -975,17 +923,6 @@ public class NdexPersistenceService extends PersistenceService {
 
 	}
 	
-/*	public void addElementPresentationProperty(Long elementId, String key, String value) throws ExecutionException {
-		ODocument elementDoc = this.elementIdCache.get(elementId);
-		OrientVertex v = graph.getVertex(elementDoc);
-		
-		ODocument pDoc = this.createSimplePropertyDoc(key,value);
-		pDoc = pDoc.save();
-        OrientVertex pV = graph.getVertex(pDoc);
-        v.addEdge(NdexClasses.E_ndexPresentationProps, pV);
-        elementDoc = v.getRecord();
-        this.elementIdCache.put(elementId, elementDoc);
-	} */
 	
 	public void setNodeProperties(Long nodeId, Collection<NdexPropertyValuePair> properties, 
 			Collection<SimplePropertyValuePair> presentationProperties) throws ExecutionException {

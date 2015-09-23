@@ -26,7 +26,7 @@ public class GeneralAspectFragmentReader extends AbstractFragmentReader {
 	@Override
 	public AspectElement readElement(ObjectNode o) throws IOException {
 		ObjectMapper jsonObjectMapper = new ObjectMapper();
-		return jsonObjectMapper.treeToValue(o, cls);
+		return (AspectElement)jsonObjectMapper.treeToValue(o, cls);
 	//	return o;
 	}
 

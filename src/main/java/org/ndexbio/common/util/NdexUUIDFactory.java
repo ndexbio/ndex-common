@@ -39,7 +39,7 @@ public enum NdexUUIDFactory {
 	INSTANCE;
 	private static final EthernetAddress addr = EthernetAddress.fromInterface();
 	private static final TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator(addr);
-	public UUID getNDExUUID() {
+	public UUID createNewNDExUUID() {
 		return  uuidGenerator.generate();
 		
 	}

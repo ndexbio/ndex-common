@@ -109,7 +109,7 @@ public class GroupDAO extends GroupDocDAO {
 			try {
 				Group result = new Group();
 				    
-				result.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
+				result.setExternalId(NdexUUIDFactory.INSTANCE.createNewNDExUUID());
 				result.setAccountName(newGroup.getAccountName());
 				result.setOrganizationName(newGroup.getOrganizationName());
 				result.setWebsite(newGroup.getWebsite());

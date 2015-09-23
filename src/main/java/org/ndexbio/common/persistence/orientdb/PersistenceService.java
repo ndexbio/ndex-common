@@ -49,7 +49,6 @@ import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
-import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
 
@@ -278,37 +277,14 @@ public abstract class PersistenceService implements AutoCloseable {
 				.build(new CacheLoader<Long, ODocument>() {
 				   @Override
 				   public ODocument load(Long key) throws NdexException, ExecutionException {
-//					   logger.info("Element Id loading cache loading element " + key + " from db .");
 					   ODocument o = networkDAO.getDocumentByElementId(key);
-                    if ( o == null )
-                    	throw new NdexException ("Document is not found for element id: " + key);
-					return o;
+                       if ( o == null )
+                    	   throw new NdexException ("Document is not found for element id: " + key);
+					   return o;
 				   }
 			    });
 
     }
-/*	
-	 protected OrientVertex createNdexPropertyVertex(NdexPropertyValuePair e) {
-
-		 return createNdexPropertyVertex_aux(e);
-		}
-
-	 protected OrientVertex createNdexPropertyVertex_aux(NdexPropertyValuePair e ) { //, Long baseTermId, ODocument btDoc)  {
-		// OrientVertex btV = graph.getVertex(btDoc);
-		 
- 		 ODocument pDoc = new ODocument(NdexClasses.NdexProperty)
-				.fields(NdexClasses.ndexProp_P_predicateStr,e.getPredicateString(),
-						NdexClasses.ndexProp_P_value, e.getValue(),
-						NdexClasses.ndexProp_P_datatype, e.getDataType())
-			   .save();
- 		
- 		 OrientVertex pV = graph.getVertex(pDoc);
-// 		 pV.addEdge(NdexClasses.ndexProp_E_predicate, btV);
-// 		 e.setPredicateId(baseTermId);
-// 		 this.elementIdCache.put(baseTermId, btV.getRecord());
- 		 return pV;
-		}
-*/
 	 
 	 protected static ODocument createSimplePropertyDoc(String key, String value) {
 			ODocument pDoc = new ODocument(NdexClasses.SimpleProperty)
@@ -319,35 +295,9 @@ public abstract class PersistenceService implements AutoCloseable {
 		}
 
 	 public void commit () {
-			//graph.commit();
 			this.localConnection.commit();
-	//		this.networkDoc.reload();
-	//		this.networkVertex = graph.getVertex(networkDoc);
-		//	logger.info("elementIdCachSize:" + elementIdCache.size());
-		//	this.localConnection.begin();
-		//	database.commit();
 		}
-/*		
-	private Long createNamespace ( String prefix, String URI) throws NdexException {
-			if ( prefix !=null && URI == null )
-			 throw new NdexException ("Prefix " + prefix + " is not defined." );
-		
-	    	Long nsId = database.getNextId();
-
-	    	ODocument nsDoc = new ODocument(NdexClasses.Namespace)
-		      .fields(NdexClasses.ns_P_prefix,prefix,
-		    		  NdexClasses.ns_P_uri, URI,
-		              NdexClasses.Element_ID, nsId)
-		      .save();
-		
-	    
-	    	OrientVertex nsV = graph.getVertex(nsDoc);
-	    	networkVertex.addEdge(NdexClasses.Network_E_Namespace, nsV);
-	    	
-	    	elementIdCache.put(nsId, nsDoc);
-		    return nsId;
-		}
-*/		
+	
 	private Namespace findOrCreateNamespace(RawNamespace key) throws NdexException {
 		Namespace ns = namespaceMap.get(key);
 
@@ -482,9 +432,6 @@ public abstract class PersistenceService implements AutoCloseable {
 		       .save();
 		    
 	        OrientVertex fTermV = graph.getVertex(fTerm);
-	        
-//	        ODocument bTermDoc = elementIdCache.get(baseTermId); 
-//	        fTermV.addEdge(NdexClasses.FunctionTerm_E_baseTerm, graph.getVertex(bTermDoc));
 	        
 	        for (Long id : termList) {
 	        	ODocument o = elementIdCache.get(id);
@@ -753,8 +700,6 @@ public abstract class PersistenceService implements AutoCloseable {
 	  @Override
 	public void close () {
           this.graph.shutdown();
-//		  this.localConnection.close();
-//		  this.database.close();
 	  }
 	  
 	  

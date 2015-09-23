@@ -136,6 +136,7 @@ public interface NdexClasses {
     
     //BaseTerm
     public static final String BTerm_P_name        = "name";
+    public static final String BTerm_P_prefix      = "prefix";
     public static final String BTerm_NS_ID   = "nsID";
     
     public static final String Index_BTerm_name    = "idx_baseterm_name";
@@ -171,6 +172,12 @@ public interface NdexClasses {
     public static final String Index_node_rep_id = "index-node-rep-id";
     public static final String Index_UUID = "index-external-id";
     public static final String Index_support_citation = "idx-support-citation";
+    
+    public static final String Index_node_sid = "idx-node-sid";
+    public static final String Index_edge_sid = "idx-edge-sid";
+    public static final String Index_citation_sid = "idx-citation-sid";
+    public static final String Index_support_sid = "idx-support-sid";
+    
     //edge
     
 //    public static final String Edge_E_predicate  = "edgePredicate";

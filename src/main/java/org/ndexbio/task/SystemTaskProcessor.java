@@ -119,7 +119,7 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
 				taskdao.commit();
 			}
 			if ( cnt < 0 ) {
-				task.setExternalId(NdexUUIDFactory.INSTANCE.getNDExUUID());
+				task.setExternalId(NdexUUIDFactory.INSTANCE.createNewNDExUUID());
 				NdexServerQueue.INSTANCE.addSystemTask(task); // add the task back to the queue.
 			}
 		}	
