@@ -749,6 +749,8 @@ public class NetworkDocDAO extends OrientdbDAO {
     	nSummary.setNodeCount((int)doc.field(NdexClasses.Network_P_nodeCount));
     	nSummary.setVersion((String)doc.field(NdexClasses.Network_P_version));
         nSummary.setVisibility(VisibilityType.valueOf((String)doc.field(NdexClasses.Network_P_visibility)));
+        
+        nSummary.setOwner((String) doc.field(NdexClasses.Network_P_owner));
         Boolean isComplete = doc.field(NdexClasses.Network_P_isComplete);
         if ( isComplete != null)
         	nSummary.setIsComplete(isComplete.booleanValue());

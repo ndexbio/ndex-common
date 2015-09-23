@@ -119,7 +119,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  Set<AspectFragmentReader> readers = Util.getAllAvailableAspectFragmentReaders();
 		  readers.add(new GeneralAspectFragmentReader (NdexNetworkStatus.NAME,
 				NdexNetworkStatus.class));
-		
+		  readers.add(new GeneralAspectFragmentReader (NamespacesElement.NAME,NamespacesElement.class));
+		  
 		  CxElementReader cxreader = CxElementReader.createInstance(inputStream, true,
 				   readers);
 		
@@ -198,7 +199,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 	}
 	
-	
 
 	private void saveNetworkStatus(NdexNetworkStatus status ) {
 		if ( status.getEdgeCount()>=0)
@@ -231,13 +231,16 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Long createCXNodeBySID(String SID) throws DuplicateObjectException {
 		Long nodeId = ndexdb.getNextId();
 		
-		new ODocument(NdexClasses.Node)
+		ODocument nodeDoc = new ODocument(NdexClasses.Node)
 		   .fields(NdexClasses.Element_ID, nodeId,
 				   NdexClasses.Element_SID, SID)
 		   .save();
 		Long oldId = nodeSIDMap.put(SID, nodeId);
 		if ( oldId !=null)
 			throw new DuplicateObjectException(NodesElement.NAME, SID);
+		
+		networkVertex.addEdge(NdexClasses.Network_E_Nodes,graph.getVertex(nodeDoc));
+
 		return nodeId;
 	}
 		
@@ -282,8 +285,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 		return edgeId;
 	}
-	
-	
 	
 	
 	private Long createBaseTerm(String termString) throws NdexException {
@@ -364,7 +365,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  
 		btDoc.save();
 		OrientVertex basetermV = graph.getVertex(btDoc);
-		networkVertex.getRecord().reload();
+	//	networkVertex.getRecord().reload();
         networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
 		return termId;
 	}
