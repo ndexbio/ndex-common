@@ -28,7 +28,6 @@ import org.cxio.metadata.MetaData;
 import org.cxio.metadata.MetaDataElement;
 import org.cxio.util.Util;
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentWriter;
 import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.cx.FunctionTermsElement;
@@ -46,6 +45,7 @@ import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.FileFormat;
 import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.ReifiedEdgeTerm;
@@ -185,6 +185,9 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
         nstatus.setOwner((String)networkDoc.field(NdexClasses.Network_P_owner));
         //nstatus.setPublished(isPublished);
         nstatus.setVersion((String)networkDoc.field(NdexClasses.Network_P_version));
+        String srcFmtStr = networkDoc.field(NdexClasses.Network_P_source_format);
+        if ( srcFmtStr !=null)
+          nstatus.setSourceFormat(srcFmtStr);
         nstatus.setVisibility(
         		VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility)));
         
@@ -206,8 +209,11 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
         
         List<NdexPropertyValuePair> props = networkDoc.field(NdexClasses.ndexProperties);
         if ( props !=null) {
+        	for ( NdexPropertyValuePair p : props) {
         	 writeNdexAspectElementAsAspectFragment(cxwtr,
-             		new NetworkAttributesElement(null,NdexClasses.Network_P_name, title));
+             		new NetworkAttributesElement(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
+             				NetworkAttributesElement.toDataType(p.getDataType().toLowerCase()) ));
+        	}
         }
         
         //write namespaces
