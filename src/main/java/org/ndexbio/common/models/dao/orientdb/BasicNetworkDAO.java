@@ -24,6 +24,7 @@ public class BasicNetworkDAO implements AutoCloseable {
     private OIndex<?> funcIdIdx;
     private OIndex<?> reifiedEdgeIdIdx;
     private OIndex<?> nodeIdIdx;
+	private OIndex<?> edgeIdIdx;
 	
 	public BasicNetworkDAO() throws NdexException {
 		db  = NdexDatabase.getInstance().getAConnection();	
@@ -34,6 +35,7 @@ public class BasicNetworkDAO implements AutoCloseable {
         funcIdIdx  = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_function_id);
         reifiedEdgeIdIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_reifiededge_id);
         nodeIdIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_node_id);
+        edgeIdIdx = db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_edge_id);
 	}
 
 	@Override
@@ -67,7 +69,17 @@ public class BasicNetworkDAO implements AutoCloseable {
     	}
   
     	throw new ObjectNotFoundException(NdexClasses.Node, id);
-}
+	}
+    
+	protected ODocument getEdgeDocById (long id) throws ObjectNotFoundException {
+    	ORecordId rid =   (ORecordId)edgeIdIdx.get( id ); 
+        
+    	if ( rid != null) {
+    		return rid.getRecord();
+    	}
+  
+    	throw new ObjectNotFoundException(NdexClasses.Edge, id);
+	}
     
 
 

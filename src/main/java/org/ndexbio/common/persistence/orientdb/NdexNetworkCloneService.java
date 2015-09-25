@@ -30,6 +30,8 @@
  */
 package org.ndexbio.common.persistence.orientdb;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -51,6 +53,7 @@ import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
+import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Task;
@@ -370,13 +373,16 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		if ( srcNetwork.getBaseTerms()!= null) {
 			for ( BaseTerm term : srcNetwork.getBaseTerms().values() ) {
-				Long nsId = (long)-1 ;
+				Long baseTermId = null;
 				if ( term.getNamespaceId() >0 ) {
-					nsId = namespaceIdMap.get(term.getNamespaceId());
+					Long nsId = namespaceIdMap.get(term.getNamespaceId());
 					if ( nsId == null)  
 						throw new NdexException ("Namespece Id " + term.getNamespaceId() + " is not found in name space list.");
+					baseTermId = createBaseTerm(null, term.getName(), nsId);
+				} else {
+					
 				}
-				Long baseTermId = createBaseTerm(term.getName(), nsId);
+				baseTermId = createBaseTermWithoutNamespace(term.getName());
 				this.baseTermIdMap.put(term.getId(), baseTermId);
 			}
 		}
@@ -384,6 +390,60 @@ public class NdexNetworkCloneService extends PersistenceService {
 				((srcNetwork.getBaseTerms() != null) ? srcNetwork.getBaseTerms().size() : 0));
 	}
 
+	
+	private Long createBaseTermWithoutNamespace(String termString) throws NdexException {
+		
+		// case 1 : termString is a URI
+		// example: http://identifiers.org/uniprot/P19838
+		// treat the last element in the URI as the identifier and the rest as
+		// prefix string. Just to help the future indexing.
+		//
+		String prefix = null;
+		String identifier = null;
+		if ( termString.length() > 8 && termString.substring(0, 7).equalsIgnoreCase("http://") &&
+				(!termString.endsWith("/"))) {
+  		  try {
+			URI termStringURI = new URI(termString);
+				identifier = termStringURI.getFragment();
+			
+			    if ( identifier == null ) {
+				    String path = termStringURI.getPath();
+				    if (path != null && path.indexOf("/") != -1) {
+				       int pos = termString.lastIndexOf('/');
+					   identifier = termString.substring(pos + 1);
+					   prefix = termString.substring(0, pos + 1);
+				    } else
+				       throw new NdexException ("Unsupported URI format in term: " + termString);
+			    } else {
+				    prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
+			    }
+                 
+			    return createBaseTerm(prefix,identifier,null);
+			  
+		  } catch (URISyntaxException e) {
+			// ignore and move on to next case
+		  }
+		}
+		
+		String[] termStringComponents = TermUtilities.getNdexQName(termString);
+		if (termStringComponents != null && termStringComponents.length == 2) {
+			// case 2: termString is of the form (NamespacePrefix:)*Identifier
+			identifier = termStringComponents[1];
+			prefix = termStringComponents[0];
+			
+			return createBaseTerm(prefix + ":" , identifier, null);
+		} 
+		
+			// case 3: termString cannot be parsed, use it as the identifier.
+			// so leave the prefix as null and create the baseterm				
+		
+		   // create baseTerm in db
+		return createBaseTerm(null,termString,null);
+          
+	
+	}
+
+	
 	private void cloneCitations() {
 		logger.info("[start: cloning citations; size={} citations]", 
 				((srcNetwork.getCitations() != null) ? srcNetwork.getCitations().size() : 0));

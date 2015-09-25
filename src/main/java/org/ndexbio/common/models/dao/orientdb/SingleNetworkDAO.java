@@ -18,6 +18,7 @@ import java.util.TreeSet;
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_TYPE;
 import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
+import org.cxio.aspects.datamodels.NetworkAttributesElement;
 import org.cxio.aspects.datamodels.NodeAttributesElement;
 import org.cxio.aspects.datamodels.NodesElement;
 import org.cxio.core.CxWriter;
@@ -44,7 +45,10 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.PropertiedObject;
+import org.ndexbio.model.object.network.BaseTerm;
+import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
+import org.ndexbio.model.object.network.ReifiedEdgeTerm;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.task.Configuration;
 
@@ -185,6 +189,26 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
         		VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility)));
         
         writeNdexAspectElementAsAspectFragment(cxwtr, nstatus);
+        
+        
+        // write name, desc and other properties;
+        String title = networkDoc.field(NdexClasses.Network_P_name);
+        if ( title != null ) {
+            writeNdexAspectElementAsAspectFragment(cxwtr,
+            		new NetworkAttributesElement(null,NdexClasses.Network_P_name, title));
+        }
+        
+        String desc = networkDoc.field(NdexClasses.Network_P_desc);
+        if ( desc != null) {
+            writeNdexAspectElementAsAspectFragment(cxwtr,
+            		new NetworkAttributesElement(null,NdexClasses.Network_P_desc, desc));
+        }
+        
+        List<NdexPropertyValuePair> props = networkDoc.field(NdexClasses.ndexProperties);
+        if ( props !=null) {
+        	 writeNdexAspectElementAsAspectFragment(cxwtr,
+             		new NetworkAttributesElement(null,NdexClasses.Network_P_name, title));
+        }
         
         //write namespaces
         NamespacesElement prefixtab = new NamespacesElement();
@@ -334,7 +358,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 	
 	private void writeNodeInCX(ODocument doc, CxWriter cxwtr, Set<Long> repIdSet,
 			 Map<Long,String> citationIdMap,  Map<Long,String> supportIdMap) 
-			throws ObjectNotFoundException, IOException {
+			throws IOException, NdexException {
 		
 		String SID = doc.field(NdexClasses.Element_SID);
 		
@@ -350,22 +374,24 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
     	Long repId = doc.field(NdexClasses.Node_P_represents);
     	
     	if ( repId != null && repId.longValue() > 0) {
-    		try {
+    		String termType = doc.field(NdexClasses.Node_P_representTermType);
+    		
+  			if ( termType.equals(NdexClasses.BaseTerm)) {
     			String repStr = this.getBaseTermStringById(repId);
     			writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null, SID, NdexClasses.Node_P_represents, repStr));
-    		} catch ( ObjectNotFoundException e1) {
-    			if ( !repIdSet.contains(repId) ) {
-    			  try {
-    				ODocument funcDoc = this.getFunctionDocById(repId);
-    				writeNdexAspectElementAsAspectFragment(cxwtr, getFunctionTermsElementFromDoc(SID, funcDoc));
-    				repIdSet.add(repId);
-    			  } catch (ObjectNotFoundException e2) {
-    				ODocument reifiedEdgeDoc = this.getReifiedEdgeDocById(repId);
+
+			} else if ( !repIdSet.contains(repId) ) {
+				if (termType.equals(NdexClasses.ReifiedEdgeTerm)) {
+					ODocument reifiedEdgeDoc = this.getReifiedEdgeDocById(repId);
     				writeReifiedEdgeTermInCX(SID, reifiedEdgeDoc, cxwtr);
-    				repIdSet.add(repId);
-    			  }
-    			}  
-    		}
+				} else if (termType.equals(NdexClasses.FunctionTerm)) {
+					ODocument funcDoc = this.getFunctionDocById(repId);
+    				writeNdexAspectElementAsAspectFragment(cxwtr, getFunctionTermsElementFromDoc(SID, funcDoc));
+				} else 
+					throw new NdexException ("Unsupported term type '" + termType + 
+							"' found for term Id:" + repId);
+				repIdSet.add(repId);
+			}
     	}
     	 
 
@@ -524,16 +550,19 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
     private String getBaseTermStringFromDoc(ODocument doc) throws ObjectNotFoundException {
 	    String name = doc.field(NdexClasses.BTerm_P_name);
     	
+	    String prefix = doc.field(NdexClasses.BTerm_P_prefix);
+	    if (prefix !=null)
+	    	name = prefix + name;
+	    
     	Long nsId = doc.field(NdexClasses.BTerm_NS_ID); 
     	if ( nsId == null || nsId.longValue() <= 0) 
     		return name;
     	
     	ODocument nsdoc = getNamespaceDocById(nsId);
-    	String prefix = nsdoc.field(NdexClasses.ns_P_prefix)	;
-    	if ( prefix!=null)
-    		return prefix + ":"+ name;
+        prefix = nsdoc.field(NdexClasses.ns_P_prefix)	;
+    	return prefix + ":"+ name;
     	
-    	return nsdoc.field(NdexClasses.ns_P_uri) + name;
+    //	return nsdoc.field(NdexClasses.ns_P_uri) + name;
     }
     
 

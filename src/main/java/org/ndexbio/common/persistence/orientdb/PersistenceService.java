@@ -346,26 +346,6 @@ public abstract class PersistenceService implements AutoCloseable {
 
 	
 	
-	 protected Long createBaseTerm(String localTerm, long nsId) {
-
-			Long termId = database.getNextId();
-			
-			ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
-			  .fields(NdexClasses.BTerm_P_name, localTerm,
-					  NdexClasses.Element_ID, termId); 
-
-			if ( nsId > 0) {
-				btDoc.field(NdexClasses.BTerm_NS_ID, nsId);
-			} 
-			  
-			btDoc.save();
-			OrientVertex basetermV = graph.getVertex(btDoc);
-			networkVertex.getRecord().reload();
-	        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
-	        elementIdCache.put(termId, basetermV.getRecord());
-			return termId;
-	 }
-
 	 
 	 protected Long createCitation(String title, String idType, String identifier, 
 				List<String> contributors, 
@@ -452,7 +432,8 @@ public abstract class PersistenceService implements AutoCloseable {
 		 * @throws NdexException
 		 * @throws ExecutionException
 		 */
-		public Long getBaseTermId(String termStringRaw) throws NdexException, ExecutionException {
+		// just fore reference before the 1.3 is done.
+		private Long getBaseTermId_old(String termStringRaw) throws NdexException, ExecutionException {
 			
 	        String termString = termStringRaw;		
 			if ( termStringRaw.length() > 8 && termStringRaw.substring(0, 7).equalsIgnoreCase("http://") ) {
@@ -527,118 +508,129 @@ public abstract class PersistenceService implements AutoCloseable {
 			
 		    return this.createBaseTerm(termString);	
 		}
+
+		public Long getBaseTermId(String termStringRaw) throws NdexException, ExecutionException {
+			Long termId = this.baseTermStrMap.get(termStringRaw);
+			if ( termId !=null)
+				return termId;
+
+			return createBaseTerm(termStringRaw);
+	  
+		}
+		
 		
 		public Long getBaseTermId (  String prefix, String localTerm) throws ExecutionException {
 			Long termId = this.baseTermStrMap.get(prefix+":"+localTerm);
 			if ( termId != null) {
 				return termId;
 			}
-		    return this.createBaseTerm(prefix,localTerm);	
+		    return this.createBaseTerm(prefix,localTerm,null);	
 		}
 			
-		
-		private Long createBaseTerm(String termString) throws NdexException {
-			// case 1 : termString is a URI
-			// example: http://identifiers.org/uniprot/P19838
-			// treat the last element in the URI as the identifier and the rest as
-			// the namespace URI
-			// find or create the namespace based on the URI
-			// when creating, set the prefix based on the PREFIX-URI table for known
-			// namespaces, otherwise do not set.
-			//
-			if ( termString.length() > 8 && termString.substring(0, 7).equalsIgnoreCase("http://") ) {
-	  		  try {
-				URI termStringURI = new URI(termString);
-//				String scheme = termStringURI.getScheme();
-					String fragment = termStringURI.getFragment();
+	
+		protected Long createBaseTerm(String termString) throws NdexException {
 				
-				    String prefix;
-				    if ( fragment == null ) {
-					    String path = termStringURI.getPath();
-					    if (path != null && path.indexOf("/") != -1) {
-						   fragment = termString.substring(termString.lastIndexOf('/') + 1);
-//						   String decodedURI = termStringURI.toString();
-						   prefix = termString.substring(0,
-								   termString.lastIndexOf('/') + 1);
-					    } else
-					       throw new NdexException ("Unsupported URI format in term: " + termString);
-				    } else {
-					    prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
-				    }
-	                 
-				    RawNamespace rns = new RawNamespace(
-				    		(reverseNSMap.containsKey(prefix)? reverseNSMap.get(prefix):null),
-				    		prefix);  //prefix value is actually the URI of the namespace.
-				    Namespace namespace = getNamespace(rns);
-				
-				    // create baseTerm in db
-				    Long id = createBaseTerm(fragment, namespace.getId());
-				    if ( namespace.getPrefix() == null)
-				    	this.baseTermStrMap.put(termString, id);
-				    else 
-				    	this.baseTermStrMap.put(namespace.getPrefix()+ ":"+fragment, id);
-			        return id;
-			  } catch (URISyntaxException e) {
-				// ignore and move on to next case
-			  }
-			}
-			// case 2: termString is of the form (NamespacePrefix:)*Identifier
-			// find or create the namespace based on the prefix
-			// when creating, set the URI based on the PREFIX-URI table for known
-			// namespaces, otherwise do not set.
-			//
-			
-			String[] termStringComponents = TermUtilities.getNdexQName(termString);
-			if (termStringComponents != null && termStringComponents.length == 2) {
-				String identifier = termStringComponents[1];
-				String prefix = termStringComponents[0];
-				Namespace namespace = prefixMap.get(prefix);
-				
-				if ( namespace == null) {
-					// check the Ndex namepace lookup table to see of we understand it
-					String uri = defaultNSMap.get(prefix);
+				// case 1 : termString is a URI
+				// example: http://identifiers.org/uniprot/P19838
+				// treat the last element in the URI as the identifier and the rest as
+				// prefix string. Just to help the future indexing.
+				//
+				String prefix = null;
+				String identifier = null;
+				if ( termString.length() > 8 && termString.substring(0, 7).equalsIgnoreCase("http://") &&
+						(!termString.endsWith("/"))) {
+		  		  try {
+					URI termStringURI = new URI(termString);
+						identifier = termStringURI.getFragment();
 					
-					if ( uri != null) {
-						namespace = getNamespace( new RawNamespace(prefix, uri));
-					} else {
-						namespace = createLocalNamespaceforPrefix(prefix);
-						logger.warning("Prefix '" + prefix + "' is not defined in the network. URI "+
-								namespace.getUri()	+ " has been created for it by Ndex." );
-					}
+					    if ( identifier == null ) {
+						    String path = termStringURI.getPath();
+						    if (path != null && path.indexOf("/") != -1) {
+						       int pos = termString.lastIndexOf('/');
+							   identifier = termString.substring(pos + 1);
+							   prefix = termString.substring(0, pos + 1);
+						    } else
+						       throw new NdexException ("Unsupported URI format in term: " + termString);
+					    } else {
+						    prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
+					    }
+		                 
+					    Long btId = createBaseTerm(prefix,identifier,null);
+					    baseTermStrMap.put(termString, btId);
+					    return btId;
+					  
+				  } catch (URISyntaxException e) {
+					// ignore and move on to next case
+				  }
 				}
 				
-				// create baseTerm in db
-				Long id= createBaseTerm(identifier, namespace.getId());
-		        this.baseTermStrMap.put(termString, id);
-		        return id;
-
-			}
-
-			// case 3: termString cannot be parsed, use it as the identifier.
-			// find or create the namespace for prefix "LOCAL" and use that as the
-			// namespace.
-
-				// create baseTerm in db
-	    	Long id = createBaseTerm(termString, -1);
-	        this.baseTermStrMap.put(termString, id);
-	        return id;
+				String[] termStringComponents = TermUtilities.getNdexQName(termString);
+				if (termStringComponents != null && termStringComponents.length == 2) {
+					// case 2: termString is of the form (NamespacePrefix:)*Identifier
+					identifier = termStringComponents[1];
+					prefix = termStringComponents[0];
+					
+					Long btId = null;
+					Namespace namespace = this.prefixMap.get(prefix);
+					if ( namespace !=null) {
+					   btId = createBaseTerm(null, identifier, namespace.getId());
+					} else
+						btId = createBaseTerm(prefix + ":" , identifier, null);
+			        this.baseTermStrMap.put(termString, btId);
+			        return btId;
+				} 
+				
+					// case 3: termString cannot be parsed, use it as the identifier.
+					// so leave the prefix as null and create the baseterm				
+				
+				   // create baseTerm in db
+				    Long id= createBaseTerm(null,termString,null);
+		           this.baseTermStrMap.put(termString, id);
+		           return id;
 			
+			}
+				
+		
+		protected Long createBaseTerm (String prefix, String localName, Long nsId) {
+			Long termId = database.getNextId();
+						
+			ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
+					.fields(NdexClasses.BTerm_P_name, localName,
+				  NdexClasses.Element_ID, termId,
+		  		  NdexClasses.BTerm_P_prefix, prefix); 
+			if ( nsId != null) {
+				btDoc.field(NdexClasses.BTerm_NS_ID, nsId);
+			} 
+			
+			btDoc.save();
+			OrientVertex basetermV = graph.getVertex(btDoc);
+			networkVertex.getRecord().reload();
+	        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
+	        elementIdCache.put(termId, basetermV.getRecord());
+	        return termId;
 		}
+		
+	/*	
+		 protected Long createBaseTerm(String localTerm, long nsId) {
+				Long termId = database.getNextId();
+
+				ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
+						.fields(NdexClasses.BTerm_P_name, localTerm,
+					  NdexClasses.Element_ID, termId); 
 	
-		
-		private Long createBaseTerm (String prefix, String localName) {
-			Namespace namespace = this.prefixMap.get(prefix);
-			Long id= createBaseTerm(localName, namespace.getId());
-	        this.baseTermStrMap.put(prefix+":"+localName, id);
-	        return id;
-		}
-		
-		private Namespace createLocalNamespaceforPrefix (String prefix) throws NdexException {
-			String urlprefix = prefix.replace(' ', '_');
-			return findOrCreateNamespace(
-					new RawNamespace(prefix, "http://uri.ndexbio.org/ns/"+this.network.getExternalId()
-							+"/" + urlprefix + "/"));
-		}
+				if ( nsId > 0) {
+					//Namespace namespace = this.prefixMap.get(prefix);
+					btDoc.fields(NdexClasses.BTerm_NS_ID, nsId);
+				} 
+				  
+				btDoc.save();
+				OrientVertex basetermV = graph.getVertex(btDoc);
+				networkVertex.getRecord().reload();
+		        networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
+		        elementIdCache.put(termId, basetermV.getRecord());
+				return termId;
+		 }
+*/
 
 		/**
 		 * Find or create a namespace object from database;

@@ -199,7 +199,7 @@ public class NdexSchemaManager
         {
             bTermClass = orientDbGraph.createVertexType(NdexClasses.BaseTerm);
             bTermClass.createProperty(NdexClasses.BTerm_P_name, OType.STRING);
-
+            bTermClass.createProperty(NdexClasses.BTerm_P_prefix, OType.STRING);
             bTermClass.createProperty(NdexClasses.Element_ID, OType.LONG);
 
             bTermClass.createProperty(NdexClasses.BTerm_NS_ID, OType.LONG);

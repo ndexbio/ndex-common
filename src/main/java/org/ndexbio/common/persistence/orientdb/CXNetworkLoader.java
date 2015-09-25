@@ -18,7 +18,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_TYPE;
 import org.cxio.aspects.datamodels.EdgesElement;
+import org.cxio.aspects.datamodels.NodeAttributesElement;
 import org.cxio.aspects.datamodels.NodesElement;
 import org.cxio.core.CxElementReader;
 import org.cxio.core.CxReader;
@@ -59,6 +61,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 //	private static final long CORE_CACHE_SIZE = 100000L;
 //	private static final long NON_CORE_CACHE_SIZE = 100000L;
 
+	private static final String nodeName = "name";
+	
+	private long counter;
+	
 	private InputStream inputStream;
 	private NdexDatabase ndexdb;
 //	private ODatabaseDocumentTx connection;
@@ -104,6 +110,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
 		graph.setUseLightweightEdges(true);
 		
+		counter =0; 
 	}
 
 	
@@ -153,6 +160,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			} else if ( aspectName.equals(NamespacesElement.NAME)) {    // namespace
 				this.ns = (NamespacesElement) elmt;
 				createCXContext(ns);
+			} else if ( aspectName.equals(NodeAttributesElement.NAME)) {  // 
+				NodeAttributesElement e = (NodeAttributesElement) elmt;
+				addNodeAttribute(e.getPropertyOf(),e.getName(),e.getValues(),e.getDataType() );
+				
 			}
 
 		}
@@ -195,6 +206,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			if ( oldv !=null)
 				throw new DuplicateObjectException(NamespacesElement.NAME, e.getKey());
 			
+			   tick();
 		}
 		
 	}
@@ -215,6 +227,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		UUID u = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
 		ODocument doc = new ODocument (NdexClasses.Network)
 				  .fields(NdexClasses.Network_P_UUID,u.toString(),
+						  NdexClasses.Network_P_name, "Unknown",
 						  NdexClasses.Network_P_owner, ownerAcctName,
 				          NdexClasses.ExternalObj_cTime, new Timestamp(Calendar.getInstance().getTimeInMillis()),
 				          NdexClasses.ExternalObj_isDeleted, false,
@@ -240,7 +253,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			throw new DuplicateObjectException(NodesElement.NAME, SID);
 		
 		networkVertex.addEdge(NdexClasses.Network_E_Nodes,graph.getVertex(nodeDoc));
-
+		   tick();
 		return nodeId;
 	}
 		
@@ -249,10 +262,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		Long edgeId = ndexdb.getNextId();
 		
 		String relation = ee.getRelationship();
-		Long btId = baseTermMap.get(relation);
-		if ( btId == null) {
-			btId = createBaseTerm(relation);
-		}
+		Long btId = getBaseTermId(relation);
 	
 	    ODocument edgeDoc = new ODocument(NdexClasses.Edge)
 		   .fields(NdexClasses.Element_ID, edgeId,
@@ -282,7 +292,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
        edgeV.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectDoc)); 
 	   
 	   networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
-		
+	   tick();
+	   
 		return edgeId;
 	}
 	
@@ -292,10 +303,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		// case 1 : termString is a URI
 		// example: http://identifiers.org/uniprot/P19838
 		// treat the last element in the URI as the identifier and the rest as
-		// the namespace URI
-		// find or create the namespace based on the URI
-		// when creating, set the prefix based on the PREFIX-URI table for known
-		// namespaces, otherwise do not set.
+		// prefix string. Just to help the future indexing.
 		//
 		String prefix = null;
 		String identifier = null;
@@ -317,8 +325,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				    prefix = termStringURI.getScheme()+":"+termStringURI.getSchemeSpecificPart()+"#";
 			    }
                  
-			    Long btId = createBaseTerm(prefix,identifier);
+			    Long btId = createBaseTerm(prefix,identifier, null);
 			    baseTermMap.put(termString, btId);
+				tick();
 			    return btId;
 			  
 		  } catch (URISyntaxException e) {
@@ -326,53 +335,129 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  }
 		}
 		
-		// case 2: termString is of the form (NamespacePrefix:)*Identifier
-		// find or create the namespace based on the prefix
-		// when creating, set the URI based on the PREFIX-URI table for known
-		// namespaces, otherwise do not set.
-		//
-		
+		Long btId = null;
 		String[] termStringComponents = TermUtilities.getNdexQName(termString);
 		if (termStringComponents != null && termStringComponents.length == 2) {
+			// case 2: termString is of the form (NamespacePrefix:)*Identifier
 			identifier = termStringComponents[1];
 			prefix = termStringComponents[0];
+			Long nsId = namespaceMap.get(prefix);
 
-		} else {
-
-		// case 3: termString cannot be parsed, use it as the identifier.
-		// find or create the namespace for prefix "LOCAL" and use that as the
-		// namespace.
+			if ( nsId !=null) {
+			  btId = createBaseTerm(null, identifier, nsId);
+			} else 
+				btId = createBaseTerm(prefix + ":",identifier, null);
+			baseTermMap.put(termString, btId);
+			tick();
+			return btId;
+		} 
+		
+			// case 3: termString cannot be parsed, use it as the identifier.
+			// so leave the prefix as null and create the baseterm
 			identifier = termString;
-			
-		}
+	
 		
 		// create baseTerm in db
-		
-		Long id= createBaseTerm(prefix,identifier);
+		Long id= createBaseTerm(null,identifier,null);
         this.baseTermMap.put(termString, id);
+		   tick();
         return id;
 
 	}
-
-
-	private Long createBaseTerm(String prefix, String identifier) {
+	
+	private Long createBaseTerm(String prefix, String identifier, Long nsId) {
 		Long termId = ndexdb.getNextId();
 		
 		ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
 		  .fields(NdexClasses.BTerm_P_name, identifier,
 				  NdexClasses.Element_ID, termId,
 		  		  NdexClasses.BTerm_P_prefix, prefix); 
-		  
+		
+		if ( nsId !=null)
+			  btDoc.field(NdexClasses.BTerm_NS_ID, nsId);
+ 
 		btDoc.save();
 		OrientVertex basetermV = graph.getVertex(btDoc);
 	//	networkVertex.getRecord().reload();
         networkVertex.addEdge(NdexClasses.Network_E_BaseTerms, basetermV);
 		return termId;
 	}
+
+	private void addNodeAttribute(List<String> nodeSIDs, String propName,List<String> values,ATTRIBUTE_TYPE type) throws NdexException{
+		for ( String nodeSID : nodeSIDs) {
+		
+		   Long nodeId = this.nodeSIDMap.get(nodeSID);
+		   if ( nodeId == null) {
+			  nodeId = createCXNodeBySID(nodeSID);
+			  undefinedNodeId.add(nodeId);
+		   }
+		   
+		   ODocument nodeDoc = getNodeDocById(nodeId);
+
+		   if (propName.equals(NdexClasses.Node_P_name)) {      //  node name
+			   if ( values.size() != 1) {
+				   new DuplicateObjectException("Node id " + nodeSID + " has 0 or more than 1 name: " + values.toString());
+			   }
+			   nodeDoc.field(NdexClasses.Node_P_name,values.get(0)).save();
+		   } else if ( propName.equals(NdexClasses.Node_P_represents)){    // represents
+			   if ( values.size() != 1) {
+				   new DuplicateObjectException("Node id " + nodeSID + " has 0 or more than 1 represents: " + values.toString());
+			   }
+			   Long btId = getBaseTermId ( values.get(0));
+			   nodeDoc.fields(NdexClasses.Node_P_represents, btId,
+					          NdexClasses.Node_P_representTermType,NdexClasses.BaseTerm).save();
+			   
+		   } else if ( propName.equals(NdexClasses.Node_P_alias)) {       // aliases
+			   if (!values.isEmpty()) {
+				   Set<Long> aliases = new TreeSet<>();
+				   for ( String v : values) {
+					   aliases.add(getBaseTermId(v));
+				   }
+				   
+				   nodeDoc.field(NdexClasses.Node_P_alias, aliases).save();
+			   } 
+		   } else if ( propName.equals(NdexClasses.Node_P_relateTo)) {       // relateTo
+			   if (!values.isEmpty()) {
+				   Set<Long> relateTo = new TreeSet<>();
+				   for ( String v : values) {
+					   relateTo.add(getBaseTermId(v));
+				   }
+				   
+				   nodeDoc.field(NdexClasses.Node_P_relateTo, relateTo).save();
+			   } 
+		   }  //else if ( prop)
+		   
+		   tick();
+		}
+	}
+
+	/**
+	 * Get the id of the base term if it was already created. Othewise creates it and return its id.
+	 * @param termString
+	 * @return
+	 * @throws NdexException
+	 */
+	private Long getBaseTermId(String termString) throws NdexException {
+		Long btId = baseTermMap.get(termString);
+		if ( btId == null) {
+			btId = createBaseTerm(termString);
+		}
+		return btId;
+	}
+
+
 	
 	@Override
 	public void close() throws Exception {
 		graph.shutdown();
+	}
+	
+	private void tick() {
+		counter ++;
+		if ( counter % 5000 == 0 )  graph.commit();
+		if ( counter %10000 == 0 )
+			System.out.println("Loaded " + counter + " element in CX");
+		
 	}
 	
 }

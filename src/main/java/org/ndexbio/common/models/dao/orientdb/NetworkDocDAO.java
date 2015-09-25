@@ -397,8 +397,14 @@ public class NetworkDocDAO extends OrientdbDAO {
 	private BaseTerm getBaseTerm(ODocument o, Network network) throws NdexException {
 		BaseTerm t = new BaseTerm();
 		t.setId((long)o.field(NdexClasses.Element_ID));
-		t.setName((String)o.field(NdexClasses.BTerm_P_name));
+		String name = o.field(NdexClasses.BTerm_P_name);
 		
+		String prefix = o.field(NdexClasses.BTerm_P_prefix);
+		if ( prefix !=null) {
+			name = prefix+name;
+		}
+		t.setName(name);
+
 		Long nsId = o.field(NdexClasses.BTerm_NS_ID);
 		if ( nsId !=null) {
 		   t.setNamespaceId(nsId);
