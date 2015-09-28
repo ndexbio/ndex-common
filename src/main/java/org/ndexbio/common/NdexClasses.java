@@ -101,6 +101,8 @@ public interface NdexClasses {
     public static final String Network_P_readOnlyCommitId = "ROId";
     public static final String Network_P_cacheId 	= "cacheId";
     public static final String Network_P_owner      = "owner";
+    public static final String Network_P_metadata   = "aspectMetadata";
+    public static final String Network_E_opaque_asp_prefix = "CX_";
     
     public static final String Network_E_Namespace = "networkNS";
     public static final String Network_E_BaseTerms = "BaseTerms";

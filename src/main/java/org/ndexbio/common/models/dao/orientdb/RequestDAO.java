@@ -227,7 +227,7 @@ public class RequestDAO extends OrientdbDAO  {
 			if(!sender)
 				throw new NdexException("Not authorized to delete request");
 			
-			request.delete();
+			graph.removeVertex(vRequest);
 			logger.info("Request deleted");
 		} catch (NdexException e){
 			throw e;

@@ -159,13 +159,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 		  CxElementReader cxreader = createCXReader();
 		
-		  for (MetaData md : cxreader.getMetaData()) {
-			for ( MetaDataElement e : md.asListOfMetaDataElements() ) {
-				String name = e.getName();
-				System.out.println(name);
-			}
-			
-		  }
+		  networkDoc.field(NdexClasses.Network_P_metadata,cxreader.getMetaData());
 		
 		  for ( AspectElement elmt : cxreader ) {
 			String aspectName = elmt.getAspectName();
@@ -205,15 +199,17 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			} else if ( aspectName.equals(CitationElement.NAME)) {      // citation
 				createCitation((CitationElement) elmt);
 			} else if ( aspectName.equals(SupportElement.NAME)) {
-				
+				createSupport((SupportElement) elmt);
 			} else if ( aspectName.equals(EdgeCitationLinksElement.NAME)) {
-				
+				createEdgeCitation((EdgeCitationLinksElement) elmt);
 			} else if ( aspectName.equals(EdgeSupportLinksElement.NAME)) {
-				
+				createEdgeSupport((EdgeSupportLinksElement) elmt);
 			} else if ( aspectName.equals(NodeSupportLinksElement.NAME))  {
-				
+				createNodeSupport((NodeSupportLinksElement) elmt);
 			} else if ( aspectName.equals(NodeCitationLinksElement.NAME)) {
-				
+				createNodeCitation((NodeCitationLinksElement) elmt);
+			} else {    // opaque aspect
+			//	addOpaqueAspectElement()
 			}
 
 		}
@@ -237,6 +233,144 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		}
 		
 		graph.commit();
+	}
+	
+	private void createEdgeSupport(EdgeSupportLinksElement elmt) throws ObjectNotFoundException, DuplicateObjectException {
+		Long edgeId = edgeSIDMap.get(elmt.getSourceId());
+		if ( edgeId == null) {
+			edgeId = createCXEdgeBySID(elmt.getSourceId());
+			undefinedEdgeId.add(edgeId);
+		}
+		
+		ODocument edgeDoc = getEdgeDocById(edgeId);
+		Set<Long> supportIds = edgeDoc.field(NdexClasses.Support);
+		
+		if(supportIds == null)
+			supportIds = new HashSet<>(elmt.getSupportIds().size());
+		
+		for ( String supportSID : elmt.getSupportIds()) {
+			Long supportId = supportSIDMap.get(supportSID);
+			if ( supportId == null) {
+				supportId = createSupportBySID(supportSID);
+				undefinedSupportId.add(supportId);
+			}
+			supportIds.add(supportId);
+		}
+		
+		edgeDoc.field(NdexClasses.Support, supportIds).save();
+	}
+
+	private void createNodeSupport(NodeSupportLinksElement elmt) throws ObjectNotFoundException, DuplicateObjectException {
+		Long nodeId = nodeSIDMap.get(elmt.getSourceId());
+		if ( nodeId == null) {
+			nodeId = createCXNodeBySID(elmt.getSourceId());
+			undefinedNodeId.add(nodeId);
+		}
+		
+		ODocument nodeDoc = getNodeDocById(nodeId);
+		Set<Long> supportIds = nodeDoc.field(NdexClasses.Support);
+		
+		if(supportIds == null)
+			supportIds = new HashSet<>(elmt.getSupportIds().size());
+		
+		for ( String supportSID : elmt.getSupportIds()) {
+			Long supportId = supportSIDMap.get(supportSID);
+			if ( supportId == null) {
+				supportId = createSupportBySID(supportSID);
+				undefinedSupportId.add(supportId);
+			}
+			supportIds.add(supportId);
+		}
+		
+		nodeDoc.field(NdexClasses.Support, supportIds).save();
+	}
+	
+	private void createEdgeCitation(EdgeCitationLinksElement elmt) throws DuplicateObjectException, ObjectNotFoundException {
+		Long edgeId = edgeSIDMap.get(elmt.getSourceId());
+		if ( edgeId == null) {
+			edgeId = createCXEdgeBySID(elmt.getSourceId());
+			undefinedEdgeId.add(edgeId);
+		}
+		
+		ODocument edgeDoc = getEdgeDocById(edgeId);
+		Set<Long> citationIds = edgeDoc.field(NdexClasses.Citation);
+		
+		if(citationIds == null)
+			citationIds = new HashSet<>(elmt.getCitationIds().size());
+		
+		for ( String citationSID : elmt.getCitationIds()) {
+			Long citationId = citationSIDMap.get(citationSID);
+			if ( citationId == null) {
+				citationId = createCitationBySID(citationSID);
+				undefinedCitationId.add(citationId);
+			}
+			citationIds.add(citationId);
+		}
+		
+		edgeDoc.field(NdexClasses.Citation, citationIds).save();
+	}
+
+	
+	private void createNodeCitation(NodeCitationLinksElement elmt) throws DuplicateObjectException, ObjectNotFoundException {
+		Long nodeId = nodeSIDMap.get(elmt.getSourceId());
+		if ( nodeId == null) {
+			nodeId = createCXNodeBySID(elmt.getSourceId());
+			undefinedNodeId.add(nodeId);
+		}
+		
+		ODocument nodeDoc = getNodeDocById(nodeId);
+		Set<Long> citationIds = nodeDoc.field(NdexClasses.Citation);
+		
+		if(citationIds == null)
+			citationIds = new HashSet<>(elmt.getCitationIds().size());
+		
+		for ( String citationSID : elmt.getCitationIds()) {
+			Long citationId = citationSIDMap.get(citationSID);
+			if ( citationId == null) {
+				citationId = createCitationBySID(citationSID);
+				undefinedCitationId.add(citationId);
+			}
+			citationIds.add(citationId);
+		}
+		
+		nodeDoc.field(NdexClasses.Citation, citationIds).save();
+	}
+	
+	private Long createSupportBySID(String sid) {
+		Long supportId =ndexdb.getNextId() ;
+
+		ODocument supportDoc = new ODocument(NdexClasses.Support)
+		   .fields(NdexClasses.Element_ID, supportId,
+				   NdexClasses.Element_SID, sid).save()	;
+
+		OrientVertex supportV = graph.getVertex(supportDoc);
+
+		networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
+
+		this.supportSIDMap.put(sid, supportId);
+		return supportId;
+	}
+	
+	
+	private Long createSupport(SupportElement elmt) {
+		Long supportId =ndexdb.getNextId() ;
+
+		ODocument supportDoc = new ODocument(NdexClasses.Support)
+		   .fields(NdexClasses.Element_ID, supportId,
+				   NdexClasses.Element_SID, elmt.getId(),
+		           NdexClasses.Support_P_text, elmt.getText())	;
+
+		if ( elmt.getProps() !=null && elmt.getProps().size()>0) {
+			supportDoc.field(NdexClasses.ndexProperties, elmt.getProps());
+		}
+		supportDoc.save();
+
+		OrientVertex supportV = graph.getVertex(supportDoc);
+
+		networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
+
+		this.supportSIDMap.put(elmt.getId(), supportId);
+		return supportId;
 	}
 	
 	
@@ -461,8 +595,14 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				        NdexClasses.Citation_P_identifier, c.getIdentifier())
 				        
 				   .field( NdexClasses.Citation_P_contributors,c.getContributor(), OType.EMBEDDEDLIST);
-				   
+				   		
+		Collection<NdexPropertyValuePair> properties = c.getProps();
+		if(properties!=null && properties.size()>0) {
+			citationDoc.field(NdexClasses.ndexProperties, properties);
+		}
+		
 		citationDoc.save();
+        
 		        
 		OrientVertex citationV = graph.getVertex(citationDoc);
 		networkVertex.addEdge(NdexClasses.Network_E_Citations, citationV);
