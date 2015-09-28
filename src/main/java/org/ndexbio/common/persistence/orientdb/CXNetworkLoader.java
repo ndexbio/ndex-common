@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,8 +19,11 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_TYPE;
+import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
+import org.cxio.aspects.datamodels.NetworkAttributesElement;
 import org.cxio.aspects.datamodels.NodeAttributesElement;
 import org.cxio.aspects.datamodels.NodesElement;
 import org.cxio.core.CxElementReader;
@@ -39,11 +43,21 @@ import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.TermUtilities;
+import org.ndexbio.model.cx.CitationElement;
+import org.ndexbio.model.cx.EdgeCitationLinksElement;
+import org.ndexbio.model.cx.EdgeSupportLinksElement;
+import org.ndexbio.model.cx.FunctionTermsElement;
 import org.ndexbio.model.cx.NamespacesElement;
 import org.ndexbio.model.cx.NdexNetworkStatus;
+import org.ndexbio.model.cx.NodeCitationLinksElement;
+import org.ndexbio.model.cx.NodeSupportLinksElement;
+import org.ndexbio.model.cx.ReifiedEdgeElement;
+import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.exceptions.DuplicateObjectException;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
@@ -52,6 +66,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -81,6 +96,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Map<String, Long> namespaceMap;
 	private Map<String, Long> baseTermMap;
 	private Set<Long> undefinedNodeId;
+	private Set<Long> undefinedEdgeId;
+	private Set<Long> undefinedCitationId;
+	private Set<Long> undefinedSupportId;
 	
 	private NamespacesElement ns;
 	
@@ -104,6 +122,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		ns = null;
 		
 		undefinedNodeId = new TreeSet<>();
+		undefinedEdgeId = new TreeSet<>();
+		undefinedSupportId = new TreeSet<>();
+		undefinedCitationId = new TreeSet<>();
 		
 		graph =  new OrientGraph(db,false);
 		graph.setAutoScaleEdgeType(true);
@@ -114,6 +135,18 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 
 	
+	private CxElementReader createCXReader () throws IOException {
+		Set<AspectFragmentReader> readers = Util.getAllAvailableAspectFragmentReaders();
+		
+		  readers.add(new GeneralAspectFragmentReader (NdexNetworkStatus.NAME,
+				NdexNetworkStatus.class));
+		  readers.add(new GeneralAspectFragmentReader (NamespacesElement.NAME,NamespacesElement.class));
+		  readers.add(new GeneralAspectFragmentReader (FunctionTermsElement.NAME,FunctionTermsElement.class));
+		  
+		  return  CxElementReader.createInstance(inputStream, true,
+				   readers);
+	}
+	
 	//TODO: will modify this function to return a CX version of NetworkSummary object.
 	public void persistCXNetwork() throws IOException, ObjectNotFoundException, NdexException {
 		
@@ -123,13 +156,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		networkVertex = graph.getVertex(networkDoc);
 		
 		try { 
-		  Set<AspectFragmentReader> readers = Util.getAllAvailableAspectFragmentReaders();
-		  readers.add(new GeneralAspectFragmentReader (NdexNetworkStatus.NAME,
-				NdexNetworkStatus.class));
-		  readers.add(new GeneralAspectFragmentReader (NamespacesElement.NAME,NamespacesElement.class));
-		  
-		  CxElementReader cxreader = CxElementReader.createInstance(inputStream, true,
-				   readers);
+
+		  CxElementReader cxreader = createCXReader();
 		
 		  for (MetaData md : cxreader.getMetaData()) {
 			for ( MetaDataElement e : md.asListOfMetaDataElements() ) {
@@ -139,7 +167,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			
 		  }
 		
-		for ( AspectElement elmt : cxreader ) {
+		  for ( AspectElement elmt : cxreader ) {
 			String aspectName = elmt.getAspectName();
 			if ( aspectName.equals(NodesElement.NAME)) {       //Node
 			    NodesElement ne = (NodesElement) elmt;
@@ -160,9 +188,31 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			} else if ( aspectName.equals(NamespacesElement.NAME)) {    // namespace
 				this.ns = (NamespacesElement) elmt;
 				createCXContext(ns);
-			} else if ( aspectName.equals(NodeAttributesElement.NAME)) {  // 
+			} else if ( aspectName.equals(NodeAttributesElement.NAME)) {  // node attributes
 				NodeAttributesElement e = (NodeAttributesElement) elmt;
-				addNodeAttribute(e.getPropertyOf(),e.getName(),e.getValues(),e.getDataType() );
+				addNodeAttribute(e );
+			} else if ( aspectName.equals(FunctionTermsElement.NAME)) {   // function term
+				FunctionTermsElement e = (FunctionTermsElement) elmt;
+				createFunctionTerm(e);
+			} else if ( aspectName.equals(NetworkAttributesElement.NAME)) {  //network attributes
+				NetworkAttributesElement e = ( NetworkAttributesElement) elmt;
+				createNetworkAttribute(e);
+			} else if ( aspectName.equals(EdgeAttributesElement.NAME)) {     // edge attibutes
+				EdgeAttributesElement e = (EdgeAttributesElement) elmt;
+				addEdgeAttribute(e );
+			} else if ( aspectName.equals(ReifiedEdgeElement.NAME)) {   // reified edge
+				createReifiedEdgeTerm((ReifiedEdgeElement) elmt);
+			} else if ( aspectName.equals(CitationElement.NAME)) {      // citation
+				createCitation((CitationElement) elmt);
+			} else if ( aspectName.equals(SupportElement.NAME)) {
+				
+			} else if ( aspectName.equals(EdgeCitationLinksElement.NAME)) {
+				
+			} else if ( aspectName.equals(EdgeSupportLinksElement.NAME)) {
+				
+			} else if ( aspectName.equals(NodeSupportLinksElement.NAME))  {
+				
+			} else if ( aspectName.equals(NodeCitationLinksElement.NAME)) {
 				
 			}
 
@@ -187,6 +237,63 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		}
 		
 		graph.commit();
+	}
+	
+	
+	private void createReifiedEdgeTerm(ReifiedEdgeElement e) throws DuplicateObjectException, ObjectNotFoundException {
+		 String nodeSID = e.getNode();
+		 Long nodeId = nodeSIDMap.get(nodeSID);
+		 if(nodeId == null) {
+			 nodeId = createCXNodeBySID(nodeSID);
+			 undefinedNodeId.add(nodeId);
+		 }
+		
+		 String edgeSID = e.getEdge();
+		 Long edgeId = edgeSIDMap.get(edgeSID);
+		 if (edgeId == null ) {
+			 edgeId = createCXEdgeBySID(edgeSID);
+			 undefinedEdgeId.add(edgeId);
+		 }
+		 
+		 Long termId = ndexdb.getNextId();
+		 ODocument reifiedEdgeTermDoc = new ODocument(NdexClasses.ReifiedEdgeTerm)
+				 	.fields(NdexClasses.Element_ID, termId).save();
+				 			
+		 ODocument edgeDoc = this.getEdgeDocById(edgeId); 
+		 graph.getVertex(reifiedEdgeTermDoc).addEdge(
+							NdexClasses.ReifiedEdge_E_edge, graph.getVertex(edgeDoc));
+		 
+		 
+		 ODocument nodeDoc = this.getNodeDocById(nodeId);
+		 nodeDoc.fields(NdexClasses.Node_P_represents, termId,
+				    NdexClasses.Node_P_representTermType, NdexClasses.ReifiedEdgeTerm)
+		   .save();
+	}
+	
+	private void createNetworkAttribute(NetworkAttributesElement e) {
+		if ( e.getName().equals(NdexClasses.Network_P_name)) {
+			networkDoc.field(NdexClasses.Network_P_name,
+					  e.getValues()).save();
+		} else if ( e.getName().equals(NdexClasses.Network_P_desc)) {
+			networkDoc.field(NdexClasses.Network_P_desc, e.getValues()).save();
+		} else {
+			List<NdexPropertyValuePair> newProps= createNdexProperties(e);
+			List<NdexPropertyValuePair> props =networkDoc.field(NdexClasses.ndexProperties);
+			if ( props == null)
+				props = newProps;
+			else 
+				props.addAll(newProps);
+			networkDoc.field(NdexClasses.ndexProperties,props).save();
+		}
+	}
+	
+	private static List<NdexPropertyValuePair> createNdexProperties(AbstractAttributesAspectElement e) {
+		List <NdexPropertyValuePair> props = new ArrayList<> (e.getValues().size());
+		for ( String value : e.getValues()) {
+			props.add( new NdexPropertyValuePair(e.getSubnetwork(),
+					 e.getName(),value, e.getDataType().toString()));
+		}
+		return props;
 	}
 	
 	private void createCXContext(NamespacesElement context) throws DuplicateObjectException {
@@ -227,7 +334,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		UUID u = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
 		ODocument doc = new ODocument (NdexClasses.Network)
 				  .fields(NdexClasses.Network_P_UUID,u.toString(),
-						  NdexClasses.Network_P_name, "Unknown",
+						  NdexClasses.Network_P_name, "",
+						  NdexClasses.Network_P_desc, "",
 						  NdexClasses.Network_P_owner, ownerAcctName,
 				          NdexClasses.ExternalObj_cTime, new Timestamp(Calendar.getInstance().getTimeInMillis()),
 				          NdexClasses.ExternalObj_isDeleted, false,
@@ -257,18 +365,43 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return nodeId;
 	}
 		
-
-	private Long createCXEdge(EdgesElement ee) throws NdexException {
+	private Long createCXEdgeBySID(String SID) throws DuplicateObjectException {
 		Long edgeId = ndexdb.getNextId();
+		
+		ODocument nodeDoc = new ODocument(NdexClasses.Edge)
+		   .fields(NdexClasses.Element_ID, edgeId,
+				   NdexClasses.Element_SID, SID)
+		   .save();
+		Long oldId = edgeSIDMap.put(SID, edgeId);
+		if ( oldId !=null)
+			throw new DuplicateObjectException(EdgesElement.NAME, SID);
+		
+		networkVertex.addEdge(NdexClasses.Network_E_Edges,graph.getVertex(nodeDoc));
+		   tick();   
+		return edgeId;
+	}
+
+	
+	private Long createCXEdge(EdgesElement ee) throws NdexException {
 		
 		String relation = ee.getRelationship();
 		Long btId = getBaseTermId(relation);
-	
-	    ODocument edgeDoc = new ODocument(NdexClasses.Edge)
+
+		Long edgeId = edgeSIDMap.get(ee.getId());
+		ODocument edgeDoc;
+
+		if ( edgeId == null ) { 
+		  edgeId = ndexdb.getNextId();
+
+	      edgeDoc = new ODocument(NdexClasses.Edge)
 		   .fields(NdexClasses.Element_ID, edgeId,
+				   NdexClasses.Element_SID, ee.getId(),
 				   NdexClasses.Edge_P_predicateId, btId )
 		   .save();
-	    
+		} else {
+			edgeDoc = this.getEdgeDocById(edgeId);
+		}
+		
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
 		
 		Long newSubjectId = nodeSIDMap.get(ee.getSource());
@@ -288,14 +421,99 @@ public class CXNetworkLoader extends BasicNetworkDAO {
     	   undefinedNodeId.add(tId);
        }
        
+       
        ODocument objectDoc = getNodeDocById(newObjectId); 
        edgeV.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectDoc)); 
 	   
 	   networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
-	   tick();
 	   
+	   tick();
+	   undefinedNodeId.remove(edgeId);
 		return edgeId;
 	}
+	
+	private Long createCitationBySID(String sid) throws DuplicateObjectException {
+		Long citationId = ndexdb.getNextId();
+		
+		ODocument citationDoc = new ODocument(NdexClasses.Citation)
+		   .fields(NdexClasses.Element_ID, citationId,
+				   NdexClasses.Element_SID, sid)
+		   .save();
+		
+		Long oldId = citationSIDMap.put(sid, citationId);
+		if ( oldId !=null)
+			throw new DuplicateObjectException(CitationElement.NAME, sid);
+		
+		networkVertex.addEdge(NdexClasses.Network_E_Citations,graph.getVertex(citationDoc));
+		   tick();   
+		return citationId;
+	}
+	
+	private Long createCitation(CitationElement c) {
+		Long citationId = ndexdb.getNextId();
+
+		ODocument citationDoc = new ODocument(NdexClasses.Citation)
+				  .fields(
+						NdexClasses.Element_ID, citationId,
+						NdexClasses.Element_SID, c.getId(),
+				        NdexClasses.Citation_P_title, c.getTitle(),
+				        NdexClasses.Citation_p_idType, c.getCitationType(),
+				        NdexClasses.Citation_P_identifier, c.getIdentifier())
+				        
+				   .field( NdexClasses.Citation_P_contributors,c.getContributor(), OType.EMBEDDEDLIST);
+				   
+		citationDoc.save();
+		        
+		OrientVertex citationV = graph.getVertex(citationDoc);
+		networkVertex.addEdge(NdexClasses.Network_E_Citations, citationV);
+		citationSIDMap.put(c.getId(), citationId);
+		undefinedCitationId.remove(citationId);
+		
+		return citationId;
+	}
+	
+	private Long createFunctionTerm(FunctionTermsElement func) throws NdexException  {
+		Long funcId = ndexdb.getNextId();
+		
+		Long baseTermId = getBaseTermId(func.getFunctionName());
+		
+		ODocument funcDoc = new ODocument(NdexClasses.FunctionTerm)
+				.fields(NdexClasses.Element_ID, funcId,
+						NdexClasses.BaseTerm, baseTermId).save();
+		
+		OrientVertex functionTermV = graph.getVertex(funcDoc);
+					 
+		for ( Object arg : func.getArgs()) {
+			ODocument argumentDoc ;
+			
+			if ( arg instanceof String) {
+				Long bId = getBaseTermId ((String)arg);
+				argumentDoc = this.getBasetermDocById(bId);
+			} else if ( arg instanceof FunctionTermsElement ) {
+				Long fId = createFunctionTerm((FunctionTermsElement) arg);
+				argumentDoc = this.getFunctionDocById(fId);
+			} else
+				throw new NdexException("Invalid function term argument type " + arg.getClass().getName() + " found." );
+		    functionTermV.addEdge(NdexClasses.FunctionTerm_E_paramter, graph.getVertex(argumentDoc));
+		}
+			
+		String nodeSID = func.getNodeID() ;
+		if ( nodeSID != null) {
+			Long nodeId = nodeSIDMap.get(nodeSID);
+			if ( nodeId == null) {
+				nodeId = createCXNodeBySID(nodeSID);
+				undefinedNodeId.add(nodeId);
+			}
+			ODocument nodeDoc = this.getNodeDocById(nodeId);
+			nodeDoc.fields(NdexClasses.Node_P_represents, funcId,
+					NdexClasses.Node_P_representTermType,NdexClasses.FunctionTerm).save();
+		}
+		
+		networkVertex.addEdge(NdexClasses.Network_E_FunctionTerms, functionTermV);
+		
+		return funcId;
+	}
+	
 	
 	
 	private Long createBaseTerm(String termString) throws NdexException {
@@ -383,8 +601,32 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return termId;
 	}
 
-	private void addNodeAttribute(List<String> nodeSIDs, String propName,List<String> values,ATTRIBUTE_TYPE type) throws NdexException{
-		for ( String nodeSID : nodeSIDs) {
+	private void addEdgeAttribute(EdgeAttributesElement e) throws NdexException{
+		for ( String edgeSID : e.getPropertyOf()) {
+		
+		   Long edgeId = this.edgeSIDMap.get(edgeSID);
+		   if ( edgeId == null) {
+			  edgeId = createCXEdgeBySID(edgeSID);
+			  undefinedEdgeId.add(edgeId);
+		   }
+		   
+		   ODocument edgeDoc = getEdgeDocById(edgeId);
+
+		   List<NdexPropertyValuePair> newProps= createNdexProperties(e);
+			List<NdexPropertyValuePair> props =edgeDoc.field(NdexClasses.ndexProperties);
+			if ( props == null)
+				props = newProps;
+			else 
+				props.addAll(newProps);
+			edgeDoc.field(NdexClasses.ndexProperties,props).save();
+
+			tick();
+		}
+	}
+	
+	
+	private void addNodeAttribute(NodeAttributesElement e) throws NdexException{
+		for ( String nodeSID : e.getPropertyOf()) {
 		
 		   Long nodeId = this.nodeSIDMap.get(nodeSID);
 		   if ( nodeId == null) {
@@ -394,38 +636,50 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   
 		   ODocument nodeDoc = getNodeDocById(nodeId);
 
+		   String propName = e.getName();
 		   if (propName.equals(NdexClasses.Node_P_name)) {      //  node name
-			   if ( values.size() != 1) {
-				   new DuplicateObjectException("Node id " + nodeSID + " has 0 or more than 1 name: " + values.toString());
+			   if ( e.getValues().size() != 1) {
+				   new DuplicateObjectException("Node id " + nodeSID + " has 0 or more than 1 name: " + e.getValues().toString());
 			   }
-			   nodeDoc.field(NdexClasses.Node_P_name,values.get(0)).save();
+			   nodeDoc.field(NdexClasses.Node_P_name,e.getValues().get(0)).save();
 		   } else if ( propName.equals(NdexClasses.Node_P_represents)){    // represents
-			   if ( values.size() != 1) {
-				   new DuplicateObjectException("Node id " + nodeSID + " has 0 or more than 1 represents: " + values.toString());
+			   if ( e.getValues().size() != 1) {
+				   new DuplicateObjectException("Node id " + nodeSID + " has 0 or more than 1 represents: " + e.getValues().toString());
 			   }
-			   Long btId = getBaseTermId ( values.get(0));
+			   Long btId = getBaseTermId ( e.getValues().get(0));
 			   nodeDoc.fields(NdexClasses.Node_P_represents, btId,
 					          NdexClasses.Node_P_representTermType,NdexClasses.BaseTerm).save();
 			   
 		   } else if ( propName.equals(NdexClasses.Node_P_alias)) {       // aliases
-			   if (!values.isEmpty()) {
+			   if (!e.getValues().isEmpty()) {
 				   Set<Long> aliases = new TreeSet<>();
-				   for ( String v : values) {
+				   for ( String v : e.getValues()) {
 					   aliases.add(getBaseTermId(v));
 				   }
 				   
 				   nodeDoc.field(NdexClasses.Node_P_alias, aliases).save();
 			   } 
 		   } else if ( propName.equals(NdexClasses.Node_P_relateTo)) {       // relateTo
-			   if (!values.isEmpty()) {
+			   if (!e.getValues().isEmpty()) {
 				   Set<Long> relateTo = new TreeSet<>();
-				   for ( String v : values) {
+				   for ( String v : e.getValues()) {
 					   relateTo.add(getBaseTermId(v));
 				   }
 				   
 				   nodeDoc.field(NdexClasses.Node_P_relateTo, relateTo).save();
 			   } 
-		   }  //else if ( prop)
+		   }  else {
+
+			   List<NdexPropertyValuePair> newProps= createNdexProperties(e);
+			   List<NdexPropertyValuePair> props =nodeDoc.field(NdexClasses.ndexProperties);
+				if ( props == null)
+					props = newProps;
+				else 
+					props.addAll(newProps);
+				nodeDoc.field(NdexClasses.ndexProperties,props).save();
+
+				tick();
+		   }
 		   
 		   tick();
 		}
@@ -445,7 +699,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return btId;
 	}
 
-
+    
 	
 	@Override
 	public void close() throws Exception {

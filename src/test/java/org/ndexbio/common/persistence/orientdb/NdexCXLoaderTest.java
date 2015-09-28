@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
+import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_TYPE;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
@@ -22,10 +24,16 @@ public class NdexCXLoaderTest {
 	private String testUser = "cj2";
 	private String passwd  = testUser;
 	
-	private String testFile = "/Users/chenjing/working/cx/ligand.cx";
-	
+	private String testFile = 
+			//"/Users/chenjing/working/cx/ligand.cx";
+			"/Users/chenjing/working/cx/tiny_corpus.cx";
+
 	@Test
 	public void test() throws FileNotFoundException, Exception {
+		
+	//	String foo = AbstractAttributesAspectElement.ATTRIBUTE_TYPE.BOOLEAN.toString();
+		
+	//	System.out.println(AbstractAttributesAspectElement.ATTRIBUTE_TYPE.valueOf(foo));
 		NdexDatabase db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/ndex", "admin", "admin", 10);
 		
 		try (UserDocDAO dao = new UserDocDAO(db.getAConnection())) {
