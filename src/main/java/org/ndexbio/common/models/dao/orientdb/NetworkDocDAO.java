@@ -167,6 +167,8 @@ public class NetworkDocDAO extends OrientdbDAO {
 		
 		//ODocument predicateDoc = (ODocument)doc.field("out_"+NdexClasses.Edge_E_predicate);
 		Long predicateId = doc.field(NdexClasses.Edge_P_predicateId);
+		if(predicateId == null)
+			System.out.println(doc.toString());
 		e.setPredicateId(predicateId);
 		
 		if ( network != null && !network.getBaseTerms().containsKey(predicateId)) {

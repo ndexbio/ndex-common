@@ -129,53 +129,110 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
         return cxwtr;
 	}
 	
+	private void writeCXPreMetadata(CxWriter cxwtr) throws IOException {
+		MetaData md = networkDoc.field(NdexClasses.Network_P_metadata);
+		if ( md == null) {
+			md= new MetaData();
+
+			MetaDataElement node_meta = new MetaDataElement();
+
+	        Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
+	        int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
+	        int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
+	        
+	        node_meta.setName(NodesElement.NAME);
+	        node_meta.setVersion("1.0");
+	      //  node_meta.setIdCounter();
+	        node_meta.setLastUpdate(lastUpdate.getTime());
+	        node_meta.setElementCount(new Long(nodecount));
+	        node_meta.setConsistencyGroup(1l);
+
+	        md.addMetaDataElement(node_meta);
+
+/*	        MetaDataElement citation_meta = new MetaDataElement();
+
+	        citation_meta.setName(CitationElement.NAME);
+	        citation_meta.setVersion("1.0");
+	        citation_meta.setLastUpdate(lastUpdate.getTime());
+	        citation_meta.setConsistencyGroup(1l);
+
+	        md.addMetaDataElement(citation_meta); */
+	        
+	        MetaDataElement edge_meta = new MetaDataElement();
+
+	        edge_meta.setName(EdgesElement.NAME);
+	        edge_meta.setVersion("1.0");
+	        edge_meta.setLastUpdate(lastUpdate.getTime());
+	        edge_meta.setConsistencyGroup(1l);
+	        edge_meta.setElementCount(new Long(edgecount));
+
+	        md.addMetaDataElement(edge_meta);
+	        
+
+		}
+		
+        cxwtr.writeMetaData(md);
+
+	}
+	
 	public void writeNetworkInCX(OutputStream out, final boolean use_default_pretty_printer) throws IOException, NdexException {
         CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);
         
-        MetaData md= new MetaData();
-        
-        MetaDataElement node_meta = new MetaDataElement();
-
-        Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
-        int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
-        int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
-        
-        node_meta.setName(NodesElement.NAME);
-        node_meta.setVersion("1.0");
-      //  node_meta.setIdCounter();
-        node_meta.setLastUpdate(lastUpdate.getTime());
-        node_meta.setElementCount(new Long(nodecount));
-        node_meta.setConsistencyGroup(1l);
-
-        md.addMetaDataElement(node_meta);
-
-        MetaDataElement citation_meta = new MetaDataElement();
-
-        citation_meta.setName(CitationElement.NAME);
-        citation_meta.setVersion("1.0");
-        citation_meta.setLastUpdate(lastUpdate.getTime());
-        citation_meta.setConsistencyGroup(1l);
-
-        md.addMetaDataElement(citation_meta);
-        
-        MetaDataElement edge_meta = new MetaDataElement();
-
-        edge_meta.setName(EdgesElement.NAME);
-        edge_meta.setVersion("1.0");
-        edge_meta.setLastUpdate(lastUpdate.getTime());
-        edge_meta.setConsistencyGroup(1l);
-        edge_meta.setElementCount(new Long(edgecount));
-
-        md.addMetaDataElement(edge_meta);
-        
-        
         cxwtr.start();
+        
+		MetaData md = networkDoc.field(NdexClasses.Network_P_metadata);
+		if ( md == null) {
+			md= new MetaData();
+
+			MetaDataElement node_meta = new MetaDataElement();
+
+	        Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
+	        int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
+	        int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
+	        
+	        node_meta.setName(NodesElement.NAME);
+	        node_meta.setVersion("1.0");
+	      //  node_meta.setIdCounter();
+	        node_meta.setLastUpdate(lastUpdate.getTime());
+	        node_meta.setElementCount(new Long(nodecount));
+	        node_meta.setConsistencyGroup(1l);
+
+	        md.addMetaDataElement(node_meta);
+
+/*	        MetaDataElement citation_meta = new MetaDataElement();
+
+	        citation_meta.setName(CitationElement.NAME);
+	        citation_meta.setVersion("1.0");
+	        citation_meta.setLastUpdate(lastUpdate.getTime());
+	        citation_meta.setConsistencyGroup(1l);
+
+	        md.addMetaDataElement(citation_meta); */
+	        
+	        MetaDataElement edge_meta = new MetaDataElement();
+
+	        edge_meta.setName(EdgesElement.NAME);
+	        edge_meta.setVersion("1.0");
+	        edge_meta.setLastUpdate(lastUpdate.getTime());
+	        edge_meta.setConsistencyGroup(1l);
+	        edge_meta.setElementCount(new Long(edgecount));
+
+	        md.addMetaDataElement(edge_meta);
+	        
+
+		}
+		
         cxwtr.writeMetaData(md);
+
+//        writeCXPreMetadata(cxwtr);
         
         //write NdexStatus
         
         NdexNetworkStatus nstatus = new NdexNetworkStatus();
         
+        int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
+        int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
+        Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
+
         nstatus.setCreationTime(new Timestamp(((Date)networkDoc.field(NdexClasses.ExternalObj_cTime)).getTime()));
         nstatus.setEdgeCount(edgecount);
         nstatus.setNodeCount(nodecount);
@@ -293,7 +350,18 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		writeNdexAspectElementAsAspectFragment(cxwtr,e);
 	  
     	// write other properties
-    	writeDocPropertiesAsCX(doc, cxwtr);
+	   	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
+    	if ( props !=null) {
+    		cxwtr.startAspectFragment(EdgeAttributesElement.NAME);
+    		for ( NdexPropertyValuePair p : props ) {
+    			EdgeAttributesElement ep = new EdgeAttributesElement ( p.getSubNetworkId(), 
+    					SID, p.getPredicateString(), p.getValue(), 
+    					EdgeAttributesElement.toDataType(p.getDataType().toLowerCase()));
+    			cxwtr.writeAspectElement(ep);
+    		}
+    		cxwtr.endAspectFragment();
+    	}
+  //  	writeDocPropertiesAsCX(doc, cxwtr);
     	
     	//write citations
     	writeCitationsAndSupports(SID,  doc, cxwtr, citationIdMap,
@@ -349,7 +417,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
     	}
 	}
 	
-	
+	/*
 	private void writeDocPropertiesAsCX(ODocument doc, CxWriter cxwtr) throws IOException {
 	   	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
     	if ( props !=null) {
@@ -361,7 +429,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
     		cxwtr.endAspectFragment();
     	}
 	}
-	
+	*/
 	private void writeNodeInCX(ODocument doc, CxWriter cxwtr, Set<Long> repIdSet,
 			 Map<Long,String> citationIdMap,  Map<Long,String> supportIdMap) 
 			throws IOException, NdexException {
@@ -431,7 +499,10 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
     	if ( props !=null) {
     		cxwtr.startAspectFragment(NodeAttributesElement.NAME);
     		for ( NdexPropertyValuePair p : props ) {
-    			NodeAttributesElement ep = new NodeAttributesElement ( null, p.getPredicateString(), p.getValue(), p.getDataType());
+    			NodeAttributesElement ep = new NodeAttributesElement ( 
+    					p.getSubNetworkId(),
+    					SID, p.getPredicateString(), p.getValue(), 
+    					NodeAttributesElement.toDataType(p.getDataType().toLowerCase()));
     			cxwtr.writeAspectElement(ep);
     		}
     		cxwtr.endAspectFragment();
@@ -542,9 +613,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		
 		writeNdexAspectElementAsAspectFragment(cxwtr,result);
 		
-    	// write properties
-    //	writeDocPropertiesAsCX(doc, cxwtr);
-    	return SID;
+       	return SID;
 	}
      
     private String getBaseTermStringById(long id) throws ObjectNotFoundException {

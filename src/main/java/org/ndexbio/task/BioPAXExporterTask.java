@@ -55,14 +55,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public class BioPAXExporterTask extends NdexTask {
 	
-	private static final String NETWORK_EXPORT_PATH = "/opt/ndex/exported-networks/";
+	public static final String NETWORK_EXPORT_PATH = "/opt/ndex/exported-networks/";
 	private static final String FILE_EXTENSION = ".owl";
 
 	private Status taskStatus;
 	
 	
 	private static final Logger logger = LoggerFactory
-			.getLogger(XGMMLExporterTask.class);
+			.getLogger(BioPAXExporterTask.class);
 	
 	public BioPAXExporterTask(Task task) throws
 		IllegalArgumentException, SecurityException, NdexException{

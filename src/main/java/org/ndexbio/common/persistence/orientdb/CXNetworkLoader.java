@@ -142,23 +142,35 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				NdexNetworkStatus.class));
 		  readers.add(new GeneralAspectFragmentReader (NamespacesElement.NAME,NamespacesElement.class));
 		  readers.add(new GeneralAspectFragmentReader (FunctionTermsElement.NAME,FunctionTermsElement.class));
+		  readers.add(new GeneralAspectFragmentReader (CitationElement.NAME,CitationElement.class));
+		  readers.add(new GeneralAspectFragmentReader (SupportElement.NAME,SupportElement.class));
+		//  readers.add(new GeneralAspectFragmentReader (NetworkAttributesElement.NAME,NetworkAttributesElement.class));
+		  readers.add(new GeneralAspectFragmentReader (ReifiedEdgeElement.NAME,ReifiedEdgeElement.class));
+		  readers.add(new GeneralAspectFragmentReader (EdgeCitationLinksElement.NAME,EdgeCitationLinksElement.class));
+		  readers.add(new GeneralAspectFragmentReader (EdgeSupportLinksElement.NAME,EdgeSupportLinksElement.class));
+		  readers.add(new GeneralAspectFragmentReader (NodeCitationLinksElement.NAME,NodeCitationLinksElement.class));
+		  readers.add(new GeneralAspectFragmentReader (NodeSupportLinksElement.NAME,NodeSupportLinksElement.class));
 		  
 		  return  CxElementReader.createInstance(inputStream, true,
 				   readers);
 	}
 	
 	//TODO: will modify this function to return a CX version of NetworkSummary object.
-	public void persistCXNetwork() throws IOException, ObjectNotFoundException, NdexException {
+	public UUID persistCXNetwork() throws IOException, ObjectNotFoundException, NdexException {
 		
 		NdexNetworkStatus netStatus = null;
-		
-		networkDoc = this.createNetworkHeadNode();
+		UUID uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
+		networkDoc = this.createNetworkHeadNode(uuid);
 		networkVertex = graph.getVertex(networkDoc);
 		
 		try { 
 
 		  CxElementReader cxreader = createCXReader();
-		
+		  
+/*		  for (MetaData m : cxreader.getMetaData()) {
+			  m.
+		  }
+		*/
 		  networkDoc.field(NdexClasses.Network_P_metadata,cxreader.getMetaData());
 		
 		  for ( AspectElement elmt : cxreader ) {
@@ -233,6 +245,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		}
 		
 		graph.commit();
+		return uuid;
 	}
 	
 	private void createEdgeSupport(EdgeSupportLinksElement elmt) throws ObjectNotFoundException, DuplicateObjectException {
@@ -464,10 +477,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		networkDoc.save();
 	}
 	
-	private ODocument createNetworkHeadNode() {
-		UUID u = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
+	private ODocument createNetworkHeadNode(UUID uuid ) {
+	
 		ODocument doc = new ODocument (NdexClasses.Network)
-				  .fields(NdexClasses.Network_P_UUID,u.toString(),
+				  .fields(NdexClasses.Network_P_UUID,uuid,
 						  NdexClasses.Network_P_name, "",
 						  NdexClasses.Network_P_desc, "",
 						  NdexClasses.Network_P_owner, ownerAcctName,
@@ -532,8 +545,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				   NdexClasses.Element_SID, ee.getId(),
 				   NdexClasses.Edge_P_predicateId, btId )
 		   .save();
+		   edgeSIDMap.put(ee.getId(), edgeId);
 		} else {
 			edgeDoc = this.getEdgeDocById(edgeId);
+			edgeDoc.fields(NdexClasses.Edge_P_predicateId, btId).save();
 		}
 		
 		OrientVertex edgeV = graph.getVertex(edgeDoc);

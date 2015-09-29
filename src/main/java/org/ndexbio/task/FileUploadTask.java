@@ -130,8 +130,10 @@ public class FileUploadTask extends NdexTask {
 			parser = new ExcelParser(
 						file.getAbsolutePath(), this.getTaskOwnerAccount(),db);
 			break;
+		case ("CX")	:
+			parser = new CXParser(file.getAbsolutePath(), this.getTaskOwnerAccount());
 		default:		
-			String message = "The uploaded file type is not supported; must be SIF, XGMML, XBEL, XLS or XLSX."; 
+			String message = "The uploaded file type is not supported; must be SIF, XGMML, XBEL, CX, XLS or XLSX."; 
 			logger.error(message);
 			throw new NdexException (message);
 
