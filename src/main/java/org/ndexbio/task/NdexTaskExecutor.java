@@ -151,9 +151,11 @@ public class NdexTaskExecutor implements Callable<Integer> {
 					return new XGMMLExporterTask(task);
 				} if ( task.getFormat() == FileFormat.BIOPAX) {
 					return new BioPAXExporterTask(task);
+				} if ( task.getFormat() == FileFormat.CX) {
+					return new CXExporterTask(task);
 				}
 				
-				throw new NdexException ("Only XBEL, XGMML and BIOPAX exporters are implemented.");
+				throw new NdexException ("Only XBEL, XGMML, CX and BIOPAX exporters are implemented.");
 			}
 			throw new NdexException("Task type: " +task.getTaskType() +" is not supported");
 		} catch (IllegalArgumentException | SecurityException | NdexException e) {
