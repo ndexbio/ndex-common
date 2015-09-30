@@ -25,8 +25,8 @@ public class NdexCXLoaderTest {
 	private String passwd  = testUser;
 	
 	private String testFile = 
-			//"/Users/chenjing/working/cx/ligand.cx";
-			"/Users/chenjing/working/cx/tiny_corpus.cx";
+			"/Users/chenjing/working/cx/ligand.cx";
+		//	"/Users/chenjing/working/cx/tiny_corpus.cx";
 
 	@Test
 	public void test() throws FileNotFoundException, Exception {

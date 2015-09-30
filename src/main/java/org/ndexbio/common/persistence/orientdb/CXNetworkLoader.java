@@ -434,13 +434,13 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private void createNetworkAttribute(NetworkAttributesElement e) {
 		if ( e.getName().equals(NdexClasses.Network_P_name)) {
 			networkDoc.field(NdexClasses.Network_P_name,
-					  e.getValues()).save();
+					  e.getValues().get(0)).save();
 		} else if ( e.getName().equals(NdexClasses.Network_P_desc)) {
-			networkDoc.field(NdexClasses.Network_P_desc, e.getValues()).save();
+			networkDoc.field(NdexClasses.Network_P_desc, e.getValues().get(0)).save();
 		} else if ( e.getName().equals(NdexClasses.Network_P_version)) {
-			networkDoc.field(NdexClasses.Network_P_version, e.getValues()).save();
+			networkDoc.field(NdexClasses.Network_P_version, e.getValues().get(0)).save();
 		} else if ( e.getName().equals(SingleNetworkDAO.CXsrcFormatAttrName)) {
-			networkDoc.field(NdexClasses.Network_P_source_format, e.getValues()).save();
+			networkDoc.field(NdexClasses.Network_P_source_format, e.getValues().get(0)).save();
 		} else {
 			List<NdexPropertyValuePair> newProps= createNdexProperties(e);
 			List<NdexPropertyValuePair> props =networkDoc.field(NdexClasses.ndexProperties);
