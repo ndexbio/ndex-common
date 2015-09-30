@@ -301,7 +301,7 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_P_representTermType, OType.STRING);
             
             nodeClass.createProperty(NdexClasses.Node_P_alias, OType.EMBEDDEDSET);
-            nodeClass.createProperty(NdexClasses.Node_P_relateTo, OType.EMBEDDEDSET);
+            nodeClass.createProperty(NdexClasses.Node_P_relatedTo, OType.EMBEDDEDSET);
             nodeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDSET);
             nodeClass.createProperty(NdexClasses.Support, OType.EMBEDDEDSET);
             

@@ -588,7 +588,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 					throw new NdexException ("Base term id " + relateToId + " not found.");
 				newRelatedTerms.add(newRelateToId);
 			}
-			nodeDoc.field(NdexClasses.Node_P_relateTo, newRelatedTerms);
+			nodeDoc.field(NdexClasses.Node_P_relatedTo, newRelatedTerms);
 		}
 		
 		Collection<Long> oldCitations = node.getCitationIds(); 

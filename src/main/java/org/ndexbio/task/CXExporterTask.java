@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 public class CXExporterTask extends NdexTask {
 
 	private static final String NETWORK_EXPORT_PATH = BioPAXExporterTask.NETWORK_EXPORT_PATH;
-	private static final String FILE_EXTENSION = ".CX";
+	private static final String FILE_EXTENSION = ".cx";
 
 	private Status taskStatus;
 	

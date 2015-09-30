@@ -289,7 +289,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	}
     	
     	//populate related terms
-		Set<Long> relateTos = nodeDoc.field(NdexClasses.Node_P_relateTo);
+		Set<Long> relateTos = nodeDoc.field(NdexClasses.Node_P_relatedTo);
 		if ( relateTos !=null && relateTos.size()> 0 ) {
 			n.setRelatedTerms(relateTos);
 		

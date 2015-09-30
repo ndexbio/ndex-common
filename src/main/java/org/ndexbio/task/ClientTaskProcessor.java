@@ -112,9 +112,11 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 						return new BioPAXExporterTask(task);
 					} if ( task.getFormat() == FileFormat.SIF) {
 						return new SIFExporterTask(task);
-					} 
+					} if ( task.getFormat() == FileFormat.CX)  {
+						return new CXExporterTask(task);
+					}
 				
-					throw new NdexException ("Only XBEL, XGMML and BIOPAX exporters are implemented.");
+					throw new NdexException ("Only XBEL, XGMML, SIF, CX, and BIOPAX exporters are implemented.");
 				case CREATE_NETWORK_CACHE: 
 					return new AddNetworkToCacheTask(task);
 				case DELETE_NETWORK_CACHE:

@@ -158,7 +158,7 @@ public interface NdexClasses {
 //    public static final String Node_E_supports     = "nSupport";
     public static final String Node_P_represents   = "represents";
     public static final String Node_P_alias		   = "alias";
-    public static final String Node_P_relateTo	   = "relateTo";
+    public static final String Node_P_relatedTo	   = "relatedTo";
     
     // index on primary keys.
     public static final String Index_ns_id = "index-namespace-id";

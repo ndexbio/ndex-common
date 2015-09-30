@@ -270,7 +270,7 @@ public class NdexPersistenceService extends PersistenceService {
 		}
 		
 		if ( newRelatedTerms !=null && newRelatedTerms.size()> 0 ) {
-			nodeRec.field(NdexClasses.Node_P_relateTo, newRelatedTerms);
+			nodeRec.field(NdexClasses.Node_P_relatedTo, newRelatedTerms);
 		}
 		
 		if ( newAliases !=null && newAliases.size()>0) 
@@ -356,7 +356,7 @@ public class NdexPersistenceService extends PersistenceService {
 			relateTos.addAll(newRelateToIds);
 		else 
 			relateTos = newRelateToIds; */
-		nodeDoc.field(NdexClasses.Node_P_relateTo, newRelateToIds).save();
+		nodeDoc.field(NdexClasses.Node_P_relatedTo, newRelateToIds).save();
 
 		elementIdCache.put(nodeId, nodeDoc);
 	}

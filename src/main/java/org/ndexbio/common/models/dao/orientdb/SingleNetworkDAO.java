@@ -35,6 +35,7 @@ import org.ndexbio.model.cx.NamespacesElement;
 import org.ndexbio.model.cx.NdexNetworkStatus;
 import org.ndexbio.model.cx.NodeCitationLinksElement;
 import org.ndexbio.model.cx.NodeSupportLinksElement;
+import org.ndexbio.model.cx.CXSimpleAttribute;
 import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.cx.CitationLinksElement;
 import org.ndexbio.model.cx.EdgeCitationLinksElement;
@@ -60,6 +61,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class SingleNetworkDAO extends BasicNetworkDAO {
 		
+	public static final String CXsrcFormatAttrName="ndex:sourceFormat";
 	private ODocument networkDoc;
     
 	public SingleNetworkDAO ( String UUID) throws NdexException {
@@ -241,10 +243,12 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
         nstatus.setNdexServerURI(Configuration.getInstance().getHostURI());
         nstatus.setOwner((String)networkDoc.field(NdexClasses.Network_P_owner));
         //nstatus.setPublished(isPublished);
-        nstatus.setVersion((String)networkDoc.field(NdexClasses.Network_P_version));
-        String srcFmtStr = networkDoc.field(NdexClasses.Network_P_source_format);
-        if ( srcFmtStr !=null)
-          nstatus.setSourceFormat(srcFmtStr);
+        
+        Long commitId = networkDoc.field(NdexClasses.Network_P_readOnlyCommitId);
+        Long cacheId = networkDoc.field(NdexClasses.Network_P_cacheId);
+        nstatus.setReadOnly(
+        		commitId !=null && cacheId !=null && commitId.equals(cacheId));
+     
         nstatus.setVisibility(
         		VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility)));
         
@@ -263,7 +267,18 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
             writeNdexAspectElementAsAspectFragment(cxwtr,
             		new NetworkAttributesElement(null,NdexClasses.Network_P_desc, desc));
         }
+
+        String version = networkDoc.field(NdexClasses.Network_P_version);
+        if ( version !=null) {
+        	writeNdexAspectElementAsAspectFragment(cxwtr,
+            		new NetworkAttributesElement(null,NdexClasses.Network_P_version, version));
+        }
         
+        String srcFmtStr = networkDoc.field(NdexClasses.Network_P_source_format);
+        if ( srcFmtStr !=null) {
+        	writeNdexAspectElementAsAspectFragment(cxwtr,
+            		new NetworkAttributesElement(null,CXsrcFormatAttrName, srcFmtStr));
+        }
         List<NdexPropertyValuePair> props = networkDoc.field(NdexClasses.ndexProperties);
         if ( props !=null) {
         	for ( NdexPropertyValuePair p : props) {
@@ -485,13 +500,13 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
         	writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_alias,terms, ATTRIBUTE_TYPE.STRING));
     	}
     	    	
-    	Set<Long> relatedTerms = doc.field(NdexClasses.Node_P_relateTo);
+    	Set<Long> relatedTerms = doc.field(NdexClasses.Node_P_relatedTo);
       	if ( relatedTerms !=null) {
         	List<String> terms = new ArrayList<> (relatedTerms.size());
         	for ( Long id : relatedTerms) {
         		terms.add(getBaseTermStringById(id));
         	}
-        	writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_relateTo,terms,ATTRIBUTE_TYPE.STRING));
+        	writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_relatedTo,terms,ATTRIBUTE_TYPE.STRING));
     	}
       	
     	// write properties
@@ -574,8 +589,13 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		
 	   	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
 	   	
-	   	result.setProps(props);
-		
+	   	if (props !=null && props.size()> 0) {
+	   	  List<CXSimpleAttribute> attrs = new ArrayList<>(props.size());
+	   	  for ( NdexPropertyValuePair p : props ) {
+	   		 attrs.add(new CXSimpleAttribute (p)) ;
+	   	  }
+	   	  result.setProps(attrs);
+	   	}
 		writeNdexAspectElementAsAspectFragment(cxwtr,result);
 	  	
     	return SID;
@@ -609,8 +629,14 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 
 	   	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
 
-		result.setProps(props);
-		
+	   	if (props !=null && props.size()> 0) {
+		   	  List<CXSimpleAttribute> attrs = new ArrayList<>(props.size());
+		   	  for ( NdexPropertyValuePair p : props ) {
+		   		 attrs.add(new CXSimpleAttribute (p)) ;
+		   	  }
+		   	  result.setProps(attrs);
+		}
+	   	
 		writeNdexAspectElementAsAspectFragment(cxwtr,result);
 		
        	return SID;
