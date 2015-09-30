@@ -165,7 +165,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		networkDoc = this.createNetworkHeadNode(uuid);
 		networkVertex = graph.getVertex(networkDoc);
 		
-		try { 
 
 		  CxElementReader cxreader = createCXReader();
 		  
@@ -238,12 +237,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  ODocument ownerDoc = userdao.getRecordByAccountName(ownerAcctName, null) ;
 		  OrientVertex ownerV = graph.getVertex(ownerDoc);
 		  ownerV.addEdge(NdexClasses.E_admin, networkVertex);
-		  
-		  
-		} catch (Throwable e) { 
-			graph.removeVertex(graph.getVertex(networkDoc) );
-			throw e;
-		}
 		
 		graph.commit();
 		return uuid;

@@ -925,7 +925,7 @@ public class UserDocDAO extends OrientdbDAO {
 			return tasks;
 
 		} catch (Exception e) {
-			throw new NdexException("Unable to retrieve user tasks");
+			throw new NdexException("Unable to retrieve user tasks:" + e.getMessage());
 		}
 	}
 	
