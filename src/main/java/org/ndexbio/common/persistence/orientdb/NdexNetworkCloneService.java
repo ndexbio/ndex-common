@@ -55,6 +55,7 @@ import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
@@ -259,7 +260,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 			this.localConnection.commit();
 	
 			return this.network;
-		} finally {
+		} catch (Exception e ) {
+			this.abortTransaction();
+			throw e;
+		}finally {
 			logger.info("[end: network name='{}' has been saved; UUID='{}']", network.getName(), network.getExternalId());
 		}
 	}
@@ -794,5 +798,19 @@ public class NdexNetworkCloneService extends PersistenceService {
 		id = functionTermIdMap.get(oldId);
 		if ( id != null ) return id;
 		return reifiedEdgeTermIdMap.get(oldId);
+	}
+	
+	private void abortTransaction() throws ObjectNotFoundException, NdexException {
+		logger.warn("AbortTransaction has been invoked from CX loader.");
+
+		logger.info("Deleting partial network "+ this.network.getExternalId().toString() + " in order to rollback in response to error");
+		networkDoc.field(NdexClasses.ExternalObj_isDeleted, true).save();
+		graph.commit();
+		
+		Task task = new Task();
+		task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
+		task.setResource(this.network.getExternalId().toString());
+		NdexServerQueue.INSTANCE.addSystemTask(task);
+		logger.info("Partial network "+ this.network.getExternalId().toString() + " is deleted.");
 	}
 }

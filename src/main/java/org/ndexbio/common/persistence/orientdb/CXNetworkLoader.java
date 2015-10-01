@@ -38,6 +38,7 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentReader;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentWriter;
 import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.dao.orientdb.SingleNetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
@@ -59,14 +60,20 @@ import org.ndexbio.model.exceptions.DuplicateObjectException;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.Task;
+import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.FunctionTerm;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.NdexServerQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -77,6 +84,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 //	private static final long CORE_CACHE_SIZE = 100000L;
 //	private static final long NON_CORE_CACHE_SIZE = 100000L;
+	
+    protected static Logger logger = LoggerFactory.getLogger(CXNetworkLoader.class);;
 
 	private static final String nodeName = "name";
 	
@@ -103,6 +112,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Set<Long> undefinedSupportId;
 	
 	private NamespacesElement ns;
+	
+	private UUID uuid;
 	
 	private Map<String, MetaDataElement> metaData;
 	
@@ -161,7 +172,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	public UUID persistCXNetwork() throws IOException, ObjectNotFoundException, NdexException {
 		
 		NdexNetworkStatus netStatus = null;
-		UUID uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
+	    uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
+	    
+	    try {
 		networkDoc = this.createNetworkHeadNode(uuid);
 		networkVertex = graph.getVertex(networkDoc);
 		
@@ -236,10 +249,27 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  UserDocDAO userdao = new UserDocDAO(db);
 		  ODocument ownerDoc = userdao.getRecordByAccountName(ownerAcctName, null) ;
 		  OrientVertex ownerV = graph.getVertex(ownerDoc);
-		  ownerV.addEdge(NdexClasses.E_admin, networkVertex);
-		
+		  
+		  for	(int retry = 0;	retry <	OrientdbDAO.maxRetries;	++retry)	{
+				try	{
+					ownerV.reload();
+					ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+					break;
+				} catch(ONeedRetryException	e)	{
+					logger.warn("Retry - " + e.getMessage());
+					
+				}
+			}		
 		graph.commit();
 		return uuid;
+		
+		} catch (Exception e) {
+			// delete network and close the database connection
+			e.printStackTrace();
+			this.abortTransaction();
+			throw new NdexException("Error occurred when loading CX stream. " + e.getMessage());
+		} 
+       
 	}
 	
 	private void createEdgeSupport(EdgeSupportLinksElement elmt) throws ObjectNotFoundException, DuplicateObjectException {
@@ -881,6 +911,21 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		if ( counter %10000 == 0 )
 			System.out.println("Loaded " + counter + " element in CX");
 		
+	}
+	
+	
+	private void abortTransaction() throws ObjectNotFoundException, NdexException {
+		logger.warn("AbortTransaction has been invoked from CX loader.");
+
+		logger.info("Deleting partial network "+ uuid + " in order to rollback in response to error");
+		networkDoc.field(NdexClasses.ExternalObj_isDeleted, true).save();
+		graph.commit();
+		
+		Task task = new Task();
+		task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
+		task.setResource(uuid.toString());
+		NdexServerQueue.INSTANCE.addSystemTask(task);
+		logger.info("Partial network "+ uuid + " is deleted.");
 	}
 	
 }

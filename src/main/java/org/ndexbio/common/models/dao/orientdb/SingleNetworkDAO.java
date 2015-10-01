@@ -282,9 +282,13 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
         List<NdexPropertyValuePair> props = networkDoc.field(NdexClasses.ndexProperties);
         if ( props !=null) {
         	for ( NdexPropertyValuePair p : props) {
+            ATTRIBUTE_TYPE t = ATTRIBUTE_TYPE.STRING;
+            try {
+        	    t = NetworkAttributesElement.toDataType(p.getDataType().toLowerCase());
+            } catch (IllegalArgumentException e) {}	
         	 writeNdexAspectElementAsAspectFragment(cxwtr,
              		new NetworkAttributesElement(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
-             				NetworkAttributesElement.toDataType(p.getDataType().toLowerCase()) ));
+             				t ));
         	}
         }
         
