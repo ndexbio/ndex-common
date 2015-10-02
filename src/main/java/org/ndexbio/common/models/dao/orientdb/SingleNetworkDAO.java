@@ -173,7 +173,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 
 		}
 		
-        cxwtr.writeMetaData(md);
+        cxwtr.addPreMetaData(md);
 
 	}
 	
@@ -223,7 +223,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 
 		}
 		
-        cxwtr.writeMetaData(md);
+        cxwtr.addPreMetaData(md);
 
 //        writeCXPreMetadata(cxwtr);
         
