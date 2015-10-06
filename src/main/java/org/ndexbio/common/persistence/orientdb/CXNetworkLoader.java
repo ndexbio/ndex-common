@@ -17,17 +17,20 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
-import org.cxio.aspects.datamodels.AnonymousElement;
 import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
 import org.cxio.aspects.datamodels.NetworkAttributesElement;
 import org.cxio.aspects.datamodels.NodeAttributesElement;
 import org.cxio.aspects.datamodels.NodesElement;
+import org.cxio.aspects.readers.EdgeAttributesFragmentReader;
+import org.cxio.aspects.readers.EdgesFragmentReader;
+import org.cxio.aspects.readers.NetworkAttributesFragmentReader;
+import org.cxio.aspects.readers.NodeAttributesFragmentReader;
+import org.cxio.aspects.readers.NodesFragmentReader;
 import org.cxio.core.CxElementReader;
 import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentReader;
 import org.cxio.metadata.MetaData;
-import org.cxio.util.Util;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentReader;
@@ -135,15 +138,22 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 	
 	private CxElementReader createCXReader () throws IOException {
-		Set<AspectFragmentReader> readers = Util.getAllAvailableAspectFragmentReaders();
+		Set<AspectFragmentReader> readers = new TreeSet<>();
 		
+		//  readers.add(AnonymousFragmentReader.createInstance());
+		  readers.add(EdgesFragmentReader.createInstance());
+		  readers.add(EdgeAttributesFragmentReader.createInstance());
+		  readers.add(NetworkAttributesFragmentReader.createInstance());
+		  readers.add(NodesFragmentReader.createInstance());
+		  readers.add(NodeAttributesFragmentReader.createInstance());
+		  
 		  readers.add(new GeneralAspectFragmentReader (NdexNetworkStatus.NAME,
 				NdexNetworkStatus.class));
 		  readers.add(new GeneralAspectFragmentReader (NamespacesElement.NAME,NamespacesElement.class));
 		  readers.add(new GeneralAspectFragmentReader (FunctionTermsElement.NAME,FunctionTermsElement.class));
-	//	  readers.add(new GeneralAspectFragmentReader (CitationElement.NAME,CitationElement.class));
+		  readers.add(new GeneralAspectFragmentReader (CitationElement.NAME,CitationElement.class));
 		  readers.add(new GeneralAspectFragmentReader (SupportElement.NAME,SupportElement.class));
-		//  readers.add(new GeneralAspectFragmentReader (NetworkAttributesElement.NAME,NetworkAttributesElement.class));
+		  readers.add(new GeneralAspectFragmentReader (NetworkAttributesElement.NAME,NetworkAttributesElement.class));
 		  readers.add(new GeneralAspectFragmentReader (ReifiedEdgeElement.NAME,ReifiedEdgeElement.class));
 		  readers.add(new GeneralAspectFragmentReader (EdgeCitationLinksElement.NAME,EdgeCitationLinksElement.class));
 		  readers.add(new GeneralAspectFragmentReader (EdgeSupportLinksElement.NAME,EdgeSupportLinksElement.class));
@@ -167,7 +177,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 		  CxElementReader cxreader = createCXReader();
 		  
-		  Set<MetaData> metadata = cxreader.getPreMetaData();
+		  Collection<MetaData> metadata = cxreader.getPreMetaData();
 		  if ( metadata.size() >1)
 			  throw new NdexException("More then one MetaData object found and the beginning of CX stream");
 		
@@ -207,8 +217,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				addEdgeAttribute(e );
 			} else if ( aspectName.equals(ReifiedEdgeElement.NAME)) {   // reified edge
 				createReifiedEdgeTerm((ReifiedEdgeElement) elmt);
-		//	} else if ( aspectName.equals(CitationElement.NAME)) {      // citation
-		//		createCitation((CitationElement) elmt);
+			} else if ( aspectName.equals(CitationElement.NAME)) {      // citation
+				createCitation((CitationElement) elmt);
 			} else if ( aspectName.equals(SupportElement.NAME)) {
 				createSupport((SupportElement) elmt);
 			} else if ( aspectName.equals(EdgeCitationLinksElement.NAME)) {
@@ -220,13 +230,15 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			} else if ( aspectName.equals(NodeCitationLinksElement.NAME)) {
 				createNodeCitation((NodeCitationLinksElement) elmt);
 			} else {    // opaque aspect
-				addOpaqueAspectElement((AnonymousElement) elmt);
+			//	addOpaqueAspectElement((AnonymousElement) elmt);
 			}
 
 		}
 		
-		  //save the metadata
 		  
+		  //save the metadata
+		  Collection<MetaData> postmetadata = cxreader.getPostMetaData();
+
 		  networkDoc.field(NdexClasses.Network_P_metadata,metadata);
 
 		  
@@ -262,7 +274,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		} 
        
 	}
-	
+	/*
 	private void addOpaqueAspectElement(AnonymousElement elmt) {
 		String aspectName = elmt.getAspectName();
 		String s = elmt.getStingData();
@@ -272,7 +284,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		tick();
 	}
 
-
+*/
 	private void createEdgeSupport(EdgeSupportLinksElement elmt) throws ObjectNotFoundException, DuplicateObjectException {
 		for ( String sourceId : elmt.getSourceIds()) {
 		   Long edgeId = edgeSIDMap.get(sourceId);

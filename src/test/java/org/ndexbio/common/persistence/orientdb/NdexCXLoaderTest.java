@@ -7,7 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
-import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_TYPE;
+import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_DATA_TYPE;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;

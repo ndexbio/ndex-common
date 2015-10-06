@@ -3,6 +3,7 @@ package org.ndexbio.task;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import org.ndexbio.common.models.dao.orientdb.CXNetworkExporter;
 import org.ndexbio.common.models.dao.orientdb.SingleNetworkDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Status;
@@ -50,7 +51,7 @@ public class CXExporterTask extends NdexTask {
 		FileOutputStream out = new FileOutputStream (exportFilename);
 		try {
 			
-			try (SingleNetworkDAO snetworkDAO = new SingleNetworkDAO(getTask().getResource())) {
+			try (CXNetworkExporter snetworkDAO = new CXNetworkExporter(getTask().getResource())) {
 				snetworkDAO.writeNetworkInCX(out, true);
 			}
 			
