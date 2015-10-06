@@ -21,7 +21,7 @@ import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_DAT
 import org.cxio.core.CxWriter;
 import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentWriter;
-import org.cxio.metadata.MetaData;
+import org.cxio.metadata.MetaDataCollection;
 import org.cxio.metadata.MetaDataElement;
 import org.cxio.util.Util;
 import org.ndexbio.common.NdexClasses;
@@ -80,7 +80,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	
 		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
         
-		MetaData md = networkDoc.field(NdexClasses.Network_P_metadata);
+		MetaDataCollection md = networkDoc.field(NdexClasses.Network_P_metadata);
 		if ( md == null) {
 			md = this.createCXMataData();
 		}
@@ -144,11 +144,13 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         List<NdexPropertyValuePair> props = networkDoc.field(NdexClasses.ndexProperties);
         if ( props !=null) {
         	for ( NdexPropertyValuePair p : props) {
-            ATTRIBUTE_DATA_TYPE t = ATTRIBUTE_DATA_TYPE.STRING;
-            try {
-        	    t = NetworkAttributesElement.toDataType(p.getDataType().toLowerCase());
-            } catch (IllegalArgumentException e) {}	
-        	 writeNdexAspectElementAsAspectFragment(cxwtr,
+        		ATTRIBUTE_DATA_TYPE t = ATTRIBUTE_DATA_TYPE.STRING;
+        		try {
+        			t = NetworkAttributesElement.toDataType(p.getDataType().toLowerCase());
+        		} catch (IllegalArgumentException e) {
+        			System.out.println("Property type " + p.getDataType() + " unsupported. Converting it to String in CX output.");
+        		}	
+        		writeNdexAspectElementAsAspectFragment(cxwtr,
              		new NetworkAttributesElement(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
              				t ));
         	}
@@ -198,7 +200,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         //Add post metadata
         
-        MetaData postmd = new MetaData ();
+        MetaDataCollection postmd = new MetaDataCollection ();
         
         if ( nodeIdCounter > 0 )
         	postmd.setIdCounter(NodesElement.NAME, nodeIdCounter);
@@ -213,8 +215,8 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 
 	}
 	
-	private MetaData createCXMataData() {
-		MetaData md= new MetaData();
+	private MetaDataCollection createCXMataData() {
+		MetaDataCollection md= new MetaDataCollection();
 
 		MetaDataElement node_meta = new MetaDataElement();
 
@@ -257,7 +259,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         return md;
 	}
 	
-	private void addMetadata(MetaData md, String networkEdgeName, String aspectName,String aspectVersion, Timestamp lastUpdate) {
+	private void addMetadata(MetaDataCollection md, String networkEdgeName, String aspectName,String aspectVersion, Timestamp lastUpdate) {
 	      long cnt = this.getVertexCount(networkEdgeName);
 	        if (cnt > 0 ) {
 	            

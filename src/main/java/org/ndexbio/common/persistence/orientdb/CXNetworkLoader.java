@@ -30,7 +30,8 @@ import org.cxio.aspects.readers.NodesFragmentReader;
 import org.cxio.core.CxElementReader;
 import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentReader;
-import org.cxio.metadata.MetaData;
+import org.cxio.metadata.MetaDataCollection;
+import org.cxio.metadata.MetaDataElement;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentReader;
@@ -113,7 +114,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		ndexdb = NdexDatabase.getInstance();
 		
 		ownerAcctName = ownerAccountName;
-//		metaData = new TreeMap<>();
 		
 		nodeSIDMap = new TreeMap<>();
 		edgeSIDMap = new TreeMap<> ();
@@ -171,16 +171,15 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	    uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
 	    
 	    try {
-		networkDoc = this.createNetworkHeadNode(uuid);
-		networkVertex = graph.getVertex(networkDoc);
+		  networkDoc = this.createNetworkHeadNode(uuid);
+		  networkVertex = graph.getVertex(networkDoc);
 		
 
 		  CxElementReader cxreader = createCXReader();
 		  
-		  Collection<MetaData> metadata = cxreader.getPreMetaData();
+		  MetaDataCollection metadata = cxreader.getPreMetaData();
 		  if ( metadata.size() >1)
 			  throw new NdexException("More then one MetaData object found and the beginning of CX stream");
-		
 		
 		  for ( AspectElement elmt : cxreader ) {
 			String aspectName = elmt.getAspectName();
@@ -235,11 +234,27 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 		}
 		
-		  
 		  //save the metadata
-		  Collection<MetaData> postmetadata = cxreader.getPostMetaData();
+		  MetaDataCollection postmetadata = cxreader.getPostMetaData();
+		  if ( postmetadata !=null) {
+			  if( metadata == null) {
+				  metadata = postmetadata;
+			  } else {
+				  for (MetaDataElement e : postmetadata.asCollectionOfMetaDataElements() ) {
+					  Long cnt = e.getIdCounter();
+					  if ( cnt !=null) {
+						 metadata.setIdCounter(e.getName(),cnt);
+					  }
+					  cnt = e.getElementCount() ;
+					  if ( cnt !=null) {
+							 metadata.setElementCount(e.getName(),cnt);
+					  }
+				  }
+			  }
+		  }
 
-		  networkDoc.field(NdexClasses.Network_P_metadata,metadata);
+		  if(metadata !=null)
+		      networkDoc.field(NdexClasses.Network_P_metadata,metadata);
 
 		  
 		  // finalize the headnode
