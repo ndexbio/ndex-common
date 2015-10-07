@@ -33,7 +33,6 @@ package org.ndexbio.common.persistence.orientdb;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -737,8 +736,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 				
 				ODocument edgeDoc = elementIdCache.get(newEdgeId); 
 				ODocument reifiedEdgeTermDoc = elementIdCache.get(newReifiedEdgeId);
-				graph.getVertex(reifiedEdgeTermDoc).addEdge(
-						NdexClasses.ReifiedEdge_E_edge, graph.getVertex(edgeDoc));
+				OrientVertex v = graph.getVertex(reifiedEdgeTermDoc); 
+				v.addEdge(NdexClasses.ReifiedEdge_E_edge, graph.getVertex(edgeDoc));
+				networkVertex.addEdge(NdexClasses.Network_E_ReifiedEdgeTerms,v);
+
 			}
 		}
 	}

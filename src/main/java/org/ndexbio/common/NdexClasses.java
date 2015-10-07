@@ -49,6 +49,7 @@ public interface NdexClasses {
 	public static final String Request            = "request";
 	public static final String Task				  = "task";
 	public static final String User				  = "user";
+	public static final String OpaqueElement      = "opaqueElmt";
 	
 	// network related classes
 	

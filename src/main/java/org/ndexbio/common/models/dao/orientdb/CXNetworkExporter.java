@@ -60,6 +60,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 
 	static private final String reifiedEdgeMDVersion = "1.0";  
 
+	static private final String ndexStatusMDVersion = "1.0";
+	static private final String EdgeCitationLinksMDVersion = "1.0";
+	static private final String EdgeSupportLinksMDVersion = "1.0";
+	
 	private long nodeIdCounter;
 	private long edgeIdCounter;
 	private long citationIdCounter;
@@ -109,7 +113,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         Long commitId = networkDoc.field(NdexClasses.Network_P_readOnlyCommitId);
         Long cacheId = networkDoc.field(NdexClasses.Network_P_cacheId);
         nstatus.setReadOnly(
-        		commitId !=null && cacheId !=null && commitId.equals(cacheId));
+        		commitId !=null && cacheId !=null && cacheId > 0 && commitId.equals(cacheId));
      
         nstatus.setVisibility(
         		VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility)));
@@ -231,18 +235,31 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         node_meta.setElementCount(new Long(nodecount));
         node_meta.setConsistencyGroup(1l);
 
-        md.addMetaDataElement(node_meta);
+        md.add(node_meta);
 
         
         MetaDataElement edge_meta = new MetaDataElement();
-
         edge_meta.setName(EdgesElement.NAME);
         edge_meta.setVersion(edgeMDVersion);
         edge_meta.setLastUpdate(lastUpdate.getTime());
         edge_meta.setConsistencyGroup(1l);
         edge_meta.setElementCount(new Long(edgecount));
-
-        md.addMetaDataElement(edge_meta);
+        md.add(edge_meta);
+        
+        MetaDataElement ndexStatus = new MetaDataElement();
+        edge_meta.setName(NdexNetworkStatus.NAME);
+        edge_meta.setVersion(ndexStatusMDVersion);
+        edge_meta.setLastUpdate(lastUpdate.getTime());
+        edge_meta.setConsistencyGroup(0l);
+        md.add(ndexStatus);
+        
+        MetaDataElement networkAttr = new MetaDataElement();
+        edge_meta.setName(NetworkAttributesElement.NAME);
+        edge_meta.setVersion("1.0");
+        edge_meta.setLastUpdate(lastUpdate.getTime());
+        edge_meta.setConsistencyGroup(2l);
+        md.add(networkAttr);   
+        
         
         //citations
         addMetadata(md,NdexClasses.Network_E_Citations, CitationElement.NAME,citationMDVersion,lastUpdate);
@@ -271,7 +288,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	        	meta.setLastUpdate(lastUpdate.getTime());
 	        	meta.setConsistencyGroup(1l);
 
-	        	md.addMetaDataElement(meta); 
+	        	md.add(meta); 
 	        } 
 	}
 	

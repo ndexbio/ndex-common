@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_DATA_TYPE;
+import org.cxio.core.OpaqueElement;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
@@ -30,6 +31,9 @@ public class NdexCXLoaderTest {
 
 	@Test
 	public void test() throws FileNotFoundException, Exception {
+		
+		OpaqueElement o = new OpaqueElement("foo", "null") ;
+		System.out.println(o.toJsonString());
 		
 	//	String foo = AbstractAttributesAspectElement.ATTRIBUTE_TYPE.BOOLEAN.toString();
 		

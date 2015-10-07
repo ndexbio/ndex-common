@@ -308,6 +308,10 @@ public class NdexSchemaManager
          //   nodeClass.createIndex(NdexClasses.Index_node_name, OClass.INDEX_TYPE.NOTUNIQUE, 		NdexClasses.Node_P_name);
         }
         
+        
+        
+        OClass opaqueClass = orientDbGraph.createVertexType(NdexClasses.OpaqueElement);
+        
 /*        if (orientDbGraph.getVertexType(NdexClasses.Provenance) == null)
         {
            // OClass clss = 
