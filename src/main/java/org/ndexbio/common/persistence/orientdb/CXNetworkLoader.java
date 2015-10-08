@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
+import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_DATA_TYPE;
 import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
 import org.cxio.aspects.datamodels.NetworkAttributesElement;
@@ -104,7 +106,11 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 	private NamespacesElement ns;
 	
+	long opaqueCounter ;
+
 	private UUID uuid;
+	
+	private Map<String, String> opaqueAspectEdgeTable;
 	
 //	private Map<String, MetaDataElement> metaData;
 	
@@ -115,6 +121,17 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		ndexdb = NdexDatabase.getInstance();
 		
 		ownerAcctName = ownerAccountName;
+		
+		graph =  new OrientGraph(db,false);
+		graph.setAutoScaleEdgeType(true);
+		graph.setEdgeContainerEmbedded2TreeThreshold(40);
+		graph.setUseLightweightEdges(true);
+				
+	}
+
+	private void init () {
+		opaqueCounter = 0;
+		counter =0; 
 		
 		nodeSIDMap = new TreeMap<>();
 		edgeSIDMap = new TreeMap<> ();
@@ -128,15 +145,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		undefinedEdgeId = new TreeSet<>();
 		undefinedSupportId = new TreeSet<>();
 		undefinedCitationId = new TreeSet<>();
-		
-		graph =  new OrientGraph(db,false);
-		graph.setAutoScaleEdgeType(true);
-		graph.setEdgeContainerEmbedded2TreeThreshold(40);
-		graph.setUseLightweightEdges(true);
-		
-		counter =0; 
-	}
 
+		opaqueAspectEdgeTable = new HashMap<>();
+	}
 	
 	private CxElementReader createCXReader () throws IOException {
 		HashSet<AspectFragmentReader> readers = new HashSet<>(20);
@@ -166,6 +177,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	//TODO: will modify this function to return a CX version of NetworkSummary object.
 	public UUID persistCXNetwork() throws IOException, ObjectNotFoundException, NdexException {
 		
+        init();
+        
 		NdexNetworkStatus netStatus = null;
 	    uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
 	    
@@ -252,11 +265,11 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 		  if(metadata !=null)
 		      networkDoc.field(NdexClasses.Network_P_metadata,metadata);
-
-		  
+		  		  
 		  // finalize the headnode
 		  networkDoc.fields(NdexClasses.ExternalObj_mTime,new Timestamp(Calendar.getInstance().getTimeInMillis()),
-				   NdexClasses.Network_P_isComplete,true );
+				   NdexClasses.Network_P_isComplete,true,
+				   NdexClasses.Network_P_opaquEdgeTable, this.opaqueAspectEdgeTable);
 		  networkDoc.save(); 
 		
 		  // set the admin
@@ -288,11 +301,18 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private void addOpaqueAspectElement(OpaqueElement elmt) throws IOException {
+		
 		String aspectName = elmt.getAspectName();
 
+		String edgeName = this.opaqueAspectEdgeTable.get(aspectName);
+		if ( edgeName == null) {
+			edgeName = NdexClasses.Network_E_opaque_asp_prefix + this.opaqueCounter;
+			opaqueCounter ++;
+			opaqueAspectEdgeTable.put(aspectName, edgeName);
+		}
 		ODocument doc = new ODocument (NdexClasses.OpaqueElement).
-				field(aspectName, elmt.toJsonString() ).save();
-		networkVertex.addEdge(NdexClasses.Network_E_opaque_asp_prefix + aspectName, graph.getVertex(doc));
+				field(edgeName, elmt.toJsonString() ).save();
+		networkVertex.addEdge(edgeName, graph.getVertex(doc));
 		tick();
 	}
 
@@ -493,12 +513,17 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		} else if ( e.getName().equals(SingleNetworkDAO.CXsrcFormatAttrName)) {
 			networkDoc.field(NdexClasses.Network_P_source_format, e.getValue()).save();
 		} else {
-			List<NdexPropertyValuePair> newProps= createNdexProperties(e);
+			
+			NdexPropertyValuePair newProps= new NdexPropertyValuePair(e.getSubnetwork(),
+					 e.getName(),
+					 (e.isSingleValue() ? e.getValue(): e.getValuesAsString())
+					 , e.getDataType().toString());
 			List<NdexPropertyValuePair> props =networkDoc.field(NdexClasses.ndexProperties);
-			if ( props == null)
-				props = newProps;
-			else 
-				props.addAll(newProps);
+			if ( props == null) {
+				props = new ArrayList<>(1);
+			} 
+			
+			props.add(newProps);
 			networkDoc.field(NdexClasses.ndexProperties,props).save();
 		}
 	}
@@ -839,12 +864,15 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   
 		   ODocument edgeDoc = getEdgeDocById(edgeId);
 
-		   List<NdexPropertyValuePair> newProps= createNdexProperties(e);
-			List<NdexPropertyValuePair> props =edgeDoc.field(NdexClasses.ndexProperties);
+		   NdexPropertyValuePair newProps= new NdexPropertyValuePair(e.getSubnetwork(),
+					 e.getName(),
+					 (e.isSingleValue() ? e.getValue(): e.getValuesAsString()),
+					 e.getDataType().toString());
+		   List<NdexPropertyValuePair> props =edgeDoc.field(NdexClasses.ndexProperties);
 			if ( props == null)
-				props = newProps;
-			else 
-				props.addAll(newProps);
+				props = new ArrayList<>(1);
+			 
+			props.add(newProps);
 			edgeDoc.field(NdexClasses.ndexProperties,props).save();
 
 			tick();
@@ -865,15 +893,15 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 		   String propName = e.getName();
 		   if (propName.equals(NdexClasses.Node_P_name)) {      //  node name
-			   if ( e.getValues().size() != 1) {
-				   new DuplicateObjectException("Node id " + nodeSID + " has 0 or more than 1 name: " + e.getValues().toString());
+			   if ( e.getDataType() != ATTRIBUTE_DATA_TYPE.STRING) {
+				   new DuplicateObjectException("Node id " + nodeSID + " has wrong data type for attribute name: " + e.getValues().toString());
 			   }
-			   nodeDoc.field(NdexClasses.Node_P_name,e.getValues().get(0)).save();
+			   nodeDoc.field(NdexClasses.Node_P_name,e.getValue()).save();
 		   } else if ( propName.equals(NdexClasses.Node_P_represents)){    // represents
-			   if ( e.getValues().size() != 1) {
+			   if ( !e.isSingleValue()) {
 				   new DuplicateObjectException("Node id " + nodeSID + " has 0 or more than 1 represents: " + e.getValues().toString());
 			   }
-			   Long btId = getBaseTermId ( e.getValues().get(0));
+			   Long btId = getBaseTermId ( e.getValue());
 			   nodeDoc.fields(NdexClasses.Node_P_represents, btId,
 					          NdexClasses.Node_P_representTermType,NdexClasses.BaseTerm).save();
 			   
@@ -897,12 +925,15 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			   } 
 		   }  else {
 
-			   List<NdexPropertyValuePair> newProps= createNdexProperties(e);
+			   NdexPropertyValuePair newProps= new NdexPropertyValuePair(e.getSubnetwork(),
+						 e.getName(),
+						 (e.isSingleValue() ? e.getValue(): e.getValuesAsString()),
+						 e.getDataType().toString());
 			   List<NdexPropertyValuePair> props =nodeDoc.field(NdexClasses.ndexProperties);
 				if ( props == null)
-					props = newProps;
-				else 
-					props.addAll(newProps);
+					props = new ArrayList<>(1);
+					
+				props.add(newProps);
 				nodeDoc.field(NdexClasses.ndexProperties,props).save();
 
 				tick();
