@@ -132,4 +132,16 @@ public class BasicNetworkDAO implements AutoCloseable {
     	throw new ObjectNotFoundException(NdexClasses.Namespace, id);
     }
     
+	protected static String getSIDFromDoc(ODocument doc) {
+		String SID = doc.field(NdexClasses.Element_SID);
+		
+		if ( SID ==null)  {
+			Long id = doc.field(NdexClasses.Element_ID);
+			SID = id.toString();
+		}
+		return SID;
+	}
+
+
+    
 }

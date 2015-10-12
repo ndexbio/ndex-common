@@ -30,10 +30,12 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 	private OrientVertex networkVertex;
 	
     protected OrientGraph graph;
+    protected String uuid;
 
     
 	public SingleNetworkDAO ( String UUID) throws NdexException {
 		super();
+		uuid = UUID;
 		networkDoc = getRecordByUUIDStr(UUID);
 		
 		graph =  new OrientGraph(db,false);
@@ -41,6 +43,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
 		graph.setUseLightweightEdges(true);
 		networkVertex = graph.getVertex(networkDoc);
+		
 		
 	}
 

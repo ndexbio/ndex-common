@@ -48,7 +48,7 @@ import org.ndexbio.model.cx.CXSimpleAttribute;
 import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.cx.EdgeCitationLinksElement;
 import org.ndexbio.model.cx.EdgeSupportLinksElement;
-import org.ndexbio.model.cx.FunctionTermsElement;
+import org.ndexbio.model.cx.FunctionTermElement;
 import org.ndexbio.model.cx.NamespacesElement;
 import org.ndexbio.model.cx.NdexNetworkStatus;
 import org.ndexbio.model.cx.NodeCitationLinksElement;
@@ -161,7 +161,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  readers.add(new GeneralAspectFragmentReader (NdexNetworkStatus.NAME,
 				NdexNetworkStatus.class));
 		  readers.add(new GeneralAspectFragmentReader (NamespacesElement.NAME,NamespacesElement.class));
-		  readers.add(new GeneralAspectFragmentReader (FunctionTermsElement.NAME,FunctionTermsElement.class));
+		  readers.add(new GeneralAspectFragmentReader (FunctionTermElement.NAME,FunctionTermElement.class));
 		  readers.add(new GeneralAspectFragmentReader (CitationElement.NAME,CitationElement.class));
 		  readers.add(new GeneralAspectFragmentReader (SupportElement.NAME,SupportElement.class));
 		  readers.add(new GeneralAspectFragmentReader (ReifiedEdgeElement.NAME,ReifiedEdgeElement.class));
@@ -215,8 +215,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			} else if ( aspectName.equals(NodeAttributesElement.NAME)) {  // node attributes
 				NodeAttributesElement e = (NodeAttributesElement) elmt;
 				addNodeAttribute(e );
-			} else if ( aspectName.equals(FunctionTermsElement.NAME)) {   // function term
-				FunctionTermsElement e = (FunctionTermsElement) elmt;
+			} else if ( aspectName.equals(FunctionTermElement.NAME)) {   // function term
+				FunctionTermElement e = (FunctionTermElement) elmt;
 				createFunctionTerm(e);
 			} else if ( aspectName.equals(NetworkAttributesElement.NAME)) {  //network attributes
 				NetworkAttributesElement e = ( NetworkAttributesElement) elmt;
@@ -724,7 +724,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return citationId;
 	}
 	
-	private Long createFunctionTerm(FunctionTermsElement func) throws NdexException  {
+	private Long createFunctionTerm(FunctionTermElement func) throws NdexException  {
 		Long funcId = ndexdb.getNextId();
 		
 		Long baseTermId = getBaseTermId(func.getFunctionName());
@@ -741,8 +741,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			if ( arg instanceof String) {
 				Long bId = getBaseTermId ((String)arg);
 				argumentDoc = this.getBasetermDocById(bId);
-			} else if ( arg instanceof FunctionTermsElement ) {
-				Long fId = createFunctionTerm((FunctionTermsElement) arg);
+			} else if ( arg instanceof FunctionTermElement ) {
+				Long fId = createFunctionTerm((FunctionTermElement) arg);
 				argumentDoc = this.getFunctionDocById(fId);
 			} else
 				throw new NdexException("Invalid function term argument type " + arg.getClass().getName() + " found." );
