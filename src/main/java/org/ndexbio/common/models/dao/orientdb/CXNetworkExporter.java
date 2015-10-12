@@ -643,7 +643,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 				for ( Long id : aliases) {
 					terms.add(getBaseTermStringById(id));
 				}
-				writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_alias,terms, ATTRIBUTE_DATA_TYPE.STRING));
+				writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_alias,terms, ATTRIBUTE_DATA_TYPE.LIST_OF_STRING));
 			}
 		    	
 			Set<Long> relatedTerms = doc.field(NdexClasses.Node_P_relatedTo);
@@ -652,7 +652,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 					for ( Long id : relatedTerms) {
 						terms.add(getBaseTermStringById(id));
 					}
-					writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_relatedTo,terms,ATTRIBUTE_DATA_TYPE.STRING));
+					writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_relatedTo,terms,ATTRIBUTE_DATA_TYPE.LIST_OF_STRING));
 			}
 			
 			// write properties
