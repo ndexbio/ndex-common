@@ -35,6 +35,7 @@ import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentReader;
 import org.cxio.metadata.MetaDataCollection;
 import org.cxio.metadata.MetaDataElement;
+import org.easymock.internal.ErrorMessage;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentReader;
@@ -99,10 +100,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Map<String, Long> supportSIDMap;
 	private Map<String, Long> namespaceMap;
 	private Map<String, Long> baseTermMap;
-	private Set<Long> undefinedNodeId;
-	private Set<Long> undefinedEdgeId;
-	private Set<Long> undefinedCitationId;
-	private Set<Long> undefinedSupportId;
+	private Set<String> undefinedNodeId;
+	private Set<String> undefinedEdgeId;
+	private Set<String> undefinedCitationId;
+	private Set<String> undefinedSupportId;
 	
 	private NamespacesElement ns;
 	
@@ -200,7 +201,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			    if ( nodeId == null) 
 			       createCXNodeBySID(nid);
 			    else {
-			       if ( !undefinedNodeId.remove(nodeId))  // it has been defined more than once
+			       if ( !undefinedNodeId.remove(nid))  // it has been defined more than once
 			    	 throw new DuplicateObjectException(NodesElement.NAME, nid);
 			    }
 			} else if (aspectName.equals(NdexNetworkStatus.NAME)) {    //ndexStatus
@@ -228,7 +229,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				createReifiedEdgeTerm((ReifiedEdgeElement) elmt);
 			} else if ( aspectName.equals(CitationElement.NAME)) {      // citation
 				createCitation((CitationElement) elmt);
-			} else if ( aspectName.equals(SupportElement.NAME)) {
+			} else if ( aspectName.equals(SupportElement.NAME)) {       //
 				createSupport((SupportElement) elmt);
 			} else if ( aspectName.equals(EdgeCitationLinksElement.NAME)) {
 				createEdgeCitation((EdgeCitationLinksElement) elmt);
@@ -243,7 +244,16 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			}
 
 		}
-		
+		  // check data integrity.
+		  if ( !undefinedNodeId.isEmpty()) {
+			  String errorMessage = undefinedNodeId.size() + "undefined nodes found in CX stream: [";
+			  for( String sid : undefinedNodeId)
+				  errorMessage += sid + " ";		  
+			  logger.error(errorMessage);
+			  throw new NdexException(errorMessage );
+		  } 
+		  
+		  
 		  //save the metadata
 		  MetaDataCollection postmetadata = cxreader.getPostMetaData();
 		  if ( postmetadata !=null) {
@@ -322,7 +332,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   Long edgeId = edgeSIDMap.get(sourceId);
 		   if ( edgeId == null) {
 			  edgeId = createCXEdgeBySID(sourceId);
-			  undefinedEdgeId.add(edgeId);
+			  undefinedEdgeId.add(sourceId);
 		   }
 		
 		   ODocument edgeDoc = getEdgeDocById(edgeId);
@@ -335,7 +345,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			Long supportId = supportSIDMap.get(supportSID);
 			if ( supportId == null) {
 				supportId = createSupportBySID(supportSID);
-				undefinedSupportId.add(supportId);
 			}
 			supportIds.add(supportId);
 		  }
@@ -349,7 +358,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		Long nodeId = nodeSIDMap.get(sourceId);
 		if ( nodeId == null) {
 			nodeId = createCXNodeBySID(sourceId);
-			undefinedNodeId.add(nodeId);
+			undefinedNodeId.add(sourceId);
 		}
 		
 		ODocument nodeDoc = getNodeDocById(nodeId);
@@ -362,7 +371,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			Long supportId = supportSIDMap.get(supportSID);
 			if ( supportId == null) {
 				supportId = createSupportBySID(supportSID);
-				undefinedSupportId.add(supportId);
 			}
 			supportIds.add(supportId);
 		}
@@ -376,7 +384,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		Long edgeId = edgeSIDMap.get(sourceId);
 		if ( edgeId == null) {
 			edgeId = createCXEdgeBySID(sourceId);
-			undefinedEdgeId.add(edgeId);
+			undefinedEdgeId.add(sourceId);
 		}
 		
 		ODocument edgeDoc = getEdgeDocById(edgeId);
@@ -389,7 +397,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			Long citationId = citationSIDMap.get(citationSID);
 			if ( citationId == null) {
 				citationId = createCitationBySID(citationSID);
-				undefinedCitationId.add(citationId);
 			}
 			citationIds.add(citationId);
 		}
@@ -404,7 +411,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		Long nodeId = nodeSIDMap.get(sourceId);
 		if ( nodeId == null) {
 			nodeId = createCXNodeBySID(sourceId);
-			undefinedNodeId.add(nodeId);
+			undefinedNodeId.add(sourceId);
 		}
 		
 		ODocument nodeDoc = getNodeDocById(nodeId);
@@ -417,7 +424,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			Long citationId = citationSIDMap.get(citationSID);
 			if ( citationId == null) {
 				citationId = createCitationBySID(citationSID);
-				undefinedCitationId.add(citationId);
 			}
 			citationIds.add(citationId);
 		}
@@ -429,27 +435,34 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Long createSupportBySID(String sid) {
 		Long supportId =ndexdb.getNextId() ;
 
-		ODocument supportDoc = new ODocument(NdexClasses.Support)
+		new ODocument(NdexClasses.Support)
 		   .fields(NdexClasses.Element_ID, supportId,
 				   NdexClasses.Element_SID, sid).save()	;
 
-		OrientVertex supportV = graph.getVertex(supportDoc);
-
-		networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
-
 		this.supportSIDMap.put(sid, supportId);
+		undefinedSupportId.add(sid);
 		return supportId;
 	}
 	
 	
-	private Long createSupport(SupportElement elmt) {
-		Long supportId =ndexdb.getNextId() ;
-
-		ODocument supportDoc = new ODocument(NdexClasses.Support)
-		   .fields(NdexClasses.Element_ID, supportId,
-				   NdexClasses.Element_SID, elmt.getId(),
-		           NdexClasses.Support_P_text, elmt.getText())	;
-
+	private Long createSupport(SupportElement elmt) throws ObjectNotFoundException {
+		Long supportId = supportSIDMap.get(elmt.getId()) ;
+		
+		ODocument supportDoc;
+		
+		if ( supportId == null ) {
+			supportId = ndexdb.getNextId() ;
+			supportDoc = new ODocument(NdexClasses.Support)
+					.fields(NdexClasses.Element_ID, supportId,
+							NdexClasses.Element_SID, elmt.getId(),
+							NdexClasses.Support_P_text, elmt.getText())	;
+			this.supportSIDMap.put(elmt.getId(), supportId);
+		} else {
+			supportDoc = getSupportDocById(supportId);
+			supportDoc.fields(NdexClasses.Support_P_text, elmt.getText());
+		}
+		
+		//TODO: this will be removed after we modify the xbel loader to remove properties on Support.
 		if(elmt.getProps()!=null && elmt.getProps().size()>0) {
 			Collection<NdexPropertyValuePair> properties = new ArrayList<>(elmt.getProps().size());
 			for ( CXSimpleAttribute s : elmt.getProps())	{	
@@ -463,8 +476,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		OrientVertex supportV = graph.getVertex(supportDoc);
 
 		networkVertex.addEdge(NdexClasses.Network_E_Supports, supportV);
-
-		this.supportSIDMap.put(elmt.getId(), supportId);
+		this.undefinedSupportId.remove(elmt.getId());
+		tick();
 		return supportId;
 	}
 	
@@ -474,14 +487,14 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		 Long nodeId = nodeSIDMap.get(nodeSID);
 		 if(nodeId == null) {
 			 nodeId = createCXNodeBySID(nodeSID);
-			 undefinedNodeId.add(nodeId);
+			 undefinedNodeId.add(nodeSID);
 		 }
 		
 		 String edgeSID = e.getEdge();
 		 Long edgeId = edgeSIDMap.get(edgeSID);
 		 if (edgeId == null ) {
 			 edgeId = createCXEdgeBySID(edgeSID);
-			 undefinedEdgeId.add(edgeId);
+			 undefinedEdgeId.add(edgeSID);
 		 }
 		 
 		 Long termId = ndexdb.getNextId();
@@ -528,14 +541,14 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		}
 	}
 	
-	private static List<NdexPropertyValuePair> createNdexProperties(AbstractAttributesAspectElement e) {
+/*	private static List<NdexPropertyValuePair> createNdexProperties(AbstractAttributesAspectElement e) {
 		List <NdexPropertyValuePair> props = new ArrayList<> (e.getValues().size());
 		for ( String value : e.getValues()) {
 			props.add( new NdexPropertyValuePair(e.getSubnetwork(),
 					 e.getName(),value, e.getDataType().toString()));
 		}
 		return props;
-	}
+	} */
 	
 	private void createCXContext(NamespacesElement context) throws DuplicateObjectException {
 		for ( Map.Entry<String, String> e : context.entrySet()) {
@@ -607,7 +620,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Long createCXEdgeBySID(String SID) throws DuplicateObjectException {
 		Long edgeId = ndexdb.getNextId();
 		
-		ODocument nodeDoc = new ODocument(NdexClasses.Edge)
+	//	ODocument nodeDoc =
+		new ODocument(NdexClasses.Edge)
 		   .fields(NdexClasses.Element_ID, edgeId,
 				   NdexClasses.Element_SID, SID)
 		   .save();
@@ -615,7 +629,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		if ( oldId !=null)
 			throw new DuplicateObjectException(EdgesElement.NAME, SID);
 		
-		networkVertex.addEdge(NdexClasses.Network_E_Edges,graph.getVertex(nodeDoc));
+	//	networkVertex.addEdge(NdexClasses.Network_E_Edges,graph.getVertex(nodeDoc));
 		   tick();   
 		return edgeId;
 	}
@@ -647,36 +661,35 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 		Long newSubjectId = nodeSIDMap.get(ee.getSource());
         if ( newSubjectId == null) {
-        	Long sId = createCXNodeBySID(ee.getSource());
-        	undefinedNodeId.add(sId);
+        	createCXNodeBySID(ee.getSource());
+        	undefinedNodeId.add(ee.getSource());
         }
 	   
         ODocument subjectDoc = this.getNodeDocById(newSubjectId); 
         
 	   graph.getVertex(subjectDoc).addEdge(NdexClasses.Edge_E_subject, edgeV);
 		
-	   
 	   Long newObjectId = nodeSIDMap.get(ee.getTarget());
        if ( newObjectId == null) {
-    	   Long tId = createCXNodeBySID(ee.getTarget());
-    	   undefinedNodeId.add(tId);
+    	   createCXNodeBySID(ee.getTarget());
+    	   undefinedNodeId.add(ee.getTarget());
        }
-       
        
        ODocument objectDoc = getNodeDocById(newObjectId); 
        edgeV.addEdge(NdexClasses.Edge_E_object, graph.getVertex(objectDoc)); 
 	   
 	   networkVertex.addEdge(NdexClasses.Network_E_Edges,edgeV);
-	   
+	   undefinedNodeId.remove(ee.getId());	   
 	   tick();
-	   undefinedNodeId.remove(edgeId);
-		return edgeId;
+	   
+	   return edgeId;
 	}
 	
 	private Long createCitationBySID(String sid) throws DuplicateObjectException {
 		Long citationId = ndexdb.getNextId();
 		
-		ODocument citationDoc = new ODocument(NdexClasses.Citation)
+	//	ODocument citationDoc = 
+		new ODocument(NdexClasses.Citation)
 		   .fields(NdexClasses.Element_ID, citationId,
 				   NdexClasses.Element_SID, sid)
 		   .save();
@@ -685,26 +698,35 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		if ( oldId !=null)
 			throw new DuplicateObjectException(CitationElement.NAME, sid);
 		
-		networkVertex.addEdge(NdexClasses.Network_E_Citations,graph.getVertex(citationDoc));
-		   tick();   
+		undefinedCitationId.add(sid);
+//		networkVertex.addEdge(NdexClasses.Network_E_Citations,graph.getVertex(citationDoc));
+		tick();   
 		return citationId;
 	}
 	
-	private Long createCitation(CitationElement c) {
-		Long citationId = ndexdb.getNextId();
+	private Long createCitation(CitationElement c) throws ObjectNotFoundException {
 
 		//TODO: add description to citation.
 		
-		ODocument citationDoc = new ODocument(NdexClasses.Citation)
-				  .fields(
-						NdexClasses.Element_ID, citationId,
-						NdexClasses.Element_SID, c.getId(),
-				        NdexClasses.Citation_P_title, c.getTitle(),
+		Long citationId = citationSIDMap.get(c.getId());
+		ODocument citationDoc ;
+		if ( citationId == null) {
+			citationId = ndexdb.getNextId();
+			citationDoc = new ODocument(NdexClasses.Citation)
+					  .fields(
+							NdexClasses.Element_ID, citationId,
+							NdexClasses.Element_SID, c.getId());
+			citationSIDMap.put(c.getId(), citationId);
+		} else {
+			citationDoc = this.getCitationDocById(citationId);
+		}
+		
+		citationDoc.fields(NdexClasses.Citation_P_title, c.getTitle(),
 				        NdexClasses.Citation_p_idType, c.getCitationType(),
 				        NdexClasses.Citation_P_identifier, c.getIdentifier())
-				        
 				   .field( NdexClasses.Citation_P_contributors,c.getContributor(), OType.EMBEDDEDLIST);			   		
 		
+		//TODO: remove this after we modify the xbel parser.
 		if(c.getProps()!=null && c.getProps().size()>0) {
 			Collection<NdexPropertyValuePair> properties = new ArrayList<>(c.getProps().size());
 			for ( CXSimpleAttribute s : c.getProps())	{	
@@ -714,12 +736,11 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		}
 		
 		citationDoc.save();
-        
 		        
 		OrientVertex citationV = graph.getVertex(citationDoc);
 		networkVertex.addEdge(NdexClasses.Network_E_Citations, citationV);
-		citationSIDMap.put(c.getId(), citationId);
-		undefinedCitationId.remove(citationId);
+		
+		undefinedCitationId.remove(c.getId());
 		
 		return citationId;
 	}
@@ -754,7 +775,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			Long nodeId = nodeSIDMap.get(nodeSID);
 			if ( nodeId == null) {
 				nodeId = createCXNodeBySID(nodeSID);
-				undefinedNodeId.add(nodeId);
+				undefinedNodeId.add(nodeSID);
 			}
 			ODocument nodeDoc = this.getNodeDocById(nodeId);
 			nodeDoc.fields(NdexClasses.Node_P_represents, funcId,
@@ -859,7 +880,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   Long edgeId = this.edgeSIDMap.get(edgeSID);
 		   if ( edgeId == null) {
 			  edgeId = createCXEdgeBySID(edgeSID);
-			  undefinedEdgeId.add(edgeId);
+			  undefinedEdgeId.add(edgeSID);
 		   }
 		   
 		   ODocument edgeDoc = getEdgeDocById(edgeId);
@@ -886,7 +907,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   Long nodeId = this.nodeSIDMap.get(nodeSID);
 		   if ( nodeId == null) {
 			  nodeId = createCXNodeBySID(nodeSID);
-			  undefinedNodeId.add(nodeId);
+			  undefinedNodeId.add(nodeSID);
 		   }
 		   
 		   ODocument nodeDoc = getNodeDocById(nodeId);
