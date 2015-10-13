@@ -52,22 +52,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		return networkVertex.countEdges(Direction.OUT,edgeName);
 	}
 	
-	private ODocument getRecordByUUIDStr(String id) 
-			throws ObjectNotFoundException, NdexException {
-		
-			OIndex<?> Idx;
-			OIdentifiable record = null;
-			
-			Idx = this.db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_UUID);
-			OIdentifiable temp = (OIdentifiable) Idx.get(id);
-			if((temp != null) )
-				record = temp;
-			else	
-				throw new ObjectNotFoundException("Network with ID: " + id + " doesn't exist.");
-			
-			return (ODocument) record.getRecord();
-	}
-	
+
     protected Iterable<ODocument> getNetworkElements(String elementEdgeString) {	
     	
     	Object f = networkDoc.field("out_"+ elementEdgeString);

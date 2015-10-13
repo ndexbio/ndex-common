@@ -32,6 +32,7 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -789,5 +790,29 @@ public class NetworkDocDAO extends OrientdbDAO {
         return nSummary;
     }
 
+    /**
+	 * This function sets network properties using the given property list. All Existing properties
+	 * of the network will be deleted. 
+	 * @param networkId
+	 * @param properties
+	 * @return
+	 * @throws ObjectNotFoundException
+	 * @throws NdexException
+	 */
+	public int setNetworkProperties (UUID networkId, Collection<NdexPropertyValuePair> properties
+			 ) throws ObjectNotFoundException, NdexException {
+
+		ODocument rec = this.getRecordByUUID(networkId, null);
+		
+		List<NdexPropertyValuePair> props = new ArrayList<>(properties.size());
+		for ( NdexPropertyValuePair p : properties ) {
+			if (!p.getPredicateString().equals(NdexClasses.Network_P_source_format))
+				props.add(p);
+		}
+		rec.fields(NdexClasses.ndexProperties, props,
+					NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
+
+		return props.size();
+	}
 
 }

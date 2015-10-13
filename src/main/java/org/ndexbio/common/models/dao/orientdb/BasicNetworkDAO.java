@@ -10,6 +10,7 @@ import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.PropertiedObject;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -142,6 +143,21 @@ public class BasicNetworkDAO implements AutoCloseable {
 		return SID;
 	}
 
-
+	protected ODocument getRecordByUUIDStr(String id) 
+			throws ObjectNotFoundException, NdexException {
+		
+			OIndex<?> Idx;
+			OIdentifiable record = null;
+			
+			Idx = this.db.getMetadata().getIndexManager().getIndex(NdexClasses.Index_UUID);
+			OIdentifiable temp = (OIdentifiable) Idx.get(id);
+			if((temp != null) )
+				record = temp;
+			else	
+				throw new ObjectNotFoundException("Network with ID: " + id + " doesn't exist.");
+			
+			return (ODocument) record.getRecord();
+	}
+	
     
 }

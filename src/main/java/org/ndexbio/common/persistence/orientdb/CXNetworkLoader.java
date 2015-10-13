@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_DATA_TYPE;
@@ -40,6 +42,7 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentReader;
 import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.dao.orientdb.SingleNetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
@@ -62,7 +65,7 @@ import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
-
+import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.task.NdexServerQueue;
 import org.slf4j.Logger;
@@ -180,11 +183,44 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
         init();
         
-		NdexNetworkStatus netStatus = null;
 	    uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
 	    
 	    try {
-		  networkDoc = this.createNetworkHeadNode(uuid);
+		  persistNetworkData(); 
+		
+		  // set the admin
+		
+		  UserDocDAO userdao = new UserDocDAO(db);
+		  ODocument ownerDoc = userdao.getRecordByAccountName(ownerAcctName, null) ;
+		  OrientVertex ownerV = graph.getVertex(ownerDoc);
+		  
+		  for	(int retry = 0;	retry <	OrientdbDAO.maxRetries;	++retry)	{
+				try	{
+					ownerV.reload();
+					ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
+					break;
+				} catch(ONeedRetryException	e)	{
+					logger.warn("Retry - " + e.getMessage());
+					
+				}
+			}		
+		graph.commit();
+		return uuid;
+		
+		} catch (Exception e) {
+			// delete network and close the database connection
+			e.printStackTrace();
+			this.abortTransaction();
+			throw new NdexException("Error occurred when loading CX stream. " + e.getMessage());
+		} 
+       
+	}
+
+	private void persistNetworkData()
+			throws IOException, DuplicateObjectException, NdexException, ObjectNotFoundException {
+		NdexNetworkStatus netStatus;
+		
+		networkDoc = this.createNetworkHeadNode(uuid);
 		  networkVertex = graph.getVertex(networkDoc);
 		
 
@@ -253,7 +289,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			  throw new NdexException(errorMessage );
 		  } 
 		  
-		  
 		  //save the metadata
 		  MetaDataCollection postmetadata = cxreader.getPostMetaData();
 		  if ( postmetadata !=null) {
@@ -280,34 +315,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  networkDoc.fields(NdexClasses.ExternalObj_mTime,new Timestamp(Calendar.getInstance().getTimeInMillis()),
 				   NdexClasses.Network_P_isComplete,true,
 				   NdexClasses.Network_P_opaquEdgeTable, this.opaqueAspectEdgeTable);
-		  networkDoc.save(); 
-		
-		  // set the admin
-		
-		  UserDocDAO userdao = new UserDocDAO(db);
-		  ODocument ownerDoc = userdao.getRecordByAccountName(ownerAcctName, null) ;
-		  OrientVertex ownerV = graph.getVertex(ownerDoc);
-		  
-		  for	(int retry = 0;	retry <	OrientdbDAO.maxRetries;	++retry)	{
-				try	{
-					ownerV.reload();
-					ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);
-					break;
-				} catch(ONeedRetryException	e)	{
-					logger.warn("Retry - " + e.getMessage());
-					
-				}
-			}		
-		graph.commit();
-		return uuid;
-		
-		} catch (Exception e) {
-			// delete network and close the database connection
-			e.printStackTrace();
-			this.abortTransaction();
-			throw new NdexException("Error occurred when loading CX stream. " + e.getMessage());
-		} 
-       
+		  networkDoc.save();
 	}
 	
 	private void addOpaqueAspectElement(OpaqueElement elmt) throws IOException {
@@ -1006,6 +1014,77 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		task.setResource(uuid.toString());
 		NdexServerQueue.INSTANCE.addSystemTask(task);
 		logger.info("Partial network "+ uuid + " is deleted.");
+	}
+	
+	
+	public UUID updateNetwork(String networkUUID) throws NdexException, ExecutionException {
+		try {
+			
+
+			// get the old network head node
+			ODocument srcNetworkDoc = this.getRecordByUUIDStr(networkUUID);
+			UUID newUUID = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
+			srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
+					  NdexClasses.ExternalObj_isDeleted,true).save();
+
+			if (srcNetworkDoc == null)
+				throw new NdexException("Network with UUID " + networkUUID + " is not found in this server");
+			
+			// create new network and set the isComplete flag to false 
+			uuid = UUID.fromString(networkUUID);
+
+			persistNetworkData();
+			
+			// copy the permission from source to target.
+			copyNetworkPermissions(srcNetworkDoc, networkVertex);
+			
+			graph.commit();
+			
+			graph.begin();
+
+			this.networkDoc.reload();
+			// copy the creationTime and visibility
+			networkDoc.fields( //NdexClasses.ExternalObj_ID, this.srcNetwork.getExternalId(),
+					NdexClasses.ExternalObj_cTime, srcNetworkDoc.field(NdexClasses.ExternalObj_cTime),
+					NdexClasses.Network_P_visibility, srcNetworkDoc.field(NdexClasses.Network_P_visibility),
+					NdexClasses.Network_P_isLocked,false,
+					NdexClasses.ExternalObj_mTime, new Date() ,
+					          NdexClasses.Network_P_isComplete,true)
+			.save();
+			graph.commit();
+			
+			
+			// added a delete old network task.
+			Task task = new Task();
+			task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
+			task.setResource(newUUID.toString());
+			NdexServerQueue.INSTANCE.addSystemTask(task);
+			
+			return uuid;
+		} catch ( Exception e) {
+			e.printStackTrace();
+			this.abortTransaction();
+			throw new NdexException("Error occurred when updating network using CX. " + e.getMessage());
+		}
+		 	
+	}
+
+	private void copyNetworkPermissions(ODocument srcNetworkDoc, OrientVertex targetNetworkVertex) {
+		
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.E_admin);
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.account_E_canEdit);
+		copyNetworkPermissionAux(srcNetworkDoc, targetNetworkVertex, NdexClasses.account_E_canRead);
+
+	}
+	
+	private void copyNetworkPermissionAux(ODocument srcNetworkDoc, OrientVertex targetNetworkVertex, String permissionEdgeType) {
+		
+		for ( ODocument rec : Helper.getDocumentLinks(srcNetworkDoc, "in_", permissionEdgeType)) {
+			OrientVertex userV = graph.getVertex(rec);
+			targetNetworkVertex.reload();
+			userV.addEdge(permissionEdgeType, targetNetworkVertex);
+		}
+		
 	}
 	
 }

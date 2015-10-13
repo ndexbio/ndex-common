@@ -452,25 +452,7 @@ public class NetworkDAO extends NetworkDocDAO {
 		Helper.updateNetworkProfile(doc, newSummary);
 	}
 	
-	/**
-	 * This function sets network properties using the given property list. All Existing properties
-	 * of the network will be deleted. 
-	 * @param networkId
-	 * @param properties
-	 * @return
-	 * @throws ObjectNotFoundException
-	 * @throws NdexException
-	 */
-	public int setNetworkProperties (UUID networkId, Collection<NdexPropertyValuePair> properties
-			 ) throws ObjectNotFoundException, NdexException {
-
-		
-		ODocument rec = this.getRecordByUUID(networkId, null);
-		
-		rec.field(NdexClasses.ndexProperties, properties).save();
-		return properties.size();
-	}
-
+	
 }
 
 
