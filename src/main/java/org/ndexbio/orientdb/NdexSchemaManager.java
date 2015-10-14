@@ -32,10 +32,8 @@ package org.ndexbio.orientdb;
 
 import java.util.logging.Logger;
 
-import org.apache.log4j.spi.LoggerFactory;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.network.FunctionTerm;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;

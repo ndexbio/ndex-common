@@ -114,7 +114,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		// get the network document
 		ODocument nDoc = getNetworkDocByUUIDString(networkId.toString());
 		// get the provenance string
-		String provenanceString = nDoc.field("provenance");
+		String provenanceString = nDoc.field(NdexClasses.Network_P_provenance);
 		// deserialize it to create a ProvenanceEntity object
 		if (provenanceString != null && provenanceString.length() > 0){
 			ObjectMapper mapper = new ObjectMapper();
@@ -623,6 +623,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 
 	public NetworkSummary getNetworkSummaryById (String networkUUIDStr) {
 		ODocument doc = getNetworkDocByUUIDString(networkUUIDStr);
+		if ( doc == null) return null;
 		return getNetworkSummary(doc);
 	}
  
@@ -653,9 +654,10 @@ public class NetworkDocDAO extends OrientdbDAO {
 			result.setContributors(o);
 		
     	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
-    	if ( props !=null && props.size() > 0 )
-    		result.setProperties(props);
-
+    	if ( props !=null && props.size() > 0 ) {
+    		for ( NdexPropertyValuePair p : props)
+    			result.getProperties().add(p);
+    	}
     	return result;
 	}
 
@@ -779,13 +781,17 @@ public class NetworkDocDAO extends OrientdbDAO {
         nSummary.setIsLocked((boolean)doc.field(NdexClasses.Network_P_isLocked));
         nSummary.setURI(NdexDatabase.getURIPrefix()+ "/network/" + nSummary.getExternalId().toString());
 
-        SingleNetworkDAO.getPropertiesFromDoc(doc, nSummary);
+        List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
+    	if (props != null && props.size()> 0) {
+    		for (NdexPropertyValuePair p : props)
+    			nSummary.getProperties().add(p);
+    	}
         
 		NetworkSourceFormat fmt = Helper.getSourceFormatFromNetworkDoc(doc);
 		if ( fmt !=null) {
 			NdexPropertyValuePair p = new NdexPropertyValuePair(NdexClasses.Network_P_source_format,fmt.toString());
 			nSummary.getProperties().add(p);
-		}
+		} 
         
         return nSummary;
     }

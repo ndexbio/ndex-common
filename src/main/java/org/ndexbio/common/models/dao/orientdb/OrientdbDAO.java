@@ -154,4 +154,8 @@ public class OrientdbDAO implements AutoCloseable {
     public void commit () {
     	db.commit();
     }
+    
+    public void rollback() {
+    	db.rollback();
+    }
 }

@@ -308,8 +308,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			  }
 		  }
 
-		  if(metadata !=null)
+		  if(metadata !=null) {
 		      networkDoc.field(NdexClasses.Network_P_metadata,metadata);
+		  } else 
+			  throw new NdexException ("No CX metadata found in this CX stream.");
 		  		  
 		  // finalize the headnode
 		  networkDoc.fields(NdexClasses.ExternalObj_mTime,new Timestamp(Calendar.getInstance().getTimeInMillis()),

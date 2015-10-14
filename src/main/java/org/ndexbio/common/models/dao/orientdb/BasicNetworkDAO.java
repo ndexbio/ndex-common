@@ -47,8 +47,10 @@ public class BasicNetworkDAO implements AutoCloseable {
 	
 	protected static void getPropertiesFromDoc(ODocument doc, PropertiedObject obj) {
 	    	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
-	    	if (props != null && props.size()> 0) 
-	    		obj.setProperties(props);
+	    	if (props != null && props.size()> 0) {
+	    		for (NdexPropertyValuePair p : props)
+	    			obj.getProperties().add(p);
+	    	}
 	    }
 
 	protected ODocument getBasetermDocById (long id) throws ObjectNotFoundException {

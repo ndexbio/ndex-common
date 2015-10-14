@@ -361,12 +361,13 @@ public class Helper {
 	}
 
     // Added by David Welker
-    public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkDAO dao, String networkId) throws NdexException
+ /*    public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkDocDAO dao, String networkId) throws NdexException
     {
-        NetworkSummary summary = dao.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
+        NetworkSummary summary = NetworkDocDAO.getNetworkSummary(dao.getRecordByUUIDStr(networkId, null));
         populateProvenanceEntity(entity, summary);
-    }
+    } */
 
+	
     //Added by David Welker
     public static void populateProvenanceEntity(ProvenanceEntity entity, NetworkSummary summary) throws NdexException
     {
