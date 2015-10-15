@@ -108,7 +108,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Set<String> undefinedCitationId;
 	private Set<String> undefinedSupportId;
 	
-	private NamespacesElement ns;
 	
 	long opaqueCounter ;
 
@@ -143,7 +142,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		supportSIDMap = new TreeMap<> ();
 		this.namespaceMap = new TreeMap<>();
 		this.baseTermMap = new TreeMap<>();
-		ns = null;
 		
 		undefinedNodeId = new TreeSet<>();
 		undefinedEdgeId = new TreeSet<>();
@@ -180,9 +178,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 	//TODO: will modify this function to return a CX version of NetworkSummary object.
 	public UUID persistCXNetwork() throws IOException, ObjectNotFoundException, NdexException {
-		
-        init();
-        
+		        
 	    uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
 	    
 	    try {
@@ -218,6 +214,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 	private void persistNetworkData()
 			throws IOException, DuplicateObjectException, NdexException, ObjectNotFoundException {
+		
+		init();
+		
 		NdexNetworkStatus netStatus;
 		
 		networkDoc = this.createNetworkHeadNode(uuid);
@@ -247,8 +246,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				EdgesElement ee = (EdgesElement) elmt;
 				createCXEdge(ee);
 			} else if ( aspectName.equals(NamespacesElement.NAME)) {    // namespace
-				this.ns = (NamespacesElement) elmt;
-				createCXContext(ns);
+				createCXContext((NamespacesElement) elmt);
 			} else if ( aspectName.equals(NodeAttributesElement.NAME)) {  // node attributes
 				NodeAttributesElement e = (NodeAttributesElement) elmt;
 				addNodeAttribute(e );
@@ -1027,20 +1025,19 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 	
 	public UUID updateNetwork(String networkUUID) throws NdexException, ExecutionException {
-		try {
-			
 
-			// get the old network head node
-			ODocument srcNetworkDoc = this.getRecordByUUIDStr(networkUUID);
-			UUID newUUID = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
-			srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
-					  NdexClasses.ExternalObj_isDeleted,true).save();
-
-			if (srcNetworkDoc == null)
+		// get the old network head node
+		ODocument srcNetworkDoc = this.getRecordByUUIDStr(networkUUID);
+		if (srcNetworkDoc == null)
 				throw new NdexException("Network with UUID " + networkUUID + " is not found in this server");
-			
+
+		srcNetworkDoc.field(NdexClasses.Network_P_isComplete, false).save();
+		graph.commit();
+		try {
+
+
 			// create new network and set the isComplete flag to false 
-			uuid = UUID.fromString(networkUUID);
+			uuid = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
 
 			persistNetworkData();
 			
@@ -1048,33 +1045,41 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			copyNetworkPermissions(srcNetworkDoc, networkVertex);
 			
 			graph.commit();
+		} catch ( Exception e) {
+			e.printStackTrace();
+			this.abortTransaction();
+			srcNetworkDoc.field(NdexClasses.Network_P_isComplete, true).save();
+			graph.commit();
+			throw new NdexException("Error occurred when updating network using CX. " + e.getMessage());
+		}
 			
-			graph.begin();
+		
+		graph.begin();
 
-			this.networkDoc.reload();
-			// copy the creationTime and visibility
-			networkDoc.fields( //NdexClasses.ExternalObj_ID, this.srcNetwork.getExternalId(),
+		UUID newUUID = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
+
+		srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
+					  NdexClasses.ExternalObj_isDeleted,true).save();
+			
+		this.networkDoc.reload();
+		// copy the creationTime and visibility
+		networkDoc.fields( NdexClasses.ExternalObj_ID, networkUUID,
 					NdexClasses.ExternalObj_cTime, srcNetworkDoc.field(NdexClasses.ExternalObj_cTime),
 					NdexClasses.Network_P_visibility, srcNetworkDoc.field(NdexClasses.Network_P_visibility),
 					NdexClasses.Network_P_isLocked,false,
 					NdexClasses.ExternalObj_mTime, new Date() ,
 					          NdexClasses.Network_P_isComplete,true)
 			.save();
-			graph.commit();
+		graph.commit();
 			
 			
-			// added a delete old network task.
-			Task task = new Task();
-			task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
-			task.setResource(newUUID.toString());
-			NdexServerQueue.INSTANCE.addSystemTask(task);
+		// added a delete old network task.
+		Task task = new Task();
+		task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
+		task.setResource(newUUID.toString());
+		NdexServerQueue.INSTANCE.addSystemTask(task);
 			
-			return uuid;
-		} catch ( Exception e) {
-			e.printStackTrace();
-			this.abortTransaction();
-			throw new NdexException("Error occurred when updating network using CX. " + e.getMessage());
-		}
+		return UUID.fromString(networkUUID);
 		 	
 	}
 
