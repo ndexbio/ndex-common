@@ -33,8 +33,7 @@ package org.ndexbio.task.parsingengines;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Calendar;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -152,7 +151,7 @@ public class XgmmlParser implements IParsingEngine {
         
             e1.printStackTrace();
             log("Could not read " + this.getXgmmlFile() + ": " + e1.getMessage());
-            this.networkService.abortTransaction();  //TODO: close connection to database
+            this.networkService.abortTransaction();  
             throw new NdexException("File not found: " + this.xgmmlFile.getName());
         }
         finally

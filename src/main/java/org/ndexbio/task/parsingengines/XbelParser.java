@@ -32,13 +32,8 @@ package org.ndexbio.task.parsingengines;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import javax.xml.bind.JAXBContext;
@@ -46,7 +41,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
@@ -153,8 +147,6 @@ public class XbelParser implements IParsingEngine
 			NetworkSummary currentNetwork = this.networkService.getCurrentNetwork();
 			
 			String uri = NdexDatabase.getURIPrefix();
-
-
             
             // set edge count and node count,
             // then close database connection

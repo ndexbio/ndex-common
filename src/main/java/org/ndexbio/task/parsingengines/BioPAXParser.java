@@ -47,7 +47,6 @@ import java.util.logging.Logger;
 import org.biopax.paxtools.controller.EditorMap;
 import org.biopax.paxtools.controller.PropertyEditor;
 import org.biopax.paxtools.controller.SimpleEditorMap;
-import org.biopax.paxtools.io.BioPAXIOHandler;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.BioPAXLevel;
@@ -68,7 +67,6 @@ import org.ndexbio.model.object.NdexProvenanceEventType;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.model.object.User;
-import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.tools.PropertyHelpers;
@@ -226,10 +224,12 @@ public class BioPAXParser implements IParsingEngine {
 		
 
 		String xmlBase = model.getXmlBase();
-		NdexPropertyValuePair xmlBaseProp = new NdexPropertyValuePair("xmlBase", xmlBase);
-		List<NdexPropertyValuePair> networkProperties = new ArrayList<>();
-		networkProperties.add(xmlBaseProp);	
-		this.persistenceService.setNetworkProperties(networkProperties, null);
+		if ( xmlBase !=null) {
+		  NdexPropertyValuePair xmlBaseProp = new NdexPropertyValuePair("xmlBase", xmlBase);
+		  List<NdexPropertyValuePair> networkProperties = new ArrayList<>();
+		  networkProperties.add(xmlBaseProp);	
+		  this.persistenceService.setNetworkProperties(networkProperties, null);
+		}
 		addBioPAXNamespaces(model);
 		
 		Set<BioPAXElement> elementSet = model.getObjects();
