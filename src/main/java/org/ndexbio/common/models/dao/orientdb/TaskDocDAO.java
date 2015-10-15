@@ -94,7 +94,7 @@ public class TaskDocDAO extends OrientdbDAO {
 		d = doc.field(NdexClasses.Task_P_endTime);
 		if ( d!=null)
 			result.setFinishTime(new Timestamp(d.getTime()));
-		result.setMessage(NdexClasses.Task_P_message);
+		result.setMessage((String)doc.field(NdexClasses.Task_P_message));
 		
 		ODocument ownerDoc = doc.field("out_"+ NdexClasses.Task_E_owner);
 		

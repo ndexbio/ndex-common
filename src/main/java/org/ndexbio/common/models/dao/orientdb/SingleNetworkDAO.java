@@ -1,22 +1,32 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
-
+import org.cxio.aspects.datamodels.EdgeAttributesElement;
+import org.cxio.aspects.datamodels.EdgesElement;
+import org.cxio.aspects.datamodels.NetworkAttributesElement;
+import org.cxio.aspects.datamodels.NodeAttributesElement;
+import org.cxio.aspects.datamodels.NodesElement;
+import org.cxio.metadata.MetaDataCollection;
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.model.cx.CitationElement;
+import org.ndexbio.model.cx.EdgeCitationLinksElement;
+import org.ndexbio.model.cx.EdgeSupportLinksElement;
+import org.ndexbio.model.cx.FunctionTermElement;
+import org.ndexbio.model.cx.NamespacesElement;
+import org.ndexbio.model.cx.NdexNetworkStatus;
+import org.ndexbio.model.cx.NodeCitationLinksElement;
+import org.ndexbio.model.cx.NodeSupportLinksElement;
+import org.ndexbio.model.cx.ReifiedEdgeElement;
+import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.Namespace;
-import org.ndexbio.model.object.network.ReifiedEdgeTerm;
-import org.ndexbio.model.object.network.VisibilityType;
-import org.ndexbio.task.Configuration;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -116,6 +126,53 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
     //	return nsdoc.field(NdexClasses.ns_P_uri) + name;
     }
     
+	/**
+	 * This function check if the given network contains all the give aspects. 
+	 * @param aspectNames
+	 * @return the aspect list that are not found in this network. if all aspects are found in the given network,
+	 * an empty set will be returned.
+	 *
+	 */
+	public Set<String> findMissingAspect ( Collection<String> aspectNames) {
+		MetaDataCollection md = networkDoc.field(NdexClasses.Network_P_metadata);
+		TreeSet<String> result = new TreeSet<>();
+		if ( md !=null) {
+			for (String aspect: aspectNames) {
+				if ( md.getMetaDataElement(aspect) == null) 
+					result.add(aspect);
+			}
+			return result;
+		}
+		
+		for ( String aspect : aspectNames) {
+			if (! isNdexSupportedAspect(aspect))
+				result.add(aspect);
+		}
+		return result;
+	}
+   
+	private boolean isNdexSupportedAspect(String aspect) {
+		switch (aspect ) {
+		case NodesElement.NAME: 
+		case EdgesElement.NAME:
+		case EdgeAttributesElement.NAME:
+		case NodeAttributesElement.NAME:
+		case NetworkAttributesElement.NAME:
+		case CitationElement.NAME:
+		case EdgeCitationLinksElement.NAME:
+		case EdgeSupportLinksElement.NAME:
+		case FunctionTermElement.NAME:
+		case NamespacesElement.NAME:
+		case NdexNetworkStatus.NAME:
+		case NodeCitationLinksElement.NAME:
+		case NodeSupportLinksElement.NAME:
+		case ReifiedEdgeElement.NAME:
+		case SupportElement.NAME:
+			return true;
+		default: 
+			return false;
+		}
 
+	}
 
 }

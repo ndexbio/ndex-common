@@ -614,25 +614,24 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		if ( repId != null && repId.longValue() > 0) {
 			String termType = doc.field(NdexClasses.Node_P_representTermType);
 			
-				if ( termType.equals(NdexClasses.BaseTerm) && writeAttribute) {
-				String repStr = this.getBaseTermStringById(repId);
-				writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null, SID, NdexClasses.Node_P_represents, repStr));
-
-				} else if (termType.equals(NdexClasses.ReifiedEdgeTerm) ) {
+			if ( termType.equals(NdexClasses.BaseTerm) ) {
+				if (writeAttribute) {
+				   String repStr = this.getBaseTermStringById(repId);
+				   writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null, SID, NdexClasses.Node_P_represents, repStr));
+				}   
+			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm) ) {
 					if ( writeReifiedTerms) {
 							ODocument reifiedEdgeDoc = this.getReifiedEdgeDocById(repId);
 							writeReifiedEdgeTermInCX(SID, reifiedEdgeDoc, cxwtr);
 					}
-				} else if (termType.equals(NdexClasses.FunctionTerm) ) {
+			} else if (termType.equals(NdexClasses.FunctionTerm) ) {
 					if ( writeFunctionTerms) {
 						ODocument funcDoc = this.getFunctionDocById(repId);
 					    writeNdexAspectElementAsAspectFragment(cxwtr, getFunctionTermsElementFromDoc(SID, funcDoc));
 					}
-				} else 
-						throw new NdexException ("Unsupported term type '" + termType + 
+			} else 
+				throw new NdexException ("Unsupported term type '" + termType + 
 								"' found for term Id:" + repId);
-//					repIdSet.add(repId);
-//				}
 		}
 
 		if ( writeAttribute) {
@@ -979,32 +978,16 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 
         }
         
-     
         //Add post metadata
-        
         MetaDataCollection postmd = new MetaDataCollection ();
         
- //       if ( elementLimit>0 ) {
-        	MetaDataElement e = new MetaDataElement();
-        	e.setName(aspectName);
-        	e.setElementCount(counter);
-        	postmd.add(e);
- //       }
+        MetaDataElement e = new MetaDataElement();
+        e.setName(aspectName);
+        e.setElementCount(counter);
+        postmd.add(e);
         	
-        if ( preMetaData.getMetaDataElement(NodesElement.NAME)!=null && nodeIdCounter > 0 ) {
-        		postmd.setIdCounter(NodesElement.NAME, nodeIdCounter);
-        }
-        
-        if ( preMetaData.getMetaDataElement(EdgesElement.NAME) != null && edgeIdCounter > 0 ) {
-        	postmd.setIdCounter(EdgesElement.NAME, edgeIdCounter);
-        }
-        if ( preMetaData.getMetaDataElement(CitationElement.NAME)!= null && citationIdCounter >0)
-        	postmd.setIdCounter(CitationElement.NAME, citationIdCounter);
-        
-        if ( preMetaData.getMetaDataElement(SupportElement.NAME) != null && supportIdCounter > 0 )
-        	postmd.setIdCounter(SupportElement.NAME, supportIdCounter);
-        if ( postmd.size()>0)
-          cxwtr.addPostMetaData(postmd);        
+        cxwtr.addPostMetaData(postmd);        
+
         cxwtr.end();
 
 	}
@@ -1023,8 +1006,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		//prepare metadata
 		MetaDataCollection preMetaData = new MetaDataCollection();
 		
+		boolean dbHasMetadata = false;
 		MetaDataCollection metadata = networkDoc.field(NdexClasses.Network_P_metadata);
 		if ( metadata != null) {
+			dbHasMetadata = true;
 			for (String aspectName : aspects) {
 				MetaDataElement e = metadata.getMetaDataElement(aspectName);
 				if ( e == null)
@@ -1173,18 +1158,21 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         MetaDataCollection postmd = new MetaDataCollection ();
         
-        if ( preMetaData.getMetaDataElement(NodesElement.NAME)!=null && nodeIdCounter > 0 ) {
+        if ( !dbHasMetadata) {
+        	if ( preMetaData.getMetaDataElement(NodesElement.NAME)!=null && nodeIdCounter > 0 ) {
         		postmd.setIdCounter(NodesElement.NAME, nodeIdCounter);
+        	}
+        
+        	if ( preMetaData.getMetaDataElement(EdgesElement.NAME) != null && edgeIdCounter > 0 ) {
+        		postmd.setIdCounter(EdgesElement.NAME, edgeIdCounter);
+        	}
+        	if ( preMetaData.getMetaDataElement(CitationElement.NAME)!= null && citationIdCounter >0)
+        		postmd.setIdCounter(CitationElement.NAME, citationIdCounter);
+        
+        	if ( preMetaData.getMetaDataElement(SupportElement.NAME) != null && supportIdCounter > 0 )
+        		postmd.setIdCounter(SupportElement.NAME, supportIdCounter);
         }
         
-        if ( preMetaData.getMetaDataElement(EdgesElement.NAME) != null && edgeIdCounter > 0 ) {
-        	postmd.setIdCounter(EdgesElement.NAME, edgeIdCounter);
-        }
-        if ( preMetaData.getMetaDataElement(CitationElement.NAME)!= null && citationIdCounter >0)
-        	postmd.setIdCounter(CitationElement.NAME, citationIdCounter);
-        
-        if ( preMetaData.getMetaDataElement(SupportElement.NAME) != null && supportIdCounter > 0 )
-        	postmd.setIdCounter(SupportElement.NAME, supportIdCounter);
         if ( postmd.size()>0)
           cxwtr.addPostMetaData(postmd);        
         cxwtr.end();
@@ -1215,6 +1203,4 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	}
 
 
-   
-	
 }

@@ -309,6 +309,13 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  }
 
 		  if(metadata !=null) {
+			  for ( MetaDataElement e: metadata.toCollection()) {
+				  if ( e.getIdCounter() == null && 
+						  (e.getName().equals(NodesElement.NAME) || e.getName().equals(EdgesElement.NAME) || 
+								  e.getName().equals(CitationElement.NAME) || 
+								  e.getName().equals(SupportElement.NAME)))
+					  throw new NdexException ( "Idcounter value is not found in metadata of aspect " + e.getName());
+			  }
 		      networkDoc.field(NdexClasses.Network_P_metadata,metadata);
 		  } else 
 			  throw new NdexException ("No CX metadata found in this CX stream.");
