@@ -63,6 +63,7 @@ import org.ndexbio.model.exceptions.DuplicateObjectException;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -71,6 +72,8 @@ import org.ndexbio.task.NdexServerQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -1101,4 +1104,15 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 	}
 	
+    public void setNetworkProvenance(ProvenanceEntity e) throws JsonProcessingException
+    {
+
+        ObjectMapper mapper = new ObjectMapper();
+        String provenanceString = mapper.writeValueAsString(e);
+        // store provenance string
+        this.networkDoc = this.networkDoc.field(NdexClasses.Network_P_provenance, provenanceString)
+                .save();
+    }
+
+
 }

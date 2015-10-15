@@ -134,9 +134,9 @@ public class XbelParser implements IParsingEngine
         this.initReader();
         this.description = description;
 
-        UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection());
-        loggedInUser = userDocDAO.getUserByAccountName(ownerName);
-
+        try (UserDocDAO userDocDAO = new UserDocDAO(db.getAConnection())) {
+        	loggedInUser = userDocDAO.getUserByAccountName(ownerName);
+        }	
     }
   
     @Override
