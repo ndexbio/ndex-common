@@ -524,7 +524,17 @@ public abstract class PersistenceService implements AutoCloseable {
 			if ( termId != null) {
 				return termId;
 			}
-		    return this.createBaseTerm(prefix,localTerm,null);	
+//		    return this.createBaseTerm(prefix,localTerm,null);	
+			
+			Long btId = null;
+			Namespace namespace = this.prefixMap.get(prefix);
+			if ( namespace !=null) {
+			   btId = createBaseTerm(null, localTerm, namespace.getId());
+			} else
+				btId = createBaseTerm(prefix + ":" , localTerm, null);
+	        this.baseTermStrMap.put(prefix+":"+localTerm, btId);
+	        return btId;
+
 		}
 			
 	

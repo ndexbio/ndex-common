@@ -363,9 +363,8 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		    Map<Long,String> supportIdMap ) throws ObjectNotFoundException, IOException {
 	
 		String SID = getSIDFromDoc ( doc);
-		if ( SID.equals("1110"))
-			System.out.println("err");
-	// track the counter
+
+		// track the counter
 	if ( edgeIdCounter >=0 ) {
 		try { 
 	   

@@ -383,9 +383,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 						throw new NdexException ("Namespece Id " + term.getNamespaceId() + " is not found in name space list.");
 					baseTermId = createBaseTerm(null, term.getName(), nsId);
 				} else {
-					
+					baseTermId = createBaseTermWithoutNamespace(term.getName());
 				}
-				baseTermId = createBaseTermWithoutNamespace(term.getName());
 				this.baseTermIdMap.put(term.getId(), baseTermId);
 			}
 		}
