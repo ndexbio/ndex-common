@@ -107,10 +107,11 @@ public class BioPAXNetworkExporter {
 
 	private void setUpModel(Model bioPAXModel){
 		String xmlBase = PropertyHelpers.getNetworkPropertyValueString(network, "xmlBase");
-		if (null == xmlBase){
-			xmlBase = "http://www.ndexbio.org/biopax/";
+		if (null != xmlBase){
+			bioPAXModel.setXmlBase(xmlBase);
+
+//			xmlBase = "http://www.ndexbio.org/biopax/";
 		}
-		bioPAXModel.setXmlBase(xmlBase);
 	}
 
 /*	

@@ -49,6 +49,8 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.Helper;
+import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.task.Configuration;
 
@@ -70,7 +72,7 @@ public class AllTests {
 			"/Users/chenjing/Dropbox/Network_test_files/";
 	public static Configuration confituration;
 	public static NdexDatabase db ;
-	public static String testUser = "cjtest";
+	public static String testUser = "cj2";
 	public static List<TestMeasurement> testList;
 
 	  @BeforeClass 
@@ -86,9 +88,18 @@ public class AllTests {
 	    			configuration.getDBUser(),
 	    			configuration.getDBPasswd(), 10);
 			
+			
+			try (UserDocDAO dao = new UserDocDAO(db.getAConnection())) {
+		    	
+				Helper.createUserIfnotExist(dao, testUser,
+					"blahsodl232@something.net", 
+					"cj2");
+			}	
+			
+			
 	    	testList = new ArrayList<> (100);
 
-	    	try (Reader in = new FileReader(testFileDirectory + "network_test_file_list.csv")) {
+	    	try (Reader in = new FileReader(testFileDirectory + "network_test_file_list_1.3.csv")) {
 	    	  CSVParser parser = CSVFormat.EXCEL.parse(in);
 	    	  for (CSVRecord record : parser) {
 	    		if ( parser.getCurrentLineNumber() > 1 && Boolean.valueOf(record.get(15).toLowerCase()) ) {
