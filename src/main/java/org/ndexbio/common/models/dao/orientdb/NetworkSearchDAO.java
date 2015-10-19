@@ -159,9 +159,11 @@ public class NetworkSearchDAO extends OrientdbDAO{
 			} else {     // different account 
 		    
 				for (OIdentifiable reifiedTRec : traverser) {
-		   			if ( reifiedTRec instanceof ORecordId) {
-				       ODocument networkDoc = new ODocument((ORecordId)reifiedTRec);
-					   if ( //networkDoc.getClassName().equals(NdexClasses.Network) &&
+		   			if ( reifiedTRec instanceof ORecordId || reifiedTRec instanceof ODocument) {
+				       ODocument networkDoc = (reifiedTRec instanceof ORecordId) ? 
+				    		   new ODocument((ORecordId)reifiedTRec) :
+				    			   (ODocument) reifiedTRec;             
+					   if ( networkDoc.getClassName().equals(NdexClasses.Network) &&
 		    			  (  (simpleNetworkQuery.getCanRead() ? 
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))== VisibilityType.PUBLIC :
 		    					  VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility))!= VisibilityType.PRIVATE)
