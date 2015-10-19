@@ -36,14 +36,17 @@ import org.ndexbio.model.cx.NamespacesElement;
 import org.ndexbio.model.cx.NdexNetworkStatus;
 import org.ndexbio.model.cx.NodeCitationLinksElement;
 import org.ndexbio.model.cx.NodeSupportLinksElement;
+import org.ndexbio.model.cx.Provenance;
 import org.ndexbio.model.cx.ReifiedEdgeElement;
 import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.task.Configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class CXNetworkExporter extends SingleNetworkDAO {
@@ -97,8 +100,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 
         cxwtr.start();
         
-        //write NdexStatus
+        //write NdexStatus & provenance
         writeNdexStatus(cxwtr);
+        
+        writeProvance( cxwtr);
         
         // write name, desc and other properties;
         writeNetworkAttributes(cxwtr,-1);
@@ -281,6 +286,23 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         writeNdexAspectElementAsAspectFragment(cxwtr, nstatus);
         return 1;
 	}
+
+	private int writeProvance(CxWriter cxwtr) throws NdexException, IOException {
+		Provenance provenance = new Provenance();
+        
+        ObjectMapper mapper = new ObjectMapper();
+        // get the provenance string
+        String provenanceString = this.networkDoc.field(NdexClasses.Network_P_provenance);
+        // deserialize it to create a ProvenanceEntity object
+        if (provenanceString != null && provenanceString.length() > 0){
+            ProvenanceEntity e = mapper.readValue(provenanceString, ProvenanceEntity.class);
+            provenance.setEntity(e);
+            writeNdexAspectElementAsAspectFragment(cxwtr, provenance);
+            return 1;
+        }
+        return 0;
+	}
+
 	
 	private MetaDataCollection createCXMataData() {
 		MetaDataCollection md= new MetaDataCollection();
@@ -307,6 +329,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         md.add(edge_meta);
         
         addMetadata(md, NdexNetworkStatus.NAME, ndexStatusMDVersion,lastUpdate, 0l);
+        addMetadata(md, Provenance.NAME, "1.0",lastUpdate, 4l);
         addMetadata(md, NetworkAttributesElement.NAME, "1.0",lastUpdate, 2l);
         addMetadata(md, NodeAttributesElement.NAME, "1.0",lastUpdate, 1l);
         addMetadata(md, EdgeAttributesElement.NAME, "1.0",lastUpdate, 1l);
@@ -804,6 +827,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NamespacesElement.NAME));
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(ReifiedEdgeElement.NAME));
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NdexNetworkStatus.NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(Provenance.NAME));
         
         return cxwtr;
 	}

@@ -690,7 +690,7 @@ public abstract class PersistenceService implements AutoCloseable {
         // Make an object mapper
         ObjectMapper mapper = new ObjectMapper();
         // get the provenance string
-        String provenanceString = this.networkDoc.field("provenance");
+        String provenanceString = this.networkDoc.field(NdexClasses.Network_P_provenance);
         // deserialize it to create a ProvenanceEntity object
         if (provenanceString != null && provenanceString.length() > 0){
             return mapper.readValue(provenanceString, ProvenanceEntity.class);

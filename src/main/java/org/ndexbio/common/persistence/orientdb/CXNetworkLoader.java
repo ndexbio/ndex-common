@@ -39,6 +39,7 @@ import org.cxio.metadata.MetaDataCollection;
 import org.cxio.metadata.MetaDataElement;
 import org.easymock.internal.ErrorMessage;
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentReader;
 import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
@@ -57,6 +58,7 @@ import org.ndexbio.model.cx.NamespacesElement;
 import org.ndexbio.model.cx.NdexNetworkStatus;
 import org.ndexbio.model.cx.NodeCitationLinksElement;
 import org.ndexbio.model.cx.NodeSupportLinksElement;
+import org.ndexbio.model.cx.Provenance;
 import org.ndexbio.model.cx.ReifiedEdgeElement;
 import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.exceptions.DuplicateObjectException;
@@ -111,6 +113,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Set<String> undefinedCitationId;
 	private Set<String> undefinedSupportId;
 	
+	private Provenance provenanceHistory;
 	
 	long opaqueCounter ;
 
@@ -152,6 +155,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		undefinedCitationId = new TreeSet<>();
 
 		opaqueAspectEdgeTable = new HashMap<>();
+		
+		provenanceHistory = null;
+		
 	}
 	
 	private CxElementReader createCXReader () throws IOException {
@@ -174,7 +180,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  readers.add(new GeneralAspectFragmentReader (EdgeSupportLinksElement.NAME,EdgeSupportLinksElement.class));
 		  readers.add(new GeneralAspectFragmentReader (NodeCitationLinksElement.NAME,NodeCitationLinksElement.class));
 		  readers.add(new GeneralAspectFragmentReader (NodeSupportLinksElement.NAME,NodeSupportLinksElement.class));
-		  
+		  readers.add(new GeneralAspectFragmentReader (Provenance.NAME,Provenance.class));
+		  		  
 		  return  CxElementReader.createInstance(inputStream, true,
 				   readers);
 	}
@@ -276,6 +283,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				createNodeSupport((NodeSupportLinksElement) elmt);
 			} else if ( aspectName.equals(NodeCitationLinksElement.NAME)) {
 				createNodeCitation((NodeCitationLinksElement) elmt);
+			} else if ( aspectName.equals(Provenance.NAME)) {
+				if ( provenanceHistory !=null)
+					throw new NdexException ("More than one provenanceHistory aspect element found in the CX stream.");
+				provenanceHistory = (Provenance) elmt;
 			} else {    // opaque aspect
 				addOpaqueAspectElement((OpaqueElement) elmt);
 			}
@@ -533,7 +544,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 	}
 	
-	private void createNetworkAttribute(NetworkAttributesElement e) {
+	private void createNetworkAttribute(NetworkAttributesElement e) throws NdexException {
 		if ( e.getName().equals(NdexClasses.Network_P_name)) {
 			networkDoc.field(NdexClasses.Network_P_name,
 					  e.getValue()).save();
@@ -542,6 +553,14 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		} else if ( e.getName().equals(NdexClasses.Network_P_version)) {
 			networkDoc.field(NdexClasses.Network_P_version, e.getValue()).save();
 		} else if ( e.getName().equals(SingleNetworkDAO.CXsrcFormatAttrName)) {
+			try {
+				NetworkSourceFormat fmt = NetworkSourceFormat.valueOf(e.getValue());
+			} catch (IllegalArgumentException ex) {
+				throw new NdexException("Unsupported source format " + 
+						e.getValue() + 
+						" received in network attribute " + 
+						SingleNetworkDAO.CXsrcFormatAttrName);
+			}
 			networkDoc.field(NdexClasses.Network_P_source_format, e.getValue()).save();
 		} else {
 			

@@ -30,24 +30,17 @@
  */
 package org.ndexbio.common.models.dao.orientdb.helper;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.ndexbio.common.models.object.MetaParameter;
-import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.SearchParameters;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.Support;
-import org.ndexbio.model.object.network.Term;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -131,39 +124,6 @@ public class NetworkUtility {
 		}
 		resultString = resultString.substring(0, resultString.length() - 2);
 		return resultString;
-	}
-
-	/**************************************************************************
-	 * Parses metadata and metaterm parameters using the given regex and removes
-	 * them from the search parameters.
-	 * 
-	 * @param searchParameters
-	 *            The search parameters.
-	 * @param metaRegex
-	 *            The regex pattern to use for parsing parameters.
-	 * @return An ArrayList containing the search parameters.
-	 **************************************************************************/
-	public static ArrayList<MetaParameter> parseMetaParameters(
-			final SearchParameters searchParameters, final Pattern metaRegex) {
-		final ArrayList<MetaParameter> metadataParameters = new ArrayList<MetaParameter>();
-		final Matcher metadataMatches = metaRegex.matcher(searchParameters
-				.getSearchString());
-	
-		if (!metadataMatches.find())
-			return metadataParameters;
-	
-		for (int groupIndex = 0; groupIndex < metadataMatches.groupCount(); groupIndex += 3) {
-			metadataParameters.add(new MetaParameter(metadataMatches
-					.group(groupIndex + 1), metadataMatches.group(
-					groupIndex + 2).charAt(0), metadataMatches.group(
-					groupIndex + 3).substring(1,
-					metadataMatches.group(groupIndex + 3).length() - 1)));
-	
-			searchParameters.setSearchString(searchParameters.getSearchString()
-					.replace(metadataMatches.group(groupIndex), ""));
-		}
-	
-		return metadataParameters;
 	}
 
 	public  static Set<Long> getEdgeSupports(final Collection<Edge> edges) {
