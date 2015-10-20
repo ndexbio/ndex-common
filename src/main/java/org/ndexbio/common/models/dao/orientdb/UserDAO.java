@@ -35,16 +35,12 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.model.exceptions.DuplicateObjectException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
 
 import com.google.common.base.Preconditions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;

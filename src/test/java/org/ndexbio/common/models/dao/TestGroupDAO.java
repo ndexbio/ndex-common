@@ -51,7 +51,6 @@ import org.ndexbio.model.object.NewUser;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
 public class TestGroupDAO 

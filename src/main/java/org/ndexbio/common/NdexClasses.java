@@ -212,6 +212,8 @@ public interface NdexClasses {
 //    public static final String user_E_grp_admin	      = "grpAdmin";
     public static final String User_P_oldEmailAddress = "oldEmail";
     public static final String User_P_emailAddress   = "emailAddress";
+    public static final String User_is_verified  = "isVerified";
+    public static final String User_verification_code = "verificationCode";
         
     // task
     public static final String Task_P_description = "description";

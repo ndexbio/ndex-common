@@ -30,6 +30,8 @@
  */
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +53,7 @@ import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.NewUser;
 import org.ndexbio.model.object.SimpleUserQuery;
+import org.ndexbio.task.Configuration;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -113,7 +116,7 @@ public class UserDocDAO extends OrientdbDAO {
 			if (!Security.authenticateUser(password, (String)OAuthUser.field("password"))) {
 				throw new UnauthorizedOperationException("Invalid accountName or password.");
 			}
-			return UserDAO.getUserFromDocument(OAuthUser);
+			return UserDocDAO.getUserFromDocument(OAuthUser);
 		} catch (UnauthorizedOperationException se) {
 			logger.info("Authentication failed: " + se.getMessage());
 			throw se;
@@ -138,7 +141,7 @@ public class UserDocDAO extends OrientdbDAO {
 	 *             The account name and/or email already exist
 	 * @returns User object, from the NDEx Object Model
 	 **************************************************************************/
-	public User createNewUser(NewUser newUser) throws NdexException,
+	public User createNewUser(NewUser newUser ) throws NdexException,
 			IllegalArgumentException, DuplicateObjectException {
 
 		Preconditions.checkArgument(null != newUser,
@@ -156,6 +159,10 @@ public class UserDocDAO extends OrientdbDAO {
 
 		this.checkForExistingUser(newUser);
 
+		String needVerify = Configuration.getInstance().getProperty("VERIFY_NEWUSER_BY_EMAIL");
+
+		boolean needEmailVerification = needVerify !=null && needVerify.equalsIgnoreCase("true");
+		
 		try {
 
 			ODocument user = new ODocument(NdexClasses.User).
@@ -165,25 +172,63 @@ public class UserDocDAO extends OrientdbDAO {
 			               "emailAddress", newUser.getEmailAddress(),
 			               "firstName", newUser.getFirstName(),
 			               "lastName", newUser.getLastName(),
-			               NdexClasses.account_P_accountName, newUser.getAccountName(),
+			               //, newUser.getAccountName(),
 			               "password", Security.hashText(newUser.getPassword()),
 			               NdexClasses.ExternalObj_ID, NdexUUIDFactory.INSTANCE.createNewNDExUUID(),
 			               NdexClasses.ExternalObj_cTime, new Date(),
 			               NdexClasses.ExternalObj_mTime, new Date(),
-			               NdexClasses.ExternalObj_isDeleted, false);
+			               //NdexClasses.ExternalObj_isDeleted, false,
+			               NdexClasses.User_is_verified, !needEmailVerification);
 
+			if ( needEmailVerification) {
+				SecureRandom random = new SecureRandom();
+				BigInteger b = new BigInteger(130, random);
+
+				String verCode= b.toString(32);
+			
+				user.fields(NdexClasses.User_verification_code, verCode,
+							NdexClasses.ExternalObj_isDeleted, true,
+							NdexClasses.account_P_oldAcctName, newUser.getAccountName());
+			} else {
+				user.fields(NdexClasses.ExternalObj_isDeleted, false,
+						NdexClasses.account_P_accountName, newUser.getAccountName());
+			}
+			
 			user = user.save();
 
 			logger.info("A new user with accountName "
 					+ newUser.getAccountName() + " has been created");
 
-			return UserDAO.getUserFromDocument(user);
+			return UserDocDAO.getUserFromDocument(user);
 		} catch (Exception e) {
 			logger.severe("Could not save new user to the database: " + e.getMessage());
 			throw new NdexException(e.getMessage());
 		}
 	}
 
+	
+	public boolean verifyUser ( String userUUID, String accountName, String verificationCode) throws ObjectNotFoundException, NdexException {
+		ODocument userDoc = this.getRecordByUUIDStr(userUUID, NdexClasses.User);
+		
+		Boolean isDeleted = userDoc.field(NdexClasses.ExternalObj_isDeleted);
+		if ( !isDeleted)
+			throw new NdexException ( "User has already been verified.");
+		
+		String vCode = userDoc.field(NdexClasses.User_verification_code);
+		
+		String acc = userDoc.field(NdexClasses.account_P_oldAcctName);
+		
+		if ( vCode != null && acc.equals(accountName) && verificationCode.equals(vCode)) {
+			userDoc.removeField(NdexClasses.account_P_oldAcctName);
+			userDoc.removeField(NdexClasses.User_verification_code);
+			userDoc.fields(NdexClasses.ExternalObj_isDeleted, false,
+					NdexClasses.account_P_accountName, accountName).save();
+			return true;
+		}
+		
+		throw new NdexException ( "User not found");
+		
+	}
 
 	/**************************************************************************
 	 * Get a user
@@ -201,7 +246,7 @@ public class UserDocDAO extends OrientdbDAO {
 		Preconditions.checkArgument(null != id, "UUID required");
 
 		final ODocument user = this.getRecordByUUID(id, NdexClasses.User);
-		return UserDAO.getUserFromDocument(user);
+		return UserDocDAO.getUserFromDocument(user);
 
 	}
 
@@ -222,7 +267,7 @@ public class UserDocDAO extends OrientdbDAO {
 
 		final ODocument user = this.getRecordByAccountName(accountName,
 				NdexClasses.User);
-		return UserDAO.getUserFromDocument(user);
+		return UserDocDAO.getUserFromDocument(user);
 
 	}
 
@@ -312,7 +357,7 @@ public class UserDocDAO extends OrientdbDAO {
 				} */
 
 				for (final ODocument user : users) {
-					foundUsers.add(UserDAO.getUserFromDocument(user));
+					foundUsers.add(UserDocDAO.getUserFromDocument(user));
 				}
 				return foundUsers;
 
@@ -333,7 +378,7 @@ public class UserDocDAO extends OrientdbDAO {
 			users = this.db.command(query).execute();
 
 			for (final ODocument user : users) {
-					foundUsers.add(UserDAO.getUserFromDocument(user));
+					foundUsers.add(UserDocDAO.getUserFromDocument(user));
 			}
 			return foundUsers;
 
@@ -371,7 +416,6 @@ public class UserDocDAO extends OrientdbDAO {
 			ODocument userToSave = this.getRecordByAccountName(accountName,
 					NdexClasses.User);
 
-	//		final User authUser = UserDAO.getUserFromDocument(userToSave);
 			final String newPassword = Security.generatePassword();
 			final String password = Security.hashText(newPassword);
 			userToSave.fields("password", password,
