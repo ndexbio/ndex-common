@@ -84,7 +84,7 @@ public class TestGroupDAO
         newUser.setFirstName("testUserGroupOwner");
         newUser.setLastName("testUserGroupOwner");
 		
-        testUserGroupOwner = userDAO.createNewUser(newUser);
+        testUserGroupOwner = userDAO.createNewUser(newUser,null);
         graph.commit();
         //localConnection.begin();
 		
@@ -301,7 +301,7 @@ public class TestGroupDAO
 	          newUser.setFirstName("member");
 	          newUser.setLastName("member");
 				
-		      member = userDAO.createNewUser(newUser);
+		      member = userDAO.createNewUser(newUser,null);
 		      //localConnection.commit();
 			  
 			  Membership membership = new Membership();
@@ -335,7 +335,7 @@ public class TestGroupDAO
 	         newUser.setFirstName("member");
 	         newUser.setLastName("member");
 				
-		      member = userDAO.createNewUser(newUser);
+		      member = userDAO.createNewUser(newUser,null);
 		      
 		      //localConnection.commit();
 		      //localConnection.begin();
@@ -444,7 +444,7 @@ public class TestGroupDAO
             newUser.setFirstName("testUser");
             newUser.setLastName("testUser");
 			
-	        testUser = userDAO.createNewUser(newUser);
+	        testUser = userDAO.createNewUser(newUser,null);
 	        //localConnection.commit();
         
         	//return true;

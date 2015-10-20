@@ -32,7 +32,9 @@ package org.ndexbio.common.models.dao.orientdb;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -141,7 +143,7 @@ public class UserDocDAO extends OrientdbDAO {
 	 *             The account name and/or email already exist
 	 * @returns User object, from the NDEx Object Model
 	 **************************************************************************/
-	public User createNewUser(NewUser newUser ) throws NdexException,
+	public User createNewUser(NewUser newUser, String verificationCode ) throws NdexException,
 			IllegalArgumentException, DuplicateObjectException {
 
 		Preconditions.checkArgument(null != newUser,
@@ -159,10 +161,6 @@ public class UserDocDAO extends OrientdbDAO {
 
 		this.checkForExistingUser(newUser);
 
-		String needVerify = Configuration.getInstance().getProperty("VERIFY_NEWUSER_BY_EMAIL");
-
-		boolean needEmailVerification = needVerify !=null && needVerify.equalsIgnoreCase("true");
-		
 		try {
 
 			ODocument user = new ODocument(NdexClasses.User).
@@ -176,17 +174,15 @@ public class UserDocDAO extends OrientdbDAO {
 			               "password", Security.hashText(newUser.getPassword()),
 			               NdexClasses.ExternalObj_ID, NdexUUIDFactory.INSTANCE.createNewNDExUUID(),
 			               NdexClasses.ExternalObj_cTime, new Date(),
-			               NdexClasses.ExternalObj_mTime, new Date(),
-			               //NdexClasses.ExternalObj_isDeleted, false,
-			               NdexClasses.User_is_verified, !needEmailVerification);
+			               NdexClasses.ExternalObj_mTime, new Date()
+			               //NdexClasses.ExternalObj_isDeleted, false
+					      );
 
-			if ( needEmailVerification) {
-				SecureRandom random = new SecureRandom();
-				BigInteger b = new BigInteger(130, random);
+			if ( verificationCode !=null) {
 
-				String verCode= b.toString(32);
+//				String verCode= Security.generatePassword(10);
 			
-				user.fields(NdexClasses.User_verification_code, verCode,
+				user.fields(NdexClasses.User_verification_code, verificationCode,
 							NdexClasses.ExternalObj_isDeleted, true,
 							NdexClasses.account_P_oldAcctName, newUser.getAccountName());
 			} else {
@@ -199,7 +195,12 @@ public class UserDocDAO extends OrientdbDAO {
 			logger.info("A new user with accountName "
 					+ newUser.getAccountName() + " has been created");
 
-			return UserDocDAO.getUserFromDocument(user);
+			User u = UserDocDAO.getUserFromDocument(user);
+	//		if ( needEmailVerification)
+	//			u.set
+			
+			return u; 
+			
 		} catch (Exception e) {
 			logger.severe("Could not save new user to the database: " + e.getMessage());
 			throw new NdexException(e.getMessage());
@@ -207,7 +208,7 @@ public class UserDocDAO extends OrientdbDAO {
 	}
 
 	
-	public boolean verifyUser ( String userUUID, String accountName, String verificationCode) throws ObjectNotFoundException, NdexException {
+	public boolean verifyUser ( String userUUID, String verificationCode) throws ObjectNotFoundException, NdexException {
 		ODocument userDoc = this.getRecordByUUIDStr(userUUID, NdexClasses.User);
 		
 		Boolean isDeleted = userDoc.field(NdexClasses.ExternalObj_isDeleted);
@@ -217,16 +218,21 @@ public class UserDocDAO extends OrientdbDAO {
 		String vCode = userDoc.field(NdexClasses.User_verification_code);
 		
 		String acc = userDoc.field(NdexClasses.account_P_oldAcctName);
+		Date t = (Date)userDoc.field(NdexClasses.ExternalObj_cTime);
 		
-		if ( vCode != null && acc.equals(accountName) && verificationCode.equals(vCode)) {
+		long t2 = Calendar.getInstance().getTimeInMillis();
+		boolean within = (t2 - t.getTime()) < 8 * 3600 * 1000;  // within 8 hours
+		
+		if ( vCode != null  && verificationCode.equals(vCode) && within) {
 			userDoc.removeField(NdexClasses.account_P_oldAcctName);
 			userDoc.removeField(NdexClasses.User_verification_code);
 			userDoc.fields(NdexClasses.ExternalObj_isDeleted, false,
-					NdexClasses.account_P_accountName, accountName).save();
+					NdexClasses.account_P_accountName, acc,
+					NdexClasses.ExternalObj_mTime, t2).save();
 			return true;
 		}
 		
-		throw new NdexException ( "User not found");
+		throw new NdexException ( "Verification information not found");
 		
 	}
 

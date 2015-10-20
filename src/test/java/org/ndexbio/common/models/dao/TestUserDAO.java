@@ -82,7 +82,7 @@ public class TestUserDAO {
         newUser.setAccountName("ndexadministrator");
         newUser.setFirstName("admin");
         newUser.setLastName("admin");
-        user = dao.createNewUser(newUser);
+        user = dao.createNewUser(newUser,null);
         dao.commit();
         
         newUser = new NewUser();
@@ -91,7 +91,7 @@ public class TestUserDAO {
         newUser.setAccountName("test2");
         newUser.setFirstName("test2");
         newUser.setLastName("test2");
-        user2 = dao.createNewUser(newUser);
+        user2 = dao.createNewUser(newUser, null);
         dao.commit();
         
         newUser = new NewUser();
@@ -100,7 +100,7 @@ public class TestUserDAO {
         newUser.setAccountName("test3");
         newUser.setFirstName("test3");
         newUser.setLastName("test3");
-        user3 = dao.createNewUser(newUser);
+        user3 = dao.createNewUser(newUser, null);
         dao.commit();
 	}
 	
@@ -275,7 +275,7 @@ public class TestUserDAO {
 	@Test(expected = IllegalArgumentException.class)
     public void createUserInvalid() throws IllegalArgumentException, NdexException {
 
-        dao.createNewUser(null);
+        dao.createNewUser(null,null);
         
     }
 	
@@ -289,7 +289,7 @@ public class TestUserDAO {
             newUser.setFirstName("test");
             newUser.setLastName("test");
             
-            dao.createNewUser(newUser);
+            dao.createNewUser(newUser,null);
             
 	}
 	
@@ -303,7 +303,7 @@ public class TestUserDAO {
             newUser.setFirstName("test");
             newUser.setLastName("test");
             
-            dao.createNewUser(newUser);
+            dao.createNewUser(newUser,null);
             
 	}
 	
@@ -317,7 +317,7 @@ public class TestUserDAO {
             newUser.setFirstName("test");
             newUser.setLastName("test");
             
-            dao.createNewUser(newUser);
+            dao.createNewUser(newUser,null);
             
 	}
 	
@@ -331,7 +331,7 @@ public class TestUserDAO {
 	            newUser.setFirstName("test");
 	            newUser.setLastName("test");
 				
-	            dao.createNewUser(newUser);
+	            dao.createNewUser(newUser,null);
 			
 	}
 	
@@ -439,7 +439,7 @@ public class TestUserDAO {
             newUser.setFirstName("testUser");
             newUser.setLastName("testUser");
 			
-	        testUser = dao.createNewUser(newUser);
+	        testUser = dao.createNewUser(newUser,null);
 	        //localConnection.commit();
         
         	return true;
