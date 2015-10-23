@@ -115,6 +115,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 	private Provenance provenanceHistory;
 	
+	private int declaredNodeCount;
+	private int declaredEdgeCount;
+	
 	long opaqueCounter ;
 
 	private UUID uuid;
@@ -157,6 +160,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		opaqueAspectEdgeTable = new HashMap<>();
 		
 		provenanceHistory = null;
+		
+		declaredNodeCount = -1 ;
+		declaredEdgeCount = -1;
 		
 	}
 	
@@ -331,9 +337,19 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		      networkDoc.field(NdexClasses.Network_P_metadata,metadata);
 		  } else 
 			  throw new NdexException ("No CX metadata found in this CX stream.");
-		  		  
+		  
+		  if ( declaredNodeCount >=0 && declaredNodeCount != this.nodeSIDMap.size() ) 
+			  throw new NdexException ("Declared node count in NdexStatus (" + declaredNodeCount + 
+					  ") doesn't match with node count in CX stream("+ this.nodeSIDMap.size() + ")" );
+		  
+		  if ( declaredEdgeCount >=0 && declaredEdgeCount != this.edgeSIDMap.size())
+			  throw new NdexException ("Declared edge count in NdexStatus (" + declaredEdgeCount + 
+					  ") doesn't match with edge count in CX stream("+ this.edgeSIDMap.size() + ")" );
+		  
 		  // finalize the headnode
 		  networkDoc.fields(NdexClasses.ExternalObj_mTime,new Timestamp(Calendar.getInstance().getTimeInMillis()),
+				  NdexClasses.Network_P_nodeCount, this.nodeSIDMap.size(),
+				  NdexClasses.Network_P_edgeCount,this.edgeSIDMap.size(),
 				   NdexClasses.Network_P_isComplete,true,
 				   NdexClasses.Network_P_opaquEdgeTable, this.opaqueAspectEdgeTable);
 		  networkDoc.save();
@@ -612,9 +628,11 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 	private void saveNetworkStatus(NdexNetworkStatus status ) {
 		if ( status.getEdgeCount()>=0)
-			networkDoc.field(NdexClasses.Network_P_edgeCount,status.getEdgeCount());
+			declaredEdgeCount = status.getEdgeCount();
+		//	networkDoc.field(NdexClasses.Network_P_edgeCount,status.getEdgeCount());
 		if ( status.getNodeCount()>=0) {
-			networkDoc.field(NdexClasses.Network_P_nodeCount, status.getNodeCount());
+			declaredNodeCount = status.getNodeCount();
+			//	networkDoc.field(NdexClasses.Network_P_nodeCount, status.getNodeCount());
 		}
 		networkDoc.save();
 	}
