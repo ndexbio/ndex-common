@@ -693,7 +693,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Long createCXEdge(EdgesElement ee) throws NdexException {
 		
 		String relation = ee.getRelationship();
-		Long btId = getBaseTermId(relation);
+	
+		Long btId = null;
+		if ( relation != null && relation.length() >0 )
+			 btId = getBaseTermId(relation);
 
 		Long edgeId = edgeSIDMap.get(ee.getId());
 		ODocument edgeDoc;
@@ -703,9 +706,11 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 	      edgeDoc = new ODocument(NdexClasses.Edge)
 		   .fields(NdexClasses.Element_ID, edgeId,
-				   NdexClasses.Element_SID, ee.getId(),
-				   NdexClasses.Edge_P_predicateId, btId )
-		   .save();
+				   NdexClasses.Element_SID, ee.getId());
+	      if ( btId !=null)
+				edgeDoc.field(NdexClasses.Edge_P_predicateId, btId );
+	      
+		  edgeDoc.save();
 		   edgeSIDMap.put(ee.getId(), edgeId);
 		} else {
 			edgeDoc = this.getEdgeDocById(edgeId);
