@@ -456,7 +456,7 @@ public class Helper {
         newUser.setAccountName(accountName);
         newUser.setFirstName("");
         newUser.setLastName("");
-        dao.createNewUser(newUser);
+        dao.createNewUser(newUser, null);
         
 
 	}
