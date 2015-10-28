@@ -92,21 +92,27 @@ public class TaskDAO extends TaskDocDAO {
 		taskDoc = taskDoc.save();
 		
 		if ( accountName != null) {
-			OrientVertex userV = this.graph.getVertex(getRecordByAccountName(accountName, NdexClasses.User));
-			String userUUID = userV.getRecord().field(NdexClasses.ExternalObj_ID);
+			ODocument userDoc = getRecordByAccountName(accountName, NdexClasses.User);
+			
+			String userUUID = userDoc.field(NdexClasses.ExternalObj_ID);
 
 			taskDoc = taskDoc.field("ownerUUID", userUUID).save();
 			
 			OrientVertex taskV = graph.getVertex(taskDoc);
-		
+			
+			OrientVertex userV = this.graph.getVertex(userDoc.reload());
 			for	(int retry = 0;	retry <	maxRetries;	++retry)	{
 				try	{
 					taskV.addEdge(NdexClasses.Task_E_owner, userV );
+
 					break;
 				} catch(ONeedRetryException	e)	{
+					e.printStackTrace();
 					logger.warning("Retry creating task add edge.");
-					userV.reload();
+					System.out.println("Retry creating task add edge.");
 					taskV.reload();
+					taskV.getRecord().removeField("out_"+ NdexClasses.Task_E_owner);
+					userV.reload();
 				}
 			}
 			newTask.setTaskOwnerId(UUID.fromString(userUUID));
