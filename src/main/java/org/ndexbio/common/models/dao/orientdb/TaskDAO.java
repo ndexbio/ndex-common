@@ -107,9 +107,7 @@ public class TaskDAO extends TaskDocDAO {
 
 					break;
 				} catch(ONeedRetryException	e)	{
-					e.printStackTrace();
 					logger.warning("Retry creating task add edge.");
-					System.out.println("Retry creating task add edge.");
 					taskV.reload();
 					taskV.getRecord().removeField("out_"+ NdexClasses.Task_E_owner);
 					userV.reload();
