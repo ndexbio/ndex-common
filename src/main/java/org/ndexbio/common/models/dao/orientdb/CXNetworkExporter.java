@@ -97,7 +97,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		}
 		
         cxwtr.addPreMetaData(md);
-
+      try {
         cxwtr.start();
         
         //write NdexStatus & provenance
@@ -136,7 +136,6 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         	writeEdgeInCX(doc,cxwtr, citationIdMap, supportIdMap);
         }
         
-        
         writeOpaqueAspects(cxwtr);
         
         //Add post metadata
@@ -153,7 +152,11 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         	postmd.setIdCounter(SupportElement.NAME, supportIdCounter);
         if ( postmd.size() > 0 ) 
         	cxwtr.addPostMetaData(postmd);        
-        cxwtr.end();
+        cxwtr.end(true,"");
+      } catch (Exception e ) {
+    	  cxwtr.end(false, "Error: " + e.getMessage() );
+    	  throw e;
+      }
 
 	}
 
@@ -921,37 +924,39 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		
 		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
         cxwtr.addPreMetaData(preMetaData);
-        cxwtr.start();
-
-		// start writing aspects out.
-        //write NdexStatus
-        long counter =0 ;
-        if (aspectName.equals(NdexNetworkStatus.NAME)) {
-           counter = writeNdexStatus(cxwtr);
-        } else if ( aspectName.equals(NetworkAttributesElement.NAME)) {
-        // write name, desc and other properties;
-           counter = writeNetworkAttributes(cxwtr, elementLimit);
-        } else if (   aspectName.equals(NamespacesElement.NAME)) {
-        	//write namespaces 
-        	counter = writeNamespacesInCX(cxwtr, elementLimit);
-        } else {
-        	
-        	// tracking ids to SID mapping and baseterms that has been outputed.
-        	Map<Long,String> citationIdMap = new TreeMap<> ();
-        	Map<Long,String> supportIdMap = new TreeMap<> ();
         
-        	if ( aspectName.equals(CitationElement.NAME)) {
-        		for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
-        			if ( elementLimit <=0 || counter < elementLimit)
-        				counter ++;
-        			else 
-        				break;
-        			Long citationId = doc.field(NdexClasses.Element_ID);
-        			String SID = writeCitationInCX(doc, cxwtr);
-        			citationIdMap.put(citationId, SID);
-        		}
-        	} else if (aspectName.equals(SupportElement.NAME) ) {
-        		for ( ODocument doc: getNetworkElements (NdexClasses.Network_E_Supports)) {
+        try {
+        	cxwtr.start();
+
+        	// start writing aspects out.
+        	//write NdexStatus
+        	long counter =0 ;
+        	if (aspectName.equals(NdexNetworkStatus.NAME)) {
+        		counter = writeNdexStatus(cxwtr);
+        	} else if ( aspectName.equals(NetworkAttributesElement.NAME)) {
+        		// write name, desc and other properties;
+        		counter = writeNetworkAttributes(cxwtr, elementLimit);
+        	} else if (   aspectName.equals(NamespacesElement.NAME)) {
+        		//write namespaces 
+        		counter = writeNamespacesInCX(cxwtr, elementLimit);
+        	} else {
+        	
+        		// tracking ids to SID mapping and baseterms that has been outputed.
+        		Map<Long,String> citationIdMap = new TreeMap<> ();
+        		Map<Long,String> supportIdMap = new TreeMap<> ();
+        
+        		if ( aspectName.equals(CitationElement.NAME)) {
+        			for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
+        				if ( elementLimit <=0 || counter < elementLimit)
+        					counter ++;
+        				else 
+        					break;
+        				Long citationId = doc.field(NdexClasses.Element_ID);
+        				String SID = writeCitationInCX(doc, cxwtr);
+        				citationIdMap.put(citationId, SID);
+        			}
+        		} else if (aspectName.equals(SupportElement.NAME) ) {
+        			for ( ODocument doc: getNetworkElements (NdexClasses.Network_E_Supports)) {
         			if ( elementLimit <=0 || counter < elementLimit)
         				counter ++;
         			else 
@@ -959,59 +964,62 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         			Long supportId = doc.field(NdexClasses.Element_ID);
         			String SID = writeSupportInCX(doc, cxwtr);
         			supportIdMap.put(supportId, SID);
-        		}
-        	} else {
-                boolean writeNodes             = aspectName.equals(NodesElement.NAME);
-                boolean writeNodeAttr          = aspectName.equals(NodeAttributesElement.NAME);
-                boolean writeFunctionTerm      = aspectName.equals(FunctionTermElement.NAME);
-                boolean writeReifiedEdgeTerm   = aspectName.equals(ReifiedEdgeElement.NAME);
-                boolean writeNodeCitationLinks = aspectName.equals(NodeCitationLinksElement.NAME);
-                boolean writeNodeSupportLinks  = aspectName.equals(NodeSupportLinksElement.NAME);
-                if ( writeNodes|| writeNodeAttr ||writeFunctionTerm || writeReifiedEdgeTerm || 
+        			}
+        		} else {
+        			boolean writeNodes             = aspectName.equals(NodesElement.NAME);
+        			boolean writeNodeAttr          = aspectName.equals(NodeAttributesElement.NAME);
+        			boolean writeFunctionTerm      = aspectName.equals(FunctionTermElement.NAME);
+        			boolean writeReifiedEdgeTerm   = aspectName.equals(ReifiedEdgeElement.NAME);
+        			boolean writeNodeCitationLinks = aspectName.equals(NodeCitationLinksElement.NAME);
+        			boolean writeNodeSupportLinks  = aspectName.equals(NodeSupportLinksElement.NAME);
+        			if ( writeNodes|| writeNodeAttr ||writeFunctionTerm || writeReifiedEdgeTerm || 
                 		writeNodeCitationLinks || writeNodeSupportLinks) {
-                	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Nodes)) {
-            			if ( elementLimit <=0 || counter < elementLimit)
-            				counter ++;
-            			else 
-            				break;
-                		writeNodeAspectsInCX(doc, cxwtr,/* repIdSet, */citationIdMap, supportIdMap,
+        				for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Nodes)) {
+        					if ( elementLimit <=0 || counter < elementLimit)
+        						counter ++;
+        					else 
+        						break;
+        					writeNodeAspectsInCX(doc, cxwtr,/* repIdSet, */citationIdMap, supportIdMap,
                 				writeNodes,	writeNodeAttr, writeFunctionTerm, writeReifiedEdgeTerm,
                 				writeNodeCitationLinks,writeNodeSupportLinks);
-                	}  
-                } else {
-                    boolean writeEdges = aspectName.equals(EdgesElement.NAME);
-                    boolean writeEdgeAttr = aspectName.equals(EdgeAttributesElement.NAME);
-                    boolean writeEdgeCitationLinks = aspectName.equals(EdgeCitationLinksElement.NAME);
-                    boolean writeEdgeSupportLinks = aspectName.equals(EdgeSupportLinksElement.NAME);
-                    if ( writeEdges || writeEdgeAttr || writeEdgeCitationLinks || writeEdgeSupportLinks ) {
-                    	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Edges)) {
-                    		if ( elementLimit <=0 || counter < elementLimit)
-                				counter ++;
-                			else 
-                				break;
-                    		writeEdgeAspectsInCX(doc,cxwtr, citationIdMap, supportIdMap,
-                    			writeEdges, writeEdgeAttr, writeEdgeCitationLinks, writeEdgeSupportLinks);
-                    	}
-                    } else {
-                       	writeOpaqueAspect(cxwtr, aspectName, elementLimit);    
-                    }	
-                }
-        		
+        				}  
+        			} else {
+        				boolean writeEdges = aspectName.equals(EdgesElement.NAME);
+        				boolean writeEdgeAttr = aspectName.equals(EdgeAttributesElement.NAME);
+        				boolean writeEdgeCitationLinks = aspectName.equals(EdgeCitationLinksElement.NAME);
+        				boolean writeEdgeSupportLinks = aspectName.equals(EdgeSupportLinksElement.NAME);
+        				if ( writeEdges || writeEdgeAttr || writeEdgeCitationLinks || writeEdgeSupportLinks ) {
+        					for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Edges)) {
+        						if ( elementLimit <=0 || counter < elementLimit)
+        							counter ++;
+        						else 
+        							break;
+        						writeEdgeAspectsInCX(doc,cxwtr, citationIdMap, supportIdMap,
+        								writeEdges, writeEdgeAttr, writeEdgeCitationLinks, writeEdgeSupportLinks);
+        					}
+        				} else {
+        					writeOpaqueAspect(cxwtr, aspectName, elementLimit);    
+        				}	
+        			}
+        		}
+
         	}
-
-        }
         
-        //Add post metadata
-        MetaDataCollection postmd = new MetaDataCollection ();
+        	//Add post metadata
+        	MetaDataCollection postmd = new MetaDataCollection ();
         
-        MetaDataElement e = new MetaDataElement();
-        e.setName(aspectName);
-        e.setElementCount(counter);
-        postmd.add(e);
+        	MetaDataElement e = new MetaDataElement();
+        	e.setName(aspectName);
+        	e.setElementCount(counter);
+        	postmd.add(e);
         	
-        cxwtr.addPostMetaData(postmd);        
+        	cxwtr.addPostMetaData(postmd);        
 
-        cxwtr.end();
+        	cxwtr.end(true, "");
+        } catch (Exception e) {
+        	cxwtr.end(false, "Error on the server:" + e.getMessage());
+        	throw e;
+        }
 
 	}
 	
@@ -1090,6 +1098,8 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		
 		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
         cxwtr.addPreMetaData(preMetaData);
+        
+     try {   
         cxwtr.start();
 
 		// start writing aspects out.
@@ -1198,8 +1208,12 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         if ( postmd.size()>0)
           cxwtr.addPostMetaData(postmd);        
-        cxwtr.end();
-
+        cxwtr.end(true, "");
+     } catch (Exception e )  {
+    	 cxwtr.end(false, "Error: " + e.getMessage());
+    	 throw e;
+     }
+        
 	}
 
 

@@ -377,7 +377,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   Long edgeId = edgeSIDMap.get(sourceId);
 		   if ( edgeId == null) {
 			  edgeId = createCXEdgeBySID(sourceId);
-			  undefinedEdgeId.add(sourceId);
 		   }
 		
 		   ODocument edgeDoc = getEdgeDocById(edgeId);
@@ -403,7 +402,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		Long nodeId = nodeSIDMap.get(sourceId);
 		if ( nodeId == null) {
 			nodeId = createCXNodeBySID(sourceId);
-			undefinedNodeId.add(sourceId);
 		}
 		
 		ODocument nodeDoc = getNodeDocById(nodeId);
@@ -429,7 +427,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		Long edgeId = edgeSIDMap.get(sourceId);
 		if ( edgeId == null) {
 			edgeId = createCXEdgeBySID(sourceId);
-			undefinedEdgeId.add(sourceId);
 		}
 		
 		ODocument edgeDoc = getEdgeDocById(edgeId);
@@ -539,7 +536,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		 Long edgeId = edgeSIDMap.get(edgeSID);
 		 if (edgeId == null ) {
 			 edgeId = createCXEdgeBySID(edgeSID);
-			 undefinedEdgeId.add(edgeSID);
 		 }
 		 
 		 Long termId = ndexdb.getNextId();
@@ -684,6 +680,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		if ( oldId !=null)
 			throw new DuplicateObjectException(EdgesElement.NAME, SID);
 		
+		undefinedEdgeId.add(SID);
+
 	//	networkVertex.addEdge(NdexClasses.Network_E_Edges,graph.getVertex(nodeDoc));
 		   tick();   
 		return edgeId;
@@ -713,8 +711,11 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  edgeDoc.save();
 		   edgeSIDMap.put(ee.getId(), edgeId);
 		} else {
+			if ( ! undefinedEdgeId.contains(ee.getId())) 
+				throw new NdexException ("Duplicate Edge found in CX stream. @id=" + ee.getId());
 			edgeDoc = this.getEdgeDocById(edgeId);
 			edgeDoc.fields(NdexClasses.Edge_P_predicateId, btId).save();
+			undefinedEdgeId.remove(ee.getId());
 		}
 		
 		OrientVertex edgeV = graph.getVertex(edgeDoc);
@@ -940,7 +941,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   Long edgeId = this.edgeSIDMap.get(edgeSID);
 		   if ( edgeId == null) {
 			  edgeId = createCXEdgeBySID(edgeSID);
-			  undefinedEdgeId.add(edgeSID);
 		   }
 		   
 		   ODocument edgeDoc = getEdgeDocById(edgeId);
