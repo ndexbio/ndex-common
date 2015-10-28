@@ -205,6 +205,7 @@ public interface NdexClasses {
     
     public static final String GRP_E_admin = Permissions.GROUPADMIN.toString().toLowerCase();
     public static final String GRP_E_member = Permissions.MEMBER.toString().toLowerCase();
+    public static final String GRP_P_NAME = "groupName";
 
     //user
     

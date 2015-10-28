@@ -111,7 +111,7 @@ public class GroupDAO extends GroupDocDAO {
 				    
 				result.setExternalId(NdexUUIDFactory.INSTANCE.createNewNDExUUID());
 				result.setAccountName(newGroup.getAccountName());
-				result.setOrganizationName(newGroup.getOrganizationName());
+				result.setGroupName(newGroup.getGroupName());
 				result.setWebsite(newGroup.getWebsite());
 				result.setDescription(newGroup.getDescription());
 				result.setImage(newGroup.getImage());
@@ -120,7 +120,7 @@ public class GroupDAO extends GroupDocDAO {
 						fields("description", newGroup.getDescription(),
 							"websiteURL", newGroup.getWebsite(),
 							"imageURL", newGroup.getImage(),
-							"organizationName", newGroup.getOrganizationName(),
+							NdexClasses.GRP_P_NAME, newGroup.getGroupName(),
 			    			NdexClasses.account_P_accountName, newGroup.getAccountName(),
 			    			NdexClasses.ExternalObj_ID, result.getExternalId(),
 			    			NdexClasses.ExternalObj_cTime, result.getCreationTime(),
@@ -494,7 +494,7 @@ public class GroupDAO extends GroupDocDAO {
 			group.fields("description", updatedGroup.getDescription(),
 					"websiteURL", updatedGroup.getWebsite(),
 					"imageURL", updatedGroup.getImage(),
-					"organizationName", updatedGroup.getOrganizationName(),
+					NdexClasses.GRP_P_NAME, updatedGroup.getGroupName(),
 					NdexClasses.ExternalObj_mTime, new Date());
 
 			group = group.save();

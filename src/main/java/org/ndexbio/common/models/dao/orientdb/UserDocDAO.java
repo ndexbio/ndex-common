@@ -752,7 +752,7 @@ public class UserDocDAO extends OrientdbDAO {
 				membership.setMemberUUID(userId);
 				membership.setPermissions(permission);
 				membership.setResourceName((String) group
-						.field("organizationName"));
+						.field(NdexClasses.GRP_P_NAME));
 				membership.setResourceUUID(UUID.fromString((String) group
 						.field("UUID")));
 
@@ -807,10 +807,10 @@ public class UserDocDAO extends OrientdbDAO {
 				permission = Permissions.MEMBER;
 
 			membership.setMemberAccountName((String) OAccount
-					.field("accountName"));
+					.field(NdexClasses.account_P_accountName));
 			membership.setMemberUUID(account);
 			membership.setResourceName((String) OResource
-					.field("organizationName"));
+					.field(NdexClasses.GRP_P_NAME));
 			membership.setResourceUUID(resource);
 			membership.setPermissions(permission);
 			membership.setMembershipType(MembershipType.GROUP);
@@ -831,7 +831,7 @@ public class UserDocDAO extends OrientdbDAO {
 				permission = Permissions.ADMIN;
 
 			membership.setMemberAccountName((String) OAccount
-					.field("accountName"));
+					.field(NdexClasses.account_P_accountName));
 			membership.setMemberUUID(account);
 			membership.setResourceName((String) OResource.field("name"));
 			membership.setResourceUUID(resource);

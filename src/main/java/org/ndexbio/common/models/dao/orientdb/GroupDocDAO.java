@@ -31,13 +31,11 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.model.exceptions.DuplicateObjectException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.SimpleUserQuery;
@@ -52,8 +50,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class GroupDocDAO extends OrientdbDAO {
 	
@@ -331,7 +327,7 @@ public class GroupDocDAO extends OrientdbDAO {
 				membership.setMemberAccountName( (String) member.field(NdexClasses.account_P_accountName) ); 
 				membership.setMemberUUID( UUID.fromString( (String) member.field(NdexClasses.ExternalObj_ID) ) );
 				membership.setPermissions( permission );
-				membership.setResourceName( (String) group.field("organizationName") );
+				membership.setResourceName( (String) group.field(NdexClasses.GRP_P_NAME) );
 				membership.setResourceUUID( groupId );
 				
 				memberships.add(membership);
@@ -400,7 +396,7 @@ public class GroupDocDAO extends OrientdbDAO {
 
 		Helper.populateExternalObjectFromDoc (result, n);
 
-		result.setOrganizationName((String)n.field("organizationName"));
+		result.setGroupName((String)n.field(NdexClasses.GRP_P_NAME));
 		result.setWebsite((String)n.field("websiteURL"));
 		result.setDescription((String)n.field("description"));
 		result.setImage((String)n.field("imageURL"));

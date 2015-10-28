@@ -89,7 +89,7 @@ public class TestGroupDAO
         //localConnection.begin();
 		
 		Group newGroup = new Group();
-        newGroup.setOrganizationName("group");
+        newGroup.setGroupName("group");
         newGroup.setAccountName("group");
         newGroup.setDescription("group");
         newGroup.setWebsite("group");
@@ -98,7 +98,7 @@ public class TestGroupDAO
         //localConnection.commit();
         
         newGroup = new Group();
-        newGroup.setOrganizationName("group2");
+        newGroup.setGroupName("group2");
         newGroup.setAccountName("group2");
         newGroup.setDescription("group2");
         newGroup.setWebsite("group2");
@@ -141,7 +141,7 @@ public class TestGroupDAO
 		try {
 			localConnection.begin();
 			final Group newGroup = new Group();
-            newGroup.setOrganizationName("create");
+            newGroup.setGroupName("create");
             newGroup.setAccountName("create");
             newGroup.setDescription("create");
             newGroup.setWebsite("create");
@@ -168,7 +168,7 @@ public class TestGroupDAO
 	public void createGroupInvalidAccountName() throws NdexException, IllegalArgumentException {
 		
 			final Group newGroup = new Group();
-            newGroup.setOrganizationName("test");
+            newGroup.setGroupName("test");
             newGroup.setAccountName("");
             newGroup.setDescription("test");
             newGroup.setWebsite("test");
@@ -181,7 +181,7 @@ public class TestGroupDAO
 	public void createExistingGroup() throws IllegalArgumentException, NdexException, DuplicateObjectException {
 		
 				final Group newGroup = new Group();
-	            newGroup.setOrganizationName("testGroup");
+	            newGroup.setGroupName("testGroup");
 	            newGroup.setAccountName("testGroup");
 	            newGroup.setDescription("testGroup");
 	            newGroup.setWebsite("testGroup");
@@ -245,7 +245,7 @@ public class TestGroupDAO
             //localConnection.commit();
             
             assertEquals(updated.getDescription(), dao.getGroupById(testGroup.getExternalId()).getDescription());
-            assertEquals(testGroup.getOrganizationName(), dao.getGroupById(testGroup.getExternalId()).getOrganizationName());
+            assertEquals(testGroup.getGroupName(), dao.getGroupById(testGroup.getExternalId()).getGroupName());
             
         } catch (Exception e) {
         	
@@ -398,7 +398,7 @@ public class TestGroupDAO
 		try {
 			
 			final Group newGroup = new Group();
-            newGroup.setOrganizationName("testGroup");
+            newGroup.setGroupName("testGroup");
             newGroup.setAccountName("testGroup");
             newGroup.setDescription("testGroup");
             newGroup.setWebsite("testGroup");
