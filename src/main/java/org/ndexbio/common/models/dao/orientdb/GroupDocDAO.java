@@ -164,7 +164,7 @@ public class GroupDocDAO extends OrientdbDAO {
 			  			+ " WHERE @class = '"+ NdexClasses.Group +"'"
 			  			+ " AND ( " + NdexClasses.ExternalObj_isDeleted + " = false)" 
 			  			+ " AND (accountName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%'"
-						+ " OR organizationName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%')"
+						+ " OR " + NdexClasses.GRP_P_NAME + ".toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%')"
 						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
@@ -183,7 +183,7 @@ public class GroupDocDAO extends OrientdbDAO {
 						+ " WHERE "
 			  			+ " ( " + NdexClasses.ExternalObj_isDeleted + " = false )" 
 						+ " AND (accountName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%'"
-						+ " OR organizationName.toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%')"
+						+ " OR " + NdexClasses.GRP_P_NAME +".toLowerCase() LIKE '%"+ Helper.escapeOrientDBSQL(simpleQuery.getSearchString()) +"%')"
 						+ " ORDER BY " + NdexClasses.ExternalObj_cTime + " DESC " 
 						+ " SKIP " + startIndex
 						+ " LIMIT " + blockSize );
