@@ -35,6 +35,7 @@ import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentReader;
 import org.cxio.metadata.MetaDataCollection;
 import org.cxio.metadata.MetaDataElement;
+import org.cxio.util.CxioUtil;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
@@ -591,7 +592,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			
 			NdexPropertyValuePair newProps= new NdexPropertyValuePair(e.getSubnetwork(),
 					 e.getName(),
-					 (e.isSingleValue() ? e.getValue(): e.getValuesAsString())
+					 (e.isSingleValue() ? e.getValue(): CxioUtil.getAttributeValuesAsString(e))
 					 , e.getDataType().toString());
 			List<NdexPropertyValuePair> props =networkDoc.field(NdexClasses.ndexProperties);
 			if ( props == null) {
@@ -908,7 +909,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 		   NdexPropertyValuePair newProps= new NdexPropertyValuePair(e.getSubnetwork(),
 					 e.getName(),
-					 (e.isSingleValue() ? e.getValue(): e.getValuesAsString()),
+					 (e.isSingleValue() ? e.getValue(): CxioUtil.getAttributeValuesAsString(e)),
 					 e.getDataType().toString());
 		   List<NdexPropertyValuePair> props =edgeDoc.field(NdexClasses.ndexProperties);
 			if ( props == null)
@@ -949,7 +950,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		   }  else {
 			   NdexPropertyValuePair newProps= new NdexPropertyValuePair(e.getSubnetwork(),
 						 e.getName(),
-						 (e.isSingleValue() ? e.getValue(): e.getValuesAsString()),
+						 (e.isSingleValue() ? e.getValue(): CxioUtil.getAttributeValuesAsString(e)),
 						 e.getDataType().toString());
 			   List<NdexPropertyValuePair> props =nodeDoc.field(NdexClasses.ndexProperties);
 				if ( props == null)

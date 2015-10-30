@@ -23,7 +23,7 @@ import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentWriter;
 import org.cxio.metadata.MetaDataCollection;
 import org.cxio.metadata.MetaDataElement;
-import org.cxio.util.Util;
+import org.cxio.util.CxioUtil;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentWriter;
 import org.ndexbio.model.cx.CXSimpleAttribute;
@@ -778,7 +778,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         GeneralAspectFragmentWriter cfw = new GeneralAspectFragmentWriter(CitationElement.ASPECT_NAME);
         
-        for (AspectFragmentWriter afw : Util.getAllAvailableAspectFragmentWriters() ) {
+        for (AspectFragmentWriter afw : CxioUtil.getAllAvailableAspectFragmentWriters() ) {
         	cxwtr.addAspectFragmentWriter(afw);
         }
         
