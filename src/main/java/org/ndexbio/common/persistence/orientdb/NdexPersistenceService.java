@@ -415,7 +415,7 @@ public class NdexPersistenceService extends PersistenceService {
 			throws NdexException, ExecutionException {
 		if (null != objectNodeId && null != subjectNodeId && null != predicateId) {
 			
-			Long edgeId = database.getNextId();
+			Long edgeId = database.getNextId(localConnection);
 /*			Edge edge = new Edge();
 			edge.setId(database.getNextId());
 			edge.setSubjectId(subjectNodeId);
@@ -558,7 +558,7 @@ public class NdexPersistenceService extends PersistenceService {
 		
 		//create a node for this external id.
 		
-		nodeId = database.getNextId();
+		nodeId = database.getNextId(localConnection);
 
 		ODocument nodeDoc = new ODocument(NdexClasses.Node);
 
@@ -709,7 +709,7 @@ public class NdexPersistenceService extends PersistenceService {
 	 */
 	
 	public Long createNodeFromTermId(Long funcTermId, String representTermType)  {
-		Long nodeId = database.getNextId();
+		Long nodeId = database.getNextId(localConnection);
 
 		ODocument nodeDoc = new ODocument(NdexClasses.Node);
 
@@ -739,7 +739,7 @@ public class NdexPersistenceService extends PersistenceService {
 		}
 		
 		// otherwise insert Node.
-		nodeId = database.getNextId();
+		nodeId = database.getNextId(localConnection);
 
 		ODocument nodeDoc = new ODocument(NdexClasses.Node)
 		        .fields(NdexClasses.Element_ID, nodeId,
@@ -778,7 +778,7 @@ public class NdexPersistenceService extends PersistenceService {
 		if (reifiedEdgeTermId != null) 	return reifiedEdgeTermId;
 		
 		// create new term
-		reifiedEdgeTermId = this.database.getNextId();
+		reifiedEdgeTermId = this.database.getNextId(localConnection);
 		
 		ODocument eTermdoc = new ODocument (NdexClasses.ReifiedEdgeTerm);
 		eTermdoc = eTermdoc.field(NdexClasses.Element_ID, reifiedEdgeTermId)

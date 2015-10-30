@@ -319,7 +319,7 @@ public abstract class PersistenceService implements AutoCloseable {
 		ns = new Namespace();
 		ns.setPrefix(key.getPrefix());
 		ns.setUri(key.getURI());
-		ns.setId(database.getNextId());
+		ns.setId(database.getNextId(localConnection));
 		
 
 		ODocument nsDoc = new ODocument(NdexClasses.Namespace);
@@ -350,7 +350,7 @@ public abstract class PersistenceService implements AutoCloseable {
 	 protected Long createCitation(String title, String idType, String identifier, 
 				List<String> contributors, 
 				Collection<NdexPropertyValuePair> properties) {
-			Long citationId = database.getNextId();
+			Long citationId = database.getNextId(localConnection);
 
 			ODocument citationDoc = new ODocument(NdexClasses.Citation)
 			  .fields(
@@ -377,7 +377,7 @@ public abstract class PersistenceService implements AutoCloseable {
 	 
 	  protected Long createSupport(String literal, Long citationId, List<NdexPropertyValuePair> props) {
 			
-			Long supportId =database.getNextId() ;
+			Long supportId =database.getNextId(localConnection) ;
 
 			ODocument supportDoc = new ODocument(NdexClasses.Support)
 			   .fields(NdexClasses.Element_ID, supportId,
@@ -404,7 +404,7 @@ public abstract class PersistenceService implements AutoCloseable {
 
 		protected Long createFunctionTerm(Long baseTermId, List<Long> termList) throws ExecutionException {
 			
-			Long functionTermId = database.getNextId(); 
+			Long functionTermId = database.getNextId(localConnection); 
 			
 		    ODocument fTerm = new ODocument(NdexClasses.FunctionTerm)
 		       .fields(NdexClasses.Element_ID, functionTermId,
@@ -602,7 +602,7 @@ public abstract class PersistenceService implements AutoCloseable {
 				
 		
 		protected Long createBaseTerm (String prefix, String localName, Long nsId) {
-			Long termId = database.getNextId();
+			Long termId = database.getNextId(localConnection);
 						
 			ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
 					.fields(NdexClasses.BTerm_P_name, localName,

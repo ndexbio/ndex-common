@@ -144,7 +144,7 @@ public class NdexDatabase {
 
 	}
 	
-    public synchronized long  getNextId() {
+    public synchronized long  getNextId(ODatabaseDocumentTx callingConnection) {
     	
     	if ( batchCounter == blockSize) {
     		vdoc.reload();
@@ -153,8 +153,9 @@ public class NdexDatabase {
             vdoc = vdoc.field(seqField, internalCounterBase + blockSize).save();
             this.ndexDatabase.activateOnCurrentThread();
             dictionary.put(sequenceKey, vdoc);
-        	commit();
+        	ndexDatabase.commit();
        // 	System.out.println("New batch in id sequence:" + internalCounterBase );
+        	callingConnection.activateOnCurrentThread();
     	}
     	long rvalue = internalCounterBase + batchCounter;
     	batchCounter++;
@@ -178,13 +179,6 @@ public class NdexDatabase {
     		logger.info("Database closed.");
     	} else 
     		logger.info("Database is already closed.");
-    }
-    
-    /**
-     * This function commit the metadata changes in the data. It doesn't comment any connections in the pool.
-     */
-    public void commit() {
-    	ndexDatabase.commit();
     }
     
     public ODatabaseDocumentTx getAConnection() throws NdexException {

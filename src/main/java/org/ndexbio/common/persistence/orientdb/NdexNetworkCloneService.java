@@ -488,7 +488,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	private void cloneReifiedEdgeTermNodes() {
 		if ( srcNetwork.getReifiedEdgeTerms()!= null) {
 			for ( ReifiedEdgeTerm reifiedTerm : srcNetwork.getReifiedEdgeTerms().values() ) {
-				Long reifiedEdgeTermId = this.database.getNextId();
+				Long reifiedEdgeTermId = this.database.getNextId(localConnection);
 				
 				ODocument eTermdoc = new ODocument (NdexClasses.ReifiedEdgeTerm);
 				eTermdoc = eTermdoc.field(NdexClasses.Element_ID, reifiedEdgeTermId)
@@ -507,7 +507,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 		if ( srcNetwork.getFunctionTerms()!= null) {
 			for ( FunctionTerm functionTerm : srcNetwork.getFunctionTerms().values() ) {
-				Long newFunctionTermId = this.database.getNextId();
+				Long newFunctionTermId = this.database.getNextId(localConnection);
 				
 				ODocument eTermdoc = new ODocument (NdexClasses.FunctionTerm)
 				        .field(NdexClasses.Element_ID, newFunctionTermId)
@@ -537,7 +537,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 
 	private Long createNode (Node node) throws NdexException {
-		Long nodeId = database.getNextId();
+		Long nodeId = database.getNextId(localConnection);
 		
 		ODocument nodeDoc = new ODocument(NdexClasses.Node)
 		   .field(NdexClasses.Element_ID, nodeId);
@@ -656,7 +656,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	
 	private Long createEdge(Edge edge) throws NdexException, ExecutionException {
 		
-		Long edgeId = database.getNextId();
+		Long edgeId = database.getNextId(localConnection);
 		
 		Long newPredicateId = baseTermIdMap.get(edge.getPredicateId());
 	 	if ( newPredicateId == null)

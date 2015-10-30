@@ -80,9 +80,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class CXNetworkLoader extends BasicNetworkDAO {
 	
-//	private static final long CORE_CACHE_SIZE = 100000L;
-//	private static final long NON_CORE_CACHE_SIZE = 100000L;
-	
     protected static Logger logger = LoggerFactory.getLogger(CXNetworkLoader.class);;
 
 	//private static final String nodeName = "name";
@@ -119,9 +116,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private UUID uuid;
 	
 	private Map<String, String> opaqueAspectEdgeTable;
-	
-//	private Map<String, MetaDataElement> metaData;
-	
+		
 	public CXNetworkLoader(InputStream iStream,String ownerAccountName)  throws NdexException {
 		super();
 		this.inputStream = iStream;
@@ -136,7 +131,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		graph.setUseLightweightEdges(true);
 				
 	}
-
+	
 	private void init () {
 		opaqueCounter = 0;
 		counter =0; 
@@ -465,7 +460,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private Long createSupportBySID(String sid) {
-		Long supportId =ndexdb.getNextId() ;
+		Long supportId =ndexdb.getNextId(db) ;
 
 		new ODocument(NdexClasses.Support)
 		   .fields(NdexClasses.Element_ID, supportId,
@@ -483,7 +478,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		ODocument supportDoc;
 		
 		if ( supportId == null ) {
-			supportId = ndexdb.getNextId() ;
+			supportId = ndexdb.getNextId(db) ;
 			supportDoc = new ODocument(NdexClasses.Support)
 					.fields(NdexClasses.Element_ID, supportId,
 							NdexClasses.Element_SID, elmt.getId(),
@@ -520,14 +515,12 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return supportId;
 	}
 	
-
-	
 	private void createReifiedEdgeTerm(ReifiedEdgeElement e) 
 						throws DuplicateObjectException, ObjectNotFoundException {		
 		 String edgeSID = e.getEdge();
 		 ODocument edgeDoc = getOrCreateEdgeDocBySID(edgeSID); 
 		 
-		 Long termId = ndexdb.getNextId();
+		 Long termId = ndexdb.getNextId(db);
 		 ODocument reifiedEdgeTermDoc = new ODocument(NdexClasses.ReifiedEdgeTerm)
 				 	.fields(NdexClasses.Element_ID, termId).save();
 				 			
@@ -548,7 +541,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private ODocument getOrCreateEdgeDocBySID(String edgeSID) throws DuplicateObjectException, ObjectNotFoundException {
 		Long edgeId = edgeSIDMap.get(edgeSID);
 		 if (edgeId == null ) {
-				edgeId = ndexdb.getNextId();
+				edgeId = ndexdb.getNextId(db);
 				
 				ODocument nodeDoc =
 					new ODocument(NdexClasses.Edge)
@@ -564,7 +557,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private ODocument getOrCreateNodeDocBySID(String nodeSID) throws ObjectNotFoundException {
 		Long nodeId = nodeSIDMap.get(nodeSID);
 		if(nodeId == null) {
-			nodeId = ndexdb.getNextId();
+			nodeId = ndexdb.getNextId(db);
 			
 		    ODocument nodeDoc = new ODocument(NdexClasses.Node)
 			   .fields(NdexClasses.Element_ID, nodeId,
@@ -610,18 +603,9 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		}
 	}
 	
-/*	private static List<NdexPropertyValuePair> createNdexProperties(AbstractAttributesAspectElement e) {
-		List <NdexPropertyValuePair> props = new ArrayList<> (e.getValues().size());
-		for ( String value : e.getValues()) {
-			props.add( new NdexPropertyValuePair(e.getSubnetwork(),
-					 e.getName(),value, e.getDataType().toString()));
-		}
-		return props;
-	} */
-	
 	private void createCXContext(NamespacesElement context) throws DuplicateObjectException {
 		for ( Map.Entry<String, String> e : context.entrySet()) {
-			Long nsId = ndexdb.getNextId();
+			Long nsId = ndexdb.getNextId(db);
 
 			ODocument nsDoc = new ODocument(NdexClasses.Namespace);
 			nsDoc = nsDoc.fields(NdexClasses.Element_ID,nsId,
@@ -640,18 +624,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		}
 		
 	}
-	
-
-/*	private void saveNetworkStatus(NdexNetworkStatus status ) {
-		if ( status.getEdgeCount()>=0)
-			declaredEdgeCount = status.getEdgeCount();
-		//	networkDoc.field(NdexClasses.Network_P_edgeCount,status.getEdgeCount());
-		if ( status.getNodeCount()>=0) {
-			declaredNodeCount = status.getNodeCount();
-			//	networkDoc.field(NdexClasses.Network_P_nodeCount, status.getNodeCount());
-		}
-		networkDoc.save();
-	} */
 	
 	private ODocument createNetworkHeadNode(UUID uuid ) {
 	
@@ -680,7 +652,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			   throw new DuplicateObjectException(NodesElement.ASPECT_NAME, node.getId());
 			nodeDoc = this.getNodeDocById(nodeId);
 		} else { 
-			nodeId = ndexdb.getNextId();
+			nodeId = ndexdb.getNextId(db);
 			nodeDoc = new ODocument(NdexClasses.Node)
 					   .fields(NdexClasses.Element_ID, nodeId,
 							   NdexClasses.Element_SID, node.getId());
@@ -714,7 +686,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		ODocument edgeDoc; 
 
 		if ( edgeId == null ) { 
-		  edgeId = ndexdb.getNextId();
+		  edgeId = ndexdb.getNextId(db);
 
 	      edgeDoc = new ODocument(NdexClasses.Edge)
 		   .fields(NdexClasses.Element_ID, edgeId,
@@ -748,7 +720,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private Long createCitationBySID(String sid) throws DuplicateObjectException {
-		Long citationId = ndexdb.getNextId();
+		Long citationId = ndexdb.getNextId(db);
 		
 	//	ODocument citationDoc = 
 		new ODocument(NdexClasses.Citation)
@@ -771,7 +743,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		Long citationId = citationSIDMap.get(c.getId());
 		ODocument citationDoc ;
 		if ( citationId == null) {
-			citationId = ndexdb.getNextId();
+			citationId = ndexdb.getNextId(db);
 			citationDoc = new ODocument(NdexClasses.Citation)
 					  .fields(
 							NdexClasses.Element_ID, citationId,
@@ -806,7 +778,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private Long createFunctionTerm(FunctionTermElement func) throws NdexException  {
-		Long funcId = ndexdb.getNextId();
+		Long funcId = ndexdb.getNextId(db);
 		
 		Long baseTermId = getBaseTermId(func.getFunctionName());
 		
@@ -912,7 +884,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private Long createBaseTerm(String prefix, String identifier, Long nsId) {
-		Long termId = ndexdb.getNextId();
+		Long termId = ndexdb.getNextId(db);
 		
 		ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
 		  .fields(NdexClasses.BTerm_P_name, identifier,
