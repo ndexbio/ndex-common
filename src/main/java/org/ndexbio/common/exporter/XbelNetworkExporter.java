@@ -212,42 +212,6 @@ public class XbelNetworkExporter {
 
 	}
 	
-
-/*	private void initiateAuditService(String networkName) {
-		Optional<NdexAuditService> optService = NdexAuditServiceFactory.INSTANCE
-				.getAuditServiceByOperation(networkName, NdexAuditUtils.AuditOperation.NETWORK_EXPORT);
-		if (optService.isPresent()) {
-			this.auditService = optService.get();
-			logger.info("NdexAuditServiceFactory returned an instance of "
-					+ this.auditService.getClass().getName());
-		} else {
-			logger.error("NdexAuditServiceFactory failed to return a NdexAuditService subclass");
-		}
-	}
-
-	private void setAuditExpectedMetrics(Network aSubNetwork) {
-		// edge count
-
-		this.auditService.increaseExpectedMetricValue("edge count",
-				(long) aSubNetwork.getEdgeCount());
-
-		this.auditService.increaseExpectedMetricValue(
-				"function term count", (long)aSubNetwork.getFunctionTerms().size());
-		this.auditService.increaseExpectedMetricValue(
-				"base term count", (long)aSubNetwork.getBaseTerms().size());
-		this.auditService.increaseExpectedMetricValue(
-				"reified edge count", (long)aSubNetwork.getReifiedEdgeTerms().size());
-
-		this.auditService.increaseExpectedMetricValue("citation count",
-				(long) aSubNetwork.getCitations().size());
-		this.auditService.increaseExpectedMetricValue("node count",
-				(long) aSubNetwork.getNodeCount());
-		this.auditService.increaseExpectedMetricValue("support count",
-				(long) aSubNetwork.getSupports().size());
-		logger.info("Expected values set in Audit Service");
-
-	}
-*/
 	/*
 	 * public method to initiate export of the specified network uses an
 	 * instance of an inner class to control marshalling of JAXB objects to an
@@ -278,19 +242,9 @@ public class XbelNetworkExporter {
 		// output the observed metrics
 /*		this.auditService.registerComment(this.edgeAuditor
 				.displayUnprocessedNdexObjects());
-		this.auditService.registerComment(this.nodeAuditor
-				.displayUnprocessedNdexObjects());
-		this.auditService.registerComment(this.termAuditor
-				.displayUnprocessedNdexObjects());
-		this.auditService.registerComment(this.supportAuditor
-				.displayUnprocessedNdexObjects());
-		System.out.println(this.auditService.displayObservedValues());
-		System.out.println(this.auditService.displayExpectedValues());
 		System.out.println(this.auditService.displayDeltaValues()); */
 		// close the XML document
-//		System.out.println("Closing export file.");
 		xm.close();
-//		System.out.println("Export finished.");
 	}
 	
 	/*

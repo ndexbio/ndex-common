@@ -10,15 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
 import org.cxio.aspects.datamodels.NetworkAttributesElement;
 import org.cxio.aspects.datamodels.NodeAttributesElement;
 import org.cxio.aspects.datamodels.NodesElement;
-import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
-import org.cxio.aspects.datamodels.AbstractAttributesAspectElement.ATTRIBUTE_DATA_TYPE;
+import org.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
+import org.cxio.aspects.datamodels.AttributesAspectUtils;
 import org.cxio.core.CxWriter;
 import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentWriter;
@@ -143,13 +142,13 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         MetaDataCollection postmd = new MetaDataCollection ();
         
         if ( nodeIdCounter > 0 )
-        	postmd.setIdCounter(NodesElement.NAME, nodeIdCounter);
+        	postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
         if ( edgeIdCounter > 0 )
-        	postmd.setIdCounter(EdgesElement.NAME, edgeIdCounter);
+        	postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
         if ( citationIdCounter >0)
-        	postmd.setIdCounter(CitationElement.NAME, citationIdCounter);
+        	postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
         if ( supportIdCounter > 0 )
-        	postmd.setIdCounter(SupportElement.NAME, supportIdCounter);
+        	postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
         if ( postmd.size() > 0 ) 
         	cxwtr.addPostMetaData(postmd);        
         cxwtr.end(true,"");
@@ -210,11 +209,11 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         			break;
         		ATTRIBUTE_DATA_TYPE t = ATTRIBUTE_DATA_TYPE.STRING;
         		try {
-        			t = NetworkAttributesElement.toDataType(p.getDataType().toLowerCase());
+        			t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
         		} catch (IllegalArgumentException e) {
         			System.out.println("Property type " + p.getDataType() + " unsupported. Converting it to String in CX output.");
         		}	
-        		if ( !AbstractAttributesAspectElement.isListType(t)) {
+        		if ( !AttributesAspectUtils.isListType(t)) {
         			writeNdexAspectElementAsAspectFragment(cxwtr,
         					NetworkAttributesElement.createInstanceWithSingleValue(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
         							t ));
@@ -316,7 +315,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
         int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
         
-        node_meta.setName(NodesElement.NAME);
+        node_meta.setName(NodesElement.ASPECT_NAME);
         node_meta.setVersion(nodeMDVersion);
         node_meta.setLastUpdate(lastUpdate.getTime());
         node_meta.setElementCount(new Long(nodecount));
@@ -324,37 +323,37 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         md.add(node_meta);
 
         MetaDataElement edge_meta = new MetaDataElement();
-        edge_meta.setName(EdgesElement.NAME);
+        edge_meta.setName(EdgesElement.ASPECT_NAME);
         edge_meta.setVersion(edgeMDVersion);
         edge_meta.setLastUpdate(lastUpdate.getTime());
         edge_meta.setConsistencyGroup(1l);
         edge_meta.setElementCount(new Long(edgecount));
         md.add(edge_meta);
         
-        addMetadata(md, NdexNetworkStatus.NAME, ndexStatusMDVersion,lastUpdate, 0l);
-        addMetadata(md, Provenance.NAME, "1.0",lastUpdate, 4l);
-        addMetadata(md, NetworkAttributesElement.NAME, "1.0",lastUpdate, 2l);
-        addMetadata(md, NodeAttributesElement.NAME, "1.0",lastUpdate, 1l);
-        addMetadata(md, EdgeAttributesElement.NAME, "1.0",lastUpdate, 1l);
-        addMetadata(md, EdgeCitationLinksElement.NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
-        addMetadata(md, EdgeSupportLinksElement.NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
-        addMetadata(md, NodeCitationLinksElement.NAME, "1.0",lastUpdate, 1l);
-        addMetadata(md, NodeSupportLinksElement.NAME, "1.0",lastUpdate, 1l);
-        addMetadata(md, NamespacesElement.NAME, "1.0",lastUpdate, 3l);
+        addMetadata(md, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate, 0l);
+        addMetadata(md, Provenance.ASPECT_NAME, "1.0",lastUpdate, 4l);
+        addMetadata(md, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 2l);
+        addMetadata(md, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+        addMetadata(md, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+        addMetadata(md, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
+        addMetadata(md, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
+        addMetadata(md, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+        addMetadata(md, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+        addMetadata(md, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate, 3l);
 
         
         
         //citations
-        addMetadata(md,NdexClasses.Network_E_Citations, CitationElement.NAME,citationMDVersion,lastUpdate);
+        addMetadata(md,NdexClasses.Network_E_Citations, CitationElement.ASPECT_NAME,citationMDVersion,lastUpdate);
       
         //supports
-        addMetadata(md,NdexClasses.Network_E_Supports,SupportElement.NAME,supportMDVersion,lastUpdate);
+        addMetadata(md,NdexClasses.Network_E_Supports,SupportElement.ASPECT_NAME,supportMDVersion,lastUpdate);
 
         //functionTerms
-        addMetadata(md,NdexClasses.Network_E_FunctionTerms,FunctionTermElement.NAME,functionMDVersion,lastUpdate);
+        addMetadata(md,NdexClasses.Network_E_FunctionTerms,FunctionTermElement.ASPECT_NAME,functionMDVersion,lastUpdate);
         
         //reifiedEdgeTerms
-        addMetadata(md,NdexClasses.Network_E_ReifiedEdgeTerms,ReifiedEdgeElement.NAME,reifiedEdgeMDVersion,lastUpdate);
+        addMetadata(md,NdexClasses.Network_E_ReifiedEdgeTerms,ReifiedEdgeElement.ASPECT_NAME,reifiedEdgeMDVersion,lastUpdate);
 
         
         return md;
@@ -428,10 +427,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	// write other properties
    	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
 	if ( props !=null) {
-		cxwtr.startAspectFragment(EdgeAttributesElement.NAME);
+		cxwtr.startAspectFragment(EdgeAttributesElement.ASPECT_NAME);
 		for ( NdexPropertyValuePair p : props ) {
-			ATTRIBUTE_DATA_TYPE t = AbstractAttributesAspectElement.toDataType(p.getDataType().toLowerCase());
-			EdgeAttributesElement ep = AbstractAttributesAspectElement.isListType(t) ? 
+			ATTRIBUTE_DATA_TYPE t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
+			EdgeAttributesElement ep = AttributesAspectUtils.isListType(t) ? 
 					EdgeAttributesElement.createInstanceWithMultipleValues ( p.getSubNetworkId(), 
 							SID, p.getPredicateString(), p.getValue(), t) : 
 					new EdgeAttributesElement ( p.getSubNetworkId(), SID, p.getPredicateString(), p.getValue(),t);
@@ -495,10 +494,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			// write other properties
 			List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
 			if ( props !=null) {
-					cxwtr.startAspectFragment(EdgeAttributesElement.NAME);
+					cxwtr.startAspectFragment(EdgeAttributesElement.ASPECT_NAME);
 					for ( NdexPropertyValuePair p : props ) {
-						ATTRIBUTE_DATA_TYPE t = AbstractAttributesAspectElement.toDataType(p.getDataType().toLowerCase());
-						EdgeAttributesElement ep = AbstractAttributesAspectElement.isListType(t) ? 
+						ATTRIBUTE_DATA_TYPE t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
+						EdgeAttributesElement ep = AttributesAspectUtils.isListType(t) ? 
 								EdgeAttributesElement.createInstanceWithMultipleValues ( p.getSubNetworkId(), 
 										SID, p.getPredicateString(), p.getValue(), t) : 
 								new EdgeAttributesElement ( p.getSubNetworkId(), SID, p.getPredicateString(), p.getValue(),t);
@@ -568,32 +567,11 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	}
 	
 	
-	private void writeNodeInCX(ODocument doc, CxWriter cxwtr, /*Set<Long> repIdSet,*/
+	private void writeNodeInCX(ODocument doc, CxWriter cxwtr, 
 			 Map<Long,String> citationIdMap,  Map<Long,String> supportIdMap) 
-			throws IOException, NdexException {
-		
-		String SID = getSIDFromDoc(doc);
-		
-		// track the counter
-		if ( nodeIdCounter >=0 ) {
-			try { 
-		   
-				long l = Long.parseLong(SID);
-				if (l>nodeIdCounter)
-					nodeIdCounter = l;
-			} catch ( NumberFormatException e) {
-				System.out.println("Non-numeric SID found in node aspect. Will ignore tracking id counters for this aspect.");
-				nodeIdCounter = -1;
-			}
-		}
-		
-		writeNdexAspectElementAsAspectFragment(cxwtr, new NodesElement(SID));
-   	   	
-   	   writeNodeAttributesInCX(doc, cxwtr, /*repIdSet,*/ SID, true, true, true);
-
-   	   //writeCitations and supports
-   	   writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
-			   supportIdMap , false, true,true );
+			throws IOException, NdexException {		
+		writeNodeAspectsInCX(doc, cxwtr, citationIdMap, supportIdMap,
+				true,true, true, true,true, true);
 	}
 	
 	private void writeNodeAspectsInCX(ODocument doc, CxWriter cxwtr, /*Set<Long> repIdSet, */
@@ -604,68 +582,56 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		
 		String SID = getSIDFromDoc(doc);
 		
-		if (writeNodes) {	
-		  // track the counter
-		  if ( nodeIdCounter >=0 ) {
-			try { 
-		   
-				long l = Long.parseLong(SID);
-				if (l>nodeIdCounter)
-					nodeIdCounter = l;
-			} catch ( NumberFormatException e) {
-				System.out.println("Non-numeric SID found in node aspect. Will ignore tracking id counters for this aspect.");
-				nodeIdCounter = -1;
-			}
-		  }
+		Long repId = doc.field(NdexClasses.Node_P_represents);
+		String represents = null;
+		if ( repId != null && repId.longValue() > 0) {
+			String termType = doc.field(NdexClasses.Node_P_representTermType);
+			
+			if ( termType.equals(NdexClasses.BaseTerm) ) {
+				represents = this.getBaseTermStringById(repId);
+			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm) ) {
+				if ( writeReifiedEdgeTerm) {
+					ODocument reifiedEdgeDoc = this.getReifiedEdgeDocById(repId);
+					writeReifiedEdgeTermInCX(SID, reifiedEdgeDoc, cxwtr);
+				}
+			} else if (termType.equals(NdexClasses.FunctionTerm) ) {
+				if ( writeFunctionTerm) {
+					ODocument funcDoc = this.getFunctionDocById(repId);
+					writeNdexAspectElementAsAspectFragment(cxwtr, getFunctionTermsElementFromDoc(SID, funcDoc));
+				}
+			} else 
+				throw new NdexException ("Unsupported term type '" + termType + 
+								"' found for term Id:" + repId);
+		}		
 		
-		  writeNdexAspectElementAsAspectFragment(cxwtr, new NodesElement(SID));
+		if (writeNodes) {
+			  // track the counter
+			  if ( nodeIdCounter >=0 ) {
+				try { 
+			   
+					long l = Long.parseLong(SID);
+					if (l>nodeIdCounter)
+						nodeIdCounter = l;
+				} catch ( NumberFormatException e) {
+					System.out.println("Non-numeric SID found in node aspect. Will ignore tracking id counters for this aspect.");
+					nodeIdCounter = -1;
+				}
+			  }
+			  writeNdexAspectElementAsAspectFragment(cxwtr,
+					  new NodesElement(SID , (String) doc.field(NdexClasses.Node_P_name),represents));
 		}
-  	
-		//write rep 
-		writeNodeAttributesInCX(doc, cxwtr, /*repIdSet, */SID, writeNodeAttr,
-				writeReifiedEdgeTerm,
-  			   	writeFunctionTerm);
+		
+		if ( writeNodeAttr)
+			writeNodeAttributesInCX(doc, cxwtr, /*repIdSet, */SID);
   	
 		//writeCitations and supports
 		writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
 			   supportIdMap , false, writeNodeCitationLinks, writeNodeSupportLinks );
 	}
 
-
-	private void writeNodeAttributesInCX(ODocument doc, CxWriter cxwtr, /*Set<Long> repIdSet,*/ String SID, boolean writeAttribute, boolean writeReifiedTerms, boolean writeFunctionTerms)
+	private void writeNodeAttributesInCX(ODocument doc, CxWriter cxwtr, String SID)
 			throws ObjectNotFoundException, IOException, NdexException {
-		Long repId = doc.field(NdexClasses.Node_P_represents);
-		
-		if ( repId != null && repId.longValue() > 0) {
-			String termType = doc.field(NdexClasses.Node_P_representTermType);
-			
-			if ( termType.equals(NdexClasses.BaseTerm) ) {
-				if (writeAttribute) {
-				   String repStr = this.getBaseTermStringById(repId);
-				   writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null, SID, NdexClasses.Node_P_represents, repStr));
-				}   
-			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm) ) {
-					if ( writeReifiedTerms) {
-							ODocument reifiedEdgeDoc = this.getReifiedEdgeDocById(repId);
-							writeReifiedEdgeTermInCX(SID, reifiedEdgeDoc, cxwtr);
-					}
-			} else if (termType.equals(NdexClasses.FunctionTerm) ) {
-					if ( writeFunctionTerms) {
-						ODocument funcDoc = this.getFunctionDocById(repId);
-					    writeNdexAspectElementAsAspectFragment(cxwtr, getFunctionTermsElementFromDoc(SID, funcDoc));
-					}
-			} else 
-				throw new NdexException ("Unsupported term type '" + termType + 
-								"' found for term Id:" + repId);
-		}
 
-		if ( writeAttribute) {
-			String name = doc.field(NdexClasses.Node_P_name);
-		    	
-			if (name !=null) {
-				writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement (null, SID,NdexClasses.Node_P_name,name ));
-			}
-		
 			Set<Long> aliases = doc.field(NdexClasses.Node_P_alias);
 		
 			if ( aliases !=null) {
@@ -688,10 +654,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			// write properties
 		 	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
 		 	if ( props !=null) {
-		 		cxwtr.startAspectFragment(NodeAttributesElement.NAME);
+		 		cxwtr.startAspectFragment(NodeAttributesElement.ASPECT_NAME);
 		 		for ( NdexPropertyValuePair p : props ) {
-		 			ATTRIBUTE_DATA_TYPE t = AbstractAttributesAspectElement.toDataType(p.getDataType().toLowerCase());
-		 			NodeAttributesElement ep = AbstractAttributesAspectElement.isListType(t) ?
+		 			ATTRIBUTE_DATA_TYPE t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
+		 			NodeAttributesElement ep = AttributesAspectUtils.isListType(t) ?
 						NodeAttributesElement.createInstanceWithMultipleValues(p.getSubNetworkId(),
 			   					SID, p.getPredicateString(), p.getValue(), t) : 
 						new NodeAttributesElement (p.getSubNetworkId(),SID, p.getPredicateString(), p.getValue(), t);
@@ -699,11 +665,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		 		}
 		 		cxwtr.endAspectFragment();
 		 	}
-		}
 	}
-
-
-	
 	
 	private void writeCitationAndSupportLinks(String SID, ODocument doc,  CxWriter cxwtr, Map<Long,String> citationIdMap,
 		    Map<Long,String> supportIdMap ,boolean isEdge, boolean writeCitationLinks, boolean writeSupportLinks ) throws ObjectNotFoundException, IOException {
@@ -814,23 +776,23 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	private CxWriter getNdexCXWriter(OutputStream out, boolean use_default_pretty_printer) throws IOException {
         CxWriter cxwtr = CxWriter.createInstance(out, use_default_pretty_printer);
         
-        GeneralAspectFragmentWriter cfw = new GeneralAspectFragmentWriter(CitationElement.NAME);
+        GeneralAspectFragmentWriter cfw = new GeneralAspectFragmentWriter(CitationElement.ASPECT_NAME);
         
         for (AspectFragmentWriter afw : Util.getAllAvailableAspectFragmentWriters() ) {
         	cxwtr.addAspectFragmentWriter(afw);
         }
         
         cxwtr.addAspectFragmentWriter(cfw);
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(SupportElement.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NodeCitationLinksElement.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(EdgeCitationLinksElement.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(EdgeSupportLinksElement.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NodeSupportLinksElement.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(FunctionTermElement.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NamespacesElement.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(ReifiedEdgeElement.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NdexNetworkStatus.NAME));
-        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(Provenance.NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(SupportElement.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NodeCitationLinksElement.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(EdgeCitationLinksElement.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(EdgeSupportLinksElement.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NodeSupportLinksElement.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(FunctionTermElement.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NamespacesElement.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(ReifiedEdgeElement.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NdexNetworkStatus.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(Provenance.ASPECT_NAME));
         
         return cxwtr;
 	}
@@ -880,43 +842,43 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		    Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
 	//	    int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
 	//	    int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
-				if ( aspectName.equals(NodesElement.NAME)) {
-			        addMetadata(preMetaData, NodesElement.NAME, nodeMDVersion,lastUpdate, 1l);
+				if ( aspectName.equals(NodesElement.ASPECT_NAME)) {
+			        addMetadata(preMetaData, NodesElement.ASPECT_NAME, nodeMDVersion,lastUpdate, 1l);
 		//	        if ( elementLimit <=0 )
-		//	            preMetaData.setElementCount(NodesElement.NAME, Long.valueOf(nodecount));
-				} else if ( aspectName.equals(EdgesElement.NAME) ) {
-			        addMetadata(preMetaData, EdgesElement.NAME, edgeMDVersion,lastUpdate, 1l);
+		//	            preMetaData.setElementCount(NodesElement.ASPECT_NAME, Long.valueOf(nodecount));
+				} else if ( aspectName.equals(EdgesElement.ASPECT_NAME) ) {
+			        addMetadata(preMetaData, EdgesElement.ASPECT_NAME, edgeMDVersion,lastUpdate, 1l);
 		//	        if ( elementLimit <=0 )
-		//	        	preMetaData.setElementCount(EdgesElement.NAME, Long.valueOf(edgecount));
-				} else if ( aspectName.equals(NdexNetworkStatus.NAME) ) {
-				  addMetadata(preMetaData, NdexNetworkStatus.NAME, ndexStatusMDVersion,lastUpdate, 0l);
-				} else if ( aspectName.equals(NetworkAttributesElement.NAME) ) {
-				  addMetadata(preMetaData, NetworkAttributesElement.NAME, "1.0",lastUpdate, 2l);
-				}  else if ( aspectName.equals(NodeAttributesElement.NAME) ) {
-			       addMetadata(preMetaData, NodeAttributesElement.NAME, "1.0",lastUpdate, 1l);
-				} else if ( aspectName.equals(EdgeAttributesElement.NAME) ) {
-				  addMetadata(preMetaData, EdgeAttributesElement.NAME, "1.0",lastUpdate, 1l);
-				} else if ( aspectName.equals(EdgeCitationLinksElement.NAME) ) {
-			      addMetadata(preMetaData, EdgeCitationLinksElement.NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
-				} else if ( aspectName.equals(EdgeSupportLinksElement.NAME) ) {
-			      addMetadata(preMetaData, EdgeSupportLinksElement.NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
-				} else if ( aspectName.equals(NodeCitationLinksElement.NAME) ) {
-			      addMetadata(preMetaData, NodeCitationLinksElement.NAME, "1.0",lastUpdate, 1l);
-				} else if ( aspectName.equals(NodeSupportLinksElement.NAME) ) {
-			      addMetadata(preMetaData, NodeSupportLinksElement.NAME, "1.0",lastUpdate, 1l);
-				} else if ( aspectName.equals(CitationElement.NAME) ) {
-  			       addMetadata(preMetaData,/*NdexClasses.Network_E_Citations, */ CitationElement.NAME,citationMDVersion,lastUpdate, 1L);
-				} else if ( aspectName.equals(SupportElement.NAME) ) {
+		//	        	preMetaData.setElementCount(EdgesElement.ASPECT_NAME, Long.valueOf(edgecount));
+				} else if ( aspectName.equals(NdexNetworkStatus.ASPECT_NAME) ) {
+				  addMetadata(preMetaData, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate, 0l);
+				} else if ( aspectName.equals(NetworkAttributesElement.ASPECT_NAME) ) {
+				  addMetadata(preMetaData, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 2l);
+				}  else if ( aspectName.equals(NodeAttributesElement.ASPECT_NAME) ) {
+			       addMetadata(preMetaData, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				} else if ( aspectName.equals(EdgeAttributesElement.ASPECT_NAME) ) {
+				  addMetadata(preMetaData, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				} else if ( aspectName.equals(EdgeCitationLinksElement.ASPECT_NAME) ) {
+			      addMetadata(preMetaData, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
+				} else if ( aspectName.equals(EdgeSupportLinksElement.ASPECT_NAME) ) {
+			      addMetadata(preMetaData, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
+				} else if ( aspectName.equals(NodeCitationLinksElement.ASPECT_NAME) ) {
+			      addMetadata(preMetaData, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				} else if ( aspectName.equals(NodeSupportLinksElement.ASPECT_NAME) ) {
+			      addMetadata(preMetaData, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				} else if ( aspectName.equals(CitationElement.ASPECT_NAME) ) {
+  			       addMetadata(preMetaData,/*NdexClasses.Network_E_Citations, */ CitationElement.ASPECT_NAME,citationMDVersion,lastUpdate, 1L);
+				} else if ( aspectName.equals(SupportElement.ASPECT_NAME) ) {
 			      //supports
-			      addMetadata(preMetaData, /*NdexClasses.Network_E_Supports, */ SupportElement.NAME,supportMDVersion,lastUpdate, 1L);
-				} else if ( aspectName.equals(FunctionTermElement.NAME) ) {
+			      addMetadata(preMetaData, /*NdexClasses.Network_E_Supports, */ SupportElement.ASPECT_NAME,supportMDVersion,lastUpdate, 1L);
+				} else if ( aspectName.equals(FunctionTermElement.ASPECT_NAME) ) {
 			      //functionTerms
-			      addMetadata(preMetaData,/* NdexClasses.Network_E_FunctionTerms,*/ FunctionTermElement.NAME,functionMDVersion,lastUpdate,1L);
-				} else if ( aspectName.equals(ReifiedEdgeElement.NAME) ) {
+			      addMetadata(preMetaData,/* NdexClasses.Network_E_FunctionTerms,*/ FunctionTermElement.ASPECT_NAME,functionMDVersion,lastUpdate,1L);
+				} else if ( aspectName.equals(ReifiedEdgeElement.ASPECT_NAME) ) {
 			      //reifiedEdgeTerms
-			      addMetadata(preMetaData,/*NdexClasses.Network_E_ReifiedEdgeTerms,*/ ReifiedEdgeElement.NAME,reifiedEdgeMDVersion,lastUpdate,1L);
-				} else if ( aspectName.equals(NamespacesElement.NAME)) {
-			        addMetadata(preMetaData, NamespacesElement.NAME, "1.0",lastUpdate, 3l);
+			      addMetadata(preMetaData,/*NdexClasses.Network_E_ReifiedEdgeTerms,*/ ReifiedEdgeElement.ASPECT_NAME,reifiedEdgeMDVersion,lastUpdate,1L);
+				} else if ( aspectName.equals(NamespacesElement.ASPECT_NAME)) {
+			        addMetadata(preMetaData, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate, 3l);
  
 				} else 
 					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);			
@@ -931,12 +893,12 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         	// start writing aspects out.
         	//write NdexStatus
         	long counter =0 ;
-        	if (aspectName.equals(NdexNetworkStatus.NAME)) {
+        	if (aspectName.equals(NdexNetworkStatus.ASPECT_NAME)) {
         		counter = writeNdexStatus(cxwtr);
-        	} else if ( aspectName.equals(NetworkAttributesElement.NAME)) {
+        	} else if ( aspectName.equals(NetworkAttributesElement.ASPECT_NAME)) {
         		// write name, desc and other properties;
         		counter = writeNetworkAttributes(cxwtr, elementLimit);
-        	} else if (   aspectName.equals(NamespacesElement.NAME)) {
+        	} else if (   aspectName.equals(NamespacesElement.ASPECT_NAME)) {
         		//write namespaces 
         		counter = writeNamespacesInCX(cxwtr, elementLimit);
         	} else {
@@ -945,7 +907,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         		Map<Long,String> citationIdMap = new TreeMap<> ();
         		Map<Long,String> supportIdMap = new TreeMap<> ();
         
-        		if ( aspectName.equals(CitationElement.NAME)) {
+        		if ( aspectName.equals(CitationElement.ASPECT_NAME)) {
         			for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
         				if ( elementLimit <=0 || counter < elementLimit)
         					counter ++;
@@ -955,7 +917,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         				String SID = writeCitationInCX(doc, cxwtr);
         				citationIdMap.put(citationId, SID);
         			}
-        		} else if (aspectName.equals(SupportElement.NAME) ) {
+        		} else if (aspectName.equals(SupportElement.ASPECT_NAME) ) {
         			for ( ODocument doc: getNetworkElements (NdexClasses.Network_E_Supports)) {
         			if ( elementLimit <=0 || counter < elementLimit)
         				counter ++;
@@ -966,12 +928,12 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         			supportIdMap.put(supportId, SID);
         			}
         		} else {
-        			boolean writeNodes             = aspectName.equals(NodesElement.NAME);
-        			boolean writeNodeAttr          = aspectName.equals(NodeAttributesElement.NAME);
-        			boolean writeFunctionTerm      = aspectName.equals(FunctionTermElement.NAME);
-        			boolean writeReifiedEdgeTerm   = aspectName.equals(ReifiedEdgeElement.NAME);
-        			boolean writeNodeCitationLinks = aspectName.equals(NodeCitationLinksElement.NAME);
-        			boolean writeNodeSupportLinks  = aspectName.equals(NodeSupportLinksElement.NAME);
+        			boolean writeNodes             = aspectName.equals(NodesElement.ASPECT_NAME);
+        			boolean writeNodeAttr          = aspectName.equals(NodeAttributesElement.ASPECT_NAME);
+        			boolean writeFunctionTerm      = aspectName.equals(FunctionTermElement.ASPECT_NAME);
+        			boolean writeReifiedEdgeTerm   = aspectName.equals(ReifiedEdgeElement.ASPECT_NAME);
+        			boolean writeNodeCitationLinks = aspectName.equals(NodeCitationLinksElement.ASPECT_NAME);
+        			boolean writeNodeSupportLinks  = aspectName.equals(NodeSupportLinksElement.ASPECT_NAME);
         			if ( writeNodes|| writeNodeAttr ||writeFunctionTerm || writeReifiedEdgeTerm || 
                 		writeNodeCitationLinks || writeNodeSupportLinks) {
         				for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Nodes)) {
@@ -984,10 +946,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
                 				writeNodeCitationLinks,writeNodeSupportLinks);
         				}  
         			} else {
-        				boolean writeEdges = aspectName.equals(EdgesElement.NAME);
-        				boolean writeEdgeAttr = aspectName.equals(EdgeAttributesElement.NAME);
-        				boolean writeEdgeCitationLinks = aspectName.equals(EdgeCitationLinksElement.NAME);
-        				boolean writeEdgeSupportLinks = aspectName.equals(EdgeSupportLinksElement.NAME);
+        				boolean writeEdges = aspectName.equals(EdgesElement.ASPECT_NAME);
+        				boolean writeEdgeAttr = aspectName.equals(EdgeAttributesElement.ASPECT_NAME);
+        				boolean writeEdgeCitationLinks = aspectName.equals(EdgeCitationLinksElement.ASPECT_NAME);
+        				boolean writeEdgeSupportLinks = aspectName.equals(EdgeSupportLinksElement.ASPECT_NAME);
         				if ( writeEdges || writeEdgeAttr || writeEdgeCitationLinks || writeEdgeSupportLinks ) {
         					for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Edges)) {
         						if ( elementLimit <=0 || counter < elementLimit)
@@ -1053,41 +1015,41 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		    int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
 		    int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
 			for (String aspectName : aspects) {
-				if ( aspectName.equals(NodesElement.NAME)) {
-			        addMetadata(preMetaData, NodesElement.NAME, nodeMDVersion,lastUpdate, 1l);
-			        preMetaData.setElementCount(NodesElement.NAME, Long.valueOf(nodecount));
-				} else if ( aspectName.equals(EdgesElement.NAME) ) {
-			        addMetadata(preMetaData, EdgesElement.NAME, edgeMDVersion,lastUpdate, 1l);
-			        preMetaData.setElementCount(EdgesElement.NAME, Long.valueOf(edgecount));
-				} else if ( aspectName.equals(NdexNetworkStatus.NAME) ) {
-				  addMetadata(preMetaData, NdexNetworkStatus.NAME, ndexStatusMDVersion,lastUpdate, 0l);
-				} else if ( aspectName.equals(NetworkAttributesElement.NAME) ) {
-				  addMetadata(preMetaData, NetworkAttributesElement.NAME, "1.0",lastUpdate, 2l);
-				}  else if ( aspectName.equals(NodeAttributesElement.NAME) ) {
-			       addMetadata(preMetaData, NodeAttributesElement.NAME, "1.0",lastUpdate, 1l);
-				} else if ( aspectName.equals(EdgeAttributesElement.NAME) ) {
-				  addMetadata(preMetaData, EdgeAttributesElement.NAME, "1.0",lastUpdate, 1l);
-				} else if ( aspectName.equals(EdgeCitationLinksElement.NAME) ) {
-			      addMetadata(preMetaData, EdgeCitationLinksElement.NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
-				} else if ( aspectName.equals(EdgeSupportLinksElement.NAME) ) {
-			      addMetadata(preMetaData, EdgeSupportLinksElement.NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
-				} else if ( aspectName.equals(NodeCitationLinksElement.NAME) ) {
-			      addMetadata(preMetaData, NodeCitationLinksElement.NAME, "1.0",lastUpdate, 1l);
-				} else if ( aspectName.equals(NodeSupportLinksElement.NAME) ) {
-			      addMetadata(preMetaData, NodeSupportLinksElement.NAME, "1.0",lastUpdate, 1l);
-				} else if ( aspectName.equals(CitationElement.NAME) ) {
-  			       addMetadata(preMetaData,NdexClasses.Network_E_Citations, CitationElement.NAME,citationMDVersion,lastUpdate);
-				} else if ( aspectName.equals(SupportElement.NAME) ) {
+				if ( aspectName.equals(NodesElement.ASPECT_NAME)) {
+			        addMetadata(preMetaData, NodesElement.ASPECT_NAME, nodeMDVersion,lastUpdate, 1l);
+			        preMetaData.setElementCount(NodesElement.ASPECT_NAME, Long.valueOf(nodecount));
+				} else if ( aspectName.equals(EdgesElement.ASPECT_NAME) ) {
+			        addMetadata(preMetaData, EdgesElement.ASPECT_NAME, edgeMDVersion,lastUpdate, 1l);
+			        preMetaData.setElementCount(EdgesElement.ASPECT_NAME, Long.valueOf(edgecount));
+				} else if ( aspectName.equals(NdexNetworkStatus.ASPECT_NAME) ) {
+				  addMetadata(preMetaData, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate, 0l);
+				} else if ( aspectName.equals(NetworkAttributesElement.ASPECT_NAME) ) {
+				  addMetadata(preMetaData, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 2l);
+				}  else if ( aspectName.equals(NodeAttributesElement.ASPECT_NAME) ) {
+			       addMetadata(preMetaData, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				} else if ( aspectName.equals(EdgeAttributesElement.ASPECT_NAME) ) {
+				  addMetadata(preMetaData, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				} else if ( aspectName.equals(EdgeCitationLinksElement.ASPECT_NAME) ) {
+			      addMetadata(preMetaData, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
+				} else if ( aspectName.equals(EdgeSupportLinksElement.ASPECT_NAME) ) {
+			      addMetadata(preMetaData, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
+				} else if ( aspectName.equals(NodeCitationLinksElement.ASPECT_NAME) ) {
+			      addMetadata(preMetaData, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				} else if ( aspectName.equals(NodeSupportLinksElement.ASPECT_NAME) ) {
+			      addMetadata(preMetaData, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				} else if ( aspectName.equals(CitationElement.ASPECT_NAME) ) {
+  			       addMetadata(preMetaData,NdexClasses.Network_E_Citations, CitationElement.ASPECT_NAME,citationMDVersion,lastUpdate);
+				} else if ( aspectName.equals(SupportElement.ASPECT_NAME) ) {
 			      //supports
-			      addMetadata(preMetaData,NdexClasses.Network_E_Supports,SupportElement.NAME,supportMDVersion,lastUpdate);
-				} else if ( aspectName.equals(FunctionTermElement.NAME) ) {
+			      addMetadata(preMetaData,NdexClasses.Network_E_Supports,SupportElement.ASPECT_NAME,supportMDVersion,lastUpdate);
+				} else if ( aspectName.equals(FunctionTermElement.ASPECT_NAME) ) {
 			      //functionTerms
-			      addMetadata(preMetaData,NdexClasses.Network_E_FunctionTerms,FunctionTermElement.NAME,functionMDVersion,lastUpdate);
-				} else if ( aspectName.equals(ReifiedEdgeElement.NAME) ) {
+			      addMetadata(preMetaData,NdexClasses.Network_E_FunctionTerms,FunctionTermElement.ASPECT_NAME,functionMDVersion,lastUpdate);
+				} else if ( aspectName.equals(ReifiedEdgeElement.ASPECT_NAME) ) {
 			      //reifiedEdgeTerms
-			      addMetadata(preMetaData,NdexClasses.Network_E_ReifiedEdgeTerms,ReifiedEdgeElement.NAME,reifiedEdgeMDVersion,lastUpdate);
-				} else if ( aspectName.equals(NamespacesElement.NAME)) {
-			        addMetadata(preMetaData, NamespacesElement.NAME, "1.0",lastUpdate, 3l);
+			      addMetadata(preMetaData,NdexClasses.Network_E_ReifiedEdgeTerms,ReifiedEdgeElement.ASPECT_NAME,reifiedEdgeMDVersion,lastUpdate);
+				} else if ( aspectName.equals(NamespacesElement.ASPECT_NAME)) {
+			        addMetadata(preMetaData, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate, 3l);
  
 				} else 
 					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
@@ -1105,21 +1067,21 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		// start writing aspects out.
         
         //write NdexStatus
-        if (aspects.contains(NdexNetworkStatus.NAME)) {
+        if (aspects.contains(NdexNetworkStatus.ASPECT_NAME)) {
            writeNdexStatus(cxwtr);
-           aspects.remove(NdexNetworkStatus.NAME);
+           aspects.remove(NdexNetworkStatus.ASPECT_NAME);
         }
         
         // write name, desc and other properties;
-        if ( aspects.contains(NetworkAttributesElement.NAME)) {
+        if ( aspects.contains(NetworkAttributesElement.ASPECT_NAME)) {
            writeNetworkAttributes(cxwtr, -1);
-           aspects.remove(NetworkAttributesElement.NAME);
+           aspects.remove(NetworkAttributesElement.ASPECT_NAME);
         }
         
         //write namespaces 
-        if (  aspects.contains(NamespacesElement.NAME)) {
+        if (  aspects.contains(NamespacesElement.ASPECT_NAME)) {
         	writeNamespacesInCX(cxwtr, -1);
-        	aspects.remove(NetworkAttributesElement.NAME);
+        	aspects.remove(NetworkAttributesElement.ASPECT_NAME);
         }
         
         // tracking ids to SID mapping and baseterms that has been outputed.
@@ -1128,30 +1090,30 @@ public class CXNetworkExporter extends SingleNetworkDAO {
      //   Set<Long> repIdSet = new TreeSet<> ();
 
         
-        if ( aspects.contains(CitationElement.NAME)) {
+        if ( aspects.contains(CitationElement.ASPECT_NAME)) {
         	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
         		Long citationId = doc.field(NdexClasses.Element_ID);
         		String SID = writeCitationInCX(doc, cxwtr);
         		citationIdMap.put(citationId, SID);
         	}
-        	aspects.remove(CitationElement.NAME);
+        	aspects.remove(CitationElement.ASPECT_NAME);
         }
         
-        if (aspects.contains(SupportElement.NAME) ) {
+        if (aspects.contains(SupportElement.ASPECT_NAME) ) {
         	for ( ODocument doc: getNetworkElements (NdexClasses.Network_E_Supports)) {
         		Long supportId = doc.field(NdexClasses.Element_ID);
         		String SID = writeSupportInCX(doc, cxwtr);
         		supportIdMap.put(supportId, SID);
         	}
-        	aspects.remove(SupportElement.NAME);
+        	aspects.remove(SupportElement.ASPECT_NAME);
         }   
         
-        boolean writeNodes             = aspects.contains(NodesElement.NAME);
-        boolean writeNodeAttr          = aspects.contains(NodeAttributesElement.NAME);
-        boolean writeFunctionTerm      = aspects.contains(FunctionTermElement.NAME);
-        boolean writeReifiedEdgeTerm   = aspects.contains(ReifiedEdgeElement.NAME);
-        boolean writeNodeCitationLinks = aspects.contains(NodeCitationLinksElement.NAME);
-        boolean writeNodeSupportLinks  = aspects.contains(NodeSupportLinksElement.NAME);
+        boolean writeNodes             = aspects.contains(NodesElement.ASPECT_NAME);
+        boolean writeNodeAttr          = aspects.contains(NodeAttributesElement.ASPECT_NAME);
+        boolean writeFunctionTerm      = aspects.contains(FunctionTermElement.ASPECT_NAME);
+        boolean writeReifiedEdgeTerm   = aspects.contains(ReifiedEdgeElement.ASPECT_NAME);
+        boolean writeNodeCitationLinks = aspects.contains(NodeCitationLinksElement.ASPECT_NAME);
+        boolean writeNodeSupportLinks  = aspects.contains(NodeSupportLinksElement.ASPECT_NAME);
         if ( writeNodes|| writeNodeAttr ||writeFunctionTerm || writeReifiedEdgeTerm || 
         		writeNodeCitationLinks || writeNodeSupportLinks) {
         	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Nodes)) {
@@ -1160,28 +1122,28 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         				writeNodeCitationLinks,writeNodeSupportLinks);
         	}  
         	
-        	aspects.remove(NodesElement.NAME);
-        	aspects.remove(NodeAttributesElement.NAME);
-        	aspects.remove(FunctionTermElement.NAME);
-        	aspects.remove(ReifiedEdgeElement.NAME);
-        	aspects.remove(NodeCitationLinksElement.NAME);
-        	aspects.remove(NodeSupportLinksElement.NAME);
+        	aspects.remove(NodesElement.ASPECT_NAME);
+        	aspects.remove(NodeAttributesElement.ASPECT_NAME);
+        	aspects.remove(FunctionTermElement.ASPECT_NAME);
+        	aspects.remove(ReifiedEdgeElement.ASPECT_NAME);
+        	aspects.remove(NodeCitationLinksElement.ASPECT_NAME);
+        	aspects.remove(NodeSupportLinksElement.ASPECT_NAME);
         }
         
         
-        boolean writeEdges = aspects.contains(EdgesElement.NAME);
-        boolean writeEdgeAttr = aspects.contains(EdgeAttributesElement.NAME);
-        boolean writeEdgeCitationLinks = aspects.contains(EdgeCitationLinksElement.NAME);
-        boolean writeEdgeSupportLinks = aspects.contains(EdgeSupportLinksElement.NAME);
+        boolean writeEdges = aspects.contains(EdgesElement.ASPECT_NAME);
+        boolean writeEdgeAttr = aspects.contains(EdgeAttributesElement.ASPECT_NAME);
+        boolean writeEdgeCitationLinks = aspects.contains(EdgeCitationLinksElement.ASPECT_NAME);
+        boolean writeEdgeSupportLinks = aspects.contains(EdgeSupportLinksElement.ASPECT_NAME);
         if ( writeEdges || writeEdgeAttr || writeEdgeCitationLinks || writeEdgeSupportLinks ) {
         	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Edges)) {
         		writeEdgeAspectsInCX(doc,cxwtr, citationIdMap, supportIdMap,
         			writeEdges, writeEdgeAttr, writeEdgeCitationLinks, writeEdgeSupportLinks);
         	}
-        	aspects.remove(EdgesElement.NAME);
-        	aspects.remove(EdgeAttributesElement.NAME);
-        	aspects.remove(EdgeCitationLinksElement.NAME);
-        	aspects.remove(EdgeSupportLinksElement.NAME);
+        	aspects.remove(EdgesElement.ASPECT_NAME);
+        	aspects.remove(EdgeAttributesElement.ASPECT_NAME);
+        	aspects.remove(EdgeCitationLinksElement.ASPECT_NAME);
+        	aspects.remove(EdgeSupportLinksElement.ASPECT_NAME);
         }
         
         for ( String opaqueAspectName : aspects) {
@@ -1192,18 +1154,18 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         MetaDataCollection postmd = new MetaDataCollection ();
         
         if ( !dbHasMetadata) {
-        	if ( preMetaData.getMetaDataElement(NodesElement.NAME)!=null && nodeIdCounter > 0 ) {
-        		postmd.setIdCounter(NodesElement.NAME, nodeIdCounter);
+        	if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null && nodeIdCounter > 0 ) {
+        		postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
         	}
         
-        	if ( preMetaData.getMetaDataElement(EdgesElement.NAME) != null && edgeIdCounter > 0 ) {
-        		postmd.setIdCounter(EdgesElement.NAME, edgeIdCounter);
+        	if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null && edgeIdCounter > 0 ) {
+        		postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
         	}
-        	if ( preMetaData.getMetaDataElement(CitationElement.NAME)!= null && citationIdCounter >0)
-        		postmd.setIdCounter(CitationElement.NAME, citationIdCounter);
+        	if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null && citationIdCounter >0)
+        		postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
         
-        	if ( preMetaData.getMetaDataElement(SupportElement.NAME) != null && supportIdCounter > 0 )
-        		postmd.setIdCounter(SupportElement.NAME, supportIdCounter);
+        	if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null && supportIdCounter > 0 )
+        		postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
         }
         
         if ( postmd.size()>0)

@@ -153,21 +153,21 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
    
 	private boolean isNdexSupportedAspect(String aspect) {
 		switch (aspect ) {
-		case NodesElement.NAME: 
-		case EdgesElement.NAME:
-		case EdgeAttributesElement.NAME:
-		case NodeAttributesElement.NAME:
-		case NetworkAttributesElement.NAME:
-		case CitationElement.NAME:
-		case EdgeCitationLinksElement.NAME:
-		case EdgeSupportLinksElement.NAME:
-		case FunctionTermElement.NAME:
-		case NamespacesElement.NAME:
-		case NdexNetworkStatus.NAME:
-		case NodeCitationLinksElement.NAME:
-		case NodeSupportLinksElement.NAME:
-		case ReifiedEdgeElement.NAME:
-		case SupportElement.NAME:
+		case NodesElement.ASPECT_NAME: 
+		case EdgesElement.ASPECT_NAME:
+		case EdgeAttributesElement.ASPECT_NAME:
+		case NodeAttributesElement.ASPECT_NAME:
+		case NetworkAttributesElement.ASPECT_NAME:
+		case CitationElement.ASPECT_NAME:
+		case EdgeCitationLinksElement.ASPECT_NAME:
+		case EdgeSupportLinksElement.ASPECT_NAME:
+		case FunctionTermElement.ASPECT_NAME:
+		case NamespacesElement.ASPECT_NAME:
+		case NdexNetworkStatus.ASPECT_NAME:
+		case NodeCitationLinksElement.ASPECT_NAME:
+		case NodeSupportLinksElement.ASPECT_NAME:
+		case ReifiedEdgeElement.ASPECT_NAME:
+		case SupportElement.ASPECT_NAME:
 			return true;
 		default: 
 			return false;
