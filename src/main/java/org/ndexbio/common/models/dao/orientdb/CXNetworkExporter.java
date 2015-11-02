@@ -71,6 +71,12 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	private long edgeIdCounter;
 	private long citationIdCounter;
 	private long supportIdCounter;
+	
+	public static final String[] NdexSupportedAspects = {NodesElement.ASPECT_NAME,EdgesElement.ASPECT_NAME,NetworkAttributesElement.ASPECT_NAME,
+			NodeAttributesElement.ASPECT_NAME, EdgeAttributesElement.ASPECT_NAME, CitationElement.ASPECT_NAME, SupportElement.ASPECT_NAME,
+			EdgeCitationLinksElement.ASPECT_NAME, EdgeSupportLinksElement.ASPECT_NAME, NodeCitationLinksElement.ASPECT_NAME,
+			NodeSupportLinksElement.ASPECT_NAME, FunctionTermElement.ASPECT_NAME, NamespacesElement.ASPECT_NAME, NdexNetworkStatus.ASPECT_NAME,
+			Provenance.ASPECT_NAME,ReifiedEdgeElement.ASPECT_NAME};
 		
 	public CXNetworkExporter(String UUID) throws NdexException {
 		super(UUID);
@@ -102,7 +108,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         //write NdexStatus & provenance
         writeNdexStatus(cxwtr);
         
-        writeProvance( cxwtr);
+        writeProvenance( cxwtr);
         
         // write name, desc and other properties;
         writeNetworkAttributes(cxwtr,-1);
@@ -289,7 +295,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         return 1;
 	}
 
-	private int writeProvance(CxWriter cxwtr) throws NdexException, IOException {
+	private int writeProvenance(CxWriter cxwtr) throws NdexException, IOException {
 		Provenance provenance = new Provenance();
         
         ObjectMapper mapper = new ObjectMapper();
@@ -880,6 +886,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 				} else if ( aspectName.equals(NamespacesElement.ASPECT_NAME)) {
 			        addMetadata(preMetaData, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate, 3l);
  
+				} else if ( aspectName.equals(Provenance.ASPECT_NAME)){
+			        addMetadata(preMetaData, Provenance.ASPECT_NAME, "1.0",lastUpdate, 4l);
+
 				} else 
 					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);			
 		}
@@ -901,6 +910,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         	} else if (   aspectName.equals(NamespacesElement.ASPECT_NAME)) {
         		//write namespaces 
         		counter = writeNamespacesInCX(cxwtr, elementLimit);
+        	} else if (  aspectName.equals(Provenance.ASPECT_NAME) ) { 
+        		writeProvenance(cxwtr);
+        		counter = 1;
         	} else {
         	
         		// tracking ids to SID mapping and baseterms that has been outputed.
@@ -1051,6 +1063,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 				} else if ( aspectName.equals(NamespacesElement.ASPECT_NAME)) {
 			        addMetadata(preMetaData, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate, 3l);
  
+				} else if ( aspectName.equals(Provenance.ASPECT_NAME)){
+			        addMetadata(preMetaData, Provenance.ASPECT_NAME, "1.0",lastUpdate, 4l);
+
 				} else 
 					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
 				
@@ -1070,6 +1085,12 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         if (aspects.contains(NdexNetworkStatus.ASPECT_NAME)) {
            writeNdexStatus(cxwtr);
            aspects.remove(NdexNetworkStatus.ASPECT_NAME);
+        }
+        
+        // write provenance
+        if ( aspects.contains(Provenance.ASPECT_NAME)) {
+        	writeProvenance(cxwtr);
+        	aspects.remove(Provenance.ASPECT_NAME);
         }
         
         // write name, desc and other properties;
