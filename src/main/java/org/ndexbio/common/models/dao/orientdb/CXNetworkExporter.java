@@ -67,6 +67,8 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	static private final String EdgeCitationLinksMDVersion = "1.0";
 	static private final String EdgeSupportLinksMDVersion = "1.0";
 	
+	static private final long consistencyGroupId = 1;
+	
 	private long nodeIdCounter;
 	private long edgeIdCounter;
 	private long citationIdCounter;
@@ -325,27 +327,27 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         node_meta.setVersion(nodeMDVersion);
         node_meta.setLastUpdate(lastUpdate.getTime());
         node_meta.setElementCount(new Long(nodecount));
-        node_meta.setConsistencyGroup(1l);
+        node_meta.setConsistencyGroup(consistencyGroupId);
         md.add(node_meta);
 
         MetaDataElement edge_meta = new MetaDataElement();
         edge_meta.setName(EdgesElement.ASPECT_NAME);
         edge_meta.setVersion(edgeMDVersion);
         edge_meta.setLastUpdate(lastUpdate.getTime());
-        edge_meta.setConsistencyGroup(1l);
+        edge_meta.setConsistencyGroup(consistencyGroupId);
         edge_meta.setElementCount(new Long(edgecount));
         md.add(edge_meta);
         
-        addMetadata(md, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate, 0l);
-        addMetadata(md, Provenance.ASPECT_NAME, "1.0",lastUpdate, 4l);
-        addMetadata(md, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 2l);
-        addMetadata(md, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
-        addMetadata(md, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
-        addMetadata(md, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
-        addMetadata(md, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
-        addMetadata(md, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
-        addMetadata(md, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
-        addMetadata(md, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate, 3l);
+        addMetadata(md, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate);
+        addMetadata(md, Provenance.ASPECT_NAME, "1.0",lastUpdate);
+        addMetadata(md, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
+        addMetadata(md, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
+        addMetadata(md, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
+        addMetadata(md, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate);
+        addMetadata(md, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate);
+        addMetadata(md, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate);
+        addMetadata(md, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate);
+        addMetadata(md, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate);
 
         
         
@@ -365,12 +367,12 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         return md;
 	}
 	
-	private void addMetadata(MetaDataCollection md, String aspectName, String version,Timestamp lastUpdate, long groupId) {
+	private void addMetadata(MetaDataCollection md, String aspectName, String version,Timestamp lastUpdate) {
 		 MetaDataElement networkAttr = new MetaDataElement();
 		 networkAttr.setName(aspectName);
 		 networkAttr.setVersion(version);
 		 networkAttr.setLastUpdate(lastUpdate.getTime());
-		 networkAttr.setConsistencyGroup(groupId);
+		 networkAttr.setConsistencyGroup(consistencyGroupId);
 	        md.add(networkAttr);   
 	}
 	
@@ -849,45 +851,45 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	//	    int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
 	//	    int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
 				if ( aspectName.equals(NodesElement.ASPECT_NAME)) {
-			        addMetadata(preMetaData, NodesElement.ASPECT_NAME, nodeMDVersion,lastUpdate, 1l);
+			        addMetadata(preMetaData, NodesElement.ASPECT_NAME, nodeMDVersion,lastUpdate);
 		//	        if ( elementLimit <=0 )
 		//	            preMetaData.setElementCount(NodesElement.ASPECT_NAME, Long.valueOf(nodecount));
 				} else if ( aspectName.equals(EdgesElement.ASPECT_NAME) ) {
-			        addMetadata(preMetaData, EdgesElement.ASPECT_NAME, edgeMDVersion,lastUpdate, 1l);
+			        addMetadata(preMetaData, EdgesElement.ASPECT_NAME, edgeMDVersion,lastUpdate);
 		//	        if ( elementLimit <=0 )
 		//	        	preMetaData.setElementCount(EdgesElement.ASPECT_NAME, Long.valueOf(edgecount));
 				} else if ( aspectName.equals(NdexNetworkStatus.ASPECT_NAME) ) {
-				  addMetadata(preMetaData, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate, 0l);
+				  addMetadata(preMetaData, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate);
 				} else if ( aspectName.equals(NetworkAttributesElement.ASPECT_NAME) ) {
-				  addMetadata(preMetaData, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 2l);
+				  addMetadata(preMetaData, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
 				}  else if ( aspectName.equals(NodeAttributesElement.ASPECT_NAME) ) {
-			       addMetadata(preMetaData, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+			       addMetadata(preMetaData, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
 				} else if ( aspectName.equals(EdgeAttributesElement.ASPECT_NAME) ) {
-				  addMetadata(preMetaData, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				  addMetadata(preMetaData, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
 				} else if ( aspectName.equals(EdgeCitationLinksElement.ASPECT_NAME) ) {
-			      addMetadata(preMetaData, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
+			      addMetadata(preMetaData, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate);
 				} else if ( aspectName.equals(EdgeSupportLinksElement.ASPECT_NAME) ) {
-			      addMetadata(preMetaData, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
+			      addMetadata(preMetaData, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate);
 				} else if ( aspectName.equals(NodeCitationLinksElement.ASPECT_NAME) ) {
-			      addMetadata(preMetaData, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+			      addMetadata(preMetaData, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate);
 				} else if ( aspectName.equals(NodeSupportLinksElement.ASPECT_NAME) ) {
-			      addMetadata(preMetaData, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+			      addMetadata(preMetaData, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate);
 				} else if ( aspectName.equals(CitationElement.ASPECT_NAME) ) {
-  			       addMetadata(preMetaData,/*NdexClasses.Network_E_Citations, */ CitationElement.ASPECT_NAME,citationMDVersion,lastUpdate, 1L);
+  			       addMetadata(preMetaData,/*NdexClasses.Network_E_Citations, */ CitationElement.ASPECT_NAME,citationMDVersion,lastUpdate);
 				} else if ( aspectName.equals(SupportElement.ASPECT_NAME) ) {
 			      //supports
-			      addMetadata(preMetaData, /*NdexClasses.Network_E_Supports, */ SupportElement.ASPECT_NAME,supportMDVersion,lastUpdate, 1L);
+			      addMetadata(preMetaData, /*NdexClasses.Network_E_Supports, */ SupportElement.ASPECT_NAME,supportMDVersion,lastUpdate);
 				} else if ( aspectName.equals(FunctionTermElement.ASPECT_NAME) ) {
 			      //functionTerms
-			      addMetadata(preMetaData,/* NdexClasses.Network_E_FunctionTerms,*/ FunctionTermElement.ASPECT_NAME,functionMDVersion,lastUpdate,1L);
+			      addMetadata(preMetaData,/* NdexClasses.Network_E_FunctionTerms,*/ FunctionTermElement.ASPECT_NAME,functionMDVersion,lastUpdate);
 				} else if ( aspectName.equals(ReifiedEdgeElement.ASPECT_NAME) ) {
 			      //reifiedEdgeTerms
-			      addMetadata(preMetaData,/*NdexClasses.Network_E_ReifiedEdgeTerms,*/ ReifiedEdgeElement.ASPECT_NAME,reifiedEdgeMDVersion,lastUpdate,1L);
+			      addMetadata(preMetaData,/*NdexClasses.Network_E_ReifiedEdgeTerms,*/ ReifiedEdgeElement.ASPECT_NAME,reifiedEdgeMDVersion,lastUpdate);
 				} else if ( aspectName.equals(NamespacesElement.ASPECT_NAME)) {
-			        addMetadata(preMetaData, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate, 3l);
+			        addMetadata(preMetaData, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate);
  
 				} else if ( aspectName.equals(Provenance.ASPECT_NAME)){
-			        addMetadata(preMetaData, Provenance.ASPECT_NAME, "1.0",lastUpdate, 4l);
+			        addMetadata(preMetaData, Provenance.ASPECT_NAME, "1.0",lastUpdate);
 
 				} else 
 					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);			
@@ -1028,27 +1030,27 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		    int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
 			for (String aspectName : aspects) {
 				if ( aspectName.equals(NodesElement.ASPECT_NAME)) {
-			        addMetadata(preMetaData, NodesElement.ASPECT_NAME, nodeMDVersion,lastUpdate, 1l);
+			        addMetadata(preMetaData, NodesElement.ASPECT_NAME, nodeMDVersion,lastUpdate);
 			        preMetaData.setElementCount(NodesElement.ASPECT_NAME, Long.valueOf(nodecount));
 				} else if ( aspectName.equals(EdgesElement.ASPECT_NAME) ) {
-			        addMetadata(preMetaData, EdgesElement.ASPECT_NAME, edgeMDVersion,lastUpdate, 1l);
+			        addMetadata(preMetaData, EdgesElement.ASPECT_NAME, edgeMDVersion,lastUpdate);
 			        preMetaData.setElementCount(EdgesElement.ASPECT_NAME, Long.valueOf(edgecount));
 				} else if ( aspectName.equals(NdexNetworkStatus.ASPECT_NAME) ) {
-				  addMetadata(preMetaData, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate, 0l);
+				  addMetadata(preMetaData, NdexNetworkStatus.ASPECT_NAME, ndexStatusMDVersion,lastUpdate);
 				} else if ( aspectName.equals(NetworkAttributesElement.ASPECT_NAME) ) {
-				  addMetadata(preMetaData, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 2l);
+				  addMetadata(preMetaData, NetworkAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
 				}  else if ( aspectName.equals(NodeAttributesElement.ASPECT_NAME) ) {
-			       addMetadata(preMetaData, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+			       addMetadata(preMetaData, NodeAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
 				} else if ( aspectName.equals(EdgeAttributesElement.ASPECT_NAME) ) {
-				  addMetadata(preMetaData, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+				  addMetadata(preMetaData, EdgeAttributesElement.ASPECT_NAME, "1.0",lastUpdate);
 				} else if ( aspectName.equals(EdgeCitationLinksElement.ASPECT_NAME) ) {
-			      addMetadata(preMetaData, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate, 1l);
+			      addMetadata(preMetaData, EdgeCitationLinksElement.ASPECT_NAME, EdgeCitationLinksMDVersion,lastUpdate);
 				} else if ( aspectName.equals(EdgeSupportLinksElement.ASPECT_NAME) ) {
-			      addMetadata(preMetaData, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate, 1l);
+			      addMetadata(preMetaData, EdgeSupportLinksElement.ASPECT_NAME, EdgeSupportLinksMDVersion,lastUpdate);
 				} else if ( aspectName.equals(NodeCitationLinksElement.ASPECT_NAME) ) {
-			      addMetadata(preMetaData, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+			      addMetadata(preMetaData, NodeCitationLinksElement.ASPECT_NAME, "1.0",lastUpdate);
 				} else if ( aspectName.equals(NodeSupportLinksElement.ASPECT_NAME) ) {
-			      addMetadata(preMetaData, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate, 1l);
+			      addMetadata(preMetaData, NodeSupportLinksElement.ASPECT_NAME, "1.0",lastUpdate);
 				} else if ( aspectName.equals(CitationElement.ASPECT_NAME) ) {
   			       addMetadata(preMetaData,NdexClasses.Network_E_Citations, CitationElement.ASPECT_NAME,citationMDVersion,lastUpdate);
 				} else if ( aspectName.equals(SupportElement.ASPECT_NAME) ) {
@@ -1061,10 +1063,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			      //reifiedEdgeTerms
 			      addMetadata(preMetaData,NdexClasses.Network_E_ReifiedEdgeTerms,ReifiedEdgeElement.ASPECT_NAME,reifiedEdgeMDVersion,lastUpdate);
 				} else if ( aspectName.equals(NamespacesElement.ASPECT_NAME)) {
-			        addMetadata(preMetaData, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate, 3l);
+			        addMetadata(preMetaData, NamespacesElement.ASPECT_NAME, "1.0",lastUpdate);
  
 				} else if ( aspectName.equals(Provenance.ASPECT_NAME)){
-			        addMetadata(preMetaData, Provenance.ASPECT_NAME, "1.0",lastUpdate, 4l);
+			        addMetadata(preMetaData, Provenance.ASPECT_NAME, "1.0",lastUpdate);
 
 				} else 
 					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
@@ -1222,5 +1224,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         return counter;
 	}
 
+	
+//	public Collection<String> getAspectNames () {
+		
+//	}
 
 }

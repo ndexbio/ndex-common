@@ -1,6 +1,7 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
@@ -13,6 +14,7 @@ import org.cxio.aspects.datamodels.NodeAttributesElement;
 import org.cxio.aspects.datamodels.NodesElement;
 import org.cxio.metadata.MetaDataCollection;
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.cx.EdgeCitationLinksElement;
 import org.ndexbio.model.cx.EdgeSupportLinksElement;
@@ -62,7 +64,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		return networkVertex.countEdges(Direction.OUT,edgeName);
 	}
 	
-
+	
     protected Iterable<ODocument> getNetworkElements(String elementEdgeString) {	
     	
     	Object f = networkDoc.field("out_"+ elementEdgeString);
@@ -145,13 +147,13 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		}
 		
 		for ( String aspect : aspectNames) {
-			if (! isNdexSupportedAspect(aspect))
+			if (Arrays.binarySearch(NdexDatabase.NdexSupportedAspects, aspect) ==-1)
 				result.add(aspect);
 		}
 		return result;
 	}
    
-	private boolean isNdexSupportedAspect(String aspect) {
+	/*private boolean isNdexSupportedAspect(String aspect) {
 		switch (aspect ) {
 		case NodesElement.ASPECT_NAME: 
 		case EdgesElement.ASPECT_NAME:
@@ -171,8 +173,8 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 			return true;
 		default: 
 			return false;
-		}
+		} 
 
-	}
+	} */
 
 }

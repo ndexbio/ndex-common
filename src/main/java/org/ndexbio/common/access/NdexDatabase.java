@@ -31,8 +31,25 @@
 package org.ndexbio.common.access;
 
 
+import java.util.Arrays;
 import java.util.logging.Logger;
 
+import org.cxio.aspects.datamodels.EdgeAttributesElement;
+import org.cxio.aspects.datamodels.EdgesElement;
+import org.cxio.aspects.datamodels.NetworkAttributesElement;
+import org.cxio.aspects.datamodels.NodeAttributesElement;
+import org.cxio.aspects.datamodels.NodesElement;
+import org.ndexbio.model.cx.CitationElement;
+import org.ndexbio.model.cx.EdgeCitationLinksElement;
+import org.ndexbio.model.cx.EdgeSupportLinksElement;
+import org.ndexbio.model.cx.FunctionTermElement;
+import org.ndexbio.model.cx.NamespacesElement;
+import org.ndexbio.model.cx.NdexNetworkStatus;
+import org.ndexbio.model.cx.NodeCitationLinksElement;
+import org.ndexbio.model.cx.NodeSupportLinksElement;
+import org.ndexbio.model.cx.Provenance;
+import org.ndexbio.model.cx.ReifiedEdgeElement;
+import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.orientdb.NdexSchemaManager;
 
@@ -71,6 +88,12 @@ public class NdexDatabase {
 	
 	private static long currentId = System.currentTimeMillis(); 
 	
+	public static  String[] NdexSupportedAspects ={NodesElement.ASPECT_NAME,EdgesElement.ASPECT_NAME,NetworkAttributesElement.ASPECT_NAME,
+			NodeAttributesElement.ASPECT_NAME, EdgeAttributesElement.ASPECT_NAME, CitationElement.ASPECT_NAME, SupportElement.ASPECT_NAME,
+			EdgeCitationLinksElement.ASPECT_NAME, EdgeSupportLinksElement.ASPECT_NAME, NodeCitationLinksElement.ASPECT_NAME,
+			NodeSupportLinksElement.ASPECT_NAME, FunctionTermElement.ASPECT_NAME, NamespacesElement.ASPECT_NAME, NdexNetworkStatus.ASPECT_NAME,
+			Provenance.ASPECT_NAME,ReifiedEdgeElement.ASPECT_NAME};
+	
 	private NdexDatabase(String HostURI, String dbURL, String dbUserName,
 			String dbPassword, int size) throws NdexException {
 		
@@ -80,6 +103,7 @@ public class NdexDatabase {
 				odb.create();
 		}
 		
+		Arrays.sort(NdexSupportedAspects) ;
 		pool = new OPartitionedDatabasePool(dbURL, dbUserName, dbPassword,size);
 	    
 	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " ("+ size + ") created.");

@@ -341,7 +341,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		      networkDoc.field(NdexClasses.Network_P_metadata,metadata);
 		  } else 
 			  throw new NdexException ("No CX metadata found in this CX stream.");
-		  
+/*		  
 		  if ( declaredNodeCount >=0 && declaredNodeCount != this.nodeSIDMap.size() ) 
 			  throw new NdexException ("Declared node count in NdexStatus (" + declaredNodeCount + 
 					  ") doesn't match with node count in CX stream("+ this.nodeSIDMap.size() + ")" );
@@ -349,7 +349,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  if ( declaredEdgeCount >=0 && declaredEdgeCount != this.edgeSIDMap.size())
 			  throw new NdexException ("Declared edge count in NdexStatus (" + declaredEdgeCount + 
 					  ") doesn't match with edge count in CX stream("+ this.edgeSIDMap.size() + ")" );
-		  
+*/		  
 		  // finalize the headnode
 		  networkDoc.fields(NdexClasses.ExternalObj_mTime,new Timestamp(Calendar.getInstance().getTimeInMillis()),
 				  NdexClasses.Network_P_nodeCount, this.nodeSIDMap.size(),
