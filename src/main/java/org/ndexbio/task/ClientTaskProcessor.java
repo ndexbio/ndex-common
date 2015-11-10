@@ -102,6 +102,8 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 			switch ( task.getTaskType()) { 
 				case PROCESS_UPLOADED_NETWORK: 
 					return new FileUploadTask(task, NdexDatabase.getInstance());
+				case DOWNLOAD_NAMESPACE_FILES:
+					return new AttachNamespacefilesTask(task);
 				case EXPORT_NETWORK_TO_FILE: 
 					
 					if ( task.getFormat() == FileFormat.XBEL)

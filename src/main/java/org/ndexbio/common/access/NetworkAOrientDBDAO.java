@@ -37,12 +37,12 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.NetworkSourceFormat;
 import org.ndexbio.model.object.network.Node;
 import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.NdexPropertyValuePair;

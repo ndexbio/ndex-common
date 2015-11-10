@@ -57,15 +57,12 @@ public class FileUploadTask extends NdexTask {
 	private static final Logger logger = LoggerFactory
 			.getLogger(FileUploadTask.class);
 
-	private Status taskStatus;
     private NdexDatabase db;
-	
 	
 	public FileUploadTask(Task itask, NdexDatabase ndexDb) throws IllegalArgumentException,
 			SecurityException, NdexException {
 		super(itask);
 		this.filename = this.getTask().getResource();
-		// this.filename = this.getTask().getResource();
 		if (!(new File(this.filename).isFile())) {
 			throw new NdexException("File " + this.filename + " does not exist");
 		}
@@ -91,8 +88,7 @@ public class FileUploadTask extends NdexTask {
 
 	private void processFile() throws Exception {
 		logger.info("[start: Processing file='{}']", this.getFilename());
-		//logger.info("[memory: {}]", MemoryUtilization.getMemoryUtiliztaion());
-		this.taskStatus = Status.PROCESSING;
+		Status taskStatus = Status.PROCESSING;
 		this.startTask();
 		File file = new File(this.getFilename());
 		String fileExtension = com.google.common.io.Files
@@ -120,7 +116,7 @@ public class FileUploadTask extends NdexTask {
 
 			if (!((XbelParser)parser).getValidationState().isValid()) {
 					logger.info("XBel validation failed");
-					this.taskStatus = Status.COMPLETED_WITH_ERRORS;
+					taskStatus = Status.COMPLETED_WITH_ERRORS;
 					throw new NdexException(
 							"XBEL file fails XML schema validation - one or more elements do not meet XBEL specification.");
 			}
@@ -140,13 +136,12 @@ public class FileUploadTask extends NdexTask {
 
 		}
 		parser.parseFile();
-		this.taskStatus = Status.COMPLETED;
+		taskStatus = Status.COMPLETED;
 		long fileSize = file.length();
 		file.delete(); // delete the file from the staging area
 		logger.info("Network upload file: " + file.getName() +" deleted from staging area");
 		this.addTaskAttribute("networkUUID", parser.getUUIDOfUploadedNetwork().toString());
-		this.updateTaskStatus(this.taskStatus);
-		//logger.info("[memory: {}]", MemoryUtilization.getMemoryUtiliztaion());
+		this.updateTaskStatus(taskStatus);
         logger.info("[end: Network upload finished; UUID='{}' fileSize={}]", parser.getUUIDOfUploadedNetwork().toString(), fileSize);
 	}
 

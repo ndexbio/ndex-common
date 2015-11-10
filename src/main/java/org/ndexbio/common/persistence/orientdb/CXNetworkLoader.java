@@ -37,7 +37,6 @@ import org.cxio.metadata.MetaDataCollection;
 import org.cxio.metadata.MetaDataElement;
 import org.cxio.util.CxioUtil;
 import org.ndexbio.common.NdexClasses;
-import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentReader;
 import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
@@ -66,6 +65,7 @@ import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
+import org.ndexbio.model.object.network.NetworkSourceFormat;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.task.NdexServerQueue;
 import org.slf4j.Logger;
@@ -95,22 +95,25 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private OrientVertex networkVertex;
 	
     protected OrientGraph graph;
-
-	private Map<String, Long> nodeSIDMap;
-	private Map<String, Long> edgeSIDMap;
-	private Map<String, Long> citationSIDMap;
-	private Map<String, Long> supportSIDMap;
-	private Map<String, Long> namespaceMap;
-	private Map<String, Long> baseTermMap;
-	private Set<String> undefinedNodeId;
-	private Set<String> undefinedEdgeId;
-	private Set<String> undefinedCitationId;
-	private Set<String> undefinedSupportId;
+    
+    //mapping tables mapping from element SID to internal ID. 
+	private Map<Long, Long> nodeSIDMap;
+	private Map<Long, Long> edgeSIDMap;
+	private Map<Long, Long> citationSIDMap;
+	private Map<Long, Long> supportSIDMap;
+	private Map<String, Long> namespaceMap;   // prefix to nsID mapping.
+	private Map<String, Long> baseTermMap;    // map a baseterm string to bastermId;
+	
+	// tables to track undefined Elements. Stores element SIDs
+	private Set<Long> undefinedNodeId;
+	private Set<Long> undefinedEdgeId;
+	private Set<Long> undefinedCitationId;
+	private Set<Long> undefinedSupportId;
 	
 	private Provenance provenanceHistory;
 	
-	private int declaredNodeCount;
-	private int declaredEdgeCount;
+//	private int declaredNodeCount;
+//	private int declaredEdgeCount;
 	
 	long opaqueCounter ;
 
@@ -153,8 +156,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 		provenanceHistory = null;
 		
-		declaredNodeCount = -1 ;
-		declaredEdgeCount = -1;
+	//	declaredNodeCount = -1 ;
+	//	declaredEdgeCount = -1;
 		
 	}
 	
@@ -296,7 +299,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  // check data integrity.
 		  if ( !undefinedNodeId.isEmpty()) {
 			  String errorMessage = undefinedNodeId.size() + "undefined nodes found in CX stream: [";
-			  for( String sid : undefinedNodeId)
+			  for( Long sid : undefinedNodeId)
 				  errorMessage += sid + " ";		  
 			  logger.error(errorMessage);
 			  throw new NdexException(errorMessage );
@@ -304,7 +307,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  
 		  if ( !undefinedEdgeId.isEmpty()) {
 			  String errorMessage = undefinedEdgeId.size() + "undefined edges found in CX stream: [";
-			  for( String sid : undefinedEdgeId)
+			  for( Long sid : undefinedEdgeId)
 				  errorMessage += sid + " ";		  
 			  logger.error(errorMessage);
 			  throw new NdexException(errorMessage );
@@ -331,13 +334,19 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  }
 
 		  if(metadata !=null) {
+			  // check if idCounter is defined in certain espects, and elementCount matches between metadata and data.
 			  for ( MetaDataElement e: metadata.toCollection()) {
-				  if ( e.getIdCounter() == null && 
-						  (e.getName().equals(NodesElement.ASPECT_NAME) || e.getName().equals(EdgesElement.ASPECT_NAME) || 
+				  if (  (e.getName().equals(NodesElement.ASPECT_NAME) || e.getName().equals(EdgesElement.ASPECT_NAME) || 
 								  e.getName().equals(CitationElement.ASPECT_NAME) || 
-								  e.getName().equals(SupportElement.ASPECT_NAME)))
-					  throw new NdexException ( "Idcounter value is not found in metadata of aspect " + e.getName());
+								  e.getName().equals(SupportElement.ASPECT_NAME))) {  
+					   if ( e.getIdCounter() == null )
+						   throw new NdexException ( "Idcounter value is not found in metadata of aspect " + e.getName());
+					   if ( e.getName().equals(NodesElement.ASPECT_NAME) && e.getElementCount() !=null && nodeSIDMap.size()!=e.getElementCount())
+						   throw new NdexException("ActualNodeCount in CX stream is " + nodeSIDMap.size() + ", but metadata says it's " + e.getElementCount());
+					   //TODO: check other 3 aspects too.
+				  }
 			  }
+			  
 		      networkDoc.field(NdexClasses.Network_P_metadata,metadata);
 		  } else 
 			  throw new NdexException ("No CX metadata found in this CX stream.");
@@ -377,14 +386,14 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 
 	private void createEdgeSupport(EdgeSupportLinksElement elmt) throws ObjectNotFoundException, DuplicateObjectException {
-		for ( String sourceId : elmt.getSourceIds()) {
+		for ( Long sourceId : elmt.getSourceIds()) {
 		   ODocument edgeDoc = getOrCreateEdgeDocBySID(sourceId);
 		   Set<Long> supportIds = edgeDoc.field(NdexClasses.Support);
 		
 		  if(supportIds == null)
 			  supportIds = new HashSet<>(elmt.getSupportIds().size());
 		
-		  for ( String supportSID : elmt.getSupportIds()) {
+		  for ( Long supportSID : elmt.getSupportIds()) {
 			Long supportId = supportSIDMap.get(supportSID);
 			if ( supportId == null) {
 				supportId = createSupportBySID(supportSID);
@@ -397,7 +406,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 
 	private void createNodeSupport(NodeSupportLinksElement elmt) throws ObjectNotFoundException, DuplicateObjectException {
-	  for (String sourceId : elmt.getSourceIds())	 {
+	  for (Long sourceId : elmt.getSourceIds())	 {
 		ODocument nodeDoc = getOrCreateNodeDocBySID(sourceId);
 		
 		Set<Long> supportIds = nodeDoc.field(NdexClasses.Support);
@@ -405,7 +414,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		if(supportIds == null)
 			supportIds = new HashSet<>(elmt.getSupportIds().size());
 		
-		for ( String supportSID : elmt.getSupportIds()) {
+		for ( Long supportSID : elmt.getSupportIds()) {
 			Long supportId = supportSIDMap.get(supportSID);
 			if ( supportId == null) {
 				supportId = createSupportBySID(supportSID);
@@ -418,7 +427,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private void createEdgeCitation(EdgeCitationLinksElement elmt) throws DuplicateObjectException, ObjectNotFoundException {
-	  for ( String sourceId : elmt.getSourceIds())	 {
+	  for ( Long sourceId : elmt.getSourceIds())	 {
 		
 		ODocument edgeDoc = getOrCreateEdgeDocBySID(sourceId);
 		Set<Long> citationIds = edgeDoc.field(NdexClasses.Citation);
@@ -426,7 +435,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		if(citationIds == null)
 			citationIds = new HashSet<>(elmt.getCitationIds().size());
 		
-		for ( String citationSID : elmt.getCitationIds()) {
+		for ( Long citationSID : elmt.getCitationIds()) {
 			Long citationId = citationSIDMap.get(citationSID);
 			if ( citationId == null) {
 				citationId = createCitationBySID(citationSID);
@@ -440,7 +449,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 
 	
 	private void createNodeCitation(NodeCitationLinksElement elmt) throws DuplicateObjectException, ObjectNotFoundException {
-	  for ( String sourceId : elmt.getSourceIds())	{
+	  for ( Long sourceId : elmt.getSourceIds())	{
 		ODocument nodeDoc = getOrCreateNodeDocBySID(sourceId);
 		
 		Set<Long> citationIds = nodeDoc.field(NdexClasses.Citation);
@@ -448,7 +457,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		if(citationIds == null)
 			citationIds = new HashSet<>(elmt.getCitationIds().size());
 		
-		for ( String citationSID : elmt.getCitationIds()) {
+		for ( Long citationSID : elmt.getCitationIds()) {
 			Long citationId = citationSIDMap.get(citationSID);
 			if ( citationId == null) {
 				citationId = createCitationBySID(citationSID);
@@ -460,7 +469,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	  }	
 	}
 	
-	private Long createSupportBySID(String sid) {
+	private Long createSupportBySID(Long sid) {
 		Long supportId =ndexdb.getNextId(db) ;
 
 		new ODocument(NdexClasses.Support)
@@ -518,7 +527,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 	private void createReifiedEdgeTerm(ReifiedEdgeElement e) 
 						throws DuplicateObjectException, ObjectNotFoundException {		
-		 String edgeSID = e.getEdge();
+		 Long edgeSID = e.getEdge();
 		 ODocument edgeDoc = getOrCreateEdgeDocBySID(edgeSID); 
 		 
 		 Long termId = ndexdb.getNextId(db);
@@ -528,7 +537,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		 OrientVertex retV = graph.getVertex(reifiedEdgeTermDoc);
 		 retV.addEdge(NdexClasses.ReifiedEdge_E_edge, graph.getVertex(edgeDoc));
 		 
-		 String nodeSID = e.getNode();
+		 Long nodeSID = e.getNode();
 		 ODocument nodeDoc = getOrCreateNodeDocBySID(nodeSID);
 		 
 		 nodeDoc.fields(NdexClasses.Node_P_represents, termId,
@@ -539,7 +548,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		tick();
 	}
 
-	private ODocument getOrCreateEdgeDocBySID(String edgeSID) throws DuplicateObjectException, ObjectNotFoundException {
+	private ODocument getOrCreateEdgeDocBySID(Long edgeSID) throws DuplicateObjectException, ObjectNotFoundException {
 		Long edgeId = edgeSIDMap.get(edgeSID);
 		 if (edgeId == null ) {
 				edgeId = ndexdb.getNextId(db);
@@ -555,7 +564,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return this.getEdgeDocById(edgeId);
 	}
 
-	private ODocument getOrCreateNodeDocBySID(String nodeSID) throws ObjectNotFoundException {
+	private ODocument getOrCreateNodeDocBySID(Long nodeSID) throws ObjectNotFoundException {
 		Long nodeId = nodeSIDMap.get(nodeSID);
 		if(nodeId == null) {
 			nodeId = ndexdb.getNextId(db);
@@ -571,7 +580,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private void createNetworkAttribute(NetworkAttributesElement e) throws NdexException {
-		if ( e.getName().equals(NdexClasses.Network_P_name)) {
+		if ( e.getName().equals(NdexClasses.Network_P_name) && e.getSubnetwork() == null) {
 			networkDoc.field(NdexClasses.Network_P_name,
 					  e.getValue()).save();
 		} else if ( e.getName().equals(NdexClasses.Network_P_desc)) {
@@ -619,8 +628,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			networkVertex.addEdge(NdexClasses.Network_E_Namespace, nsV);
 			Long oldv = this.namespaceMap.put(e.getKey(), nsId);
 			if ( oldv !=null)
-				throw new DuplicateObjectException(NamespacesElement.ASPECT_NAME, e.getKey());
-			
+				throw new DuplicateObjectException("Duplicate @context prefix " + e.getKey());			
 			   tick();
 		}
 		
@@ -720,7 +728,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	   return edgeId;
 	}
 	
-	private Long createCitationBySID(String sid) throws DuplicateObjectException {
+	private Long createCitationBySID(Long sid) throws DuplicateObjectException {
 		Long citationId = ndexdb.getNextId(db);
 		
 	//	ODocument citationDoc = 
@@ -803,7 +811,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		    functionTermV.addEdge(NdexClasses.FunctionTerm_E_paramter, graph.getVertex(argumentDoc));
 		}
 			
-		String nodeSID = func.getNodeID() ;
+		Long nodeSID = func.getNodeID() ;
 		if ( nodeSID != null) {
 			ODocument nodeDoc = getOrCreateNodeDocBySID(nodeSID);
 			nodeDoc.fields(NdexClasses.Node_P_represents, funcId,
@@ -903,7 +911,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 
 	private void addEdgeAttribute(EdgeAttributesElement e) throws NdexException{
-		for ( String edgeSID : e.getPropertyOf()) {
+		for ( Long edgeSID : e.getPropertyOf()) {
 		
 		   ODocument edgeDoc = getOrCreateEdgeDocBySID(edgeSID); 
 
@@ -924,7 +932,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 	
 	private void addNodeAttribute(NodeAttributesElement e) throws NdexException{
-		for ( String nodeSID : e.getPropertyOf()) {
+		for ( Long nodeSID : e.getPropertyOf()) {
 			ODocument nodeDoc = getOrCreateNodeDocBySID(nodeSID);
 		   
 		   String propName = e.getName();

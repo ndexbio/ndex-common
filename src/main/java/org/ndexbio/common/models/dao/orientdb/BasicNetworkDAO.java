@@ -45,6 +45,8 @@ public class BasicNetworkDAO implements AutoCloseable {
 		db.close();
 	}
 	
+	public ODatabaseDocumentTx getDbConnection() { return db; }
+	
 	protected static void getPropertiesFromDoc(ODocument doc, PropertiedObject obj) {
 	    	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
 	    	if (props != null && props.size()> 0) {
@@ -135,14 +137,13 @@ public class BasicNetworkDAO implements AutoCloseable {
     	throw new ObjectNotFoundException(NdexClasses.Namespace, id);
     }
     
-	protected static String getSIDFromDoc(ODocument doc) {
-		String SID = doc.field(NdexClasses.Element_SID);
+	protected static Long getSIDFromDoc(ODocument doc) {
+		Long SID = doc.field(NdexClasses.Element_SID);
 		
-		if ( SID ==null)  {
-			Long id = doc.field(NdexClasses.Element_ID);
-			SID = id.toString();
+		if ( SID != null)  {
+			return SID;
 		}
-		return SID;
+		return doc.field(NdexClasses.Element_ID);
 	}
 
 	protected ODocument getRecordByUUIDStr(String id) 

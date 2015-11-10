@@ -35,9 +35,9 @@ import static org.junit.Assert.*;
 import java.util.UUID;
 
 import org.junit.Test;
-import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.NetworkSourceFormat;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 

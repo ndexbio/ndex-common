@@ -40,7 +40,6 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.junit.Test;
-import org.ndexbio.common.NetworkSourceFormat;
 import org.ndexbio.common.exporter.BioPAXNetworkExporter;
 import org.ndexbio.common.exporter.XGMMLNetworkExporter;
 import org.ndexbio.common.exporter.XbelNetworkExporter;
@@ -50,6 +49,7 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.NetworkSourceFormat;
 import org.ndexbio.model.object.network.Node;
 import org.xml.sax.SAXException;
 

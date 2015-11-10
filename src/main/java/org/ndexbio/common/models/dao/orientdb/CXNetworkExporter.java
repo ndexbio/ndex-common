@@ -112,25 +112,27 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         writeProvenance( cxwtr);
         
+        //always export the context first.
+        writeNamespacesInCX(cxwtr, -1);
+        
         // write name, desc and other properties;
         writeNetworkAttributes(cxwtr,-1);
         
-        writeNamespacesInCX(cxwtr, -1);
         
-        Map<Long,String> citationIdMap = new TreeMap<> ();
-        Map<Long,String> supportIdMap = new TreeMap<> ();
+        Map<Long,Long> citationIdMap = new TreeMap<> ();
+        Map<Long,Long> supportIdMap = new TreeMap<> ();
  //       Set<Long> repIdSet = new TreeSet<> ();
 
         
         for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
         	Long citationId = doc.field(NdexClasses.Element_ID);
-        	String SID = writeCitationInCX(doc, cxwtr);
+        	Long SID = writeCitationInCX(doc, cxwtr);
         	citationIdMap.put(citationId, SID);
         }
         
         for ( ODocument doc: getNetworkElements (NdexClasses.Network_E_Supports)) {
         	Long supportId = doc.field(NdexClasses.Element_ID);
-        	String SID = writeSupportInCX(doc, cxwtr);
+        	Long SID = writeSupportInCX(doc, cxwtr);
         	supportIdMap.put(supportId, SID);
         }
            
@@ -392,16 +394,16 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	        } 
 	}
 	
-	private void writeEdgeInCX(ODocument doc, CxWriter cxwtr, Map<Long,String> citationIdMap,
-		    Map<Long,String> supportIdMap ) throws ObjectNotFoundException, IOException {
+	private void writeEdgeInCX(ODocument doc, CxWriter cxwtr, Map<Long,Long> citationIdMap,
+		    Map<Long,Long> supportIdMap ) throws ObjectNotFoundException, IOException {
 	
-		String SID = getSIDFromDoc ( doc);
+		Long SID = getSIDFromDoc ( doc);
 
 		// track the counter
 	if ( edgeIdCounter >=0 ) {
 		try { 
 	   
-			long l = Long.parseLong(SID);
+			long l = SID.longValue();
 			if (l>edgeIdCounter)
 				edgeIdCounter = l;
 		} catch ( NumberFormatException e) {
@@ -454,19 +456,19 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 }
 
 	
-	private void writeEdgeAspectsInCX(ODocument doc, CxWriter cxwtr, Map<Long,String> citationIdMap,
-		    Map<Long,String> supportIdMap , 
+	private void writeEdgeAspectsInCX(ODocument doc, CxWriter cxwtr, Map<Long,Long> citationIdMap,
+		    Map<Long,Long> supportIdMap , 
 		    boolean writeEdges, boolean writeEdgeAttr,
 		    boolean writeEdgeCitationLinks, boolean writeEdgeSupportLinks) throws ObjectNotFoundException, IOException {
 	
-		String SID = getSIDFromDoc ( doc);
+		Long SID = getSIDFromDoc ( doc);
 	
 		if ( writeEdges) {
 			// track the counter
 			if ( edgeIdCounter >=0 ) {
 				try { 
 	   
-					long l = Long.parseLong(SID);
+					long l = SID.longValue();
 					if (l>edgeIdCounter)
 						edgeIdCounter = l;
 				} catch ( NumberFormatException e) {
@@ -523,23 +525,17 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	
 
 	
-	private String writeCitationInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
+	private Long writeCitationInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
 		
 	    CitationElement result = new CitationElement();
 		
-  	    String SID = getSIDFromDoc(doc);
+  	    Long SID = getSIDFromDoc(doc);
 		
 		// track the counter
 		if ( citationIdCounter >=0 ) {
-			try { 
-		   
-				long l = Long.parseLong(SID);
-				if (l>citationIdCounter)
-					citationIdCounter = l;
-			} catch ( NumberFormatException e) {
-				System.out.println("Non-numeric SID found in citation aspect. Will ignore tracking id counters for this aspect.");
-				citationIdCounter = -1;
-			}
+			if (SID.longValue()>citationIdCounter)
+				citationIdCounter = SID.longValue();
+
 		}
 				
 		result.setId(SID);
@@ -566,29 +562,29 @@ public class CXNetworkExporter extends SingleNetworkDAO {
     	return SID;
 	}
 
-	private void writeReifiedEdgeTermInCX(String nodeId, ODocument reifiedEdgeDoc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
+	private void writeReifiedEdgeTermInCX(Long nodeSID, ODocument reifiedEdgeDoc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
 		ODocument e = reifiedEdgeDoc.field("out_" + NdexClasses.ReifiedEdge_E_edge);
-		String eid = getSIDFromDoc(e);
+		Long eid = getSIDFromDoc(e);
 			
-		writeNdexAspectElementAsAspectFragment(cxwtr, new ReifiedEdgeElement(nodeId, eid));
+		writeNdexAspectElementAsAspectFragment(cxwtr, new ReifiedEdgeElement(nodeSID, eid));
 			
 	}
 	
 	
 	private void writeNodeInCX(ODocument doc, CxWriter cxwtr, 
-			 Map<Long,String> citationIdMap,  Map<Long,String> supportIdMap) 
+			 Map<Long,Long> citationIdMap,  Map<Long,Long> supportIdMap) 
 			throws IOException, NdexException {		
 		writeNodeAspectsInCX(doc, cxwtr, citationIdMap, supportIdMap,
 				true,true, true, true,true, true);
 	}
 	
 	private void writeNodeAspectsInCX(ODocument doc, CxWriter cxwtr, /*Set<Long> repIdSet, */
-			 Map<Long,String> citationIdMap,  Map<Long,String> supportIdMap,
+			 Map<Long,Long> citationIdMap,  Map<Long,Long> supportIdMap,
 			boolean writeNodes,boolean	writeNodeAttr, boolean writeFunctionTerm, boolean writeReifiedEdgeTerm,
 			boolean writeNodeCitationLinks, boolean writeNodeSupportLinks) 
 			throws IOException, NdexException {
 		
-		String SID = getSIDFromDoc(doc);
+		Long SID = getSIDFromDoc(doc);
 		
 		Long repId = doc.field(NdexClasses.Node_P_represents);
 		String represents = null;
@@ -615,15 +611,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		if (writeNodes) {
 			  // track the counter
 			  if ( nodeIdCounter >=0 ) {
-				try { 
-			   
-					long l = Long.parseLong(SID);
-					if (l>nodeIdCounter)
-						nodeIdCounter = l;
-				} catch ( NumberFormatException e) {
-					System.out.println("Non-numeric SID found in node aspect. Will ignore tracking id counters for this aspect.");
-					nodeIdCounter = -1;
-				}
+				long l = SID.longValue();
+				if (l>nodeIdCounter)
+					nodeIdCounter = l;
 			  }
 			  writeNdexAspectElementAsAspectFragment(cxwtr,
 					  new NodesElement(SID , (String) doc.field(NdexClasses.Node_P_name),represents));
@@ -637,7 +627,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			   supportIdMap , false, writeNodeCitationLinks, writeNodeSupportLinks );
 	}
 
-	private void writeNodeAttributesInCX(ODocument doc, CxWriter cxwtr, String SID)
+	private void writeNodeAttributesInCX(ODocument doc, CxWriter cxwtr, Long SID)
 			throws ObjectNotFoundException, IOException, NdexException {
 
 			Set<Long> aliases = doc.field(NdexClasses.Node_P_alias);
@@ -675,18 +665,18 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		 	}
 	}
 	
-	private void writeCitationAndSupportLinks(String SID, ODocument doc,  CxWriter cxwtr, Map<Long,String> citationIdMap,
-		    Map<Long,String> supportIdMap ,boolean isEdge, boolean writeCitationLinks, boolean writeSupportLinks ) throws ObjectNotFoundException, IOException {
+	private void writeCitationAndSupportLinks(Long SID, ODocument doc,  CxWriter cxwtr, Map<Long,Long> citationIdMap,
+		    Map<Long,Long> supportIdMap ,boolean isEdge, boolean writeCitationLinks, boolean writeSupportLinks ) throws ObjectNotFoundException, IOException {
    	
 	//write citations
 	if ( writeCitationLinks ) {
 	  Collection<Long> citations = doc.field(NdexClasses.Citation);
 	
 	  if ( citations !=null) {
-		List<String> cids = new ArrayList<String> (citations.size());
+		List<Long> cids = new ArrayList<> (citations.size());
 		
 		for ( Long citationId : citations) {
-			String csid = citationIdMap.get(citationId);
+			Long csid = citationIdMap.get(citationId);
 			if ( csid == null) {
 				csid = writeCitationInCX(getCitationDocById(citationId), cxwtr);
 				citationIdMap.put(citationId, csid);
@@ -706,10 +696,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		Collection<Long> supports = doc.field(NdexClasses.Support);
 	
 		if ( supports !=null) {
-			List<String> supIds = new ArrayList<String> (supports.size());
+			List<Long> supIds = new ArrayList<> (supports.size());
 		
 			for ( Long supId : supports) {
-				String ssid = supportIdMap.get(supId);
+				Long ssid = supportIdMap.get(supId);
 				if ( ssid == null) {
 					ssid = writeSupportInCX(getSupportDocById(supId), cxwtr);
 					supportIdMap.put(supId, ssid);
@@ -727,23 +717,17 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 }
 
 	
-	private String writeSupportInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
+	private Long writeSupportInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
 		
 		SupportElement result = new SupportElement();
 		
- 	    String SID = getSIDFromDoc(doc);
+ 	    Long SID = getSIDFromDoc(doc);
  	    
 		// track the counter
 		if ( supportIdCounter >=0 ) {
-			try { 
-		   
-				long l = Long.parseLong(SID);
-				if (l>supportIdCounter)
-					supportIdCounter = l;
-			} catch ( NumberFormatException e) {
-				System.out.println("Non-numeric SID found in support aspect. Will ignore tracking id counters for this aspect.");
-				supportIdCounter = -1;
-			}
+			long l = SID.longValue();
+			if (l>supportIdCounter)
+				supportIdCounter = l;
 		}
 		result.setId(SID);
 		result.setText((String)doc.field(NdexClasses.Support_P_text));
@@ -752,9 +736,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		
 		if ( citationId !=null) {
 			ODocument cDoc = this.getCitationDocById(citationId);
-			String cId = cDoc.field(NdexClasses.Element_SID);
+			Long cId = cDoc.field(NdexClasses.Element_SID);
 			if ( cId == null)
-				cId = ((Long)cDoc.field(NdexClasses.Element_ID)).toString();
+				cId = cDoc.field(NdexClasses.Element_ID);
 			result.setCitationId(cId);
 		}
 
@@ -806,7 +790,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	}
 	
 
-	private FunctionTermElement getFunctionTermsElementFromDoc(String nodeId, ODocument funcDoc) throws ObjectNotFoundException {
+	private FunctionTermElement getFunctionTermsElementFromDoc(Long nodeSID, ODocument funcDoc) throws ObjectNotFoundException {
 		Long btId = funcDoc.field(NdexClasses.BaseTerm);
 		String bt = this.getBaseTermStringById(btId);
 	
@@ -815,7 +799,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
  	    Object f = funcDoc.field("out_"+ NdexClasses.FunctionTerm_E_paramter);
 
  	    if ( f == null)   {   // function without parameters.
- 	    	return new FunctionTermElement(nodeId,bt, args);
+ 	    	return new FunctionTermElement(nodeSID,bt, args);
  	    }
 
  	    Iterable<ODocument> iterable =  ( f instanceof ODocument) ?
@@ -829,7 +813,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	    		args.add(func);
 	    	}
 	    }
-	    return new FunctionTermElement(nodeId, bt, args);
+	    return new FunctionTermElement(nodeSID, bt, args);
 	}
 
 	
@@ -918,8 +902,8 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         	} else {
         	
         		// tracking ids to SID mapping and baseterms that has been outputed.
-        		Map<Long,String> citationIdMap = new TreeMap<> ();
-        		Map<Long,String> supportIdMap = new TreeMap<> ();
+        		Map<Long,Long> citationIdMap = new TreeMap<> ();
+        		Map<Long,Long> supportIdMap = new TreeMap<> ();
         
         		if ( aspectName.equals(CitationElement.ASPECT_NAME)) {
         			for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
@@ -928,7 +912,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         				else 
         					break;
         				Long citationId = doc.field(NdexClasses.Element_ID);
-        				String SID = writeCitationInCX(doc, cxwtr);
+        				Long SID = writeCitationInCX(doc, cxwtr);
         				citationIdMap.put(citationId, SID);
         			}
         		} else if (aspectName.equals(SupportElement.ASPECT_NAME) ) {
@@ -938,7 +922,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         			else 
         				break;
         			Long supportId = doc.field(NdexClasses.Element_ID);
-        			String SID = writeSupportInCX(doc, cxwtr);
+        			Long SID = writeSupportInCX(doc, cxwtr);
         			supportIdMap.put(supportId, SID);
         			}
         		} else {
@@ -1108,15 +1092,15 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         }
         
         // tracking ids to SID mapping and baseterms that has been outputed.
-        Map<Long,String> citationIdMap = new TreeMap<> ();
-        Map<Long,String> supportIdMap = new TreeMap<> ();
+        Map<Long,Long> citationIdMap = new TreeMap<> ();
+        Map<Long,Long> supportIdMap = new TreeMap<> ();
      //   Set<Long> repIdSet = new TreeSet<> ();
 
         
         if ( aspects.contains(CitationElement.ASPECT_NAME)) {
         	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
         		Long citationId = doc.field(NdexClasses.Element_ID);
-        		String SID = writeCitationInCX(doc, cxwtr);
+        		Long SID = writeCitationInCX(doc, cxwtr);
         		citationIdMap.put(citationId, SID);
         	}
         	aspects.remove(CitationElement.ASPECT_NAME);
@@ -1125,7 +1109,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         if (aspects.contains(SupportElement.ASPECT_NAME) ) {
         	for ( ODocument doc: getNetworkElements (NdexClasses.Network_E_Supports)) {
         		Long supportId = doc.field(NdexClasses.Element_ID);
-        		String SID = writeSupportInCX(doc, cxwtr);
+        		Long SID = writeSupportInCX(doc, cxwtr);
         		supportIdMap.put(supportId, SID);
         	}
         	aspects.remove(SupportElement.ASPECT_NAME);

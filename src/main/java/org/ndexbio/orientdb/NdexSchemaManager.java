@@ -210,7 +210,7 @@ public class NdexSchemaManager
 
             citationClass.createProperty("contributors", OType.EMBEDDEDLIST, OType.STRING);
             citationClass.createProperty(NdexClasses.Element_ID, OType.LONG);
-            citationClass.createProperty(NdexClasses.Element_SID, OType.STRING);
+            citationClass.createProperty(NdexClasses.Element_SID, OType.LONG);
             citationClass.createProperty("properties", OType.EMBEDDEDLIST);
  //           citationClass.createProperty("presentationProperties", OType.EMBEDDEDLIST);
             citationClass.createProperty("title", OType.STRING);
@@ -221,7 +221,7 @@ public class NdexSchemaManager
         if (supportClass == null)
         {
             supportClass = orientDbGraph.createVertexType(NdexClasses.Support);
-            supportClass.createProperty(NdexClasses.Element_SID, OType.STRING);
+            supportClass.createProperty(NdexClasses.Element_SID, OType.LONG);
             supportClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             supportClass.createProperty("text", OType.STRING);
             supportClass.createProperty(NdexClasses.Citation, OType.LONG);
@@ -236,7 +236,7 @@ public class NdexSchemaManager
             edgeClass.createProperty(NdexClasses.Element_ID, OType.LONG);
             edgeClass.createProperty(NdexClasses.ndexProperties, OType.EMBEDDEDLIST);
             edgeClass.createProperty(NdexClasses.Edge_P_predicateId, OType.LONG);
-            edgeClass.createProperty(NdexClasses.Element_SID, OType.STRING);
+            edgeClass.createProperty(NdexClasses.Element_SID, OType.LONG);
 
             edgeClass.createProperty(NdexClasses.Citation, OType.EMBEDDEDSET);
             edgeClass.createProperty(NdexClasses.Support,OType.EMBEDDEDSET);
@@ -293,7 +293,7 @@ public class NdexSchemaManager
             nodeClass.createProperty(NdexClasses.Node_P_name, OType.STRING);
             nodeClass.createProperty(NdexClasses.Element_ID,  OType.LONG);
             nodeClass.createProperty(NdexClasses.ndexProperties, OType.EMBEDDEDLIST);
-            nodeClass.createProperty(NdexClasses.Element_SID, OType.STRING);
+            nodeClass.createProperty(NdexClasses.Element_SID, OType.LONG);
 
             nodeClass.createProperty(NdexClasses.Node_P_represents, OType.LONG);
             nodeClass.createProperty(NdexClasses.Node_P_representTermType, OType.STRING);

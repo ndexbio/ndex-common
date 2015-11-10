@@ -30,7 +30,7 @@
  */
 package org.ndexbio.task.parsingengines;
 
-import org.ndexbio.common.NetworkSourceFormat;
+import org.ndexbio.model.object.network.NetworkSourceFormat;
 
 public class TestMeasurement {
    public String fileName;

@@ -7,27 +7,15 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.cxio.aspects.datamodels.EdgeAttributesElement;
-import org.cxio.aspects.datamodels.EdgesElement;
-import org.cxio.aspects.datamodels.NetworkAttributesElement;
-import org.cxio.aspects.datamodels.NodeAttributesElement;
-import org.cxio.aspects.datamodels.NodesElement;
+
 import org.cxio.metadata.MetaDataCollection;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
-import org.ndexbio.model.cx.CitationElement;
-import org.ndexbio.model.cx.EdgeCitationLinksElement;
-import org.ndexbio.model.cx.EdgeSupportLinksElement;
-import org.ndexbio.model.cx.FunctionTermElement;
-import org.ndexbio.model.cx.NamespacesElement;
-import org.ndexbio.model.cx.NdexNetworkStatus;
-import org.ndexbio.model.cx.NodeCitationLinksElement;
-import org.ndexbio.model.cx.NodeSupportLinksElement;
-import org.ndexbio.model.cx.ReifiedEdgeElement;
-import org.ndexbio.model.cx.SupportElement;
+
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.network.Namespace;
+import org.ndexbio.model.object.network.NetworkSourceFormat;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
@@ -89,19 +77,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 	}
 	
 	*/
-	/*
-	private void writeDocPropertiesAsCX(ODocument doc, CxWriter cxwtr) throws IOException {
-	   	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
-    	if ( props !=null) {
-    		cxwtr.startAspectFragment(EdgeAttributesElement.NAME);
-    		for ( NdexPropertyValuePair p : props ) {
-    			EdgeAttributesElement ep = new EdgeAttributesElement ( null, p.getPredicateString(), p.getValue(), p.getDataType());
-    			cxwtr.writeAspectElement(ep);
-    		}
-    		cxwtr.endAspectFragment();
-    	}
-	}
-	*/
+
 
 
     protected String getBaseTermStringById(long id) throws ObjectNotFoundException {
@@ -152,29 +128,10 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		}
 		return result;
 	}
-   
-	/*private boolean isNdexSupportedAspect(String aspect) {
-		switch (aspect ) {
-		case NodesElement.ASPECT_NAME: 
-		case EdgesElement.ASPECT_NAME:
-		case EdgeAttributesElement.ASPECT_NAME:
-		case NodeAttributesElement.ASPECT_NAME:
-		case NetworkAttributesElement.ASPECT_NAME:
-		case CitationElement.ASPECT_NAME:
-		case EdgeCitationLinksElement.ASPECT_NAME:
-		case EdgeSupportLinksElement.ASPECT_NAME:
-		case FunctionTermElement.ASPECT_NAME:
-		case NamespacesElement.ASPECT_NAME:
-		case NdexNetworkStatus.ASPECT_NAME:
-		case NodeCitationLinksElement.ASPECT_NAME:
-		case NodeSupportLinksElement.ASPECT_NAME:
-		case ReifiedEdgeElement.ASPECT_NAME:
-		case SupportElement.ASPECT_NAME:
-			return true;
-		default: 
-			return false;
-		} 
-
-	} */
+	
+	
+   public NetworkSourceFormat getSourceFormat()    {
+	   return NetworkSourceFormat.valueOf((String)networkDoc.field(NdexClasses.Network_P_source_format));
+   }
 
 }
