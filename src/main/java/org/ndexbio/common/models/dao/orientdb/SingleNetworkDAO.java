@@ -1,19 +1,29 @@
 package org.ndexbio.common.models.dao.orientdb;
 
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
-
 
 import org.cxio.metadata.MetaDataCollection;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.model.cx.BELNamespaceElement;
 
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.object.Status;
+import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSourceFormat;
 
@@ -31,7 +41,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 	
     protected OrientGraph graph;
     protected String uuid;
-
+    
     
 	public SingleNetworkDAO ( String UUID) throws NdexException {
 		super();
@@ -134,4 +144,49 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 	   return NetworkSourceFormat.valueOf((String)networkDoc.field(NdexClasses.Network_P_source_format));
    }
 
+   /**
+    *  
+    * @param task This function will update the status in the passed in task argument. populate the message attribute in it 
+    * if error occurs.
+    * @return the status of this task. complete, error etc.
+ * @throws  
+    */
+   public Status attachNamespaceFiles(Task task) {
+	   try { 
+		   Map<String,String> namespaceFileMap = new TreeMap<>();
+		   for (Iterator<Namespace> i = getNamespaces() ; i.hasNext(); ) {
+			   Namespace ns = i.next();
+		   
+			   URL link = new URL(ns.getUri());
+			   InputStream in = new BufferedInputStream(link.openStream());
+			   String inputStreamString = new Scanner(in,"UTF-8").useDelimiter("\\A").next();
+			   namespaceFileMap.put(ns.getPrefix(),inputStreamString)	;
+			   in.close();
+		   }
+		   
+		   for ( Map.Entry<String, String > entry : namespaceFileMap.entrySet()) {
+			   ODocument doc = new ODocument ( NdexClasses.OpaqueElement)
+					   .fields(NdexClasses.BELPrefix, entry.getKey(),
+							   NdexClasses.BELNamespaceFileContent, entry.getValue()).save();
+			   networkVertex.addEdge(BELNamespaceElement.ASPECT_NAME, graph.getVertex(doc));
+		   }
+			
+		   task.setStatus(Status.COMPLETED);
+	   } catch (MalformedURLException e) {
+		   task.setMessage("Malformed URL found in namespace: " + e.getMessage());
+		   task.setStatus(Status.FAILED);
+		   
+	   } catch (IOException e) {
+		   task.setMessage("IOExeception when downloading namespace file. " + e.getMessage());
+		   
+		   task.setStatus(Status.FAILED);
+		   
+	   }
+	return task.getStatus();
+   }
+   
+
+   public void commit () {
+	   this.graph.commit();
+   }
 }

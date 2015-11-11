@@ -238,5 +238,10 @@ public interface NdexClasses {
     public static final String Request_E_requests   = "requests";
     
     //reserved NDEx property names
+    
+    //BEL namespace file record
+    public static final String BELPrefix = "prefix";
+    public static final String BELNamespaceFileContent = "content";
+    
 }
 
