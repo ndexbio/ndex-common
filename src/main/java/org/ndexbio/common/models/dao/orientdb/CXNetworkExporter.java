@@ -27,6 +27,7 @@ import org.cxio.util.CxioUtil;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.cx.aspect.CXMetaDataManager;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentWriter;
+import org.ndexbio.model.cx.BELNamespaceElement;
 import org.ndexbio.model.cx.CXSimpleAttribute;
 import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.cx.EdgeCitationLinksElement;
@@ -122,6 +123,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         	writeEdgeInCX(doc,cxwtr, citationIdMap, supportIdMap);
         }
         
+        for ( ODocument doc : getNetworkElements(BELNamespaceElement.ASPECT_NAME)) {
+        	writeNamespaceFileInCX(doc,cxwtr);
+        }
+
         writeOpaqueAspects(cxwtr);
         
         //Add post metadata
@@ -144,6 +149,13 @@ public class CXNetworkExporter extends SingleNetworkDAO {
     	  throw e;
       }
 
+	}
+
+	private void writeNamespaceFileInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
+		String prefix = doc.field(NdexClasses.BELPrefix);
+		String content = doc.field(NdexClasses.BELNamespaceFileContent);
+		
+		writeNdexAspectElementAsAspectFragment(cxwtr, new BELNamespaceElement(prefix, content));
 	}
 
 
@@ -326,13 +338,13 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	ODocument srcDoc = doc.field("in_"+ NdexClasses.Edge_E_subject);
 	ODocument tgtDoc = doc.field("out_"+NdexClasses.Edge_E_object);
 	
-	String srcId = srcDoc.field(NdexClasses.Element_SID);
+	Long srcId = srcDoc.field(NdexClasses.Element_SID);
 	if ( srcId == null )
-		srcId = ( (Long)srcDoc.field(NdexClasses.Element_ID)).toString();
+		srcId = srcDoc.field(NdexClasses.Element_ID);
 	
-	String tgtId = tgtDoc.field(NdexClasses.Element_SID);
+	Long tgtId = tgtDoc.field(NdexClasses.Element_SID);
 	if ( tgtId == null)
-		tgtId = ((Long)tgtDoc.field(NdexClasses.Element_ID)).toString();
+		tgtId = tgtDoc.field(NdexClasses.Element_ID);
 	
 	String relation = null;
 	Long predicate= doc.field(NdexClasses.Edge_P_predicateId);
@@ -391,13 +403,13 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			ODocument srcDoc = doc.field("in_"+ NdexClasses.Edge_E_subject);
 			ODocument tgtDoc = doc.field("out_"+NdexClasses.Edge_E_object);
 	
-			String srcId = srcDoc.field(NdexClasses.Element_SID);
+			Long srcId = srcDoc.field(NdexClasses.Element_SID);
 			if ( srcId == null )
-				srcId = ( (Long)srcDoc.field(NdexClasses.Element_ID)).toString();
+				srcId = srcDoc.field(NdexClasses.Element_ID);
 	
-			String tgtId = tgtDoc.field(NdexClasses.Element_SID);
+			Long tgtId = tgtDoc.field(NdexClasses.Element_SID);
 			if ( tgtId == null)
-				tgtId = ((Long)tgtDoc.field(NdexClasses.Element_ID)).toString();
+				tgtId = tgtDoc.field(NdexClasses.Element_ID);
 	
 			String relation = null;
 			Long predicate= doc.field(NdexClasses.Edge_P_predicateId);

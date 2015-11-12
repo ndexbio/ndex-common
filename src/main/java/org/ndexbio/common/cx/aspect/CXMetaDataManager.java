@@ -1,8 +1,6 @@
 package org.ndexbio.common.cx.aspect;
 
-import java.sql.Timestamp;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -13,7 +11,7 @@ import org.cxio.aspects.datamodels.NodeAttributesElement;
 import org.cxio.aspects.datamodels.NodesElement;
 import org.cxio.metadata.MetaDataCollection;
 import org.cxio.metadata.MetaDataElement;
-import org.ndexbio.common.NdexClasses;
+import org.ndexbio.model.cx.BELNamespaceElement;
 import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.cx.EdgeCitationLinksElement;
 import org.ndexbio.model.cx.EdgeSupportLinksElement;
@@ -62,6 +60,7 @@ public class CXMetaDataManager {
 	    	  NdexSupportedAspects.put(NdexNetworkStatus.ASPECT_NAME,"1.0");
 	    	  NdexSupportedAspects.put(Provenance.ASPECT_NAME,"1.0");
 	    	  NdexSupportedAspects.put(ReifiedEdgeElement.ASPECT_NAME,"1.0");	  
+	    	  NdexSupportedAspects.put(BELNamespaceElement.ASPECT_NAME, "1.0;");
 	}
 
 	public static synchronized CXMetaDataManager getInstance() {
