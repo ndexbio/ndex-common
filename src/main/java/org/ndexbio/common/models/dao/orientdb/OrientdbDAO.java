@@ -51,7 +51,6 @@ import com.tinkerpop.blueprints.Direction;
 
 public class OrientdbDAO implements AutoCloseable {
 
-	public static final int maxRetries = 100; 
 	
 	protected ODatabaseDocumentTx db;
 	private static final Logger logger = Logger.getLogger(OrientdbDAO.class.getName());

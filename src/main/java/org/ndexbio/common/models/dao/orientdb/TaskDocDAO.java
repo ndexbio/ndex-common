@@ -37,14 +37,17 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.Priority;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
+import org.ndexbio.model.object.TaskAttribute;
 import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.FileFormat;
 
@@ -184,7 +187,7 @@ public class TaskDocDAO extends OrientdbDAO {
     	ODocument doc = this.getRecordByUUID(task.getExternalId(), NdexClasses.Task);
     	Status s = Status.valueOf((String)doc.field(NdexClasses.Task_P_status));
     	if ( s != newStatus ) {
-       		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+       		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
        			try	{
        	    		doc.fields(NdexClasses.Task_P_status, newStatus,
          				   NdexClasses.ExternalObj_mTime, new Date()).save();
@@ -199,7 +202,7 @@ public class TaskDocDAO extends OrientdbDAO {
     }
 
     
-	public void saveTaskStatus (String taskID, Status status, String message) throws NdexException {
+	public void saveTaskStatus (String taskID, Status status, String message, String stackTrace) throws NdexException {
 			ODocument taskdoc = getRecordByUUIDStr(taskID, NdexClasses.Task);
 			
 			if ( status == Status.PROCESSING) {
@@ -210,6 +213,14 @@ public class TaskDocDAO extends OrientdbDAO {
 				taskdoc.fields(NdexClasses.Task_P_endTime, new Timestamp(Calendar.getInstance().getTimeInMillis()),
 						NdexClasses.Task_P_status, status.toString(),
 						NdexClasses.Task_P_message, message).save();
+				if ( stackTrace !=null) {
+					Map<String, Object> attributes = taskdoc.field(NdexClasses.Task_P_attributes);
+					if ( attributes == null) {
+						attributes = new TreeMap<>();
+					}
+					attributes.put(TaskAttribute.NdexServerStackTrace, stackTrace);
+					taskdoc.fields(NdexClasses.Task_P_attributes,attributes).save();
+				}
 			}
 	}
 
@@ -223,7 +234,7 @@ public class TaskDocDAO extends OrientdbDAO {
     public int deleteTask (UUID taskID) throws ObjectNotFoundException, NdexException {
         ODocument d = this.getRecordByUUID(taskID, NdexClasses.Task);
        
-   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+   		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
    			try	{
    		        d.fields(NdexClasses.ExternalObj_isDeleted,  true, 
    	        		 NdexClasses.ExternalObj_mTime, new Date()).save();

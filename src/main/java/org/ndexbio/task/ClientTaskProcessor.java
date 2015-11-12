@@ -73,9 +73,9 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 				logger.info("[start: starting task]");
 				
 				NdexTask t = getNdexTask(task);
-				saveTaskStatus(task.getExternalId().toString(), Status.PROCESSING, null);
+				saveTaskStatus(task.getExternalId().toString(), Status.PROCESSING, null,null);
 				Task taskObj = t.call();
-				saveTaskStatus(task.getExternalId().toString(), Status.COMPLETED, taskObj.getMessage());
+				saveTaskStatus(task.getExternalId().toString(), Status.COMPLETED, taskObj.getMessage(),null);
 
 				logger.info("[end: task completed]");
 
@@ -86,8 +86,8 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 				PrintWriter pw = new PrintWriter(sw);
 				e.printStackTrace(pw);     
 				try {
-					saveTaskStatus(task.getExternalId().toString(), Status.FAILED, e.getMessage() + "\n\n"
-							+ sw.toString());
+					saveTaskStatus(task.getExternalId().toString(), Status.FAILED, e.getMessage(), sw.toString() );
+
 				} catch (NdexException e1) {
 					logger.error("Error occured when saving task " + e1);
 				}
@@ -133,9 +133,9 @@ public class ClientTaskProcessor extends NdexTaskProcessor {
 	}
 
 
-	private static  void saveTaskStatus (String taskID, Status status, String message) throws NdexException {
+	private static  void saveTaskStatus (String taskID, Status status, String message, String stackTrace) throws NdexException {
 		try (TaskDocDAO dao = new TaskDocDAO (NdexDatabase.getInstance().getAConnection());) {
-			dao.saveTaskStatus(taskID, status, message);
+			dao.saveTaskStatus(taskID, status, message,stackTrace);
 			dao.commit();
 		}
 	}

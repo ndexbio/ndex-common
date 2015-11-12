@@ -140,7 +140,7 @@ public class NetworkDAO extends NetworkDocDAO {
 		// remove the network node.
 		networkDoc.reload();
 		
-		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
 			try	{
 				graph.removeVertex(graph.getVertex(networkDoc));
 				break;
@@ -207,7 +207,7 @@ public class NetworkDAO extends NetworkDocDAO {
 		int counter = currentCount;
 		doc.reload();
 
-		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
 			try	{
 				graph.removeVertex(graph.getVertex(doc));
 				break;

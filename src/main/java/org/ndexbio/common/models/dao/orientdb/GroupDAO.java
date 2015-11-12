@@ -35,6 +35,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.*;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.object.Group;
@@ -132,7 +133,7 @@ public class GroupDAO extends GroupDocDAO {
 				OrientVertex vGroup = graph.getVertex(group);
 
 				OrientVertex vAdmin = graph.getVertex(admin);
-		   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+		   		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
 		   			try	{
 						graph.addEdge(null, vAdmin, vGroup, Permissions.GROUPADMIN.toString().toLowerCase());
 		  				break;
@@ -221,7 +222,7 @@ public class GroupDAO extends GroupDocDAO {
 			
 				
             			
-	   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+	   		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
 	   			try	{
 	   				group.fields(NdexClasses.ExternalObj_isDeleted, true,
 	   						NdexClasses.ExternalObj_mTime, new Date(),
@@ -311,7 +312,7 @@ public class GroupDAO extends GroupDocDAO {
 				}
 
 				if ( edge != null) {
-			   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+			   		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
 			   			try	{
 							graph.removeEdge(edge);
 			  				break;
@@ -321,7 +322,7 @@ public class GroupDAO extends GroupDocDAO {
 			   		}
 				}
 				
-		   		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+		   		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
 		   			try	{
 						graph.addEdge(null, vMember, vGroup, membership.getPermissions().toString().toLowerCase());
 		  				break;

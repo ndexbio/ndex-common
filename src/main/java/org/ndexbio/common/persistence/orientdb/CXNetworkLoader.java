@@ -201,7 +201,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  ODocument ownerDoc = userdao.getRecordByAccountName(ownerAcctName, null) ;
 		  OrientVertex ownerV = graph.getVertex(ownerDoc);
 		  
-		  for	(int retry = 0;	retry <	OrientdbDAO.maxRetries;	++retry)	{
+		  for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
 				try	{
 					ownerV.reload();
 					ownerV.addEdge(NdexClasses.E_admin, this.networkVertex);

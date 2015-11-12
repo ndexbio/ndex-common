@@ -26,7 +26,9 @@ import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSourceFormat;
+import org.ndexbio.task.parsingengines.XbelParser;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -53,7 +55,6 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
 		graph.setUseLightweightEdges(true);
 		networkVertex = graph.getVertex(networkDoc);
-		
 		
 	}
 
@@ -145,48 +146,74 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
    }
 
    /**
+ * @throws NdexException 
+ * @throws IOException 
+ * @throws MalformedURLException 
     *  
     * @param task This function will update the status in the passed in task argument. populate the message attribute in it 
     * if error occurs.
     * @return the status of this task. complete, error etc.
  * @throws  
     */
-   public Status attachNamespaceFiles(Task task) {
-	   try { 
-		   Map<String,String> namespaceFileMap = new TreeMap<>();
-		   for (Iterator<Namespace> i = getNamespaces() ; i.hasNext(); ) {
+   public void attachNamespaceFiles() throws NdexException  {
+	   Map<String,String> namespaceFileMap = new TreeMap<>();
+		   
+	    // clear perviou archives if they exist.
+	   for ( ODocument rec : getNetworkElements(BELNamespaceElement.ASPECT_NAME) ) {
+			   cleanupElement(rec);
+	   }
+		   
+	   for (Iterator<Namespace> i = getNamespaces() ; i.hasNext(); ) {
 			   Namespace ns = i.next();
-		   
-			   URL link = new URL(ns.getUri());
-			   InputStream in = new BufferedInputStream(link.openStream());
-			   String inputStreamString = new Scanner(in,"UTF-8").useDelimiter("\\A").next();
-			   namespaceFileMap.put(ns.getPrefix(),inputStreamString)	;
-			   in.close();
+			   
+			if ( ! ns.getPrefix().equals(XbelParser.belPrefix) && 
+				! ns.getPrefix().equals("TextLocation") ) { // we ignore the bel and TextLocation prefix we put in from the loader
+			     try {   
+			    	 URL link = new URL(ns.getUri());
+			    	 InputStream in = new BufferedInputStream(link.openStream());
+			    	 String inputStreamString = new Scanner(in,"UTF-8").useDelimiter("\\A").next();
+			    	 namespaceFileMap.put(ns.getPrefix(),inputStreamString)	;
+			    	 in.close();
+			     } catch ( IOException e) {
+			    	 throw new NdexException ("IOException received when downloading file " + ns.getUri() + ": " + e.getMessage());
+			     }
 		   }
+	   }
 		   
-		   for ( Map.Entry<String, String > entry : namespaceFileMap.entrySet()) {
+	   for ( Map.Entry<String, String > entry : namespaceFileMap.entrySet()) {
 			   ODocument doc = new ODocument ( NdexClasses.OpaqueElement)
 					   .fields(NdexClasses.BELPrefix, entry.getKey(),
 							   NdexClasses.BELNamespaceFileContent, entry.getValue()).save();
 			   networkVertex.addEdge(BELNamespaceElement.ASPECT_NAME, graph.getVertex(doc));
-		   }
-			
-		   task.setStatus(Status.COMPLETED);
-	   } catch (MalformedURLException e) {
-		   task.setMessage("Malformed URL found in namespace: " + e.getMessage());
-		   task.setStatus(Status.FAILED);
-		   
-	   } catch (IOException e) {
-		   task.setMessage("IOExeception when downloading namespace file. " + e.getMessage());
-		   
-		   task.setStatus(Status.FAILED);
-		   
 	   }
-	return task.getStatus();
+	 
    }
    
+   public String getNamespaceFile ( String prefix) throws ObjectNotFoundException {
+	   for ( ODocument rec : getNetworkElements(BELNamespaceElement.ASPECT_NAME) ) {
+		   if ( rec.field(NdexClasses.BELPrefix).equals(prefix)){
+			   return rec.field(NdexClasses.BELNamespaceFileContent);
+		   }
+	   }
+	   throw new ObjectNotFoundException("Namespace file of " + prefix + " not found in this network.");
+   }
 
    public void commit () {
 	   this.graph.commit();
    }
+   
+	private void cleanupElement(ODocument doc) {
+		doc.reload();
+
+		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
+			try	{
+				graph.removeVertex(graph.getVertex(doc));
+				break;
+			} catch(ONeedRetryException	e)	{
+//				logger.warning("Retry: "+ e.getMessage());
+				doc.reload();
+			}
+		}
+	}
+
 }

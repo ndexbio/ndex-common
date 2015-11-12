@@ -65,6 +65,8 @@ public class NdexDatabase {
 	
 	private OPartitionedDatabasePool pool;
 	
+	public static final int maxRetries = 100; 
+	
 	private ODatabaseDocumentTx ndexDatabase;  // this connection is used for transactions in this database object.
 	
 	private ODictionary dictionary;

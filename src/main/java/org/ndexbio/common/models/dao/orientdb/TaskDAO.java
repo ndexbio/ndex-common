@@ -34,6 +34,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
@@ -101,7 +102,7 @@ public class TaskDAO extends TaskDocDAO {
 			OrientVertex taskV = graph.getVertex(taskDoc);
 			
 			OrientVertex userV = this.graph.getVertex(userDoc.reload());
-			for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+			for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
 				try	{
 					taskV.addEdge(NdexClasses.Task_E_owner, userV );
 
@@ -114,7 +115,7 @@ public class TaskDAO extends TaskDocDAO {
 				}
 			}
 			newTask.setTaskOwnerId(UUID.fromString(userUUID));
-
+			graph.commit();
 			NdexServerQueue.INSTANCE.addUserTask(newTask);
 		}
 		
@@ -130,7 +131,7 @@ public class TaskDAO extends TaskDocDAO {
         if ( isDeleted ) {
             OrientVertex v = graph.getVertex(d);
     			   
-     		for	(int retry = 0;	retry <	maxRetries;	++retry)	{
+     		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
      			try	{
    		   			v.remove();
    		   			break;
