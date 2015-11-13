@@ -39,7 +39,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 	public static final String CXsrcFormatAttrName="ndex:sourceFormat";
 	protected ODocument networkDoc;
 	
-	private OrientVertex networkVertex;
+	protected OrientVertex networkVertex;
 	
     protected OrientGraph graph;
     protected String uuid;

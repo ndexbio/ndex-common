@@ -49,6 +49,7 @@ import org.ndexbio.task.Configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.Direction;
 
 public class CXNetworkExporter extends SingleNetworkDAO {
 	
@@ -99,8 +100,6 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         Map<Long,Long> citationIdMap = new TreeMap<> ();
         Map<Long,Long> supportIdMap = new TreeMap<> ();
- //       Set<Long> repIdSet = new TreeSet<> ();
-
         
         for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
         	Long citationId = doc.field(NdexClasses.Element_ID);
@@ -708,6 +707,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(ReifiedEdgeElement.ASPECT_NAME));
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(NdexNetworkStatus.ASPECT_NAME));
         cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(Provenance.ASPECT_NAME));
+        cxwtr.addAspectFragmentWriter(new GeneralAspectFragmentWriter(BELNamespaceElement.ASPECT_NAME));
         
         return cxwtr;
 	}
@@ -1058,6 +1058,52 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         return counter;
 	}
 
+	
+	public MetaDataCollection getMetaDataCollection () {
+		MetaDataCollection md = networkDoc.field(NdexClasses.Network_P_metadata);
+		if ( md != null) {
+			return md;
+		}
+			
+		md = CXMetaDataManager.getInstance().createCXMataDataTemplate();
 
+        Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
+        int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
+        int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
+        
+        md.setElementCount(NodesElement.ASPECT_NAME, new Long(nodecount));
+        md.setElementCount(EdgesElement.ASPECT_NAME, new Long(edgecount));
+  
+        //check citation
+        populateMDElementCnt(md, NdexClasses.Network_E_Citations, CitationElement.ASPECT_NAME);
+        populateMDElementCnt(md, NdexClasses.Network_E_FunctionTerms, FunctionTermElement.ASPECT_NAME);
+        populateMDElementCnt(md, NdexClasses.Network_E_Namespace, NamespacesElement.ASPECT_NAME);
+        populateMDElementCnt(md, NdexClasses.Network_E_ReifiedEdgeTerms, ReifiedEdgeElement.ASPECT_NAME);
+        populateMDElementCnt(md, NdexClasses.Network_E_Supports, SupportElement.ASPECT_NAME);
+        populateMDElementCnt(md, BELNamespaceElement.ASPECT_NAME, BELNamespaceElement.ASPECT_NAME);
+        
+        if ( md.getMetaDataElement(CitationElement.ASPECT_NAME)==null) {
+        	md.remove(NodeCitationLinksElement.ASPECT_NAME);
+        	md.remove(EdgeCitationLinksElement.ASPECT_NAME);
+        }
+        if ( md.getMetaDataElement(SupportElement.ASPECT_NAME) == null) {
+        	md.remove(NodeSupportLinksElement.ASPECT_NAME);
+        	md.remove(EdgeSupportLinksElement.ASPECT_NAME);
+        }
+        for ( MetaDataElement e : md ) {
+            e.setLastUpdate(lastUpdate.getTime());
+        }
+        
+        return md;
+	}
+
+
+	private void populateMDElementCnt(MetaDataCollection md,String edgeName, String aspectName) {
+		long count = networkVertex.countEdges(Direction.OUT, edgeName);     
+        if ( count == 0 ) {
+        	md.remove(aspectName);
+        } else 
+        	md.setElementCount(aspectName, count);
+	}
 
 }

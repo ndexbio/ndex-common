@@ -80,7 +80,8 @@ public class CXMetaDataManager {
 			metadataElement .setConsistencyGroup(consistencyGroupId);
 	        md.add(metadataElement );
 
-		}    
+		}   
+		md.setElementCount(NdexNetworkStatus.ASPECT_NAME, 1l);
         return md;
 	}
 
@@ -95,8 +96,10 @@ public class CXMetaDataManager {
 			metadataElement .setName(aspectName);
 			metadataElement .setVersion(aspectVersion);
 			metadataElement .setConsistencyGroup(consistencyGroupId);
+	        if ( aspectName .equals(NdexNetworkStatus.ASPECT_NAME))
+	        	metadataElement.setElementCount(1L);
 	        md.add(metadataElement );
-
+	        	
 		}    
         return md;
 	}
