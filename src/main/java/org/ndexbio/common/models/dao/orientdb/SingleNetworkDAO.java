@@ -50,7 +50,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 		uuid = UUID;
 		networkDoc = getRecordByUUIDStr(UUID);
 		
-		graph =  new OrientGraph(db,false);
+		graph =  new OrientGraph(localConnection,false);
 		graph.setAutoScaleEdgeType(true);
 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
 		graph.setUseLightweightEdges(true);

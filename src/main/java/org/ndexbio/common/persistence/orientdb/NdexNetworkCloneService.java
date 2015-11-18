@@ -30,6 +30,7 @@
  */
 package org.ndexbio.common.persistence.orientdb;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
@@ -45,6 +46,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.solr.client.solrj.SolrServerException;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
@@ -140,8 +142,10 @@ public class NdexNetworkCloneService extends PersistenceService {
 	 * @return
 	 * @throws NdexException
 	 * @throws ExecutionException
+	 * @throws IOException 
+	 * @throws SolrServerException 
 	 */
-	public NetworkSummary updateNetwork() throws NdexException, ExecutionException {
+	public NetworkSummary updateNetwork() throws NdexException, ExecutionException, SolrServerException, IOException {
 		try {
 			
 			// create new network and set the isComplete flag to false 
@@ -187,6 +191,8 @@ public class NdexNetworkCloneService extends PersistenceService {
 			NdexServerQueue.INSTANCE.addSystemTask(task);
 			
 			this.network.setIsLocked(false);
+			createSolrIndex(networkDoc);
+			
 			return this.network;
 		} finally {
 			this.localConnection.commit();
@@ -242,7 +248,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 		
 	}
 
-	public NetworkSummary cloneNetwork() throws NdexException, ExecutionException {
+	public NetworkSummary cloneNetwork() throws Exception {
 		try {
 			logger.info("[start: cloning network]");
 			cloneNetworkCore();
@@ -258,6 +264,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			ownerV.addEdge(NdexClasses.E_admin, networkVertex);
 			this.localConnection.commit();
 	
+			createSolrIndex(networkDoc);
 			return this.network;
 		} catch (Exception e ) {
 			this.abortTransaction();

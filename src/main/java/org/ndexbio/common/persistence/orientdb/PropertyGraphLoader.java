@@ -256,7 +256,7 @@ public class PropertyGraphLoader {
 	
 	private void updateNetwork (UUID uuid, PropertyGraphNetwork network,  NdexPersistenceService persistenceService) throws Exception {
 		
-			NetworkDAO dao = new NetworkDAO(persistenceService.localConnection);
+			NetworkDAO dao = new NetworkDAO(persistenceService.getDbConnection());
 			
 			persistenceService.networkVertex.getRecord().field(NdexClasses.Network_P_isComplete, "false").save();
 			persistenceService.commit();

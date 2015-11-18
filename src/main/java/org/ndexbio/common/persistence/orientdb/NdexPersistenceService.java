@@ -843,6 +843,9 @@ public class NdexPersistenceService extends PersistenceService {
 					}
 				}
 			
+				// create the solr index
+				createSolrIndex(networkDoc);
+				
 				this.localConnection.commit();
 			}
 

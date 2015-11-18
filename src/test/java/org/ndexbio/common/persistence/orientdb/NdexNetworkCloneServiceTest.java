@@ -61,7 +61,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class NdexNetworkCloneServiceTest {
 
 	@Test
-	public void test() throws NdexException, ExecutionException {
+	public void test() throws Exception {
 		NdexDatabase db = NdexDatabase.createNdexDatabase("http://localhost", "plocal:/opt/ndex/orientdb/databases/cjtest", "admin", "admin", 10);
 		ODatabaseDocumentTx connection = db.getAConnection();
 		

@@ -40,12 +40,20 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.solr.client.solrj.SolrServerException;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.OrientDBIterableSingleLink;
 import org.ndexbio.common.models.object.network.RawNamespace;
+import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.common.util.TermUtilities;
+import org.ndexbio.model.cx.FunctionTermElement;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.network.Namespace;
@@ -61,7 +69,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public abstract class PersistenceService implements AutoCloseable {
+public abstract class PersistenceService extends BasicNetworkDAO {
 
 	//TODO: turn this into configuration property
 	private static final long CACHE_SIZE = 100000L;
@@ -88,7 +96,7 @@ public abstract class PersistenceService implements AutoCloseable {
     protected Logger logger ;
 
     protected OrientGraph graph;
-	protected ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
+//	protected ODatabaseDocumentTx  localConnection;  //all DML will be in this connection, in one transaction.
 	
 	 // prefix to URI mapping
 	 private static final Map<String, String> defaultNSMap;
@@ -709,5 +717,5 @@ public abstract class PersistenceService implements AutoCloseable {
 			return this.network;
 	}
 		
-
+	
 }

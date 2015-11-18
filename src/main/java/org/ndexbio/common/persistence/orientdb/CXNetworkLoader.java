@@ -41,7 +41,6 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentReader;
 import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.Helper;
-import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.models.dao.orientdb.SingleNetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
 import org.ndexbio.common.util.NdexUUIDFactory;
@@ -129,7 +128,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 		ownerAcctName = ownerAccountName;
 		
-		graph =  new OrientGraph(db,false);
+		graph =  new OrientGraph(localConnection,false);
 		graph.setAutoScaleEdgeType(true);
 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
 		graph.setUseLightweightEdges(true);
@@ -197,7 +196,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 		  // set the admin
 		
-		  UserDocDAO userdao = new UserDocDAO(db);
+		  UserDocDAO userdao = new UserDocDAO(localConnection);
 		  ODocument ownerDoc = userdao.getRecordByAccountName(ownerAcctName, null) ;
 		  OrientVertex ownerV = graph.getVertex(ownerDoc);
 		  
@@ -212,6 +211,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				}
 			}		
 		graph.commit();
+		createSolrIndex(networkDoc);
 		return uuid;
 		
 		} catch (Exception e) {
@@ -470,7 +470,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private Long createSupportBySID(Long sid) {
-		Long supportId =ndexdb.getNextId(db) ;
+		Long supportId =ndexdb.getNextId(localConnection) ;
 
 		new ODocument(NdexClasses.Support)
 		   .fields(NdexClasses.Element_ID, supportId,
@@ -488,7 +488,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		ODocument supportDoc;
 		
 		if ( supportId == null ) {
-			supportId = ndexdb.getNextId(db) ;
+			supportId = ndexdb.getNextId(localConnection) ;
 			supportDoc = new ODocument(NdexClasses.Support)
 					.fields(NdexClasses.Element_ID, supportId,
 							NdexClasses.Element_SID, elmt.getId(),
@@ -530,7 +530,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		 Long edgeSID = e.getEdge();
 		 ODocument edgeDoc = getOrCreateEdgeDocBySID(edgeSID); 
 		 
-		 Long termId = ndexdb.getNextId(db);
+		 Long termId = ndexdb.getNextId(localConnection);
 		 ODocument reifiedEdgeTermDoc = new ODocument(NdexClasses.ReifiedEdgeTerm)
 				 	.fields(NdexClasses.Element_ID, termId).save();
 				 			
@@ -551,7 +551,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private ODocument getOrCreateEdgeDocBySID(Long edgeSID) throws DuplicateObjectException, ObjectNotFoundException {
 		Long edgeId = edgeSIDMap.get(edgeSID);
 		 if (edgeId == null ) {
-				edgeId = ndexdb.getNextId(db);
+				edgeId = ndexdb.getNextId(localConnection);
 				
 				ODocument nodeDoc =
 					new ODocument(NdexClasses.Edge)
@@ -567,7 +567,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private ODocument getOrCreateNodeDocBySID(Long nodeSID) throws ObjectNotFoundException {
 		Long nodeId = nodeSIDMap.get(nodeSID);
 		if(nodeId == null) {
-			nodeId = ndexdb.getNextId(db);
+			nodeId = ndexdb.getNextId(localConnection);
 			
 		    ODocument nodeDoc = new ODocument(NdexClasses.Node)
 			   .fields(NdexClasses.Element_ID, nodeId,
@@ -615,7 +615,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 	private void createCXContext(NamespacesElement context) throws DuplicateObjectException {
 		for ( Map.Entry<String, String> e : context.entrySet()) {
-			Long nsId = ndexdb.getNextId(db);
+			Long nsId = ndexdb.getNextId(localConnection);
 
 			ODocument nsDoc = new ODocument(NdexClasses.Namespace);
 			nsDoc = nsDoc.fields(NdexClasses.Element_ID,nsId,
@@ -661,7 +661,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			   throw new DuplicateObjectException(NodesElement.ASPECT_NAME, node.getId());
 			nodeDoc = this.getNodeDocById(nodeId);
 		} else { 
-			nodeId = ndexdb.getNextId(db);
+			nodeId = ndexdb.getNextId(localConnection);
 			nodeDoc = new ODocument(NdexClasses.Node)
 					   .fields(NdexClasses.Element_ID, nodeId,
 							   NdexClasses.Element_SID, node.getId());
@@ -695,7 +695,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		ODocument edgeDoc; 
 
 		if ( edgeId == null ) { 
-		  edgeId = ndexdb.getNextId(db);
+		  edgeId = ndexdb.getNextId(localConnection);
 
 	      edgeDoc = new ODocument(NdexClasses.Edge)
 		   .fields(NdexClasses.Element_ID, edgeId,
@@ -729,7 +729,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private Long createCitationBySID(Long sid) throws DuplicateObjectException {
-		Long citationId = ndexdb.getNextId(db);
+		Long citationId = ndexdb.getNextId(localConnection);
 		
 	//	ODocument citationDoc = 
 		new ODocument(NdexClasses.Citation)
@@ -752,7 +752,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		Long citationId = citationSIDMap.get(c.getId());
 		ODocument citationDoc ;
 		if ( citationId == null) {
-			citationId = ndexdb.getNextId(db);
+			citationId = ndexdb.getNextId(localConnection);
 			citationDoc = new ODocument(NdexClasses.Citation)
 					  .fields(
 							NdexClasses.Element_ID, citationId,
@@ -787,7 +787,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private Long createFunctionTerm(FunctionTermElement func) throws NdexException  {
-		Long funcId = ndexdb.getNextId(db);
+		Long funcId = ndexdb.getNextId(localConnection);
 		
 		Long baseTermId = getBaseTermId(func.getFunctionName());
 		
@@ -893,7 +893,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private Long createBaseTerm(String prefix, String identifier, Long nsId) {
-		Long termId = ndexdb.getNextId(db);
+		Long termId = ndexdb.getNextId(localConnection);
 		
 		ODocument btDoc = new ODocument(NdexClasses.BaseTerm)
 		  .fields(NdexClasses.BTerm_P_name, identifier,

@@ -32,13 +32,94 @@ package org.ndexbio.common.models.object.network;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
+import org.apache.solr.client.solrj.response.CoreAdminResponse;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.SolrInputDocument;
 import org.junit.Test;
 import org.ndexbio.model.exceptions.NdexException;
 
 public class RawCitationTest {
 
+	@Test
+	public void test0() throws SolrServerException, IOException {
+		String solrUrl = "http://localhost:8983/solr/";
+		
+		String coreName = "test12";
+		HttpSolrClient client = new HttpSolrClient(solrUrl);
+				
+	//	ConcurrentUpdateSolrServer solrServer = new ConcurrentUpdateSolrServer(solrUrl, 1,2);
+	//	CoreAdminResponse foo = CoreAdminRequest.createCore(coreName, "test1", client, ""
+				
+	//			);
+		
+		CoreAdminRequest.Create creator = new CoreAdminRequest.Create(); 
+		creator.setCoreName(coreName);
+		creator.setConfigSet("data_driven_schema_configs");
+		creator.process(client);
+	
+		String baseURL = client.getBaseURL();
+		System.out.println("base url:"+ baseURL);
+		
+		client.setBaseURL(solrUrl+ coreName);
+		
+		Collection<SolrInputDocument> docs = new ArrayList<>();
+		SolrInputDocument doc1 = new SolrInputDocument();
+		doc1.addField("id",  12 );
+		doc1.addField("n", "XXBC");
+		doc1.addField("r", "HGNC:MK1");
+		doc1.addField("r", "MK1");
+		doc1.addField("a", "MKX");
+		doc1.addField("a", "MK2");
+		
+		docs.add(doc1);
+		
+		
+		SolrInputDocument doc2 = new SolrInputDocument();
+		doc2.addField("id",  22 );
+		doc2.addField("n", "protein");
+		doc2.addField("r", "UniProt:Q6FGS5");
+		doc2.addField("r", "Q6FGS5");
+		doc2.addField("a", "Ensembl:ENSP00000254661");
+		doc2.addField("a", "ENSP00000254661");
+		doc2.addField("a", "HGNC Symbol:RAMP1");
+		doc2.addField("a", "RAMP1");
+		
+		docs.add(doc2);
+		
+		
+		client.add(docs);
+		
+		client.commit();
+		
+		SolrQuery solrQuery = new SolrQuery();
+		
+		solrQuery.setQuery("protein").setFields("id");
+		QueryResponse rsp = client.query(solrQuery);
+		
+		SolrDocumentList  dds = rsp.getResults();
+		
+		for ( SolrDocument d : dds) {
+			System.out.println(d.get("id"));
+		}
+		
+		client.setBaseURL(baseURL);
+		
+	//	foo = CoreAdminRequest.unloadCore(coreName, client);
+//		System.out.println(foo);
+	}
+	
+	
 	@Test
 	public void test() throws NdexException {
 		
