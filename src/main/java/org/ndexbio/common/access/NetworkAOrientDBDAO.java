@@ -30,15 +30,20 @@
  */
 package org.ndexbio.common.access;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.common.SolrDocument;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
+import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
@@ -76,8 +81,6 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	   }
 
 
-
-
 	public PropertyGraphNetwork queryForSubPropertyGraphNetworkV2(final String networkId,
 			final SimplePathQuery parameters
 			//,final int skipBlocks,	final int blockSize
@@ -87,54 +90,6 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		return new PropertyGraphNetwork ( n);
 	}
 
-
-
-
-	private static Set<ORID> getNodeORIDsFromNames(ORID networkRid, int nodeLimit,
-			String searchString,NetworkDocDAO networkdao) throws NdexException {
-
-		Set<ORID> result = new TreeSet<>();
-
-		OIndex<?> basetermIdx =  networkdao.getDBConnection().getMetadata().getIndexManager().getIndex(NdexClasses.Index_BTerm_name);
-		OIndex<?> nodeRepIdx =  networkdao.getDBConnection().getMetadata().getIndexManager().getIndex(NdexClasses.Index_node_rep_id);
-		
-		for (OIdentifiable termOID : (Collection<OIdentifiable>) basetermIdx.get( searchString)) {
-			ODocument termDoc = (ODocument) termOID.getRecord();
-			OIdentifiable tnId = termDoc.field("in_" + NdexClasses.Network_E_BaseTerms);
-			if ( tnId != null && tnId.getIdentity().equals(networkRid)) {
-				Long bTermId = termDoc.field(NdexClasses.Element_ID);
-				for (OIdentifiable nodeOID : (Collection<OIdentifiable>) nodeRepIdx.get(bTermId )) {
-					if (nodeLimit >0 && result.size() > nodeLimit)
-						throw new NdexException(resultOverLimitMsg);
-					result.add(nodeOID.getIdentity());
-				}
-			}
-		}
-		
-		return result;
-	}
-
-	
-	private static Collection<ORID> getBaseTermRidsFromNamesV2(ORID networkRid, int nodeLimit,
-			String searchString,NetworkDocDAO networkdao) throws NdexException {
-
-		Set<ORID> result = new TreeSet<>();
-
-		OIndex<?> basetermIdx =  networkdao.getDBConnection().getMetadata().getIndexManager().getIndex(NdexClasses.Index_BTerm_name);
-		
-		for (OIdentifiable termOID : (Collection<OIdentifiable>) basetermIdx.get( searchString)) {
-			ODocument termDoc = (ODocument) termOID.getRecord();
-			OIdentifiable tnId = termDoc.field("in_" + NdexClasses.Network_E_BaseTerms);
-			if ( tnId != null && tnId.getIdentity().equals(networkRid)) {
-				result.add(termOID.getIdentity());
-				if (nodeLimit >0 && result.size() > nodeLimit)
-					throw new NdexException(resultOverLimitMsg);
-			}
-		}
-		
-		return result;
-	}
-
 	
 	public Network queryForSubnetworkV2(final String networkId,
 			final SimplePathQuery parameters
@@ -142,14 +97,12 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 		try (NetworkDocDAO dao = new NetworkDocDAO()){
 			ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
-			
-			final ORID networkRid = networkDoc.getIdentity();
-			
+						
 			final long startTime = System.currentTimeMillis();
 			System.out.println("Starting subnetworkQuery ");
       
 			Network result = new Network();
-			Set<ORID> nodeRIDs = getNodeRidsFromSearchString(networkRid, parameters.getSearchString(), parameters.getEdgeLimit()*2, 
+			Set<ORID> nodeRIDs = getNodeRidsFromSearchString(networkId, parameters.getSearchString(), parameters.getEdgeLimit()*2, 
 					    true, dao, result);
 			
 			Set<ORID> traversedEdges = new TreeSet<>();
@@ -189,62 +142,22 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	 * @param networkdao
 	 * @return
 	 * @throws NdexException
+	 * @throws IOException 
+	 * @throws SolrServerException 
 	 */
-	private Set<ORID> getNodeRidsFromSearchString(ORID networkRID,String searchString, int nodeLimit, boolean includeAliases, 
-			NetworkDocDAO networkdao ,Network resultNetwork) throws NdexException {
+	private Set<ORID> getNodeRidsFromSearchString(String networkUUID,String searchString, int nodeLimit, boolean includeAliases, 
+			NetworkDocDAO networkdao ,Network resultNetwork) throws NdexException, SolrServerException, IOException {
 		
-		Set<ORID> result = getNodeORIDsFromNames(networkRID,  nodeLimit, searchString,networkdao);
-		
-	  try {	
-		OTraverse traverser = new OTraverse()
-  			.fields("in_" + NdexClasses.FunctionTerm_E_paramter)
-  			.target(getBaseTermRidsFromNamesV2(networkRID, nodeLimit, searchString, networkdao));
-		
-		//TODO: commented out for now. Will put it back when we implment the Solr search.
-/*		if ( includeAliases)
-			traverser.field("in_" + NdexClasses.Node_E_alias); */
-		
-		for (OIdentifiable nodeRec : traverser) {
-            ODocument doc = null;
-			if  ( nodeRec instanceof ORecordId) 
-			    doc = new ODocument((ORecordId)nodeRec);
-			else if ( ((ODocument)nodeRec).getClassName().equals(NdexClasses.Node)) 
-				doc = (ODocument)nodeRec;
-			if ( doc !=null) {
-				ORID rid = nodeRec.getIdentity();
-				if ( !result.contains(rid) ) {
-					result.add(rid);
-                    Node n = networkdao.getNode(doc, resultNetwork);
-                    resultNetwork.getNodes().put(n.getId(), n);
-				}
-				if ( nodeLimit >0 && result.size()> nodeLimit) {
-					break;
-				}
-			}
-		}
-		
-	    OIndex<?> nodeNameIdx = networkdao.getDBConnection().getMetadata().getIndexManager().getIndex(NdexClasses.Index_node_name);
-				
-	 	for (OIdentifiable termOID : (Collection<OIdentifiable>) nodeNameIdx.get( searchString)) {
-			ODocument nodeDoc = (ODocument) termOID.getRecord();
-			OIdentifiable tnId = nodeDoc.field("in_" + NdexClasses.Network_E_Nodes);
-			if ( tnId != null && tnId.getIdentity().equals(networkRID)) {
-				
-				if ( !result.contains(nodeDoc.getIdentity())) {
-					result.add(nodeDoc.getIdentity());
-					Node n = networkdao.getNode(nodeDoc, resultNetwork);
-	                resultNetwork.getNodes().put(n.getId(), n);
-				}
-				if ( nodeLimit >0 && result.size() > nodeLimit) { 
-					throw new NdexException(resultOverLimitMsg);
-				}
-			}
-		}
+		Set<ORID> result = new TreeSet<>();
 
+		SingleNetworkSolrIdxManager mgr = new SingleNetworkSolrIdxManager(networkUUID);
+		for ( SolrDocument d : mgr.getNodeIdsByQuery(searchString,nodeLimit)) {
+			Object id = d.get(SingleNetworkSolrIdxManager.ID);
+			ODocument nodeDoc = networkdao.getDocumentByElementId(NdexClasses.Node, Long.parseLong((String)id));
+			result.add(nodeDoc.getIdentity());
+		}
+		
 		return result;
-	  } catch (OIndexException e1) {
-		  throw new NdexException ("Invalid search string. " + e1.getCause().getMessage());
-	  }
 	}
 
 
@@ -291,4 +204,42 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		return newNodes;
 	}
 
+	public void getSubnetworkInCX(OutputStream out, String networkId, SimplePathQuery query) {
+	/*	try (NetworkDocDAO dao = new NetworkDocDAO()){
+			ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
+						
+			final long startTime = System.currentTimeMillis();
+			System.out.println("Starting subnetworkQuery ");
+      
+			Network result = new Network();
+			Set<ORID> nodeRIDs = getNodeRidsFromSearchString(networkId, parameters.getSearchString(), parameters.getEdgeLimit()*2, 
+					    true, dao, result);
+			
+			Set<ORID> traversedEdges = new TreeSet<>();
+			
+			traverseNeighborHood(nodeRIDs, parameters.getSearchDepth(), dao, result, parameters.getEdgeLimit(),traversedEdges );
+
+			
+	        // copy the source format
+	        NetworkSourceFormat fmt = Helper.getSourceFormatFromNetworkDoc(networkDoc);
+	        if ( fmt!=null) {
+	        	result.getProperties().add(new NdexPropertyValuePair(NdexClasses.Network_P_source_format, fmt.toString()));
+	        }
+	        	
+
+			result.setEdgeCount(result.getEdges().size());
+			result.setNodeCount(result.getNodes().size());
+			
+			final long getSubnetworkTime = System.currentTimeMillis();
+			System.out.println("  Network Nodes : " + result.getNodeCount());
+			System.out.println("  Network Edges : " + result.getEdgeCount());
+			System.out.println("Getting Network : " + (getSubnetworkTime - startTime));
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new NdexException("Error in queryForSubnetwork: " + e.getLocalizedMessage());
+		} */
+
+	}
+	
 }

@@ -5,10 +5,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.ndexbio.model.exceptions.NdexException;
 
@@ -23,7 +27,7 @@ public class SingleNetworkSolrIdxManager {
 	private int counter ; 
 	private Collection<SolrInputDocument> docs ;
 	
-	private static final String ID = "id";
+	public static final String ID = "id";
 	private static final String NAME = "name";
 	private static final String REPRESENTS = "represents";
 	private static final String ALIAS= "alias";
@@ -32,6 +36,22 @@ public class SingleNetworkSolrIdxManager {
 	public SingleNetworkSolrIdxManager(String networkUUID) {
 		coreName = networkUUID;
 		client = new HttpSolrClient(solrUrl);
+	}
+	
+	public SolrDocumentList getNodeIdsByQuery(String query, int limit) throws SolrServerException, IOException {
+		client.setBaseURL(solrUrl+ "/" + coreName);
+
+		SolrQuery solrQuery = new SolrQuery();
+		
+		solrQuery.setQuery(query).setFields(ID);
+		solrQuery.setStart(0);
+		solrQuery.setRows(limit);
+		QueryResponse rsp = client.query(solrQuery);
+		
+		SolrDocumentList  dds = rsp.getResults();
+		
+		return dds;
+		
 	}
 	
 	public void createIndex() throws SolrServerException, IOException, NdexException {

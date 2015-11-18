@@ -34,7 +34,6 @@ public class BasicNetworkDAO implements AutoCloseable {
 	
 	public BasicNetworkDAO() throws NdexException {
 		this (NdexDatabase.getInstance().getAConnection());	
-		
 	}
 
 	public BasicNetworkDAO(ODatabaseDocumentTx dbconnection) throws NdexException {
