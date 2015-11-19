@@ -11,7 +11,6 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.ndexbio.model.exceptions.NdexException;
@@ -23,7 +22,7 @@ public class SingleNetworkSolrIdxManager {
 	private String coreName; 
 	private HttpSolrClient client;
 	
-	static private final  int batchSize = 5;
+	static private final  int batchSize = 2000;
 	private int counter ; 
 	private Collection<SolrInputDocument> docs ;
 	

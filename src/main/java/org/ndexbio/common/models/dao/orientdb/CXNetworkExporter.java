@@ -139,15 +139,16 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         //Add post metadata
         MetaDataCollection postmd = new MetaDataCollection ();
-        
-        if ( nodeIdCounter > 0 )
-        	postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
-        if ( edgeIdCounter > 0 )
-        	postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
-        if ( citationIdCounter >0)
-        	postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
-        if ( supportIdCounter > 0 )
-        	postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
+        if (!dbHasMetadata) {
+        	if ( md.getMetaDataElement(NodesElement.ASPECT_NAME) !=null)
+        		postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
+        	if ( md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null)
+        		postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
+        	if ( md.getMetaDataElement(CitationElement.ASPECT_NAME) !=null )
+        		postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
+        	if ( md.getMetaDataElement(SupportElement.ASPECT_NAME) !=null)
+        		postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
+        }
         if ( postmd.size() > 0 ) 
         	cxwtr.addPostMetaData(postmd);        
         cxwtr.end(true,"");
@@ -159,7 +160,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	}
 	
 
-	public static void writeNamespaceFileInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
+	private static void writeNamespaceFileInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
 		String prefix = doc.field(NdexClasses.BELPrefix);
 		String content = doc.field(NdexClasses.BELNamespaceFileContent);
 		
@@ -339,11 +340,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		Long SID = getSIDFromDoc ( doc);
 
 		// track the counter
-	if ( edgeIdCounter >=0 ) {
 		long l = SID.longValue();
 		if (l>edgeIdCounter)
 			edgeIdCounter = l;
-	}
 	
 	ODocument srcDoc = doc.field("in_"+ NdexClasses.Edge_E_subject);
 	ODocument tgtDoc = doc.field("out_"+NdexClasses.Edge_E_object);
@@ -398,11 +397,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	
 		if ( writeEdges) {
 			// track the counter
-			if ( edgeIdCounter >=0 ) {
-					long l = SID.longValue();
-					if (l>edgeIdCounter)
-						edgeIdCounter = l;
-			}
+			long l = SID.longValue();
+			if (l>edgeIdCounter)
+				edgeIdCounter = l;
 	
 			ODocument srcDoc = doc.field("in_"+ NdexClasses.Edge_E_subject);
 			ODocument tgtDoc = doc.field("out_"+NdexClasses.Edge_E_object);
@@ -516,11 +513,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
   	    Long SID = getSIDFromDoc(doc);
 		
 		// track the counter
-		if ( citationIdCounter >=0 ) {
-			if (SID.longValue()>citationIdCounter)
-				citationIdCounter = SID.longValue();
+		if (SID.longValue()>citationIdCounter)
+			citationIdCounter = SID.longValue();
 
-		}
 				
 		result.setId(SID);
 		result.setTitle((String)doc.field(NdexClasses.Citation_P_title));
@@ -768,11 +763,10 @@ public class CXNetworkExporter extends SingleNetworkDAO {
  	    Long SID = getSIDFromDoc(doc);
  	    
 		// track the counter
-		if ( supportIdCounter >=0 ) {
-			long l = SID.longValue();
-			if (l>supportIdCounter)
+		long l = SID.longValue();
+		if (l>supportIdCounter)
 				supportIdCounter = l;
-		}
+		
 		result.setId(SID);
 		result.setText((String)doc.field(NdexClasses.Support_P_text));
 		
@@ -1144,17 +1138,17 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         MetaDataCollection postmd = new MetaDataCollection ();
         
         if ( !dbHasMetadata) {
-        	if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null && nodeIdCounter > 0 ) {
+        	if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null  ) {
         		postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
         	}
         
-        	if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null && edgeIdCounter > 0 ) {
+        	if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null  ) {
         		postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
         	}
-        	if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null && citationIdCounter >0)
+        	if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null)
         		postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
         
-        	if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null && supportIdCounter > 0 )
+        	if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null )
         		postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
         }
         
@@ -1310,17 +1304,17 @@ public class CXNetworkExporter extends SingleNetworkDAO {
             MetaDataCollection postmd = new MetaDataCollection ();
             
             if ( !dbHasMetadata) {
-            	if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null && nodeIdCounter > 0 ) {
+            	if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null ) {
             		postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
             	}
             
-            	if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null && edgeIdCounter > 0 ) {
+            	if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null ) {
             		postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
             	}
-            	if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null && citationIdCounter >0)
+            	if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null )
             		postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
             
-            	if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null && supportIdCounter > 0 )
+            	if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null  )
             		postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
             }
             
