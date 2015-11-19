@@ -10,12 +10,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
 import org.cxio.aspects.datamodels.NetworkAttributesElement;
 import org.cxio.aspects.datamodels.NodeAttributesElement;
 import org.cxio.aspects.datamodels.NodesElement;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.common.SolrDocument;
 import org.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
 import org.cxio.aspects.datamodels.AttributesAspectUtils;
 import org.cxio.core.CxWriter;
@@ -25,8 +28,10 @@ import org.cxio.metadata.MetaDataCollection;
 import org.cxio.metadata.MetaDataElement;
 import org.cxio.util.CxioUtil;
 import org.ndexbio.common.NdexClasses;
+import org.ndexbio.common.access.NetworkAOrientDBDAO;
 import org.ndexbio.common.cx.aspect.CXMetaDataManager;
 import org.ndexbio.common.cx.aspect.GeneralAspectFragmentWriter;
+import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.model.cx.BELNamespaceElement;
 import org.ndexbio.model.cx.CXSimpleAttribute;
 import org.ndexbio.model.cx.CitationElement;
@@ -42,12 +47,14 @@ import org.ndexbio.model.cx.ReifiedEdgeElement;
 import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
+import org.ndexbio.model.object.CXSimplePathQuery;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.task.Configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 
@@ -75,11 +82,13 @@ public class CXNetworkExporter extends SingleNetworkDAO {
        
 		init();
 	
+		boolean dbHasMetadata = true;
 		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
         
 		MetaDataCollection md = networkDoc.field(NdexClasses.Network_P_metadata);
 		if ( md == null) {
-			md = this.createCXMataData();
+			dbHasMetadata = false;
+			md = this.getMetaDataCollection();
 		}
 		
         cxwtr.addPreMetaData(md);
@@ -129,7 +138,6 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         writeOpaqueAspects(cxwtr);
         
         //Add post metadata
-        
         MetaDataCollection postmd = new MetaDataCollection ();
         
         if ( nodeIdCounter > 0 )
@@ -149,8 +157,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
       }
 
 	}
+	
 
-	private void writeNamespaceFileInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
+	public static void writeNamespaceFileInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
 		String prefix = doc.field(NdexClasses.BELPrefix);
 		String content = doc.field(NdexClasses.BELNamespaceFileContent);
 		
@@ -209,7 +218,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         		try {
         			t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
         		} catch (IllegalArgumentException e) {
-        			System.out.println("Property type " + p.getDataType() + " unsupported. Converting it to String in CX output.");
+        			System.out.println("Property type " + p.getDataType() + " unsupported. Converting it to String in CX output. Error message: " + e.getMessage());
         		}	
         		if ( !AttributesAspectUtils.isListType(t)) {
         			writeNdexAspectElementAsAspectFragment(cxwtr,
@@ -303,13 +312,15 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         return 0;
 	}
 
-	
+/*	
 	private MetaDataCollection createCXMataData() {
 		MetaDataCollection md = CXMetaDataManager.getInstance().createCXMataDataTemplate();
 
         Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
         int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
         int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
+        
+        if ( networkDoc.field("out_" + NdexClasses.Network_E_BaseTerms) !=null)
         
         md.setElementCount(NodesElement.ASPECT_NAME, new Long(nodecount));
         md.setElementCount(EdgesElement.ASPECT_NAME, new Long(edgecount));
@@ -320,7 +331,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         return md;
 	}
-	
+*/	
 
 	private void writeEdgeInCX(ODocument doc, CxWriter cxwtr, Map<Long,Long> citationIdMap,
 		    Map<Long,Long> supportIdMap ) throws ObjectNotFoundException, IOException {
@@ -388,15 +399,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		if ( writeEdges) {
 			// track the counter
 			if ( edgeIdCounter >=0 ) {
-				try { 
-	   
 					long l = SID.longValue();
 					if (l>edgeIdCounter)
 						edgeIdCounter = l;
-				} catch ( NumberFormatException e) {
-					System.out.println("Non-numeric SID found in edge aspect. Will ignore tracking id counters for this aspect.");
-					edgeIdCounter = -1;
-				}
 			}
 	
 			ODocument srcDoc = doc.field("in_"+ NdexClasses.Edge_E_subject);
@@ -445,6 +450,63 @@ public class CXNetworkExporter extends SingleNetworkDAO {
    
 }
 	
+	private void writeEdgeAspectsInCX(ODocument doc, CxWriter cxwtr, Set<String> aspects, Map<Long,Long> citationIdMap,
+		    Map<Long,Long> supportIdMap) throws ObjectNotFoundException, IOException {
+	
+		Long SID = getSIDFromDoc ( doc);
+	
+		if ( aspects.contains(EdgesElement.ASPECT_NAME)) {
+			// track the counter
+			long l = SID.longValue();
+			if (l>edgeIdCounter)
+			    edgeIdCounter = l;
+	
+			ODocument srcDoc = doc.field("in_"+ NdexClasses.Edge_E_subject);
+			ODocument tgtDoc = doc.field("out_"+NdexClasses.Edge_E_object);
+	
+			Long srcId = srcDoc.field(NdexClasses.Element_SID);
+			if ( srcId == null )
+				srcId = srcDoc.field(NdexClasses.Element_ID);
+	
+			Long tgtId = tgtDoc.field(NdexClasses.Element_SID);
+			if ( tgtId == null)
+				tgtId = tgtDoc.field(NdexClasses.Element_ID);
+	
+			String relation = null;
+			Long predicate= doc.field(NdexClasses.Edge_P_predicateId);
+	
+			if ( predicate !=null) {
+				relation = this.getBaseTermStringById(predicate);
+			}
+	
+			EdgesElement e = new EdgesElement(SID, srcId, tgtId,relation);
+	
+			writeNdexAspectElementAsAspectFragment(cxwtr,e);
+		}
+  
+		if ( aspects.contains(EdgeAttributesElement.ASPECT_NAME)) {
+			// write other properties
+			List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
+			if ( props !=null) {
+					cxwtr.startAspectFragment(EdgeAttributesElement.ASPECT_NAME);
+					for ( NdexPropertyValuePair p : props ) {
+						ATTRIBUTE_DATA_TYPE t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
+						EdgeAttributesElement ep = AttributesAspectUtils.isListType(t) ? 
+								EdgeAttributesElement.createInstanceWithMultipleValues ( p.getSubNetworkId(), 
+										SID, p.getPredicateString(), p.getValue(), t) : 
+								new EdgeAttributesElement ( p.getSubNetworkId(), SID, p.getPredicateString(), p.getValue(),t);
+								cxwtr.writeAspectElement(ep);
+					}
+					cxwtr.endAspectFragment();
+			}
+		}
+		
+		//write citations
+		writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
+		   supportIdMap , true, aspects.contains(CitationElement.ASPECT_NAME),
+		   aspects.contains(SupportElement.ASPECT_NAME) );
+   
+}
 
 	
 	private Long writeCitationInCX(ODocument doc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
@@ -484,7 +546,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
     	return SID;
 	}
 
-	private void writeReifiedEdgeTermInCX(Long nodeSID, ODocument reifiedEdgeDoc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
+	private static void writeReifiedEdgeTermInCX(Long nodeSID, ODocument reifiedEdgeDoc, CxWriter cxwtr) throws ObjectNotFoundException, IOException {
 		ODocument e = reifiedEdgeDoc.field("out_" + NdexClasses.ReifiedEdge_E_edge);
 		Long eid = getSIDFromDoc(e);
 			
@@ -500,7 +562,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 				true,true, true, true,true, true);
 	}
 	
-	private void writeNodeAspectsInCX(ODocument doc, CxWriter cxwtr, /*Set<Long> repIdSet, */
+	private void writeNodeAspectsInCX(ODocument doc, CxWriter cxwtr, 
 			 Map<Long,Long> citationIdMap,  Map<Long,Long> supportIdMap,
 			boolean writeNodes,boolean	writeNodeAttr, boolean writeFunctionTerm, boolean writeReifiedEdgeTerm,
 			boolean writeNodeCitationLinks, boolean writeNodeSupportLinks) 
@@ -532,11 +594,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		
 		if (writeNodes) {
 			  // track the counter
-			  if ( nodeIdCounter >=0 ) {
 				long l = SID.longValue();
 				if (l>nodeIdCounter)
 					nodeIdCounter = l;
-			  }
 			  writeNdexAspectElementAsAspectFragment(cxwtr,
 					  new NodesElement(SID , (String) doc.field(NdexClasses.Node_P_name),represents));
 		}
@@ -549,6 +609,68 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			   supportIdMap , false, writeNodeCitationLinks, writeNodeSupportLinks );
 	}
 
+	/**
+	 * This function is for exporting aspects in a subnetwork.
+	 * @param id
+	 * @param doc
+	 * @param cxwtr
+	 * @param aspects
+	 * @param nodeIdMap
+	 * @param citationIdMap
+	 * @param supportIdMap
+	 * @throws IOException
+	 * @throws NdexException
+	 */
+	private void writeNodeAspectsInCX(Long id,ODocument doc, CxWriter cxwtr, Set<String> aspects,
+			 Map<Long, Long> nodeIdMap, Map<Long,Long> citationIdMap,  Map<Long,Long> supportIdMap) 
+			throws IOException, NdexException {
+		
+		Long SID = getSIDFromDoc(doc);
+		nodeIdMap.put(id, SID);
+		Long repId = doc.field(NdexClasses.Node_P_represents);
+		String represents = null;
+		if ( repId != null && repId.longValue() > 0) {
+			String termType = doc.field(NdexClasses.Node_P_representTermType);
+			
+			if ( termType.equals(NdexClasses.BaseTerm) ) {
+				represents = this.getBaseTermStringById(repId);
+			} else if (termType.equals(NdexClasses.ReifiedEdgeTerm) ) {
+				if ( aspects.contains(ReifiedEdgeElement.ASPECT_NAME)) {
+					ODocument reifiedEdgeDoc = this.getReifiedEdgeDocById(repId);
+					writeReifiedEdgeTermInCX(SID, reifiedEdgeDoc, cxwtr);
+				}
+			} else if (termType.equals(NdexClasses.FunctionTerm) ) {
+				if ( aspects.contains(FunctionTermElement.ASPECT_NAME)) {
+					ODocument funcDoc = this.getFunctionDocById(repId);
+					writeNdexAspectElementAsAspectFragment(cxwtr, getFunctionTermsElementFromDoc(SID, funcDoc));
+				}
+			} else 
+				throw new NdexException ("Unsupported term type '" + termType + 
+								"' found for term Id:" + repId);
+		}		
+		
+		if (aspects.contains(NodesElement.ASPECT_NAME)) {
+			  // track the counter
+			long l = SID.longValue();
+			if (l>nodeIdCounter)
+					nodeIdCounter = l;
+			writeNdexAspectElementAsAspectFragment(cxwtr,
+					  new NodesElement(SID , (String) doc.field(NdexClasses.Node_P_name),represents));
+		}
+		
+		if ( aspects.contains(NodeAttributesElement.ASPECT_NAME))
+			writeNodeAttributesInCX(doc, cxwtr, /*repIdSet, */SID);
+ 	
+		//writeCitations and supports
+		writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
+			   supportIdMap , false, aspects.contains(CitationElement.ASPECT_NAME),
+			   aspects.contains(SupportElement.ASPECT_NAME));
+	}
+	
+	
+	
+	
+	
 	private void writeNodeAttributesInCX(ODocument doc, CxWriter cxwtr, Long SID)
 			throws ObjectNotFoundException, IOException, NdexException {
 
@@ -680,14 +802,14 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	}
      
 		
-    private void writeNdexAspectElementAsAspectFragment (CxWriter cxwtr, AspectElement element ) throws IOException {
+    private static void writeNdexAspectElementAsAspectFragment (CxWriter cxwtr, AspectElement element ) throws IOException {
     	cxwtr.startAspectFragment(element.getAspectName());
 		cxwtr.writeAspectElement(element);
 		cxwtr.endAspectFragment();
     }
 
 
-	private CxWriter getNdexCXWriter(OutputStream out, boolean use_default_pretty_printer) throws IOException {
+	private static CxWriter getNdexCXWriter(OutputStream out, boolean use_default_pretty_printer) throws IOException {
         CxWriter cxwtr = CxWriter.createInstance(out, use_default_pretty_printer);
         
         GeneralAspectFragmentWriter cfw = new GeneralAspectFragmentWriter(CitationElement.ASPECT_NAME);
@@ -868,6 +990,30 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	
 	/**
 	 * 
+	 * @return
+	 * @throws NdexException 
+	 */
+/*	private boolean populatePreMetadataForAspects (MetaDataCollection preMetadata, Set<String> aspects) throws NdexException  {		
+		
+		boolean dbHasMetadata = true;
+		MetaDataCollection metadata = networkDoc.field(NdexClasses.Network_P_metadata);
+		if ( metadata == null) {
+			dbHasMetadata = false;
+			metadata = this.getMetaDataCollection();
+		}		
+		
+		for (String aspectName : aspects) {
+			MetaDataElement e = metadata.getMetaDataElement(aspectName);
+			if ( e == null)
+					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
+	//		preMetaData.add(e);
+		}
+		return dbHasMetadata;
+	} */
+	
+	
+	/**
+	 * 
 	 * @param out
 	 * @param aspects should be not null and not empty.
 	 * @throws NdexException 
@@ -880,34 +1026,21 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		//prepare metadata
 		MetaDataCollection preMetaData ;
 		
-		boolean dbHasMetadata = false;
+		boolean dbHasMetadata = true;
 		MetaDataCollection metadata = networkDoc.field(NdexClasses.Network_P_metadata);
-		if ( metadata != null) {
-			dbHasMetadata = true;
-			preMetaData = new MetaDataCollection();
-			for (String aspectName : aspects) {
-				MetaDataElement e = metadata.getMetaDataElement(aspectName);
-				if ( e == null)
+		if ( metadata == null) {
+			dbHasMetadata = false;
+			metadata = this.getMetaDataCollection();
+		}		
+		
+		preMetaData = new MetaDataCollection();
+		for (String aspectName : aspects) {
+			MetaDataElement e = metadata.getMetaDataElement(aspectName);
+			if ( e == null)
 					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
-				preMetaData.add(e);
-			}
-		} else {
-			// construct metadata
-			preMetaData = CXMetaDataManager.getInstance().createCXMataDataTemplateForAspects(aspects);
-		    long lastUpdate =  ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime();
-		    int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
-		    int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
-		    
-		    if ( aspects.contains(NodesElement.ASPECT_NAME))
-		    	preMetaData.setElementCount(NodesElement.ASPECT_NAME, new Long(nodecount));
-		    if ( aspects.contains(EdgesElement.ASPECT_NAME))
-		    	preMetaData.setElementCount(EdgesElement.ASPECT_NAME, new Long(edgecount));
-		    
-		    for ( MetaDataElement e : preMetaData) {
-		    	e.setLastUpdate(lastUpdate);
-		    }
-
+			preMetaData.add(e);
 		}
+		
 		
 		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
         cxwtr.addPreMetaData(preMetaData);
@@ -1105,5 +1238,190 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         } else 
         	md.setElementCount(aspectName, count);
 	}
+	
 
+	public void exportSubnetworkInCX(OutputStream out, CXSimplePathQuery parameters, boolean use_default_pretty_printer) throws Exception {
+						
+		init();
+		
+		//prepare metadata
+		MetaDataCollection preMetaData ;
+		
+		boolean dbHasMetadata = true;
+		MetaDataCollection metadata = networkDoc.field(NdexClasses.Network_P_metadata);
+		if ( metadata == null) {
+			dbHasMetadata = false;
+			metadata = this.getMetaDataCollection();
+		}		
+		
+		Set<String> aspects = parameters.getAspects();
+		preMetaData = new MetaDataCollection();
+		for (String aspectName : aspects) {
+			MetaDataElement e = metadata.getMetaDataElement(aspectName);
+			if ( e == null)
+					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
+			preMetaData.add(e);
+		}
+		
+		
+		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
+        cxwtr.addPreMetaData(preMetaData);		
+		
+        try {   
+            cxwtr.start();
+
+            // write network level aspects
+            //write NdexStatus
+            if (aspects.contains(NdexNetworkStatus.ASPECT_NAME)) {
+               writeNdexStatus(cxwtr);
+               aspects.remove(NdexNetworkStatus.ASPECT_NAME);
+            }
+            
+            // write provenance
+            if ( aspects.contains(Provenance.ASPECT_NAME)) {
+            	writeProvenance(cxwtr);
+            	aspects.remove(Provenance.ASPECT_NAME);
+            }
+            
+            // write name, desc and other properties;
+            if ( aspects.contains(NetworkAttributesElement.ASPECT_NAME)) {
+               writeNetworkAttributes(cxwtr, -1);
+               aspects.remove(NetworkAttributesElement.ASPECT_NAME);
+            }
+            
+            //write namespaces 
+            if (  aspects.contains(NamespacesElement.ASPECT_NAME)) {
+            	writeNamespacesInCX(cxwtr, -1);
+            	aspects.remove(NetworkAttributesElement.ASPECT_NAME);
+            }
+
+            
+    		// start writing ndex aspects out.
+            writeNeighborhoodSubNetworkAspects(cxwtr, parameters);
+            
+            //writing opaque aspects
+            for ( String aspect : aspects) {
+            	if ( !CXMetaDataManager.getInstance().isNdexSupportedAspect(aspect))
+            		writeOpaqueAspect(cxwtr, aspect, -1);
+            }
+
+            //Add post metadata
+            
+            MetaDataCollection postmd = new MetaDataCollection ();
+            
+            if ( !dbHasMetadata) {
+            	if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null && nodeIdCounter > 0 ) {
+            		postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
+            	}
+            
+            	if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null && edgeIdCounter > 0 ) {
+            		postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
+            	}
+            	if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null && citationIdCounter >0)
+            		postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
+            
+            	if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null && supportIdCounter > 0 )
+            		postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
+            }
+            
+            if ( postmd.size()>0)
+              cxwtr.addPostMetaData(postmd);        
+            cxwtr.end(true, "");
+         } catch (Exception e )  {
+        	 cxwtr.end(false, "Error: " + e.getMessage());
+        	 throw e;
+         }
+
+
+	}
+	
+	private void  writeNeighborhoodSubNetworkAspects(CxWriter cxwtr, CXSimplePathQuery parameters) throws NdexException, SolrServerException, IOException {
+		
+	    // tracking ids to SID mapping that has been outputed.
+        Map<Long,Long> citationIdMap = new TreeMap<> ();
+        Map<Long,Long> supportIdMap = new TreeMap<> ();            
+        
+        Map<Long,Long> nodeIdMap = new TreeMap<>();
+ //       Map<Long,Long> edgeIdMap = new TreeMap<>();
+        
+
+		Set<ORID> nodeRIDs = getNodeRidsFromSearchString( cxwtr, parameters.getAspects(), parameters.getSearchString(), parameters.getEdgeLimit()*2, 
+					nodeIdMap, citationIdMap, supportIdMap);
+
+		Set<ORID> traversedEdges = new TreeSet<>();
+
+		traverseNeighborHoodAndOutputCX(cxwtr, parameters.getAspects(),nodeRIDs, parameters.getSearchDepth(), parameters.getEdgeLimit(),traversedEdges,
+				nodeIdMap,citationIdMap, supportIdMap);
+	}
+	
+	private Set<ORID> getNodeRidsFromSearchString(CxWriter wtr, Set<String> aspects,
+			 String searchString, int nodeLimit, Map<Long,Long> nodeIdMap,
+			 Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap) throws NdexException, SolrServerException, IOException {
+		
+		Set<ORID> result = new TreeSet<>();
+
+		SingleNetworkSolrIdxManager mgr = new SingleNetworkSolrIdxManager(uuid);
+		for ( SolrDocument d : mgr.getNodeIdsByQuery(searchString,nodeLimit)) {
+			String idstr = (String)d.get(SingleNetworkSolrIdxManager.ID);
+			Long id = Long.parseLong(idstr);
+			ODocument nodeDoc =  getNodeDocById( id );
+			result.add(nodeDoc.getIdentity());
+			
+			writeNodeAspectsInCX(id,nodeDoc, wtr, aspects, nodeIdMap,citationIdMap,supportIdMap );
+
+		}
+		
+		return result;
+	}
+	
+	
+	private void  traverseNeighborHoodAndOutputCX(CxWriter wtr, Set<String> aspects,
+			   Set<ORID> nodeRIDs, int searchDepth, int edgeLimit ,Set<ORID> traversedEdges,
+			   Map<Long,Long> nodeIdMap, Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap
+			   ) throws NdexException, IOException  {
+		if ( searchDepth <= 0 ) return ;
+		
+		Set<ORID> newNodes1 = getNeighborHood(wtr, aspects,nodeRIDs,edgeLimit, true,traversedEdges, nodeIdMap,citationIdMap,supportIdMap);  // upstream
+		Set<ORID> newNodes2 = getNeighborHood(wtr, aspects,nodeRIDs,edgeLimit, false,traversedEdges,nodeIdMap,citationIdMap,supportIdMap);  // downstream;
+		
+        newNodes1.addAll(newNodes2);
+		traverseNeighborHoodAndOutputCX(wtr, aspects, newNodes1, searchDepth-1, edgeLimit, traversedEdges, nodeIdMap,citationIdMap,supportIdMap);
+	}
+	
+	
+	private  Set<ORID> getNeighborHood(CxWriter wtr, Set<String> aspects,Set<ORID> nodeRIDs,
+			int edgeLimit ,boolean upstream, Set<ORID> traversedEdges, Map<Long,Long> nodeIdMap, Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap) throws NdexException, IOException {
+		Set<ORID> newNodes = new TreeSet<>();
+		for ( ORID nodeRID: nodeRIDs) {
+			ODocument nodeDoc = new ODocument(nodeRID);
+			for ( ODocument edgeDoc :
+				       ( upstream ? 
+				    		   Helper.getDocumentLinks( nodeDoc, "in_", NdexClasses.Edge_E_object) 
+				    		 : Helper.getDocumentLinks( nodeDoc, "out_", NdexClasses.Edge_E_subject) )) {
+				if( !traversedEdges.contains(edgeDoc.getIdentity())) { //new edge found
+					traversedEdges.add(edgeDoc.getIdentity());
+					
+					writeEdgeAspectsInCX(edgeDoc, wtr, aspects, citationIdMap, supportIdMap);
+
+					ODocument newNodeDoc = (ODocument)(upstream ? 
+							         edgeDoc.field("in_" + NdexClasses.Edge_E_subject) : 
+							         edgeDoc.field("out_", NdexClasses.Edge_E_object) );
+					Long nodeId = newNodeDoc.field(NdexClasses.Element_ID);
+					if ( !nodeIdMap.containsKey(nodeId))
+					    writeNodeAspectsInCX(nodeId,newNodeDoc, wtr, aspects, nodeIdMap, citationIdMap,supportIdMap);
+					
+					ORID newNodeRID = newNodeDoc.getIdentity();
+					if ( !newNodes.contains(newNodeRID)) {
+						newNodes.add(newNodeRID);
+					}
+					
+					if(edgeLimit>0 && traversedEdges.size()> edgeLimit)
+						throw new NdexException(NetworkAOrientDBDAO.resultOverLimitMsg);
+				}
+			}
+		}
+		return newNodes;
+	}
+
+	
 }

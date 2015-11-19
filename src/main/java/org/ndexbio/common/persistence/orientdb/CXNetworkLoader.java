@@ -228,7 +228,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 		init();
 		
-		networkDoc = this.createNetworkHeadNode(uuid);
+		networkDoc = this.createNetworkHeadNode();
 		networkVertex = graph.getVertex(networkDoc);
 		
 
@@ -332,6 +332,8 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 				  }
 			  }
 		  }
+		  
+		  Timestamp modificationTime = new Timestamp(Calendar.getInstance().getTimeInMillis());
 
 		  if(metadata !=null) {
 			  // check if idCounter is defined in certain espects, and elementCount matches between metadata and data.
@@ -346,21 +348,38 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 					   //TODO: check other 3 aspects too.
 				  }
 			  }
+			  Long consistencyGrp = metadata.getMetaDataElement(NodesElement.ASPECT_NAME).getConsistencyGroup();
+
+			  // process NdexNetworkStatus metadata
+			  MetaDataElement e = metadata.getMetaDataElement(NdexNetworkStatus.ASPECT_NAME);
+			  if ( e == null) {
+				  e = new MetaDataElement();
+				  e.setName(NdexNetworkStatus.ASPECT_NAME);
+				  e.setVersion("1.0");
+				  e.setConsistencyGroup(consistencyGrp);
+				  e.setElementCount(1l);
+				  metadata.add(e);
+			  }
+			  e.setLastUpdate(modificationTime.getTime());
+			  
+			  // process Provenance metadata
+			  e = metadata.getMetaDataElement(Provenance.ASPECT_NAME);
+			  if ( e == null) {
+				  e = new MetaDataElement();
+				  e.setName(Provenance.ASPECT_NAME);
+				  e.setVersion("1.0");
+				  e.setConsistencyGroup(consistencyGrp);
+				  e.setElementCount(1l);
+				  metadata.add(e);
+			  }
+			  e.setLastUpdate(modificationTime.getTime());
 			  
 		      networkDoc.field(NdexClasses.Network_P_metadata,metadata);
 		  } else 
 			  throw new NdexException ("No CX metadata found in this CX stream.");
-/*		  
-		  if ( declaredNodeCount >=0 && declaredNodeCount != this.nodeSIDMap.size() ) 
-			  throw new NdexException ("Declared node count in NdexStatus (" + declaredNodeCount + 
-					  ") doesn't match with node count in CX stream("+ this.nodeSIDMap.size() + ")" );
-		  
-		  if ( declaredEdgeCount >=0 && declaredEdgeCount != this.edgeSIDMap.size())
-			  throw new NdexException ("Declared edge count in NdexStatus (" + declaredEdgeCount + 
-					  ") doesn't match with edge count in CX stream("+ this.edgeSIDMap.size() + ")" );
-*/		  
+  
 		  // finalize the headnode
-		  networkDoc.fields(NdexClasses.ExternalObj_mTime,new Timestamp(Calendar.getInstance().getTimeInMillis()),
+		  networkDoc.fields(NdexClasses.ExternalObj_mTime, modificationTime,
 				  NdexClasses.Network_P_nodeCount, this.nodeSIDMap.size(),
 				  NdexClasses.Network_P_edgeCount,this.edgeSIDMap.size(),
 				   NdexClasses.Network_P_isComplete,true,
@@ -634,7 +653,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		
 	}
 	
-	private ODocument createNetworkHeadNode(UUID uuid ) {
+	private ODocument createNetworkHeadNode( ) {
 	
 		ODocument doc = new ODocument (NdexClasses.Network)
 				  .fields(NdexClasses.Network_P_UUID,uuid,

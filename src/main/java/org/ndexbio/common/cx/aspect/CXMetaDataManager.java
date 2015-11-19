@@ -30,7 +30,7 @@ public class CXMetaDataManager {
 	private static CXMetaDataManager INSTANCE = null;
 	
 	// table stores ndex supported aspect and its version.
-	private static Map<String, String> NdexSupportedAspects;
+	private Map<String, String> NdexSupportedAspects;
 
 	static protected final long consistencyGroupId = 1;
 	
@@ -102,6 +102,10 @@ public class CXMetaDataManager {
 	        	
 		}    
         return md;
+	}
+	
+	public boolean isNdexSupportedAspect(String aspect) {
+		return NdexSupportedAspects.containsKey(aspect);
 	}
 	
 }

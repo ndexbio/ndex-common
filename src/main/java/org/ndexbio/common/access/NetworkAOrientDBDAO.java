@@ -31,9 +31,6 @@
 package org.ndexbio.common.access;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Collection;
-
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -53,19 +50,14 @@ import org.ndexbio.model.object.network.PropertyGraphNetwork;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePathQuery;
 
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 
 	private static NetworkAOrientDBDAO INSTANCE = null;
 	
-	private static final String resultOverLimitMsg = "Result set is too large for this query.";
+	public static final String resultOverLimitMsg = "Result set is too large for this query.";
 	
 	private static final Logger _logger = Logger.getLogger(NetworkAOrientDBDAO.class.getName());
 	
@@ -145,8 +137,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 	 * @throws IOException 
 	 * @throws SolrServerException 
 	 */
-	private Set<ORID> getNodeRidsFromSearchString(String networkUUID,String searchString, int nodeLimit, boolean includeAliases, 
-			NetworkDocDAO networkdao ,Network resultNetwork) throws NdexException, SolrServerException, IOException {
+	private static Set<ORID> getNodeRidsFromSearchString(String networkUUID,String searchString, int nodeLimit, boolean includeAliases, 
+			NetworkDocDAO networkdao, Network resultNetwork) throws NdexException, SolrServerException, IOException {
 		
 		Set<ORID> result = new TreeSet<>();
 
@@ -155,6 +147,8 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			Object id = d.get(SingleNetworkSolrIdxManager.ID);
 			ODocument nodeDoc = networkdao.getDocumentByElementId(NdexClasses.Node, Long.parseLong((String)id));
 			result.add(nodeDoc.getIdentity());
+		    Node n = networkdao.getNode(nodeDoc, resultNetwork);
+            resultNetwork.getNodes().put(n.getId(), n);
 		}
 		
 		return result;
@@ -194,52 +188,11 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 					
 					if(edgeLimit>0 && traversedEdges.size()> edgeLimit)
 						throw new NdexException(resultOverLimitMsg);
-
 				}
-				
 			}
-			
-			
 		}
 		return newNodes;
 	}
 
-	public void getSubnetworkInCX(OutputStream out, String networkId, SimplePathQuery query) {
-	/*	try (NetworkDocDAO dao = new NetworkDocDAO()){
-			ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
-						
-			final long startTime = System.currentTimeMillis();
-			System.out.println("Starting subnetworkQuery ");
-      
-			Network result = new Network();
-			Set<ORID> nodeRIDs = getNodeRidsFromSearchString(networkId, parameters.getSearchString(), parameters.getEdgeLimit()*2, 
-					    true, dao, result);
-			
-			Set<ORID> traversedEdges = new TreeSet<>();
-			
-			traverseNeighborHood(nodeRIDs, parameters.getSearchDepth(), dao, result, parameters.getEdgeLimit(),traversedEdges );
-
-			
-	        // copy the source format
-	        NetworkSourceFormat fmt = Helper.getSourceFormatFromNetworkDoc(networkDoc);
-	        if ( fmt!=null) {
-	        	result.getProperties().add(new NdexPropertyValuePair(NdexClasses.Network_P_source_format, fmt.toString()));
-	        }
-	        	
-
-			result.setEdgeCount(result.getEdges().size());
-			result.setNodeCount(result.getNodes().size());
-			
-			final long getSubnetworkTime = System.currentTimeMillis();
-			System.out.println("  Network Nodes : " + result.getNodeCount());
-			System.out.println("  Network Edges : " + result.getEdgeCount());
-			System.out.println("Getting Network : " + (getSubnetworkTime - startTime));
-			return result;
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new NdexException("Error in queryForSubnetwork: " + e.getLocalizedMessage());
-		} */
-
-	}
 	
 }
