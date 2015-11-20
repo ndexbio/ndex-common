@@ -30,6 +30,7 @@
  */
 package org.ndexbio.common.models.dao.orientdb;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -40,8 +41,11 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.model.exceptions.*;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
@@ -233,6 +237,16 @@ public class NetworkDAO extends NetworkDocDAO {
 		   networkDoc.fields(NdexClasses.ExternalObj_isDeleted,true,
 				   NdexClasses.ExternalObj_mTime, new Date()).save();
 		}
+		commit();
+
+		// remove the solr Index
+		SingleNetworkSolrIdxManager idxManager = new SingleNetworkSolrIdxManager(uuid);
+		try {
+			idxManager.dropIndex();
+		} catch (SolrServerException | HttpSolrClient.RemoteSolrException | IOException se ) {
+			logger.warning("node term index for network "+ uuid +" not found in Solr. Ignore deleteing solr index for it: " + se.getMessage());
+		}
+
  		return 1;
 	}
 	

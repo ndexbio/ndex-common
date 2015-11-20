@@ -35,7 +35,6 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -46,7 +45,6 @@ import org.ndexbio.common.exporter.XbelNetworkExporter;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSourceFormat;
@@ -56,6 +54,7 @@ import org.xml.sax.SAXException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.TransformerException;
 
 import org.apache.commons.io.FilenameUtils;
@@ -120,11 +119,13 @@ public class ImportExportTest {
 
   		 logger.info("Deleting first round test network " + oldNetworkID + " from db.");
  		  NetworkDAO dao = new NetworkDAO (conn);
+ 		  dao.logicalDeleteNetwork(oldNetworkID);
  		  dao.deleteNetwork(oldNetworkID);
 
  		  conn.commit();
  		  
   		 logger.info("All tests on " + m.fileName + " passed. Deleteing test network " + networkID.toString()); 
+		  dao.logicalDeleteNetwork(networkID.toString());
   		  dao.deleteNetwork(networkID.toString());
   		  conn.commit();
   		  conn.close();
@@ -143,7 +144,7 @@ public class ImportExportTest {
 	}
 
 	private static void exportNetwork(TestMeasurement m, ODatabaseDocumentTx conn,
-			UUID networkID) throws ParserConfigurationException, ClassCastException, NdexException, TransformerException, SAXException, IOException {
+			UUID networkID) throws ParserConfigurationException, ClassCastException, NdexException, TransformerException, SAXException, IOException, XMLStreamException {
 		  if ( m.srcFormat == NetworkSourceFormat.XGMML) {
 			  XGMMLNetworkExporter exporter = new XGMMLNetworkExporter(conn);
 			  FileOutputStream out = new FileOutputStream (networkID.toString());
