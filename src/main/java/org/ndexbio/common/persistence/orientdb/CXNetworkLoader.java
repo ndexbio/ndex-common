@@ -66,6 +66,7 @@ import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
 import org.ndexbio.model.object.network.NetworkSourceFormat;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.ndexbio.task.Configuration;
 import org.ndexbio.task.NdexServerQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +89,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	
 	private InputStream inputStream;
 	private NdexDatabase ndexdb;
-//	private ODatabaseDocumentTx connection;
 	private String ownerAcctName;
 	private ODocument networkDoc;
 	private OrientVertex networkVertex;
@@ -110,12 +110,11 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	private Set<Long> undefinedSupportId;
 	
 	private Provenance provenanceHistory;
-	
-//	private int declaredNodeCount;
-//	private int declaredEdgeCount;
-	
+		
 	long opaqueCounter ;
 
+	long serverElementLimit; 
+	
 	private UUID uuid;
 	
 	private Map<String, String> opaqueAspectEdgeTable;
@@ -133,6 +132,17 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		graph.setEdgeContainerEmbedded2TreeThreshold(40);
 		graph.setUseLightweightEdges(true);
 				
+		String edgeLimit = Configuration.getInstance().getProperty(Configuration.networkPostEdgeLimit);
+		if ( edgeLimit != null ) {
+			try {
+				serverElementLimit = Long.parseLong(edgeLimit);
+			} catch( NumberFormatException e) {
+				logger.error("[Invalid value in server property {}]", Configuration.networkPostEdgeLimit);
+		//		props.put("ServerPostEdgeLimit", "-1");  //defaultPostEdgeLimit);
+			}
+		} else 
+			serverElementLimit = -1;
+		
 	}
 	
 	private void init () {
@@ -387,7 +397,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		  networkDoc.save();
 	}
 	
-	private void addOpaqueAspectElement(OpaqueElement elmt) throws IOException {
+	private void addOpaqueAspectElement(OpaqueElement elmt) throws IOException, NdexException {
 		
 		String aspectName = elmt.getAspectName();
 
@@ -501,7 +511,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	
-	private Long createSupport(SupportElement elmt) throws ObjectNotFoundException, DuplicateObjectException {
+	private Long createSupport(SupportElement elmt) throws NdexException {
 		Long supportId = supportSIDMap.get(elmt.getId()) ;
 		
 		ODocument supportDoc;
@@ -545,7 +555,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	private void createReifiedEdgeTerm(ReifiedEdgeElement e) 
-						throws DuplicateObjectException, ObjectNotFoundException {		
+						throws NdexException {		
 		 Long edgeSID = e.getEdge();
 		 ODocument edgeDoc = getOrCreateEdgeDocBySID(edgeSID); 
 		 
@@ -632,7 +642,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		}
 	}
 	
-	private void createCXContext(NamespacesElement context) throws DuplicateObjectException {
+	private void createCXContext(NamespacesElement context) throws NdexException {
 		for ( Map.Entry<String, String> e : context.entrySet()) {
 			Long nsId = ndexdb.getNextId(localConnection);
 
@@ -764,7 +774,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return citationId;
 	}
 	
-	private Long createCitation(CitationElement c) throws ObjectNotFoundException {
+	private Long createCitation(CitationElement c) throws NdexException {
 
 		//TODO: add description to citation.
 		
@@ -1012,8 +1022,10 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		graph.shutdown();
 	}
 	
-	private void tick() {
+	private void tick() throws NdexException {
 		counter ++;
+		if ( serverElementLimit>=0 && counter >serverElementLimit ) 
+			throw new NdexException("Element count in the CX input stream exceeded server limit " + serverElementLimit);
 		if ( counter % 5000 == 0 )  graph.commit();
 		if ( counter %10000 == 0 )
 			System.out.println("Loaded " + counter + " element in CX");

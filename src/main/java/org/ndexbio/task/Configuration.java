@@ -56,7 +56,9 @@ public class Configuration
 	private String dbURL;
 	private static final String dbUserPropName 	   = "OrientDB-Username";
 	private static final String dbPasswordPropName = "OrientDB-Password";
-	    
+	
+	public static final String networkPostEdgeLimit = "NETWORK_POST_ELEMENT_LIMIT";
+
 	private String hostURI ;
 	private String ndexSystemUser ;
 	private String ndexSystemUserPassword;
