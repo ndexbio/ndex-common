@@ -48,6 +48,7 @@ public class Configuration
     public static final String UPLOADED_NETWORKS_PATH_PROPERTY = "Uploaded-Networks-Path";
     
     private static final String PROP_USE_AD_AUTHENTICATION = "USE_AD_AUTHENTICATION";
+    private static final String SOLR_URL = "SolrURL";
     
     private static Configuration INSTANCE = null;
     private static final Logger _logger = LoggerFactory.getLogger(Configuration.class);
@@ -58,7 +59,9 @@ public class Configuration
 	private static final String dbPasswordPropName = "OrientDB-Password";
 	
 	public static final String networkPostEdgeLimit = "NETWORK_POST_ELEMENT_LIMIT";
-
+	private static final String defaultSolrURL = "http://localhost:8983/solr";
+	
+	private String solrURL;
 	private String hostURI ;
 	private String ndexSystemUser ;
 	private String ndexSystemUserPassword;
@@ -105,7 +108,10 @@ public class Configuration
             
             dbURL 	= getRequiredProperty("OrientDB-URL");
             hostURI = getRequiredProperty("HostURI");
-
+            solrURL = getProperty(SOLR_URL);
+            if ( solrURL == null)
+            	solrURL = defaultSolrURL;
+            
             this.ndexSystemUser = getRequiredProperty("NdexSystemUser");
             this.ndexSystemUserPassword = getRequiredProperty("NdexSystemUserPassword");
 
@@ -265,6 +271,7 @@ public class Configuration
     public String getSystmUserName() {return this.ndexSystemUser;}
     public String getSystemUserPassword () {return this.ndexSystemUserPassword;}
     public String getNdexRoot()  {return this.ndexRoot;}
+    public String getSolrURL() {return this.solrURL; }
     public Level  getLogLevel()  {return this.logLevel;}
 
 	public boolean getUseADAuthentication() {

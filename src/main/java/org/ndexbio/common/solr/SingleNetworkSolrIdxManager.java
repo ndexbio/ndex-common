@@ -14,10 +14,11 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.task.Configuration;
 
 public class SingleNetworkSolrIdxManager {
 
-	private String solrUrl = "http://localhost:8983/solr";
+	private String solrUrl;
 	
 	private String coreName; 
 	private HttpSolrClient client;
@@ -32,8 +33,9 @@ public class SingleNetworkSolrIdxManager {
 	private static final String ALIAS= "alias";
 	private static final String RELATEDTO = "relatedTo";
 		
-	public SingleNetworkSolrIdxManager(String networkUUID) {
+	public SingleNetworkSolrIdxManager(String networkUUID) throws NdexException {
 		coreName = networkUUID;
+		solrUrl = Configuration.getInstance().getSolrURL();
 		client = new HttpSolrClient(solrUrl);
 	}
 	
