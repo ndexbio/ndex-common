@@ -22,8 +22,6 @@ import org.ndexbio.model.cx.BELNamespaceElement;
 
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.object.Status;
-import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.network.Namespace;
 import org.ndexbio.model.object.network.NetworkSourceFormat;
 import org.ndexbio.task.parsingengines.XbelParser;

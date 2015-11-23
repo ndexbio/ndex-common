@@ -33,6 +33,7 @@ package org.ndexbio.task.parsingengines;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
@@ -42,9 +43,12 @@ import org.junit.Test;
 import org.ndexbio.common.exporter.BioPAXNetworkExporter;
 import org.ndexbio.common.exporter.XGMMLNetworkExporter;
 import org.ndexbio.common.exporter.XbelNetworkExporter;
+import org.ndexbio.common.models.dao.orientdb.CXNetworkExporter;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
+import org.ndexbio.common.persistence.orientdb.CXNetworkLoader;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.network.Edge;
 import org.ndexbio.model.object.network.Network;
 import org.ndexbio.model.object.network.NetworkSourceFormat;
@@ -87,54 +91,77 @@ public class ImportExportTest {
 		 ODatabaseDocumentTx conn = AllTests.db.getAConnection();
 		 exportNetwork(m, conn, networkID);
 
+		// String oldNetworkID = networkID.toString();
 		 logger.info("First export done.");
-		 if ( m.srcFormat == NetworkSourceFormat.SIF) { 
-			 System.out.println("Ignore the rest of test for " + m.fileName);
-			 continue;
-		 }
 
-		 String oldNetworkID = networkID.toString();
+		 File file1 = null;
+		 File file2 = null;
+		 UUID nativeReloadedNetworkID = null;
+		 if ( m.srcFormat != NetworkSourceFormat.SIF) { 
 		  
-		  logger.info("Started importing exported network.");
-		  parser = importFile ( System.getProperty("user.dir") + "/"+ networkID.toString(), m);
-		  
-  		  
+			 logger.info("Started importing exported network.");
+			 parser = importFile ( System.getProperty("user.dir") + "/"+ networkID.toString(), m);
 
-  		logger.info("Verifying network loaded from exported file.");
-  		  networkID = parser.getUUIDOfUploadedNetwork();
- 		  assertEquivalence(networkID, m);
+			 logger.info("Verifying network loaded from exported file.");
+			 nativeReloadedNetworkID = parser.getUUIDOfUploadedNetwork();
+			 assertEquivalence(networkID, m);
           
  		  
- 		 logger.info("Exporting the re-imported network.");
- 		  exportNetwork(m, conn, networkID);
+			 logger.info("Exporting the re-imported network.");
+			 exportNetwork(m, conn, nativeReloadedNetworkID);
  
 
- 		  logger.info("checking if the 2 exported files have similar sizes");
- 		  File file1 = new File(oldNetworkID.toString());
-		  File file2 = new File(networkID.toString());
- 		  assertTrue( file2.exists());
- 		  double sizeDiff = Math.abs(file1.length()-file2.length());
- 		  assertTrue ( sizeDiff/file1.length() < 0.005 || sizeDiff <100);
- 		  //assertEquals(file1.length(), file2.length()); 
-
-  		 logger.info("Deleting first round test network " + oldNetworkID + " from db.");
- 		  NetworkDAO dao = new NetworkDAO (conn);
- 		  dao.logicalDeleteNetwork(oldNetworkID);
- 		  dao.deleteNetwork(oldNetworkID);
-
- 		  conn.commit();
+			 logger.info("checking if the 2 exported files have similar sizes");
+			 file1 = new File(networkID.toString());
+			 file2 = new File(nativeReloadedNetworkID.toString());
+			 assertTrue( file2.exists());
+			 double sizeDiff = Math.abs(file1.length()-file2.length());
+			 assertTrue ( sizeDiff/file1.length() < 0.005 || sizeDiff <100);
+			 //assertEquals(file1.length(), file2.length()); 
+		 } 
  		  
-  		 logger.info("All tests on " + m.fileName + " passed. Deleteing test network " + networkID.toString()); 
-		  dao.logicalDeleteNetwork(networkID.toString());
-  		  dao.deleteNetwork(networkID.toString());
-  		  conn.commit();
-  		  conn.close();
+ 		  // test the CX IO functions for this network 
+		  logger.info("Started exporting network in CX format.");
+
+ 		 String fileName = exportNetworkInCX( networkID);
+		 logger.info("network exported into CX file " + fileName);
+		 
+		 logger.info("Started importing exported CX file");
+ 		 UUID newCXUUID = importCXFile(fileName);
+		 assertEquivalence(newCXUUID, m);
+ 		
+		 UUID reimporedNetworkID = null;
+		 if ( m.srcFormat != NetworkSourceFormat.SIF) { 
+			 logger.info("Started exporting CX network.");
+			 exportNetwork(m, conn, newCXUUID);
+
+			 logger.info("Started importing exported network.");
+			 parser = importFile ( System.getProperty("user.dir") + "/"+ newCXUUID.toString(), m);
+		  
+			 logger.info("Verifying network loaded from exported file.");
+			 reimporedNetworkID = parser.getUUIDOfUploadedNetwork();
+			 assertEquivalence(networkID, m);
+			 
+		 }	 
+		 
+  		 logger.info("Deleting all test networks related to " + m.fileName + " from db.");
+ 		  NetworkDAO dao = new NetworkDAO (conn);
+ 	
+ 			  deleteTestNetwork( networkID, dao); 
+ 			  deleteTestNetwork( nativeReloadedNetworkID, dao); 
+		  
+ 			  deleteTestNetwork( newCXUUID, dao); 
+ 			  deleteTestNetwork( reimporedNetworkID, dao); 
+
+ 		  conn.close();
 		  
 		  logger.info("Deleting network document exported in first round.");
-		  file1.delete();
+		  if ( file1 !=null )
+			  file1.delete();
  		  
  		 logger.info("Deleteing network document exported in second round " + networkID.toString());
- 		  file2.delete();
+ 		  if (file2 != null ) 
+ 			  file2.delete();
  		  
  		 logger.info("All done for "+ m.fileName);
 		}
@@ -142,6 +169,17 @@ public class ImportExportTest {
 		logger.info("All tests passed.");
 
 	}
+
+
+	private static void deleteTestNetwork(UUID newCXUUID, NetworkDAO dao) throws ObjectNotFoundException, NdexException {
+		if ( newCXUUID !=null) {
+			logger.info( "Deleteing network " + newCXUUID.toString()); 
+			dao.logicalDeleteNetwork(newCXUUID.toString());
+			dao.deleteNetwork(newCXUUID.toString());
+			dao.commit();
+		}
+	}
+	
 
 	private static void exportNetwork(TestMeasurement m, ODatabaseDocumentTx conn,
 			UUID networkID) throws ParserConfigurationException, ClassCastException, NdexException, TransformerException, SAXException, IOException, XMLStreamException {
@@ -169,6 +207,18 @@ public class ImportExportTest {
 		  } 
 
 	}
+
+	// return the file name
+	private static String exportNetworkInCX( UUID networkID) throws Exception {
+		try (CXNetworkExporter exporter = new CXNetworkExporter(networkID.toString()) ) {
+			String outputFileName = networkID.toString() + ".cx";
+			try (FileOutputStream out = new FileOutputStream (outputFileName)) {
+			  exporter.writeNetworkInCX(out, true);
+			  return outputFileName;
+			}	  
+		}
+	}
+	
 	
 	private static IParsingEngine importFile (String fileName, TestMeasurement m) throws Exception {
 		  IParsingEngine parser;	
@@ -190,6 +240,15 @@ public class ImportExportTest {
 		  return parser;
 
 	}	
+	
+	private static UUID importCXFile (String fileName) throws Exception {
+		  FileInputStream input = new FileInputStream ( fileName);
+		  try (CXNetworkLoader loader = new CXNetworkLoader ( input, AllTests.testUser) ) {
+			 return loader.persistCXNetwork();
+		  }
+	}	
+
+	
     private static void assertEquivalence(UUID networkID, TestMeasurement m) throws NdexException {
 
     	// verify a uploaded network
