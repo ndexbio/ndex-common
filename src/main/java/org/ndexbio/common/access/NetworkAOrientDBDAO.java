@@ -180,7 +180,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 					resultNetwork.getEdges().put(e.getId(), e);
 					ODocument newNodeDoc = (ODocument)(upstream ? 
 							         edgeDoc.field("in_" + NdexClasses.Edge_E_subject) : 
-							         edgeDoc.field("out_", NdexClasses.Edge_E_object) );
+							         edgeDoc.field("out_"+ NdexClasses.Edge_E_object) );
 					ORID newNodeRID = newNodeDoc.getIdentity();
 					if ( !newNodes.contains(newNodeRID)) {
 						newNodes.add(newNodeRID);

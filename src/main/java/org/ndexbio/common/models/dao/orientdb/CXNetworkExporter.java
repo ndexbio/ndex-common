@@ -1399,7 +1399,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 
 					ODocument newNodeDoc = (ODocument)(upstream ? 
 							         edgeDoc.field("in_" + NdexClasses.Edge_E_subject) : 
-							         edgeDoc.field("out_", NdexClasses.Edge_E_object) );
+							         edgeDoc.field("out_"+ NdexClasses.Edge_E_object) );
 					Long nodeId = newNodeDoc.field(NdexClasses.Element_ID);
 					if ( !nodeIdMap.containsKey(nodeId))
 					    writeNodeAspectsInCX(nodeId,newNodeDoc, wtr, aspects, nodeIdMap, citationIdMap,supportIdMap);
