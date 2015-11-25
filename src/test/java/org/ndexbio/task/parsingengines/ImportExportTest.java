@@ -142,7 +142,7 @@ public class ImportExportTest {
 		  
 			 logger.info("Verifying network loaded from exported file.");
 			 reimporedNetworkID = parser.getUUIDOfUploadedNetwork();
-			 assertEquivalence(networkID, m);
+			 assertEquivalence(reimporedNetworkID, m);
 			 
 		 }	 
 		 
@@ -274,7 +274,7 @@ public class ImportExportTest {
 				 for(String si : s) { 
 				   System.out.println(i + "\t" + si);
 				   i++;
-				 } 
+				 }   
 				 assertEquals(n.getBaseTerms().size(), m.basetermCnt);
 			 } 
 			 if ( m.citationCnt >= 0 )

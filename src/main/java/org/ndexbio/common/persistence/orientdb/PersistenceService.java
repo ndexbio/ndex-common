@@ -610,6 +610,7 @@ public abstract class PersistenceService extends BasicNetworkDAO {
 				
 		
 		protected Long createBaseTerm (String prefix, String localName, Long nsId) {
+			
 			Long termId = database.getNextId(localConnection);
 						
 			ODocument btDoc = new ODocument(NdexClasses.BaseTerm)

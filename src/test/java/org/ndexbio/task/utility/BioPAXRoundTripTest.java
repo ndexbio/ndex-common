@@ -93,13 +93,13 @@ public class BioPAXRoundTripTest {
 		parser2.parseFile();
 		
 		// Compare parser metrics
-		System.out.println("entities: " + parser.getEntityCount() + " -> " + parser2.getEntityCount());
+/*		System.out.println("entities: " + parser.getEntityCount() + " -> " + parser2.getEntityCount());
 		System.out.println("pubXrefs: " + parser.getPubXrefCount() + " -> " + parser2.getPubXrefCount());
 		System.out.println("uXrefs: " + parser.getuXrefCount() + " -> " + parser2.getuXrefCount());
 		System.out.println("rXrefs: " + parser.getrXrefCount() + " -> " + parser2.getrXrefCount());
 		System.out.println("literalProps: " + parser.getLiteralPropertyCount() + " -> " + parser2.getLiteralPropertyCount());
 		System.out.println("referenceProps: " + parser.getReferencePropertyCount() + " -> " + parser2.getReferencePropertyCount());
-		
+		*/
 		
         connection.close();
         out.close();

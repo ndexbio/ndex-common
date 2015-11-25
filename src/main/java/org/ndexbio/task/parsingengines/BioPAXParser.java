@@ -169,9 +169,6 @@ public class BioPAXParser implements IParsingEngine {
 			String uri = NdexDatabase.getURIPrefix();
 			this.persistenceService.setNetworkVisibility(VisibilityType.PRIVATE);
 
-			// close database connection
-			this.persistenceService.persistNetwork();
-
             ProvenanceEntity provEntity = ProvenanceHelpers
                     .createProvenanceHistory(currentNetwork, uri, 
                     		NdexProvenanceEventType.FILE_UPLOAD, currentNetwork.getCreationTime(),
@@ -189,6 +186,8 @@ public class BioPAXParser implements IParsingEngine {
 
             this.persistenceService.setNetworkProvenance(provEntity);
 
+			// close database connection
+			this.persistenceService.persistNetwork();
             persistenceService.commit();
 			
 			System.out.println("Network UUID: " + currentNetwork.getExternalId());
@@ -328,15 +327,16 @@ public class BioPAXParser implements IParsingEngine {
 			// - create an NdexPropertyValuePair and add it to the current Node
 			// - (note that Edges do not have properties in BioPAX3, only Nodes)
 			//
-			String propertyName = editor.getProperty();
-			Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
-			
-			for (Object val : editor.getValueFromBean(bpe)) {
+
+			Set<Object > values = editor.getValueFromBean(bpe);  
+			if (values.size() >0 ) {    // we only process it when we found values.
+				String propertyName = editor.getProperty();
+			  for (Object val : values) {
 				// System.out.println("       Property: " + editor.getProperty()
 				// + " : (" + val.getClass().getName() + ") " + val.toString());
 				if (val instanceof PublicationXref) {
 			        Long objectId = this.persistenceService.getNodeIdByBaseTerm(((PublicationXref)val).getRDFId());
-					
+					Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
 					this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
 					
 					Long citationId = getElementIdByRdfId(((PublicationXref)val).getRDFId());
@@ -345,7 +345,7 @@ public class BioPAXParser implements IParsingEngine {
 //					processPublicationXrefProperty(predicateId,(PublicationXref) val, nodeId);
 				} else if (val instanceof UnificationXref) {
 				     Long objectId = this.persistenceService.getNodeIdByBaseTerm(((UnificationXref)val).getRDFId());
-						
+						Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
 					 this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
 						
 					 Long termId = getElementIdByRdfId(((UnificationXref)val).getRDFId());
@@ -355,7 +355,7 @@ public class BioPAXParser implements IParsingEngine {
 //					processUnificationXrefProperty(predicateId, (UnificationXref) val,nodeId);
 				} else if (val instanceof RelationshipXref) {
 			        Long objectId = this.persistenceService.getNodeIdByBaseTerm(((RelationshipXref)val).getRDFId());
-					
+					Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
 					this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
 					
 					Long termId = getElementIdByRdfId(((RelationshipXref)val).getRDFId());
@@ -363,6 +363,7 @@ public class BioPAXParser implements IParsingEngine {
 					relateToList.add(termId);
 				} else if (val instanceof BioPAXElement){
 					// create the edge
+					Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
 					processEdge(predicateId, (BioPAXElement) val, nodeId);
 					this.referencePropertyCount++;
 				} else if (null != val){
@@ -383,8 +384,8 @@ public class BioPAXParser implements IParsingEngine {
 						standardName = valueString;
 					}
 				}
+			  }
 			}
-
 		}
 		
 		this.persistenceService.setReferencesOnNode(nodeId, citationList, relateToList, aliasList);
@@ -678,7 +679,7 @@ public class BioPAXParser implements IParsingEngine {
 		return networkUUID;
 	}
 
-	public int getEntityCount() {
+/*	public int getEntityCount() {
 		return entityCount;
 	}
 
@@ -701,6 +702,7 @@ public class BioPAXParser implements IParsingEngine {
 	public int getReferencePropertyCount() {
 		return referencePropertyCount;
 	}
+	*/
 	
 	@Override
 	public UUID getUUIDOfUploadedNetwork() {

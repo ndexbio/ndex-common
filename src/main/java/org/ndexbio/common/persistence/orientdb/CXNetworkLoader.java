@@ -528,12 +528,15 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			supportDoc.fields(NdexClasses.Support_P_text, elmt.getText());
 		}
 		
-		Long citationId = citationSIDMap.get(elmt.getCitationId());
-		if (citationId == null) {
-			citationId = createCitationBySID(elmt.getCitationId());
-		}
+		Long citationSID = elmt.getCitationId();
+		if ( citationSID !=null ) {
+			Long citationId = citationSIDMap.get(citationSID);
+			if (citationId == null) {
+				citationId = createCitationBySID(citationSID);
+			}
 		
-		supportDoc.field(NdexClasses.Citation, citationId);
+			supportDoc.field(NdexClasses.Citation, citationId);
+		}
 		
 		//TODO: this will be removed after we modify the xbel loader to remove properties on Support.
 		if(elmt.getProps()!=null && elmt.getProps().size()>0) {
