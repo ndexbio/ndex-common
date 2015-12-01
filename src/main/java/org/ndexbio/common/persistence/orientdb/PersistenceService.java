@@ -441,7 +441,7 @@ public abstract class PersistenceService extends BasicNetworkDAO {
 		 * @throws ExecutionException
 		 */
 		// just fore reference before the 1.3 is done.
-		private Long getBaseTermId_old(String termStringRaw) throws NdexException, ExecutionException {
+/*		private Long getBaseTermId_old(String termStringRaw) throws NdexException, ExecutionException {
 			
 	        String termString = termStringRaw;		
 			if ( termStringRaw.length() > 8 && termStringRaw.substring(0, 7).equalsIgnoreCase("http://") ) {
@@ -516,7 +516,7 @@ public abstract class PersistenceService extends BasicNetworkDAO {
 			
 		    return this.createBaseTerm(termString);	
 		}
-
+*/
 		public Long getBaseTermId(String termStringRaw) throws NdexException, ExecutionException {
 			Long termId = this.baseTermStrMap.get(termStringRaw);
 			if ( termId !=null)
@@ -610,6 +610,8 @@ public abstract class PersistenceService extends BasicNetworkDAO {
 				
 		
 		protected Long createBaseTerm (String prefix, String localName, Long nsId) {
+			if ( localName.equals("40674"))
+				System.out.println("got you");
 			
 			Long termId = database.getNextId(localConnection);
 						

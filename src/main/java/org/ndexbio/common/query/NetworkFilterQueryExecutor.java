@@ -65,27 +65,27 @@ public class NetworkFilterQueryExecutor {
  		    ODocument networkDoc = dao.getRecordByUUIDStr(networkId, NdexClasses.Network);
 		
 		    Iterable<ODocument> edgeDocs = Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_Edges );
-	        if ( edgeDocs != null)
-		    for ( ODocument edgeDoc : edgeDocs) {
+	        if ( edgeDocs != null) {
+	        	for ( ODocument edgeDoc : edgeDocs) {
 
-	        	// check against filter
-	        	if ( EdgeRecordSatisfyFilter(edgeDoc)) {
+	        		// check against filter
+	        		if ( EdgeRecordSatisfyFilter(dao, edgeDoc)) {
 	        			Edge e = dao.getEdgeFromDocument(edgeDoc,result);
 	        			result.getEdges().put(e.getId(), e);
 	        			if ( limit > 0 && result.getEdges().size() >= limit)
 	        				break;
-	        	}	
-	    }
-		
-		if( query.getQueryName() != null) 
+	        		}	
+	        	}
+	        }
+	        if( query.getQueryName() != null) 
 				result.setName(query.getQueryName());
-		else
+	        else
 				result.setName("");
 		
-		result.setNodeCount(result.getNodes().size());
-		result.setEdgeCount(result.getEdges().size());
+	        result.setNodeCount(result.getNodes().size());
+	        result.setEdgeCount(result.getEdges().size());
 		
-		return result;
+	        return result;
 		}
 		
 	}
@@ -95,19 +95,22 @@ public class NetworkFilterQueryExecutor {
 
 		List<NdexPropertyValuePair> props = elementDoc.field(NdexClasses.ndexProperties);
 		if ( props !=null )
-		for (NdexPropertyValuePair property : props) {
-			if ( filter.containsPropertyName(property.getPredicateString()) ) {
+		 for (NdexPropertyValuePair property : props) {
+			String value = filter.getValue(property.getPredicateString());
+			if ( value !=null && value.equalsIgnoreCase(property.getValue()))
+				return true;
+	/*		if ( filter.containsPropertyName(property.getPredicateString()) ) {
 					return true;
-			}
-		}
+			} */
+		 }
 		return false;
 	}
 	
 	
-	private boolean EdgeRecordSatisfyFilter(ODocument edgeDoc) {
+	private boolean EdgeRecordSatisfyFilter(NetworkDocDAO dao, ODocument edgeDoc) {
 	    
 		return EdgeRecordSatisfyEdgePropertyFilter(edgeDoc, query.getEdgeFilter()) &&
-				EdgeRecordSatisfyNodeFilters  (edgeDoc, query.getNodeFilter())		;
+				EdgeRecordSatisfyNodeFilters  (dao, edgeDoc, query.getNodeFilter())		;
 	}
 
 	private static boolean EdgeRecordSatisfyEdgePropertyFilter (ODocument edgeDoc, EdgeByEdgePropertyFilterODB edgeFilter) {
@@ -124,7 +127,7 @@ public class NetworkFilterQueryExecutor {
 		
 	}
 	
-	private static boolean EdgeRecordSatisfyNodeFilters (ODocument edgeDoc, EdgeByNodePropertyFilterODB nodeFilter) {
+	private static boolean EdgeRecordSatisfyNodeFilters (NetworkDocDAO dao, ODocument edgeDoc, EdgeByNodePropertyFilterODB nodeFilter) {
 		
 		if ( nodeFilter == null) return true;
 		
@@ -132,20 +135,20 @@ public class NetworkFilterQueryExecutor {
 		case Both: {
 			ODocument subject= edgeDoc.field("in_"+ NdexClasses.Edge_E_subject);
 			ODocument object = edgeDoc.field("out_"+NdexClasses.Edge_E_object);
-			return nodeSatisfyNodeFilter(subject,nodeFilter) && nodeSatisfyNodeFilter(object, nodeFilter);
+			return nodeSatisfyNodeFilter(dao, subject,nodeFilter) && nodeSatisfyNodeFilter(dao, object, nodeFilter);
 		}
 		case Either: {
 			ODocument subject= edgeDoc.field("in_"+ NdexClasses.Edge_E_subject);
 			ODocument object = edgeDoc.field("out_"+NdexClasses.Edge_E_object);
-			return nodeSatisfyNodeFilter(subject,nodeFilter) || nodeSatisfyNodeFilter(object, nodeFilter);
+			return nodeSatisfyNodeFilter(dao,subject,nodeFilter) || nodeSatisfyNodeFilter(dao,object, nodeFilter);
 		}
 		case Source:
 			ODocument subject= edgeDoc.field("in_"+ NdexClasses.Edge_E_subject);
-			return nodeSatisfyNodeFilter(subject,nodeFilter) ;
+			return nodeSatisfyNodeFilter(dao,subject,nodeFilter) ;
 			
 		case Target:
 			ODocument object = edgeDoc.field("out_"+NdexClasses.Edge_E_object);
-			return  nodeSatisfyNodeFilter(object, nodeFilter);
+			return  nodeSatisfyNodeFilter(dao,object, nodeFilter);
 
 		default:
 			return false;
@@ -154,7 +157,7 @@ public class NetworkFilterQueryExecutor {
 	}
 	
 	
-	private static boolean nodeSatisfyNodeFilter(ODocument nodeDoc, EdgeByNodePropertyFilterODB nodeFilter) {
+	private static boolean nodeSatisfyNodeFilter(NetworkDocDAO dao, ODocument nodeDoc, EdgeByNodePropertyFilterODB nodeFilter) {
 		
 		//check on node name
 		String nName = nodeDoc.field(NdexClasses.Node_P_name);
@@ -163,9 +166,20 @@ public class NetworkFilterQueryExecutor {
 		
 		// check on baseTerm
 		Long termId = nodeDoc.field(NdexClasses.Node_P_represents);
-		if (termId != null && nodeFilter.containsRepresentTermId(termId))
+		if (termId != null ) {
+			if ( nodeFilter.containsRepresentTermId(termId)) 
 				return true;
-		
+
+	        String termType = nodeDoc.field(NdexClasses.Node_P_representTermType);
+	        if (termType.equals(NdexClasses.FunctionTerm)) {
+	    	  ODocument funcDoc = dao.getDocumentByElementId(NdexClasses.FunctionTerm, termId);
+	    	  Long btermId = funcDoc.field(NdexClasses.BaseTerm);
+	    	  ODocument btermDoc = dao.getDocumentByElementId(NdexClasses.BaseTerm, btermId);
+	    	  String bterm = btermDoc.field(NdexClasses.BTerm_P_name); 
+	    	  if ( nodeFilter.getFunctionTermNames().contains(bterm.toLowerCase()))
+	    		  return true;
+	        }
+		}
 		return elementHasPropertySatisfyFilter(nodeDoc,nodeFilter);
 	}
 }

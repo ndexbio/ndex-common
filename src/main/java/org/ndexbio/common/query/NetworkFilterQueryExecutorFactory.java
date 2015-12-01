@@ -108,7 +108,8 @@ public class NetworkFilterQueryExecutorFactory {
 					}
 				}
 			} else {  // normal properties
-				//TODO: need to reimplement this
+				
+				odbFilter.addProperty(propName, value);
 /*				for ( ODocument baseTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
 					if (propertyNameMatchesBaseterm(propName, baseTermDoc) ) {
 					   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
@@ -146,18 +147,19 @@ public class NetworkFilterQueryExecutorFactory {
 							}
 					}
 			} else if (propName.equalsIgnoreCase(nodePropertyFunctionTermType)) {
+			   odbFilter.addFunctionTermName(value.toLowerCase());
 				//TODO: need to reimplement this
-				/*	for ( ODocument funcTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_FunctionTerms)) {
+			/*		for ( ODocument funcTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_FunctionTerms)) {
 						Long fBTermId = funcTermDoc.field(NdexClasses.BaseTerm);
+						
 						String name = fBTerm.field(NdexClasses.BTerm_P_name);
 						if ( name !=null && name.equalsIgnoreCase(value)) {
 							odbFilter.addRepresentTermID(funcTermDoc.getIdentity().toString());
 						}
-					} */
+					}  */
 			} else {  // normal property
-				for ( ODocument baseTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
-					//TODO: need to reimplement this.
-					/*	
+				odbFilter.addProperty(propName, value);
+  	           /*for ( ODocument baseTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_BaseTerms)) {
 					if (propertyNameMatchesBaseterm(propName, baseTermDoc)) {
 					   for ( ODocument prop : Helper.getDocumentLinks(baseTermDoc, "in_", NdexClasses.ndexProp_E_predicate)) {
 						   String v = prop.field(NdexClasses.ndexProp_P_value);
@@ -166,7 +168,7 @@ public class NetworkFilterQueryExecutorFactory {
 						   }
 					   }
 					}  */
-				}
+			//	}
 			}
 		}
 		return odbFilter;

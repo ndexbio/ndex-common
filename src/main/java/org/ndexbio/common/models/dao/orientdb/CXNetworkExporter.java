@@ -225,10 +225,13 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         			writeNdexAspectElementAsAspectFragment(cxwtr,
         					NetworkAttributesElement.createInstanceWithSingleValue(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
         							t ));
-        		} else 
-        			writeNdexAspectElementAsAspectFragment(cxwtr,
-        					new NetworkAttributesElement(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
-        							t ));
+        		} else {
+        			NetworkAttributesElement te = NetworkAttributesElement.createInstanceWithMultipleValues(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
+							t);
+        			writeNdexAspectElementAsAspectFragment(cxwtr,te);
+        				//	new NetworkAttributesElement(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
+        				//			t ));
+        		}	
         	}	
         }
         

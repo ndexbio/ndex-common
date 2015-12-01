@@ -41,11 +41,12 @@ public class EdgeByNodePropertyFilterODB extends PropertyFilterODB {
 	private SpecMatchMode mode;
 	private Set<String>   nodeNames;
 	private Set<Long>   representTermIDs;  // term elementIds
-//	private String[]   functionTermIDs;  //Orient rids
+	private Set<String>  functionTermNames;  //Orient rids
 	
 	public EdgeByNodePropertyFilterODB () { super();
 		representTermIDs = new TreeSet<> ();
 		nodeNames = new TreeSet<> ();
+		functionTermNames = new TreeSet<>();
 	}
 
 	public SpecMatchMode getMode() {
@@ -79,15 +80,15 @@ public class EdgeByNodePropertyFilterODB extends PropertyFilterODB {
 	public boolean conatinsNodeName(String name) {
 		return nodeNames.contains(name.toLowerCase());
 	}
-	/*
-	public String[] getFunctionTermIDs() {
-		return functionTermIDs;
+	
+	public Set<String> getFunctionTermNames() {
+		return functionTermNames;
 	}
 
-	public void setFunctionTermIDs(String[] functionTermIDs) {
-		this.functionTermIDs = functionTermIDs;
-	}
+	public void addFunctionTermName(String functionTerm) {
+		this.functionTermNames.add( functionTerm);
+	} 
 	
-	*/
+	
    
 }

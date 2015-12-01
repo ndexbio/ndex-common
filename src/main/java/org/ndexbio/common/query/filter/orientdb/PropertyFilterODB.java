@@ -30,27 +30,32 @@
  */
 package org.ndexbio.common.query.filter.orientdb;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class PropertyFilterODB {
 
 	
-	private Set<String> _propertyNameSet;
+	private Map<String,String> _propertySet;
 	
 	public PropertyFilterODB () {
-		_propertyNameSet = new TreeSet<>();
+		_propertySet = new HashMap<>();
 	}
 	
 /*	public List<String> getPropertySpecList() {
 		return _propertyList;
 	}
 */	
-	public void addPropertyName(String propertyName) {
-		this._propertyNameSet.add( propertyName);
+	public void addProperty(String propertyName, String value) {
+		this._propertySet.put( propertyName,value);
 	}
 
-	public boolean containsPropertyName(String propertyName) {
-		return _propertyNameSet.contains(propertyName);
+/*	public boolean containsPropertyName(String propertyName) {
+		return _propertySet.containsKey(propertyName);
+	} */
+	
+	public String getValue ( String propertyName) {
+		return _propertySet.get(propertyName);
 	}
 }

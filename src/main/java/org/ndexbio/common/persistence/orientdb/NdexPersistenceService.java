@@ -915,13 +915,9 @@ public class NdexPersistenceService extends PersistenceService {
 /*		if ( elementId == null) {
 			System.out.println("br");
 		} else 
-			System.out.println("Adding propperty to element " + elementId); */
+			System.out.println("Adding propperty to element " + elementId);  */
 		
 		ODocument elementDoc = this.elementIdCache.get(elementId);
-		
-		if ( elementDoc == null )
-			System.out.println("ffo");
-		
 		
 		List<NdexPropertyValuePair> props = elementDoc.field(NdexClasses.ndexProperties);
 		if ( props == null )
