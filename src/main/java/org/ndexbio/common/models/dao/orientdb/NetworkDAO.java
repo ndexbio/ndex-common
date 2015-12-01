@@ -407,7 +407,20 @@ public class NetworkDAO extends NetworkDocDAO {
 
         networkdoc.reload();
         accountdoc.reload();
-        accountV.addEdge(permission.toString().toLowerCase(), networkV);
+        
+		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
+			try	{
+		        accountV.addEdge(permission.toString().toLowerCase(), networkV);
+				break;
+			} catch(ONeedRetryException	e)	{
+				logger.warning("Retry adding edge between account and network: " + e.getMessage());
+		        networkdoc.reload();
+		        accountdoc.reload();
+			//	taskV.getRecord().removeField("out_"+ NdexClasses.Task_E_owner);
+			}
+		}
+
+        
     	return 1;
     }
 

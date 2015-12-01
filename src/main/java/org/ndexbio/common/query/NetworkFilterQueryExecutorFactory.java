@@ -36,8 +36,6 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.query.filter.orientdb.EdgeByEdgePropertyFilterODB;
 import org.ndexbio.common.query.filter.orientdb.EdgeByNodePropertyFilterODB;
 import org.ndexbio.common.query.filter.orientdb.EdgeCollectionQueryODB;
-import org.ndexbio.common.util.TermStringType;
-import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.network.query.EdgeByEdgePropertyFilter;
 import org.ndexbio.model.network.query.EdgeByNodePropertyFilter;
@@ -148,7 +146,6 @@ public class NetworkFilterQueryExecutorFactory {
 					}
 			} else if (propName.equalsIgnoreCase(nodePropertyFunctionTermType)) {
 			   odbFilter.addFunctionTermName(value.toLowerCase());
-				//TODO: need to reimplement this
 			/*		for ( ODocument funcTermDoc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_FunctionTerms)) {
 						Long fBTermId = funcTermDoc.field(NdexClasses.BaseTerm);
 						
@@ -173,7 +170,7 @@ public class NetworkFilterQueryExecutorFactory {
 		}
 		return odbFilter;
 	}
-
+/*
 	private static boolean propertyNameMatchesBaseterm(String propertyName, ODocument baseTermDoc) throws NdexException {
 
 		String name = baseTermDoc.field(NdexClasses.BTerm_P_name);
@@ -209,6 +206,6 @@ public class NetworkFilterQueryExecutorFactory {
 		
 		return false;
 		
-	}
+	} */
 	
 }
