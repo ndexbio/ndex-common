@@ -183,6 +183,8 @@ public class BasicNetworkDAO implements AutoCloseable {
 		if ( aliases != null) {
 			aliasList = new ArrayList<>(aliases.size()*2+1);
 			for ( Long aliasId : aliases) {
+//				if ( aliasId == null )
+//			      System.out.println("foo");
 				addTermsToList(aliasId, aliasList);
 			}
 		}

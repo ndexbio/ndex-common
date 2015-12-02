@@ -610,8 +610,6 @@ public abstract class PersistenceService extends BasicNetworkDAO {
 				
 		
 		protected Long createBaseTerm (String prefix, String localName, Long nsId) {
-			if ( localName.equals("40674"))
-				System.out.println("got you");
 			
 			Long termId = database.getNextId(localConnection);
 						

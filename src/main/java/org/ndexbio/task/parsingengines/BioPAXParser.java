@@ -435,7 +435,7 @@ public class BioPAXParser implements IParsingEngine {
 		// Create a node to hold the mapping of the rdfId to a biopax type
 		Long nodeId = this.persistenceService.getNodeIdByBaseTerm(rdfId);
 
-		List<NdexPropertyValuePair> literalProperties = getXRefProperties( xref,false);
+		List<NdexPropertyValuePair> literalProperties = getXRefProperties( xref,true);
 		
 		String simpleName = xref.getModelInterface().getSimpleName();
 		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", simpleName));
