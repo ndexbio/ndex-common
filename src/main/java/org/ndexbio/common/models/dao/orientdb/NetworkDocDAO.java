@@ -374,16 +374,16 @@ public class NetworkDocDAO extends OrientdbDAO {
 	     
 	     if (nss.isEmpty())
 	    	 return null;
-         Namespace result = getNamespace(nss.get(0), null);
+         Namespace result = getNamespace(nss.get(0));
          return result;
 	}
 
 
-	public  Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc,Network network)  {
+	public  Collection<Namespace> getNamespacesFromNetworkDoc(ODocument networkDoc)  {
 		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
 		for ( ODocument doc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_Namespace)) {
-    			namespaces.add(getNamespace(doc,network));
+    			namespaces.add(getNamespace(doc));
     	}
     	return namespaces;
 	}
@@ -415,7 +415,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		   if ( nsId >0) {
 			   if ( network != null &&
 					 ! network.getNamespaces().containsKey(nsId)) {
-					Namespace ns = getNamespace(getDocumentByElementId(NdexClasses.Namespace, nsId),network);
+					Namespace ns = getNamespace(getDocumentByElementId(NdexClasses.Namespace, nsId));
 					network.getNamespaces().put(nsId, ns);
 				}
 		   }
@@ -490,7 +490,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		return localName;
 	}
 */
-    private  Namespace getNamespace(ODocument ns, Network network)  {
+    private  Namespace getNamespace(ODocument ns)  {
         Namespace rns = new Namespace();
         rns.setId((long)ns.field("id"));
         rns.setPrefix((String)ns.field(NdexClasses.ns_P_prefix));
@@ -513,7 +513,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 
         setNetworkSummary(nDoc, network);
         
-        for ( Namespace ns : getNamespacesFromNetworkDoc(nDoc, network)) {
+        for ( Namespace ns : getNamespacesFromNetworkDoc(nDoc)) {
         	network.getNamespaces().put(ns.getId(),ns);
         }
 
@@ -524,6 +524,30 @@ public class NetworkDocDAO extends OrientdbDAO {
         		network.getBaseTerms().put(term.getId(), term);
         }
 
+        // get all citations
+        for ( ODocument doc : Helper.getNetworkElements(nDoc,NdexClasses.Network_E_Citations)) {
+    		Citation citation = getCitationFromDoc(doc);
+    		network.getCitations().put(citation.getId(), citation);
+        }
+        
+        // get all functionTerms
+        for ( ODocument doc : Helper.getNetworkElements(nDoc,NdexClasses.Network_E_FunctionTerms)) {
+    		FunctionTerm func = getFunctionTermfromDoc(doc,network);
+    		network.getFunctionTerms().put(func.getId(), func);
+        }
+        
+        // get all supports
+        for ( ODocument doc : Helper.getNetworkElements(nDoc,NdexClasses.Network_E_Supports)) {
+    		Support support = getSupportFromDoc(doc,network);
+    		network.getSupports().put(support.getId(), support);
+        }
+        
+        // get all reifedEdges
+        for ( ODocument doc : Helper.getNetworkElements(nDoc,NdexClasses.Network_E_ReifiedEdgeTerms)) {
+    		ReifiedEdgeTerm reifiedEdge = getReifiedEdgeTermFromDoc(doc,network);
+    		network.getReifiedEdgeTerms().put(reifiedEdge.getId(), reifiedEdge);
+        }
+        
         for ( ODocument doc : Helper.getNetworkElements(nDoc,NdexClasses.Network_E_Nodes)) {
         		Node node = getNode(doc,network);
         		network.getNodes().put(node.getId(), node);
@@ -608,7 +632,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		
 		for ( ODocument doc : Helper.getNetworkElements(networkDoc, NdexClasses.Network_E_Namespace)) {
  
-        			Namespace n = getNamespace(doc,null);
+        			Namespace n = getNamespace(doc);
         			namespaces.add(n);
         	}
     	return namespaces;
