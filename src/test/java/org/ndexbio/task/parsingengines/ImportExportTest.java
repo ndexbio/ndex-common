@@ -121,47 +121,53 @@ public class ImportExportTest {
 			 assertTrue ( sizeDiff/file1.length() < 0.005 || sizeDiff <100);
 			 //assertEquals(file1.length(), file2.length()); 
 		 } 
- 		  
+
+		  NetworkDAO dao = new NetworkDAO (conn);
+		 
  		  // test the CX IO functions for this network 
-		  logger.info("Started exporting network in CX format.");
+		  if ( m.testCX)  {
+			  logger.info("Started exporting network in CX format.");
 
- 		 String fileName = exportNetworkInCX( networkID);
-		 logger.info("network exported into CX file " + fileName);
+			  String fileName = exportNetworkInCX( networkID);
+			  logger.info("network exported into CX file " + fileName);
 		 
-		 logger.info("Started importing exported CX file");
- 		 UUID newCXUUID = importCXFile(fileName);
-		 assertEquivalence(newCXUUID, m);
+			  logger.info("Started importing exported CX file");
+			  UUID newCXUUID = importCXFile(fileName);
+			  assertEquivalence(newCXUUID, m);
  		
-		 UUID reimporedNetworkID = null;
-		 if ( m.srcFormat != NetworkSourceFormat.SIF) { 
-			 logger.info("Started exporting CX network.");
-			 exportNetwork(m, conn, newCXUUID);
+			  UUID reimporedNetworkID = null;
+			  if ( m.srcFormat != NetworkSourceFormat.SIF) { 
+				  logger.info("Started exporting CX network in its original source format.");
+				  exportNetwork(m, conn, newCXUUID);
 
-			 logger.info("Started importing exported network.");
-			 parser = importFile ( System.getProperty("user.dir") + "/"+ newCXUUID.toString(), m);
+				  logger.info("Started importing exported network.");
+				  parser = importFile ( System.getProperty("user.dir") + "/"+ newCXUUID.toString(), m);
 		  
-			 logger.info("Verifying network loaded from exported file.");
-			 reimporedNetworkID = parser.getUUIDOfUploadedNetwork();
-			 assertEquivalence(reimporedNetworkID, m);
+				  logger.info("Verifying network loaded from exported file.");
+				  reimporedNetworkID = parser.getUUIDOfUploadedNetwork();
+				  assertEquivalence(reimporedNetworkID, m);
 			 
-		 }	 
-		 
-  		 logger.info("Deleting all test networks related to " + m.fileName + " from db.");
- 		  NetworkDAO dao = new NetworkDAO (conn);
- 	
- 			  deleteTestNetwork( networkID, dao); 
- 			  deleteTestNetwork( nativeReloadedNetworkID, dao); 
-		  
+			  }
+
+			  logger.info("Deleting CX related test networks related to " + m.fileName + " from db.");
+			  
  			  deleteTestNetwork( newCXUUID, dao); 
  			  deleteTestNetwork( reimporedNetworkID, dao); 
 
+		  }
+		 
+  		 logger.info("Deleting all other test networks related to " + m.fileName + " from db.");
+ 	
+ 		 deleteTestNetwork( networkID, dao); 
+ 		 deleteTestNetwork( nativeReloadedNetworkID, dao); 
+		  
  		  conn.close();
 		  
 		  logger.info("Deleting network document exported in first round.");
 		  if ( file1 !=null )
 			  file1.delete();
  		  
- 		 logger.info("Deleteing network document exported in second round " + networkID.toString());
+ 		 logger.info("Deleting network document exported in second round " + networkID.toString());
  		  if (file2 != null ) 
  			  file2.delete();
  		  
@@ -175,7 +181,7 @@ public class ImportExportTest {
 
 	private static void deleteTestNetwork(UUID newCXUUID, NetworkDAO dao) throws ObjectNotFoundException, NdexException {
 		if ( newCXUUID !=null) {
-			logger.info( "Deleteing network " + newCXUUID.toString()); 
+			logger.info( "Deleting network " + newCXUUID.toString()); 
 			dao.logicalDeleteNetwork(newCXUUID.toString());
 			dao.deleteNetwork(newCXUUID.toString());
 			dao.commit();
@@ -264,7 +270,7 @@ public class ImportExportTest {
 			 assertEquals(n.getEdgeCount(), m.edgeCnt);
 			 assertEquals(n.getEdges().size(), m.edgeCnt);
 			 if (m.basetermCnt >=0 ) {
-			 TreeSet<String> s = new TreeSet<>();
+/*			 TreeSet<String> s = new TreeSet<>();  // uncomment this section to debug
 
 				 for ( BaseTerm ss : n.getBaseTerms().values()) {
 					 s.add(ss.getName());
@@ -274,9 +280,10 @@ public class ImportExportTest {
 				 for(String si : s) { 
 				   System.out.println(i + "\t" + si);
 				   i++;
-				 }   
+				 }       // uncomment this section to debug
+				  */
 				 assertEquals(n.getBaseTerms().size(), m.basetermCnt);
-			 } 
+			 }  
 			 if ( m.citationCnt >= 0 )
 				 assertEquals(n.getCitations().size(), m.citationCnt);
 	//		 if ( m.elmtPresPropCnt >= 0 )

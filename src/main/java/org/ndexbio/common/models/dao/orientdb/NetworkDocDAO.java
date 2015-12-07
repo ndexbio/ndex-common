@@ -528,7 +528,7 @@ public class NetworkDocDAO extends OrientdbDAO {
         		Node node = getNode(doc,network);
         		network.getNodes().put(node.getId(), node);
         }
-
+        
         for ( ODocument doc: Helper.getNetworkElements(nDoc, NdexClasses.Network_E_Edges)) {
               	   Edge e = getEdgeFromDocument(doc,network);
               	   network.getEdges().put(e.getId(), e);

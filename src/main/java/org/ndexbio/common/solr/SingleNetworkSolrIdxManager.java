@@ -86,8 +86,8 @@ public class SingleNetworkSolrIdxManager {
 			doc.addField(REPRESENTS, represents);
 		if ( alias !=null && !alias.isEmpty())
 			doc.addField(ALIAS, alias);
-		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) 
-			doc.addField(RELATEDTO, relatedTerms);
+//		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) 
+//			doc.addField(RELATEDTO, relatedTerms);
 		
 		docs.add(doc);
 		

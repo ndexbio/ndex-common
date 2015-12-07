@@ -102,7 +102,7 @@ public class AllTests {
 	    	try (Reader in = new FileReader(testFileDirectory + "network_test_file_list_1.3.csv")) {
 	    	  CSVParser parser = CSVFormat.EXCEL.parse(in);
 	    	  for (CSVRecord record : parser) {
-	    		if ( parser.getCurrentLineNumber() > 1 && Boolean.valueOf(record.get(15).toLowerCase()) ) {
+	    		if ( parser.getCurrentLineNumber() > 1 && Boolean.valueOf(record.get(16).toLowerCase()) ) {
 	    			TestMeasurement t = new TestMeasurement();
 	    			t.fileName = record.get(0);
 	    			t.srcFormat = NetworkSourceFormat.valueOf(record.get(1));
@@ -119,6 +119,11 @@ public class AllTests {
 	    			t.nodePropCnt   = getIntValueFromRec(record,12);
 	    			t.edgePropCnt = getIntValueFromRec(record,13);
 	    			t.networkName = record.get(14);
+	    			String testCX = record.get(15); 
+	    			if ( testCX !=null && testCX.toLowerCase().equals("false"))
+	    				t.testCX = false;
+	    			else 
+	    				t.testCX = true;
 	    			//t.runTest  = ;
 	    			
 	    			testList.add(t);

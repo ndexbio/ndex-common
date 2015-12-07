@@ -48,5 +48,6 @@ public class TestMeasurement {
    public int nodePropCnt;
    public int edgePropCnt;
    public String networkName;
+   public boolean testCX;
   // public boolean runTest;
 }

@@ -86,8 +86,8 @@ public class BioPAXParser implements IParsingEngine {
 	public int pubXrefCount;
 	public int uXrefCount;
 	public int rXrefCount;
-	public int literalPropertyCount;
-	public int referencePropertyCount;
+//	public int literalPropertyCount;
+//	public int referencePropertyCount;
 
 	
 	EditorMap editorMap ;
@@ -149,8 +149,8 @@ public class BioPAXParser implements IParsingEngine {
 		this.pubXrefCount = 0;
 		this.uXrefCount = 0;
 		this.rXrefCount = 0;
-		this.literalPropertyCount = 0;
-		this.referencePropertyCount = 0;
+	//	this.literalPropertyCount = 0;
+	//	this.referencePropertyCount = 0;
 		
 		try  {
 
@@ -250,6 +250,8 @@ public class BioPAXParser implements IParsingEngine {
 				this.persistenceService.commit();
 			}
 		}
+		logger.info( entityCount + " entities created by BioPAX loader.");
+
 		//
 		// Iterate over all BioPAX elements to
 		// process all Properties in each Element
@@ -332,18 +334,17 @@ public class BioPAXParser implements IParsingEngine {
 			if (values.size() >0 ) {    // we only process it when we found values.
 				String propertyName = editor.getProperty();
 			  for (Object val : values) {
-				// System.out.println("       Property: " + editor.getProperty()
-				// + " : (" + val.getClass().getName() + ") " + val.toString());
-				if (val instanceof PublicationXref) {
-			        Long objectId = this.persistenceService.getNodeIdByBaseTerm(((PublicationXref)val).getRDFId());
-					Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
-					this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
+				if ( propertyName.equals("xref"))   {
+					if (val instanceof PublicationXref) {
+						Long objectId = this.persistenceService.getNodeIdByBaseTerm(((PublicationXref)val).getRDFId());
+						Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
+						this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
 					
-					Long citationId = getElementIdByRdfId(((PublicationXref)val).getRDFId());
+						Long citationId = getElementIdByRdfId(((PublicationXref)val).getRDFId());
 					
-					citationList.add(citationId);
-//					processPublicationXrefProperty(predicateId,(PublicationXref) val, nodeId);
-				} else if (val instanceof UnificationXref) {
+						citationList.add(citationId);
+						//					processPublicationXrefProperty(predicateId,(PublicationXref) val, nodeId);
+					} else if (val instanceof UnificationXref) {
 				     Long objectId = this.persistenceService.getNodeIdByBaseTerm(((UnificationXref)val).getRDFId());
 						Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
 					 this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
@@ -353,44 +354,48 @@ public class BioPAXParser implements IParsingEngine {
 					 aliasList.add(termId);
 					 	
 //					processUnificationXrefProperty(predicateId, (UnificationXref) val,nodeId);
-				} else if (val instanceof RelationshipXref) {
-			        Long objectId = this.persistenceService.getNodeIdByBaseTerm(((RelationshipXref)val).getRDFId());
-					Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
-					this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
+					} else if (val instanceof RelationshipXref) {
+						Long objectId = this.persistenceService.getNodeIdByBaseTerm(((RelationshipXref)val).getRDFId());
+						Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
+						this.persistenceService.createEdge(nodeId, objectId, predicateId, null,null,(List<NdexPropertyValuePair>)null);
 					
-					Long termId = getElementIdByRdfId(((RelationshipXref)val).getRDFId());
+						Long termId = getElementIdByRdfId(((RelationshipXref)val).getRDFId());
 					
-					relateToList.add(termId);
-				} else if (val instanceof BioPAXElement){
-					// create the edge
-					Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
-					processEdge(predicateId, (BioPAXElement) val, nodeId);
-					this.referencePropertyCount++;
-				} else if (null != val){
-					// queue up a property to be in the set to add
-					String valueString = val.toString();
-
-					NdexPropertyValuePair pvp = new NdexPropertyValuePair(propertyName, valueString);
-					literalProperties.add(pvp);
-					this.literalPropertyCount++;
-					
-					// populate the node name if possible.
-					if ( nodeName ==null && propertyName.equals("name")) {
-						nodeName = valueString;
-					} 
-					if ( propertyName.equals("displayName")) {
-						displayName = valueString;
-					} else if ( propertyName.equals("standardName")) {
-						standardName = valueString;
+						relateToList.add(termId);
+					} else {
+						throw new NdexException("Unhandled value type " + val.getClass().getName() + " found in the loader.");
 					}
-				}
+				} else {
+					if (val instanceof BioPAXElement){
+						// create the edge
+						Long predicateId = this.persistenceService.getBaseTermId(this.bioPaxPrefix,propertyName);
+						processEdge(predicateId, (BioPAXElement) val, nodeId);
+			//			this.referencePropertyCount++;
+					} else if (null != val){
+						// queue up a property to be in the set to add
+						String valueString = val.toString();
+
+						NdexPropertyValuePair pvp = new NdexPropertyValuePair(propertyName, valueString);
+						literalProperties.add(pvp);
+			//			this.literalPropertyCount++;
+					
+						// populate the node name if possible.
+						if ( propertyName.equals("name")) {
+							nodeName = valueString;
+						} else if ( propertyName.equals("displayName")) {
+							displayName = valueString;
+						} else if ( propertyName.equals("standardName")) {
+							standardName = valueString;
+						}
+					}
+				}	
 			  }
 			}
 		}
 		
 		this.persistenceService.setReferencesOnNode(nodeId, citationList, relateToList, aliasList);
 		
-		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", bpe.getModelInterface().getSimpleName()));
+//		literalProperties.add(new NdexPropertyValuePair("ndex:bioPAXType", bpe.getModelInterface().getSimpleName()));
 		this.persistenceService.setNodeProperties(nodeId, literalProperties, null);
 
 		// set the node name if possible.
