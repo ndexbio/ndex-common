@@ -401,8 +401,19 @@ public class NetworkDAO extends NetworkDocDAO {
         OrientVertex accountV = graph.getVertex(accountdoc);
         
         for ( com.tinkerpop.blueprints.Edge e : accountV.getEdges(networkV, Direction.OUT)) { 
-        //NdexClasses.E_admin, NdexClasses.account_E_canEdit,NdexClasses.account_E_canRead)) {
-          	graph.removeEdge(e);
+    		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
+    			try	{
+    	          	graph.removeEdge(e);
+    				break;
+    			} catch(ONeedRetryException	ex)	{
+    				logger.warning("Retry adding edge between account and network: " + ex.getMessage());
+    		       // networkdoc.reload();
+    		       // accountdoc.reload();
+    		       networkV.reload();
+    		       accountV.reload();
+    			}
+    		}
+          	break;
         }
 
         networkdoc.reload();
@@ -448,8 +459,19 @@ public class NetworkDAO extends NetworkDocDAO {
         OrientVertex accountV = graph.getVertex(accountdoc);
         
         for ( com.tinkerpop.blueprints.Edge e : accountV.getEdges(networkV, Direction.OUT)) { 
-        		                   //NdexClasses.E_admin, NdexClasses.account_E_canEdit,NdexClasses.account_E_canRead)) {
-          	graph.removeEdge(e);
+        	
+    		for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
+    			try	{
+    	          	graph.removeEdge(e);
+    				break;
+    			} catch(ONeedRetryException	ex)	{
+    				logger.warning("Retry adding edge between account and network: " + ex.getMessage());
+    		       // networkdoc.reload();
+    		       // accountdoc.reload();
+    		       networkV.reload();
+    		       accountV.reload();
+    			}
+    		}
           	break;
         }
 
