@@ -218,7 +218,7 @@ public class NdexDatabase {
     				try {
 						Thread.sleep(150);
 					} catch (InterruptedException e1) {
-						throw new NdexException ("Interrupted in getAConnection.");
+						throw new NdexException ("Interrupted in getAConnection: " + e1.getMessage());
 					}
     			} else 
     				throw e;
