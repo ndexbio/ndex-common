@@ -406,14 +406,13 @@ public class NetworkDAO extends NetworkDocDAO {
     	          	graph.removeEdge(e);
     				break;
     			} catch(ONeedRetryException	ex)	{
-    				logger.warning("Retry adding edge between account and network: " + ex.getMessage());
-    		       // networkdoc.reload();
-    		       // accountdoc.reload();
-    		       networkV.reload();
-    		       accountV.reload();
+    				logger.warning("Retry removing edge between account and network: " + ex.getMessage());
+    		        networkdoc.reload();
+    		        accountdoc.reload();
+//    		       networkV.reload();
+//    		       accountV.reload();
     			}
     		}
-          	break;
         }
 
         networkdoc.reload();
@@ -465,7 +464,7 @@ public class NetworkDAO extends NetworkDocDAO {
     	          	graph.removeEdge(e);
     				break;
     			} catch(ONeedRetryException	ex)	{
-    				logger.warning("Retry adding edge between account and network: " + ex.getMessage());
+    				logger.warning("Retry removing edge between account and network: " + ex.getMessage());
     		       // networkdoc.reload();
     		       // accountdoc.reload();
     		       networkV.reload();
