@@ -73,7 +73,7 @@ public class OrientdbDAO implements AutoCloseable {
 	public ODocument getRecordByUUIDStr(String id, String orientClass) 
 			throws ObjectNotFoundException, NdexException {
 		
-		try {
+		//try {
 			OIndex<?> Idx;
 			OIdentifiable record = null;
 			
@@ -87,11 +87,12 @@ public class OrientdbDAO implements AutoCloseable {
 			
 			return (ODocument) record.getRecord();
 			
-		}   catch (Exception e) {
+//		}  
+	/*catch (Exception e) {
 			logger.severe("Unexpected error on external object retrieval by UUID : " + e.getMessage());
 			e.printStackTrace();
 			throw new NdexException(e.getMessage());
-		}
+		} */
 		
 	}
 	
