@@ -60,6 +60,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.PropertiedObject;
@@ -244,6 +245,10 @@ public class AttributeValueUtil {
     	prop.setPredicateString(key);
     	prop.setValue(value);
     	if ( type != null ) {
+    		if ( type.equalsIgnoreCase("real"))
+				type = ATTRIBUTE_DATA_TYPE.toCxLabel(ATTRIBUTE_DATA_TYPE.DOUBLE);	
+    		else if ( type.equalsIgnoreCase("list"))
+				type = ATTRIBUTE_DATA_TYPE.toCxLabel(ATTRIBUTE_DATA_TYPE.STRING);	
     		prop.setDataType(type);
     	} else 
     		prop.setDataType(NdexPropertyValuePair.STRING);

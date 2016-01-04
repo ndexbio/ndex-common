@@ -57,6 +57,7 @@ package org.ndexbio.xgmml.parser.handler;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
+import org.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.SimplePropertyValuePair;
 import org.ndexbio.xgmml.parser.ObjectType;
@@ -113,6 +114,11 @@ public class HandleEdgeAttribute extends AbstractHandler {
 
 		
 		NdexPropertyValuePair prop = new NdexPropertyValuePair(name,value);
+		if ( type != null && type.equalsIgnoreCase("real"))
+			type = ATTRIBUTE_DATA_TYPE.toCxLabel(ATTRIBUTE_DATA_TYPE.DOUBLE);	
+		else if (type!=null && type.equalsIgnoreCase("list"))
+			type = ATTRIBUTE_DATA_TYPE.toCxLabel(ATTRIBUTE_DATA_TYPE.STRING);	
+
 		prop.setDataType(type);
 
 		manager.getCurrentXGMMLEdge().getProps().add(prop);

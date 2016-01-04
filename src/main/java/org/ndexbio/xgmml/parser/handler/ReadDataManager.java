@@ -64,6 +64,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
+import org.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.persistence.orientdb.NdexPersistenceService;
 import org.ndexbio.common.util.TermStringType;
@@ -499,6 +500,11 @@ public class ReadDataManager {
 	
 	protected void setElementProperty ( Long elementId, String key, String value,
 			String type) throws ExecutionException {
+		if ( type != null && type.equalsIgnoreCase("real"))
+				type = ATTRIBUTE_DATA_TYPE.toCxLabel(ATTRIBUTE_DATA_TYPE.DOUBLE);	
+		else if (type!=null && type.equalsIgnoreCase("list"))
+			type = ATTRIBUTE_DATA_TYPE.toCxLabel(ATTRIBUTE_DATA_TYPE.STRING);	
+
 		this.networkService.addElementProperty(elementId, key, value,type);
 	}
 

@@ -58,7 +58,9 @@ public class SingleNetworkSolrIdxManager {
 	public void createIndex() throws SolrServerException, IOException, NdexException {
 		CoreAdminRequest.Create creator = new CoreAdminRequest.Create(); 
 		creator.setCoreName(coreName);
-		creator.setConfigSet("data_driven_schema_configs");
+		creator.setConfigSet(
+				"ndex-nodes"); 
+	//	"data_driven_schema_configs");
 		CoreAdminResponse foo = creator.process(client);	
 			
 		if ( foo.getStatus() != 0 ) {
