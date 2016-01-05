@@ -208,7 +208,7 @@ public class UserDocDAO extends OrientdbDAO {
 	}
 
 	
-	public boolean verifyUser ( String userUUID, String verificationCode) throws ObjectNotFoundException, NdexException {
+	public String verifyUser ( String userUUID, String verificationCode) throws ObjectNotFoundException, NdexException {
 		ODocument userDoc = this.getRecordByUUIDStr(userUUID, NdexClasses.User);
 		
 		Boolean isDeleted = userDoc.field(NdexClasses.ExternalObj_isDeleted);
@@ -229,7 +229,7 @@ public class UserDocDAO extends OrientdbDAO {
 			userDoc.fields(NdexClasses.ExternalObj_isDeleted, false,
 					NdexClasses.account_P_accountName, acc,
 					NdexClasses.ExternalObj_mTime, t2).save();
-			return true;
+			return acc;
 		}
 		
 		throw new NdexException ( "Verification information not found");
