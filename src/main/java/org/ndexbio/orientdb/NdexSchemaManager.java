@@ -333,7 +333,7 @@ public class NdexSchemaManager
     			OClass.INDEX_TYPE.UNIQUE, 
     			NdexClasses.account_P_accountName);
 
-       userClass.createIndex("index-user-emailAddress", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "emailAddress");
+       userClass.createIndex(NdexClasses.Index_userEmail, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, NdexClasses.User_P_emailAddress);
         nsClass.createIndex(NdexClasses.Index_ns_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         
         bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});

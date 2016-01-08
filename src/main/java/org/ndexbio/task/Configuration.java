@@ -205,7 +205,7 @@ public class Configuration
         		break;
         		
         	default:
-            	_logger.error("Unrecoginzed value for Log-Level configuration property found: " + "'" + 
+            	_logger.info("Unrecoginzed value for Log-Level configuration property found: " + "'" + 
         	        result + "'" + ". Log level set to 'info'.");
             	this.logLevel = Level.INFO;
         		rootLog.setLevel(Level.INFO);

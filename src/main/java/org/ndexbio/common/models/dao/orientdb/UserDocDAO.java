@@ -277,6 +277,23 @@ public class UserDocDAO extends OrientdbDAO {
 
 	}
 
+	
+	public String getUserUUIDByEmail(String userEmail) throws IllegalArgumentException {
+
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(userEmail),
+				"userEmail required");
+
+		OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex( NdexClasses.Index_userEmail );
+		OIdentifiable user = (OIdentifiable) Idx.get(userEmail); 
+		if(user == null)
+				return null;
+			
+		ODocument doc = user.getRecord();
+		return doc.field(NdexClasses.ExternalObj_ID);
+			
+	}
+
+	
 	/**************************************************************************
 	 * Find users
 	 * 

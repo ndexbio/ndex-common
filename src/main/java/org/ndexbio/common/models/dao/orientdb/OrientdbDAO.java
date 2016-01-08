@@ -127,7 +127,8 @@ public class OrientdbDAO implements AutoCloseable {
 		}
 		
 	} 
-	
+
+
 	public static boolean checkPermission(ORID source, ORID destination, Direction dir, Integer depth, Permissions... permissions) {
 		
 		Collection<Object> fields = new ArrayList<>();

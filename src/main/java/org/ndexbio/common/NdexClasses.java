@@ -77,6 +77,7 @@ public interface NdexClasses {
     public static final String account_P_oldAcctName = "oldAcctName";
 	
     public static final String Index_accountName = "index-user-username";
+    public static final String Index_userEmail = "index-user-emailAddress";
     
     //extertnal object
     public static final String ExternalObj_ID    = "UUID";
