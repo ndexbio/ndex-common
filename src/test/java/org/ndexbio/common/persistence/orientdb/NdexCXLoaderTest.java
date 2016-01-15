@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.cxio.aspects.datamodels.AbstractAttributesAspectElement;
 import org.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
-import org.cxio.aux.OpaqueElement;
+import org.cxio.misc.OpaqueElement;
 import org.junit.Test;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;

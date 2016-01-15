@@ -8,11 +8,14 @@ import java.util.List;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.solr.NetworkGlobalIndexManager;
 import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.PropertiedObject;
+import org.ndexbio.model.object.network.Network;
+import org.ndexbio.model.object.network.NetworkSummary;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -280,8 +283,21 @@ public class BasicNetworkDAO implements AutoCloseable {
     	    addNodeToIndex(c,doc);
     	}
     	c.commit();
+
+		addNetworkToGlobalIndex(networkDocument);
 	}
 	
-	
+	private void addNetworkToGlobalIndex(ODocument networkDoc) throws NdexException, SolrServerException, IOException {
+		NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
+		
+		NetworkDocDAO dao = new NetworkDocDAO (localConnection);
+		
+		//handle the network properties 
+		NetworkSummary summary = new NetworkSummary();
+		NetworkDocDAO.setNetworkSummary(networkDoc, summary);
+		globalIdx.createIndexDocFromSummary(summary);
+		
+		globalIdx.commit();
+	}
     
 }

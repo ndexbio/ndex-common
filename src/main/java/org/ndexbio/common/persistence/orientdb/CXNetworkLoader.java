@@ -30,7 +30,7 @@ import org.cxio.aspects.readers.NetworkAttributesFragmentReader;
 import org.cxio.aspects.readers.NodeAttributesFragmentReader;
 import org.cxio.aspects.readers.NodesFragmentReader;
 import org.cxio.core.CxElementReader;
-import org.cxio.aux.OpaqueElement;
+import org.cxio.misc.OpaqueElement;
 import org.cxio.core.interfaces.AspectElement;
 import org.cxio.core.interfaces.AspectFragmentReader;
 import org.cxio.metadata.MetaDataCollection;
@@ -1098,7 +1098,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 					          NdexClasses.Network_P_isComplete,true)
 			.save();
 		graph.commit();
-			
 			
 		// added a delete old network task.
 		Task task = new Task();

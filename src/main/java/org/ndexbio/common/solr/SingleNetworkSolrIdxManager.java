@@ -31,7 +31,7 @@ public class SingleNetworkSolrIdxManager {
 	private static final String NAME = "name";
 	private static final String REPRESENTS = "represents";
 	private static final String ALIAS= "alias";
-	private static final String RELATEDTO = "relatedTo";
+//	private static final String RELATEDTO = "relatedTo";
 		
 	public SingleNetworkSolrIdxManager(String networkUUID) throws NdexException {
 		coreName = networkUUID;
