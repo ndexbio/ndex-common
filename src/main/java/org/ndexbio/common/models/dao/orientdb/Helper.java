@@ -157,10 +157,15 @@ public class Helper {
     	String query = "select $path from (traverse out_admin,out_member,out_groupadmin,out_write,out_read from (select * from " + NdexClasses.Account + 
     			" where accountName='"+ accountName + "') while $depth < 3 ) where UUID = '"+ networkUUID + "'";
 
+    	logger.debug("Checking permissiong, query string is: " + query);
+    	
     	final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(query));
 
     	for ( ODocument d : result ) { 
     		String s = d.field("$path");
+    		
+        	logger.debug("Got query result $path: " + s);
+        	
     		Pattern pattern = Pattern.compile("(out_admin|out_write|out_read)");
     		Matcher matcher = pattern.matcher(s);
     		if (matcher.find())
