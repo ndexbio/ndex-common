@@ -107,7 +107,7 @@ public class OrientdbDAO implements AutoCloseable {
 		
 		try {
 			OIndex<?> Idx = this.db.getMetadata().getIndexManager().getIndex( NdexClasses.Index_accountName );
-			OIdentifiable user = (OIdentifiable) Idx.get(accountName); // account to traverse by
+			OIdentifiable user = (OIdentifiable) Idx.get(accountName); 
 			if(user == null)
 				throw new ObjectNotFoundException("Account with ID: " + accountName + " doesn't exist.");
 			

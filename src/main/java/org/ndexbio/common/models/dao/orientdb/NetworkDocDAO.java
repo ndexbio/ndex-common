@@ -34,19 +34,30 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
+import org.ndexbio.common.models.dao.orientdb.NetworkSearchDAO.NetworkResultComparator;
+import org.ndexbio.common.solr.NetworkGlobalIndexManager;
+import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
+import org.ndexbio.model.object.NetworkSearchResult;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.PropertiedObject;
 import org.ndexbio.model.object.ProvenanceEntity;
+import org.ndexbio.model.object.SimpleNetworkQuery;
+import org.ndexbio.model.object.User;
 import org.ndexbio.model.object.network.BaseTerm;
 import org.ndexbio.model.object.network.Citation;
 import org.ndexbio.model.object.network.Edge;
@@ -64,9 +75,15 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.google.common.base.Strings;
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class NetworkDocDAO extends OrientdbDAO {
@@ -844,5 +861,41 @@ public class NetworkDocDAO extends OrientdbDAO {
 
 		return props.size();
 	}
+	
+	public NetworkSearchResult findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skipBlocks, int top, User loggedInUser) throws NdexException, SolrServerException, IOException {
+	
+		String queryStr = simpleNetworkQuery.getSearchString().trim();
+		if (queryStr.equals("*")  || queryStr.length() == 0 )
+			queryStr = "*:*";
+		
+		NetworkGlobalIndexManager networkIdx = new NetworkGlobalIndexManager();
+		
+		//prepare the query.
+		if (simpleNetworkQuery.getPermission() == null) 
+			simpleNetworkQuery.setPermission(Permissions.READ);
 
+		List<String> groupNames = null;
+		if ( simpleNetworkQuery.getIncludeGroups()) {
+			UserDocDAO userDao = new UserDocDAO(this.getDBConnection());
+			groupNames = userDao.getUserAllGroupMemberships(loggedInUser.getAccountName());
+		}
+			
+		SolrDocumentList solrResults = networkIdx.searchForNetworks(queryStr, 
+				(loggedInUser == null? null: loggedInUser.getAccountName()), top, skipBlocks * top, 
+						simpleNetworkQuery.getAccountName(), simpleNetworkQuery.getPermission(), simpleNetworkQuery.getCanRead(), groupNames);
+		
+		List<NetworkSummary> results = new ArrayList<>(solrResults.size());
+		for ( SolrDocument d : solrResults) {
+			String id = (String) d.get(NetworkGlobalIndexManager.UUID);
+			NetworkSummary s = getNetworkSummaryById(id);
+			if ( s !=null)
+				results .add(s);
+		}
+		
+		return new NetworkSearchResult ( solrResults.getNumFound(), solrResults.getStart(), results);
+	}
+
+	
+	
+	
 }

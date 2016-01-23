@@ -785,6 +785,50 @@ public class UserDocDAO extends OrientdbDAO {
 		}
 	}
 
+	
+	/**
+	 * Get all the group memberships this user belongs to.
+	 * @param userId
+	 * @return
+	 * @throws ObjectNotFoundException
+	 * @throws NdexException
+	 */
+	public List<String> getUserAllGroupMemberships(String userAccountName)
+			throws ObjectNotFoundException, NdexException {
+
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(userAccountName),
+				"A user UUID is required");
+		
+		ODocument user = this.getRecordByAccountName(userAccountName,NdexClasses.User);
+
+		try {
+			List<String> memberships = new ArrayList<>();
+
+			String userRID = user.getIdentity().toString();
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
+					"SELECT FROM" + " (TRAVERSE " + NdexClasses.User + ".out_"
+							+ Permissions.GROUPADMIN.name().toString().toLowerCase()
+							+ "," + NdexClasses.User + ".out_" 
+							+ Permissions.MEMBER.name().toString().toLowerCase()
+							+ " FROM" + " " + userRID + "  WHILE $depth <=1)"
+							+ " WHERE @class = '" + NdexClasses.Group + "' and ( " + NdexClasses.ExternalObj_isDeleted +" = false) ");
+
+			List<ODocument> records = this.db.command(query).execute();
+			for (ODocument group : records) {
+				memberships.add((String) group
+						.field(NdexClasses.GRP_P_NAME));
+			}
+
+			logger.info("Successfuly retrieved user-group memberships");
+			return memberships;
+
+		} catch (Exception e) {
+			logger.severe("An unexpected error occured while retrieving user-group memberships");
+			throw new NdexException(e.getMessage());
+		}
+	}
+	
+	
 	/**************************************************************************
 	 * getMembership
 	 * 

@@ -342,6 +342,40 @@ public class GroupDocDAO extends OrientdbDAO {
 		}
 	}
 	
+	
+	public List<String> getGroupUserAccount(String groupAccount) 
+			throws ObjectNotFoundException, NdexException {
+		
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupAccount.toString()),
+				"A group UUID is required");
+	
+		ODocument group = this.getRecordByAccountName(groupAccount, NdexClasses.Group);
+		
+		List<String> result = new ArrayList<>();
+		try {
+			List<Membership> memberships = new ArrayList<>();
+			
+			String groupRID = group.getIdentity().toString();
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
+		  			"SELECT FROM"
+		  			+ " (TRAVERSE "+ NdexClasses.Group +".in_"+ Permissions.GROUPADMIN.name().toString().toLowerCase() +
+		  					",in_" + NdexClasses.Group +".in_"+ Permissions.MEMBER.name().toString().toLowerCase() 
+		  					+ " FROM " + groupRID + "  WHILE $depth <=1) WHERE @class = '" + NdexClasses.User + 
+		  					"' AND ( " + NdexClasses.ExternalObj_isDeleted + " = false) ");
+			
+			List<ODocument> records = this.db.command(query).execute(); 
+			for(ODocument member: records) {
+				result.add((String)member.field(NdexClasses.account_P_accountName));		
+			}
+			
+			return result;
+			
+		} catch(Exception e) {
+			logger.severe("An unexpected error occured while retrieving group-user memberships "+e.getMessage());
+			throw new NdexException("Unable to get user memberships for group "+groupAccount);
+		}
+	}
+	
 	public Membership getMembershipToNetwork(UUID groupId, UUID networkId) 
 		throws IllegalArgumentException, ObjectNotFoundException, NdexException {
 		
