@@ -292,4 +292,56 @@ public class NetworkGlobalIndexManager {
 		client.commit();
 
 	}
+	
+	public void grantNetworkPermission(String networkId, String accountName, Permissions newPermission, 
+			 Permissions oldPermission, boolean isUser) 
+			throws NdexException, SolrServerException, IOException {
+		client.setBaseURL(solrUrl + "/" + coreName);
+		SolrInputDocument tmpdoc = new SolrInputDocument();
+		tmpdoc.addField(UUID, networkId);
+		 
+		Map<String,String> cmd = new HashMap<>();
+		cmd.put("add", accountName);
+
+		switch ( newPermission) {
+		case ADMIN : 
+			tmpdoc.addField( isUser? USER_ADMIN: GRP_ADMIN, cmd);
+			break;
+		case WRITE:
+			tmpdoc.addField( isUser? USER_EDIT: GRP_EDIT, cmd);
+			break;
+		case READ:
+			tmpdoc.addField( isUser? USER_READ: GRP_READ, cmd);
+			break;		
+		default: 
+			throw new NdexException ("Invalid permission type " + newPermission
+					+ " received in network previlege revoke.");
+		}
+		
+		if ( oldPermission !=null ) {
+			Map<String,String> rmCmd = new HashMap<>();
+			rmCmd.put("remove", accountName);
+
+			switch ( oldPermission) {
+			case ADMIN : 
+				tmpdoc.addField( isUser? USER_ADMIN: GRP_ADMIN, rmCmd);
+				break;
+			case WRITE:
+				tmpdoc.addField( isUser? USER_EDIT: GRP_EDIT, rmCmd);
+				break;
+			case READ:
+				tmpdoc.addField( isUser? USER_READ: GRP_READ, rmCmd);
+				break;
+				
+			default: 
+				throw new NdexException ("Invalid permission type " + oldPermission + " received in network previlege revoke.");
+			}
+		}
+		
+		Collection<SolrInputDocument> docs = new ArrayList<>(1);
+		docs.add(tmpdoc);
+		client.add(docs);
+		client.commit();
+
+	}
 }

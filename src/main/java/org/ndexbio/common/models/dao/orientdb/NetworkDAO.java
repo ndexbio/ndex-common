@@ -446,7 +446,7 @@ public class NetworkDAO extends NetworkDocDAO {
 	}
 	
 	
-    public int grantPrivilege(String networkUUID, String accountUUID, Permissions permission) throws NdexException {
+    public int grantPrivilege(String networkUUID, String accountUUID, Permissions permission) throws NdexException, SolrServerException, IOException {
     	// check if the edge already exists?
 
     	Permissions p = Helper.getNetworkPermissionByAccout(db,networkUUID, accountUUID);
@@ -466,6 +466,9 @@ public class NetworkDAO extends NetworkDocDAO {
         
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
         ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), null);
+        
+        String className = accountdoc.getClassName();
+        String accountName = accountdoc.field(NdexClasses.account_P_accountName);
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         
@@ -499,11 +502,16 @@ public class NetworkDAO extends NetworkDocDAO {
 			}
 		}
 
-        
+		//update solr index
+		NetworkGlobalIndexManager networkIdx = new NetworkGlobalIndexManager();
+		
+		networkIdx.grantNetworkPermission(networkUUID, accountName, permission, p,
+				className.equals(NdexClasses.User));
+               
     	return 1;
     }
 
-    public int revokePrivilege(String networkUUID, String accountUUID) throws NdexException {
+    public int revokePrivilege(String networkUUID, String accountUUID) throws NdexException, SolrServerException, IOException {
     	// check if the edge exists?
 
     	Permissions p = Helper.getNetworkPermissionByAccout(this.db,networkUUID, accountUUID);
@@ -523,6 +531,9 @@ public class NetworkDAO extends NetworkDocDAO {
         
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
         ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), null);
+        
+        String className = accountdoc.getClassName();
+        String accountName = accountdoc.field(NdexClasses.account_P_accountName);
         OrientVertex networkV = graph.getVertex(networkdoc);
         OrientVertex accountV = graph.getVertex(accountdoc);
         
@@ -541,6 +552,10 @@ public class NetworkDAO extends NetworkDocDAO {
           	break;
         }
 
+		//update solr index
+		NetworkGlobalIndexManager networkIdx = new NetworkGlobalIndexManager();
+		networkIdx.revokeNetworkPermission(networkUUID, accountName, p, 
+				className.equals(NdexClasses.User));
         
         
     	return 1;
