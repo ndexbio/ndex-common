@@ -534,8 +534,6 @@ public class NetworkDAO extends NetworkDocDAO {
     				break;
     			} catch(ONeedRetryException	ex)	{
     				logger.warning("Retry removing edge between account and network: " + ex.getMessage());
-    		       // networkdoc.reload();
-    		       // accountdoc.reload();
     		       networkV.reload();
     		       accountV.reload();
     			}
@@ -543,6 +541,8 @@ public class NetworkDAO extends NetworkDocDAO {
           	break;
         }
 
+        
+        
     	return 1;
     }
 

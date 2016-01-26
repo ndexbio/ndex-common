@@ -24,6 +24,7 @@ import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.network.NetworkSummary;
+import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.task.Configuration;
 
 public class NetworkGlobalIndexManager {
@@ -244,7 +245,45 @@ public class NetworkGlobalIndexManager {
 			Map<String,Timestamp> cmd = new HashMap<>();
 			java.util.Date now = Calendar.getInstance().getTime();
 			cmd.put("set",  new java.sql.Timestamp(now.getTime()));
-			tmpdoc.addField(VERSION, cmd);
+			tmpdoc.addField(MODIFICATION_TIME, cmd);
+		}
+		
+		VisibilityType  vt = (VisibilityType)table.get(NdexClasses.Network_P_visibility);		
+		if ( vt!=null) {
+			Map<String,String> cmd = new HashMap<>();
+			cmd.put("set",  vt.toString());
+			tmpdoc.addField(VISIBILITY, cmd);
+		}
+		
+		Collection<SolrInputDocument> docs = new ArrayList<>(1);
+		docs.add(tmpdoc);
+		client.add(docs);
+		client.commit();
+
+	}
+	
+	public void revokeNetworkPermission(String networkId, String accountName, Permissions p, boolean isUser) 
+			throws NdexException, SolrServerException, IOException {
+		client.setBaseURL(solrUrl + "/" + coreName);
+		SolrInputDocument tmpdoc = new SolrInputDocument();
+		tmpdoc.addField(UUID, networkId);
+		 
+		Map<String,String> cmd = new HashMap<>();
+		cmd.put("remove", accountName);
+
+		switch ( p) {
+		case ADMIN : 
+			tmpdoc.addField( isUser? USER_ADMIN: GRP_ADMIN, cmd);
+			break;
+		case WRITE:
+			tmpdoc.addField( isUser? USER_EDIT: GRP_EDIT, cmd);
+			break;
+		case READ:
+			tmpdoc.addField( isUser? USER_READ: GRP_READ, cmd);
+			break;
+			
+		default: 
+			throw new NdexException ("Invalid permission type " + p + " received in network previlege revoke.");
 		}
 		
 		Collection<SolrInputDocument> docs = new ArrayList<>(1);
