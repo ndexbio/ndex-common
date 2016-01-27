@@ -47,11 +47,14 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
+import org.ndexbio.common.solr.NetworkGlobalIndexManager;
+import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.exceptions.NdexException;
@@ -183,6 +186,18 @@ public class NdexNetworkCloneService extends PersistenceService {
 			.save();
 			localConnection.commit();
 			
+			// remove the old solr Index and add the new one.
+			String networkUUID = this.srcNetwork.getExternalId().toString();
+			SingleNetworkSolrIdxManager idxManager = new SingleNetworkSolrIdxManager(networkUUID);
+			NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
+			try {
+				idxManager.dropIndex();
+				globalIdx.deleteNetwork(networkUUID);
+			} catch (SolrServerException | HttpSolrClient.RemoteSolrException | IOException se ) {
+				logger.warn("Failed to delete Solr Index for network " + networkUUID + ". Please clean it up manually from solr. Error message: " + se.getMessage());
+			}
+			createSolrIndex(networkDoc);
+						
 			
 			// added a delete old network task.
 			Task task = new Task();
@@ -191,7 +206,6 @@ public class NdexNetworkCloneService extends PersistenceService {
 			NdexServerQueue.INSTANCE.addSystemTask(task);
 			
 			this.network.setIsLocked(false);
-			createSolrIndex(networkDoc);
 			
 			return this.network;
 		} finally {

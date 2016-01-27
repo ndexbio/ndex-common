@@ -60,6 +60,20 @@ public class BasicNetworkDAO implements AutoCloseable {
 	
 	public ODatabaseDocumentTx getDbConnection() { return localConnection; }
 	
+    protected static Iterable<ODocument> getNetworkElements(ODocument networkDoc, String elementEdgeString) {	
+	    	
+	   Object f = networkDoc.field("out_"+ elementEdgeString);
+	    	
+	    	if ( f == null) return Helper.emptyDocs;
+	    	
+	    	if ( f instanceof ODocument)
+	    		 return new OrientDBIterableSingleLink((ODocument)f);
+	    	
+	    	Iterable<ODocument> iterable = (Iterable<ODocument>)f;
+			return iterable;
+	    	     
+	}
+
 	protected static void getPropertiesFromDoc(ODocument doc, PropertiedObject obj) {
 	    	List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
 	    	if (props != null && props.size()> 0) {
@@ -175,7 +189,7 @@ public class BasicNetworkDAO implements AutoCloseable {
 			return (ODocument) record.getRecord();
 	}
 	
-	
+/*	
 	private void addNodeToIndex(SingleNetworkSolrIdxManager c, ODocument doc) throws SolrServerException, IOException, ObjectNotFoundException {
 		String name =  doc.field(NdexClasses.Node_P_name);
 		Long id = doc.field(NdexClasses.Element_ID);
@@ -200,7 +214,7 @@ public class BasicNetworkDAO implements AutoCloseable {
 			for ( Long relatedToId : relatedTo) {
 				addTermsToList(relatedToId, relatedTermList);
 			}
-		}
+		} 
 		// get the represent term list.
 		List<String> representList =  null;
 		Long represents = doc.field(NdexClasses.Node_P_represents);
@@ -215,9 +229,9 @@ public class BasicNetworkDAO implements AutoCloseable {
 			}  
 			// ignore reified edge nodes	
 		}
-		c.addNodeIndex(id, name, representList, aliasList, relatedTermList);
+		c.addNodeIndex(id, name, representList, aliasList);
 	}
-	
+*/	
 	private void addTermsToList(Long baseTermId, List<String> termList) throws ObjectNotFoundException {
 		ODocument doc = getBasetermDocById(baseTermId);
 		addTermsToList(doc, termList);
@@ -265,28 +279,95 @@ public class BasicNetworkDAO implements AutoCloseable {
 	}
 	
 	protected void createSolrIndex(ODocument networkDocument) throws SolrServerException, IOException, NdexException {
+
 		SingleNetworkSolrIdxManager c = new SingleNetworkSolrIdxManager((String)networkDocument.field(NdexClasses.ExternalObj_ID));
+		NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
+
+		//handle the network properties 
+		NetworkSummary summary = new NetworkSummary();
+		NetworkDocDAO.setNetworkSummary(networkDocument, summary);
+		globalIdx.createIndexDocFromSummary(summary);
 		
 		c.createIndex();
 		
- 	    Object f = networkDocument.field("out_"+ NdexClasses.Network_E_Nodes);
-    	
-    	if ( f == null) return;
-    	
-    	if ( f instanceof ODocument) {
-    		addNodeToIndex(c,(ODocument)f);
-    		c.commit();
-    		return;
-    	}
-    	
-    	for ( ODocument doc :  (Iterable<ODocument>)f ) {
-    	    addNodeToIndex(c,doc);
-    	}
+		for ( ODocument nodeDoc : getNetworkElements(networkDocument, NdexClasses.Network_E_Nodes)) {
+			addNodeToSolrIndex(nodeDoc, c, globalIdx);
+		}
+ 
     	c.commit();
+		globalIdx.commit();
+   	
 
-		addNetworkToGlobalIndex(networkDocument);
 	}
 	
+	/**
+	 *  add information of a node to both collections in Ndex Solr index. 
+	 * @param nodeDoc
+	 * @param singleNetworkIndex
+	 * @param globalIndex
+	 * @throws IOException 
+	 * @throws SolrServerException 
+	 * @throws ObjectNotFoundException 
+	 */
+	private void addNodeToSolrIndex ( ODocument nodeDoc, SingleNetworkSolrIdxManager singleNetworkIndex, NetworkGlobalIndexManager globalIndex )
+			throws SolrServerException, IOException, ObjectNotFoundException {
+		
+		String name =  nodeDoc.field(NdexClasses.Node_P_name);
+		
+		Long id = nodeDoc.field(NdexClasses.Element_ID);
+	
+		// get the alias term list
+		List<String> aliasList = null;
+		Collection<Long> aliases = nodeDoc.field(NdexClasses.Node_P_alias);
+		if ( aliases != null) {
+			aliasList = new ArrayList<>(aliases.size()*2+1);
+			for ( Long aliasId : aliases) {
+				addTermsToList(aliasId, aliasList);
+			}
+		}
+		
+		// get the relatedTo term list
+		List<String> relatedTermList = null;
+		Collection<Long> relatedTo = nodeDoc.field(NdexClasses.Node_P_relatedTo);
+		if ( relatedTo !=null) {
+			relatedTermList = new ArrayList<>(relatedTo.size()*2+1);
+			for ( Long relatedToId : relatedTo) {
+				addTermsToList(relatedToId, relatedTermList);
+			}
+		}
+		// get the represent term list.
+		List<String> representList =  null;
+		Long represents = nodeDoc.field(NdexClasses.Node_P_represents);
+		if ( represents !=null ) {
+			String representTermType = nodeDoc.field(NdexClasses.Node_P_representTermType);
+			representList = new ArrayList<>(2);
+			if ( representTermType.equals(NdexClasses.BaseTerm)) {
+				addTermsToList(represents, representList);
+			} else if (representTermType.equals(NdexClasses.FunctionTerm)) {
+				ODocument functionTermDoc = this.getFunctionDocById(represents);
+				addFunctionTermsToList(functionTermDoc, representList);
+			}  
+		}
+		
+		// get geneSymbols and NCBIGeneIDs
+		List<String> geneSymbol = new ArrayList<>();
+		List<String> NCBIGeneID = new ArrayList<>();
+		List<NdexPropertyValuePair> props = nodeDoc.field(NdexClasses.ndexProperties);
+		if ( props != null) {
+			for ( NdexPropertyValuePair prop: props ) {
+				String propName = prop.getPredicateString();
+				if ( propName.equalsIgnoreCase(NetworkGlobalIndexManager.GENE_SYMBOL)) {
+					geneSymbol.add(prop.getValue());
+				} else if ( propName.equalsIgnoreCase(NetworkGlobalIndexManager.NCBI_GENE_ID)) {
+					NCBIGeneID.add(prop.getValue());
+				}
+			}
+		}
+		
+		singleNetworkIndex.addNodeIndex(id, name, representList, aliasList) ; //relatedTermList);
+		globalIndex.addNodeToIndex(name, representList, aliasList, relatedTermList, geneSymbol, NCBIGeneID);
+	}
+/*	
 	private void addNetworkToGlobalIndex(ODocument networkDoc) throws NdexException, SolrServerException, IOException {
 		NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
 		
@@ -298,6 +379,6 @@ public class BasicNetworkDAO implements AutoCloseable {
 		globalIdx.createIndexDocFromSummary(summary);
 		
 		globalIdx.commit();
-	}
+	} */
     
 }

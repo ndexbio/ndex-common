@@ -77,7 +77,7 @@ public class SingleNetworkSolrIdxManager {
 		CoreAdminRequest.unloadCore(coreName, true, true, client);
 	}
 	
-	public void addNodeIndex(long id, String name, List<String> represents, List<String> alias, List<String> relatedTerms) throws SolrServerException, IOException {
+	public void addNodeIndex(long id, String name, List<String> represents, List<String> alias) throws SolrServerException, IOException {
 		
 		SolrInputDocument doc = new SolrInputDocument();
 		doc.addField(ID,  id );

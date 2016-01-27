@@ -3,9 +3,11 @@ package org.ndexbio.common.solr;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +24,7 @@ import org.apache.solr.common.util.NamedList;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
@@ -52,15 +55,50 @@ public class NetworkGlobalIndexManager {
 	private static final String VISIBILITY = "visibility";
 	
 	private static final String EDGE_COUNT = "EdgeCount";
+	
 	private static final String NODE_COUNT = "NodeCount";
 	private static final String CREATION_TIME = "CreationTime";
 	private static final String MODIFICATION_TIME = "ModificationTime";
+	
+	
+	private static final String NODE_NAME = "nodeName";
+	
+	public static final String NCBI_GENE_ID = "NCBIGeneID";
+	public static final String GENE_SYMBOL = "geneSymbol";
+	
+	private static final String REPRESENTS = "represents";
+	private static final String ALIASES = "alias";
+	private static final String RELATED_TO = "relatedTo";
+	
+	// user required indexing fields. hardcoded for now. Will turn them into configurable list in 1.4.
+	
+	private static final Set<String> otherAttributes = 
+			new HashSet<>(Arrays.asList("ObjectCategory", "Organism",
+	"Platform",
+	"Disease",
+	"Tissue",
+	 "RightsHolder",
+	 "Author",
+	 "CreatedAt",
+	 "Methods",
+	 "SubnetworkType","SubnetworkFilter","GraphHash","Rights"));
+	
+	private static  Map<String,String> attTable = null;
+		
+//	private int counter;
+	
 	
 	public NetworkGlobalIndexManager() throws NdexException {
 		// TODO Auto-generated constructor stub
 		solrUrl = Configuration.getInstance().getSolrURL();
 		client = new HttpSolrClient(solrUrl);
 		doc = null;
+		if ( attTable == null) { 
+			attTable = new HashMap<>(otherAttributes.size());
+			for ( String att : otherAttributes) {
+				attTable.put(att.toLowerCase(), att);
+			}
+		}
 	}
 	
 	public void createCoreIfNotExists() throws SolrServerException, IOException, NdexException {
@@ -179,10 +217,17 @@ public class NetworkGlobalIndexManager {
 			doc.addField(DESC, summary.getDescription());
 		if ( summary.getVersion() !=null)
 			doc.addField(VERSION, summary.getVersion());
-		
-		
+				
 		
 		// dynamic fields from property table.
+		List<NdexPropertyValuePair> props = summary.getProperties();
+		
+		for ( NdexPropertyValuePair prop : props) {
+			String attrName = attTable.get(prop.getPredicateString().toLowerCase()) ;
+			if (attrName !=null) {
+				doc.addField(attrName, prop.getValue());
+			}
+		}
 		
 		try (NetworkDAO dao = new NetworkDAO()) {
 			Map<String,Map<Permissions, Set<String>>> members = dao.getAllMembershipsOnNetwork(summary.getExternalId().toString());
@@ -194,9 +239,41 @@ public class NetworkGlobalIndexManager {
 			doc.addField(GRP_EDIT, members.get(NdexClasses.Group).get(Permissions.WRITE));
 		}
 
+//		counter = 0;
 	}
 
-	
+    public void addNodeToIndex(String name, List<String> represents, List<String> alias, List<String> relatedTerms,
+    				List<String> geneSymbol, List<String> NCBIGeneID) throws SolrServerException, IOException {
+				
+		if ( name != null ) 
+			doc.addField(NODE_NAME, name);
+		if ( represents !=null )
+			doc.addField(REPRESENTS, represents);
+		if ( alias !=null && !alias.isEmpty())
+			doc.addField(ALIASES, alias);
+		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) 
+			doc.addField(RELATED_TO, relatedTerms);
+		
+		if ( geneSymbol != null && !geneSymbol.isEmpty()) {
+			doc.addField(GENE_SYMBOL, geneSymbol);
+		}
+		
+		if ( NCBIGeneID !=null && !NCBIGeneID.isEmpty()) {
+			doc.addField(NCBI_GENE_ID, NCBIGeneID);
+		}
+		
+	//	docs.add(doc);
+		
+/*		counter ++;
+		if ( counter == batchSize) {
+			client.add(docs);
+			client.commit();
+			docs.clear();
+			counter = 0;
+		}  */
+
+	}
+
 	
 	public void deleteNetwork(String networkId) throws SolrServerException, IOException {
 		client.setBaseURL(solrUrl + "/" + coreName);

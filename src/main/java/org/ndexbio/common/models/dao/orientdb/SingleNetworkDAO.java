@@ -64,16 +64,7 @@ public class SingleNetworkDAO extends BasicNetworkDAO {
 	
     protected Iterable<ODocument> getNetworkElements(String elementEdgeString) {	
     	
-    	Object f = networkDoc.field("out_"+ elementEdgeString);
-    	
-    	if ( f == null) return Helper.emptyDocs;
-    	
-    	if ( f instanceof ODocument)
-    		 return new OrientDBIterableSingleLink((ODocument)f);
-    	
-    	Iterable<ODocument> iterable = (Iterable<ODocument>)f;
-		return iterable;
-    	     
+    	return getNetworkElements(networkDoc, elementEdgeString);	     
     }
 	
 	public Iterator<Namespace> getNamespaces() {

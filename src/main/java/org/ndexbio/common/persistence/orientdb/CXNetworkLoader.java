@@ -19,6 +19,8 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.cxio.aspects.datamodels.EdgeAttributesElement;
 import org.cxio.aspects.datamodels.EdgesElement;
 import org.cxio.aspects.datamodels.NetworkAttributesElement;
@@ -43,6 +45,8 @@ import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.Helper;
 import org.ndexbio.common.models.dao.orientdb.SingleNetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDocDAO;
+import org.ndexbio.common.solr.NetworkGlobalIndexManager;
+import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.common.util.TermUtilities;
 import org.ndexbio.model.cx.CXSimpleAttribute;
@@ -81,7 +85,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class CXNetworkLoader extends BasicNetworkDAO {
 	
-    protected static Logger logger = LoggerFactory.getLogger(CXNetworkLoader.class);;
+    protected static Logger logger = LoggerFactory.getLogger(CXNetworkLoader.class);
 
 	//private static final String nodeName = "name";
 	
@@ -1051,7 +1055,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	
-	public UUID updateNetwork(String networkUUID) throws NdexException, ExecutionException {
+	public UUID updateNetwork(String networkUUID) throws NdexException, ExecutionException, SolrServerException, IOException {
 
 		// get the old network head node
 		ODocument srcNetworkDoc = this.getRecordByUUIDStr(networkUUID);
@@ -1098,6 +1102,19 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 					          NdexClasses.Network_P_isComplete,true)
 			.save();
 		graph.commit();
+		
+		
+		// remove the old solr Index and add the new one.
+		SingleNetworkSolrIdxManager idxManager = new SingleNetworkSolrIdxManager(networkUUID);
+		NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
+		try {
+			idxManager.dropIndex();
+			globalIdx.deleteNetwork(networkUUID);
+		} catch (SolrServerException | HttpSolrClient.RemoteSolrException | IOException se ) {
+			logger.warn("Failed to delete Solr Index for network " + networkUUID + ". Please clean it up manually from solr. Error message: " + se.getMessage());
+		}
+		
+		createSolrIndex(networkDoc);
 			
 		// added a delete old network task.
 		Task task = new Task();
