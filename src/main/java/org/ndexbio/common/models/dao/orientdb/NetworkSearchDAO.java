@@ -59,6 +59,8 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
+@Deprecated
+
 public class NetworkSearchDAO extends OrientdbDAO{
 	
 	private static final Logger logger = Logger.getLogger(NetworkSearchDAO.class.getName());

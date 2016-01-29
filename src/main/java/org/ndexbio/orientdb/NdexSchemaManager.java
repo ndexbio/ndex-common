@@ -281,8 +281,8 @@ public class NdexSchemaManager
             
             networkClass.createProperty(NdexClasses.Network_E_Namespace, OType.LINKSET, nsClass);
 
-            networkClass.createIndex(NdexClasses.Index_network_name_desc, "FULLTEXT", 
-        			null, null, "LUCENE", new String[] { NdexClasses.ExternalObj_ID, NdexClasses.Network_P_name, NdexClasses.Network_P_desc});
+  //          networkClass.createIndex(NdexClasses.Index_network_name_desc, "FULLTEXT", 
+  //      			null, null, "LUCENE", new String[] { NdexClasses.ExternalObj_ID, NdexClasses.Network_P_name, NdexClasses.Network_P_desc});
 
         }
 
@@ -336,7 +336,7 @@ public class NdexSchemaManager
        userClass.createIndex(NdexClasses.Index_userEmail, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, NdexClasses.User_P_emailAddress);
         nsClass.createIndex(NdexClasses.Index_ns_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
         
-        bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});
+   //     bTermClass.createIndex(NdexClasses.Index_BTerm_name, "FULLTEXT", null, null, "LUCENE", new String[] { NdexClasses.BTerm_P_name});
        bTermClass.createIndex(NdexClasses.Index_bterm_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
        bTermClass.createIndex("index-baseterm-ns", OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.BTerm_NS_ID);
 
@@ -350,7 +350,7 @@ public class NdexSchemaManager
 
        nodeClass.createIndex(NdexClasses.Index_node_id, OClass.INDEX_TYPE.UNIQUE, NdexClasses.Element_ID);
        nodeClass.createIndex(NdexClasses.Index_node_rep_id, OClass.INDEX_TYPE.NOTUNIQUE, NdexClasses.Node_P_represents);
-       nodeClass.createIndex(NdexClasses.Index_node_name, "FULLTEXT",null, null, "LUCENE", new String[] { NdexClasses.Node_P_name});
+   //    nodeClass.createIndex(NdexClasses.Index_node_name, "FULLTEXT",null, null, "LUCENE", new String[] { NdexClasses.Node_P_name});
 
 
         logger.info("All indexes are created.");
