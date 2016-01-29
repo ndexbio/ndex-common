@@ -245,7 +245,7 @@ public class NetworkGlobalIndexManager {
     public void addNodeToIndex(String name, List<String> represents, List<String> alias, List<String> relatedTerms,
     				List<String> geneSymbol, List<String> NCBIGeneID) throws SolrServerException, IOException {
 				
-		if ( name != null ) 
+		if ( name != null && name.length() >1 ) 
 			doc.addField(NODE_NAME, name);
 		if ( represents !=null )
 			doc.addField(REPRESENTS, represents);

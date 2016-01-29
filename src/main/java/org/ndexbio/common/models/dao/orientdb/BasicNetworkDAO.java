@@ -232,16 +232,23 @@ public class BasicNetworkDAO implements AutoCloseable {
 		c.addNodeIndex(id, name, representList, aliasList);
 	}
 */	
-	private void addTermsToList(Long baseTermId, List<String> termList) throws ObjectNotFoundException {
+	/**
+	 * This function will add a base term to a string list for indexing. terms whose length is less then 2 are ignored.
+	 * @param baseTermId
+	 * @param termList
+	 * @throws ObjectNotFoundException
+	 */
+	private void addTermsToIndexList(Long baseTermId, List<String> termList) throws ObjectNotFoundException {
 		ODocument doc = getBasetermDocById(baseTermId);
-		addTermsToList(doc, termList);
+		addTermsToSolrIdxList(doc, termList);
 	}
 	
-	private void addTermsToList(ODocument doc, List<String> termList) throws ObjectNotFoundException {
+	private void addTermsToSolrIdxList(ODocument doc, List<String> termList) throws ObjectNotFoundException {
 		String name = doc.field(NdexClasses.BTerm_P_name);
 		String prefix = doc.field(NdexClasses.BTerm_P_prefix);
 
-		termList.add(name);
+		if ( name.length() > 1)
+		  termList.add(name);
 	   
 		if (prefix !=null) {
 			termList.add ( prefix + name);
@@ -256,9 +263,9 @@ public class BasicNetworkDAO implements AutoCloseable {
 	    }	
 	}
 	
-	private void addFunctionTermsToList ( ODocument funcDoc, List<String> termList) throws ObjectNotFoundException {
+	private void addFunctionTermsToIndexList ( ODocument funcDoc, List<String> termList) throws ObjectNotFoundException {
 		Long btId = funcDoc.field(NdexClasses.BaseTerm);
-		addTermsToList(btId, termList); 
+		addTermsToIndexList(btId, termList); 
 	
  	    Object f = funcDoc.field("out_"+ NdexClasses.FunctionTerm_E_paramter);
 
@@ -271,9 +278,9 @@ public class BasicNetworkDAO implements AutoCloseable {
 	    
     	for (ODocument para : iterable) {
 	    	if (para.getClassName().equals(NdexClasses.BaseTerm)) {
-	    		addTermsToList(para, termList);
+	    		addTermsToSolrIdxList(para, termList);
 	    	} else {  // add nested functionTerm
-	    		addFunctionTermsToList(para, termList);
+	    		addFunctionTermsToIndexList(para, termList);
 	    	}
 	    }
 	}
@@ -322,7 +329,7 @@ public class BasicNetworkDAO implements AutoCloseable {
 		if ( aliases != null) {
 			aliasList = new ArrayList<>(aliases.size()*2+1);
 			for ( Long aliasId : aliases) {
-				addTermsToList(aliasId, aliasList);
+				addTermsToIndexList(aliasId, aliasList);
 			}
 		}
 		
@@ -332,7 +339,7 @@ public class BasicNetworkDAO implements AutoCloseable {
 		if ( relatedTo !=null) {
 			relatedTermList = new ArrayList<>(relatedTo.size()*2+1);
 			for ( Long relatedToId : relatedTo) {
-				addTermsToList(relatedToId, relatedTermList);
+				addTermsToIndexList(relatedToId, relatedTermList);
 			}
 		}
 		// get the represent term list.
@@ -342,10 +349,10 @@ public class BasicNetworkDAO implements AutoCloseable {
 			String representTermType = nodeDoc.field(NdexClasses.Node_P_representTermType);
 			representList = new ArrayList<>(2);
 			if ( representTermType.equals(NdexClasses.BaseTerm)) {
-				addTermsToList(represents, representList);
+				addTermsToIndexList(represents, representList);
 			} else if (representTermType.equals(NdexClasses.FunctionTerm)) {
 				ODocument functionTermDoc = this.getFunctionDocById(represents);
-				addFunctionTermsToList(functionTermDoc, representList);
+				addFunctionTermsToIndexList(functionTermDoc, representList);
 			}  
 		}
 		
