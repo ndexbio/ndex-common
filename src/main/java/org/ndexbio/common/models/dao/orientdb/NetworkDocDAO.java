@@ -34,8 +34,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -75,6 +77,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -375,6 +378,112 @@ public class NetworkDocDAO extends OrientdbDAO {
     	return citations;
 	}
 
+	/**************************************************************************
+	    * getAllAdminUsers on a network
+	    *
+	    * @param networkId
+	    *            UUID for network
+	    * @throws NdexException
+	    *            Invalid parameters or an error occurred while accessing the database
+	    * @throws ObjectNotFoundException
+	    * 			Invalid groupId
+	    **************************************************************************/
+	
+	public Set<String> getAdminUsersOnNetwork(String networkId) 
+			throws ObjectNotFoundException, NdexException {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId.toString()),
+		
+				"A network UUID is required");
+
+		ODocument network = this.getRecordByUUIDStr(networkId, NdexClasses.Network);
+		
+		Set<String> adminUUIDStrs = new TreeSet<>();
+			
+		String networkRID = network.getIdentity().toString();
+			
+		String traverseCondition = "in_" + Permissions.ADMIN + ",in_" + Permissions.GROUPADMIN + ",in_" + Permissions.MEMBER;   
+			
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
+		  			"SELECT " +
+		  					NdexClasses.ExternalObj_ID + ", $path" +
+			        " FROM"
+		  			+ " (TRAVERSE "+ traverseCondition.toLowerCase() +" FROM"
+		  				+ " " + networkRID
+		  				+ "  WHILE $depth <=3)"
+		  			+ " WHERE @class = '" + NdexClasses.User + "' " +" AND  " + NdexClasses.ExternalObj_isDeleted + " = false ");
+			
+			List<ODocument> records = this.db.command(query).execute(); 
+			for(ODocument member: records) {
+				adminUUIDStrs.add( (String) member.field(NdexClasses.ExternalObj_ID) );
+			}
+			
+			logger.info("Successfuly retrieved network-user memberships");
+			return adminUUIDStrs;
+	}
+	
+	
+	   /**
+	    * Get all the direct membership on a network.
+	    * @param networkId
+	    * @return A table as a map. Key is a string with value either 'user' or 'group'. value is another map which holds all the members under either the 
+	    *  'user' or 'group' category. For the inner map, tts key is one of the permission type, value is a set of account names that have that permission.
+	    *  If an account has a edit privilege on the network this function wont duplicate that account in the read permission list automatically.
+	    * @throws ObjectNotFoundException
+	    * @throws NdexException
+	    */
+		public Map<String,Map<Permissions, Set<String>>> getAllMembershipsOnNetwork(String networkId) 
+				throws ObjectNotFoundException, NdexException {
+			Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId.toString()),	
+					"A network UUID is required");
+
+			ODocument network = this.getNetworkDocByUUIDString(networkId);
+			
+			Map<Permissions,Set<String>> userMemberships = new HashMap<>();
+			
+			userMemberships.put(Permissions.ADMIN, new TreeSet<String> ());
+			userMemberships.put(Permissions.WRITE, new TreeSet<String> ());
+			userMemberships.put(Permissions.READ, new TreeSet<String> ());
+			
+			Map<Permissions, Set<String>> grpMemberships = new HashMap<>();
+			grpMemberships.put(Permissions.ADMIN, new TreeSet<String> ());
+			grpMemberships.put(Permissions.READ, new TreeSet<String> ());
+			grpMemberships.put(Permissions.WRITE, new TreeSet<String> ());
+			
+			Map<String, Map<Permissions,Set<String>> > fullMembership = new HashMap <>();
+			fullMembership.put(NdexClasses.Group,grpMemberships);
+			fullMembership.put(NdexClasses.User, userMemberships);
+			
+			String networkRID = network.getIdentity().toString();
+				
+			String traverseCondition = "in_" + Permissions.ADMIN + ",in_" + Permissions.READ + ",in_" + Permissions.WRITE;   
+				
+				OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
+			  			"SELECT " + NdexClasses.account_P_accountName + "," +
+			  					NdexClasses.ExternalObj_ID + ", $path, @class" +
+			  					
+				        " FROM"
+			  			+ " (TRAVERSE "+ traverseCondition.toLowerCase() +" FROM"
+			  				+ " " + networkRID
+			  				+ "  WHILE $depth <=1)"
+			  			+ " WHERE (@class = '" + NdexClasses.User + "'"
+			  			+ " OR @class='" + NdexClasses.Group + "'" +  ") AND ( " + NdexClasses.ExternalObj_isDeleted + " = false) ");
+				
+				List<ODocument> records = this.db.command(query).execute(); 
+				for(ODocument member: records) {
+					
+					String accountType = member.field("class");
+					Permissions p = Helper.getNetworkPermissionFromInPath ((String)member.field("$path"));
+					String accountName = member.field(NdexClasses.account_P_accountName);
+			
+					fullMembership.get(accountType).get(p).add(accountName);
+						
+//						userMemberships.get(p).add(accountName);	
+
+				}
+				
+				return fullMembership;
+		}
+		
 
 	public Namespace getNamespace(String prefix, String URI, UUID networkID ) {
 		String query = "select from (traverse out_" +
@@ -488,6 +597,29 @@ public class NetworkDocDAO extends OrientdbDAO {
 		if ( accountName == null ) return false;
 		return Helper.checkPermissionOnNetworkByAccountName(db,UUIDStr, accountName, permission);
 	}
+	
+	/**
+	 * Check if a user has access to a network summary.
+	 * @param accountName
+	 * @param UUIDStr
+	 * @return
+	 * @throws ObjectNotFoundException
+	 * @throws NdexException
+	 */
+	public boolean networkSummaryIsReadable(String accountName, String UUIDStr) throws ObjectNotFoundException, NdexException {
+		
+		ODocument d = this.getRecordByUUID(UUID.fromString(UUIDStr), NdexClasses.Network);
+		
+		String vstr = d.field(NdexClasses.Network_P_visibility);
+		
+		VisibilityType v = VisibilityType.valueOf(vstr);
+		
+		if ( v != VisibilityType.PRIVATE ) return true;
+
+		if ( accountName == null ) return false;
+		return Helper.checkPermissionOnNetworkByAccountName(db,UUIDStr, accountName, Permissions.READ);
+	}
+	
 	
 	
 	public ODocument getDocumentByElementId(String NdexClassName, long elementID) {

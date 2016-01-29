@@ -33,13 +33,18 @@ package org.ndexbio.task;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.logging.Logger;
 
+import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.NetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.RequestDAO;
 import org.ndexbio.common.models.dao.orientdb.TaskDAO;
 import org.ndexbio.common.util.NdexUUIDFactory;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.Request;
+import org.ndexbio.model.object.ResponseType;
 import org.ndexbio.model.object.Status;
 import org.ndexbio.model.object.Task;
 import org.ndexbio.model.object.TaskType;
@@ -47,6 +52,8 @@ import org.ndexbio.model.object.TaskType;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class SystemTaskProcessor extends NdexTaskProcessor {
 
@@ -168,5 +175,22 @@ public class SystemTaskProcessor extends NdexTaskProcessor {
  			}
 
        	 } 	
+	}
+	
+	
+	private void sendEmailNotification(Task task) throws NdexException {
+  		 try (ODatabaseDocumentTx db = NdexDatabase.getInstance().getAConnection()){
+  		
+  			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
+  						"SELECT FROM " + NdexClasses.Request +
+  						" WHERE sysdate().asLong()  - modificationTime.asLong()  < 24*3600000 and  isDeleted=false"
+  								 );
+
+  			List<ODocument> records = db.command(query).execute();
+
+  			for (ODocument request : records) {
+  				Request r = RequestDAO.getRequestFromDocument(request);
+  			}
+  		 }
 	}
 }

@@ -382,68 +382,7 @@ public class NetworkDAO extends NetworkDocDAO {
 			logger.info("Successfuly retrieved network-user memberships");
 			return memberships;
 	}
-	
-   /**
-    * Get all the direct membership on a network.
-    * @param networkId
-    * @return A table as a map. Key is a string with value either 'user' or 'group'. value is another map which holds all the members under either the 
-    *  'user' or 'group' category. For the inner map, tts key is one of the permission type, value is a set of account names that have that permission.
-    *  If an account has a edit privilege on the network this function wont duplicate that account in the read permission list automatically.
-    * @throws ObjectNotFoundException
-    * @throws NdexException
-    */
-	public Map<String,Map<Permissions, Set<String>>> getAllMembershipsOnNetwork(String networkId) 
-			throws ObjectNotFoundException, NdexException {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(networkId.toString()),	
-				"A network UUID is required");
 
-		ODocument network = this.getNetworkDocByUUIDString(networkId);
-		
-		Map<Permissions,Set<String>> userMemberships = new HashMap<>();
-		
-		userMemberships.put(Permissions.ADMIN, new TreeSet<String> ());
-		userMemberships.put(Permissions.WRITE, new TreeSet<String> ());
-		userMemberships.put(Permissions.READ, new TreeSet<String> ());
-		
-		Map<Permissions, Set<String>> grpMemberships = new HashMap<>();
-		grpMemberships.put(Permissions.ADMIN, new TreeSet<String> ());
-		grpMemberships.put(Permissions.READ, new TreeSet<String> ());
-		grpMemberships.put(Permissions.WRITE, new TreeSet<String> ());
-		
-		Map<String, Map<Permissions,Set<String>> > fullMembership = new HashMap <>();
-		fullMembership.put(NdexClasses.Group,grpMemberships);
-		fullMembership.put(NdexClasses.User, userMemberships);
-		
-		String networkRID = network.getIdentity().toString();
-			
-		String traverseCondition = "in_" + Permissions.ADMIN + ",in_" + Permissions.READ + ",in_" + Permissions.WRITE;   
-			
-			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
-		  			"SELECT " + NdexClasses.account_P_accountName + "," +
-		  					NdexClasses.ExternalObj_ID + ", $path, @class" +
-		  					
-			        " FROM"
-		  			+ " (TRAVERSE "+ traverseCondition.toLowerCase() +" FROM"
-		  				+ " " + networkRID
-		  				+ "  WHILE $depth <=1)"
-		  			+ " WHERE (@class = '" + NdexClasses.User + "'"
-		  			+ " OR @class='" + NdexClasses.Group + "'" +  ") AND ( " + NdexClasses.ExternalObj_isDeleted + " = false) ");
-			
-			List<ODocument> records = this.db.command(query).execute(); 
-			for(ODocument member: records) {
-				
-				String accountType = member.field("class");
-				Permissions p = Helper.getNetworkPermissionFromInPath ((String)member.field("$path"));
-				String accountName = member.field(NdexClasses.account_P_accountName);
-		
-				fullMembership.get(accountType).get(p).add(accountName);
-					
-//					userMemberships.get(p).add(accountName);	
-
-			}
-			
-			return fullMembership;
-	}
 	
 	
     public int grantPrivilege(String networkUUID, String accountUUID, Permissions permission) throws NdexException, SolrServerException, IOException {
