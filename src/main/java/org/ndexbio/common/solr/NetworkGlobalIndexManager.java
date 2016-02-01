@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
@@ -182,6 +183,8 @@ public class NetworkGlobalIndexManager {
 			
 			
 		solrQuery.setQuery(searchTerms).setFields(UUID);
+		if ( searchTerms.equalsIgnoreCase("*:*"))
+			solrQuery.setSort(MODIFICATION_TIME, ORDER.desc);
 		if ( offset >=0)
 		  solrQuery.setStart(offset);
 		if ( limit >0 )
