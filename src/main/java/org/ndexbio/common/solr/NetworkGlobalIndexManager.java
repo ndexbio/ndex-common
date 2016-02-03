@@ -139,48 +139,47 @@ public class NetworkGlobalIndexManager {
 		SolrQuery solrQuery = new SolrQuery();
 		
 		//create the result filter
-		String visibilityFilter = canReadOnly? 
-				(VISIBILITY + ":PUBLIC") :( "(NOT " + VISIBILITY + ":PRIVATE)");
+	//	String visibilityFilter = // canReadOnly? 
+//				/* (VISIBILITY + ":PUBLIC") :( "(NOT " + */ VISIBILITY + ":PRIVATE";
 		
 		String adminFilter = "";		
 		if ( adminedBy !=null) {
 			adminFilter = " AND (" + USER_ADMIN + ":" + adminedBy + " OR " + GRP_ADMIN + ":" + adminedBy + ")";
 		}
 		
-		String resultFilter = "";
+		String resultFilter = VISIBILITY + ":PRIVATE";
 		if ( userAccount !=null) {     // has a signed in user.
 			if ( permission == Permissions.ADMIN)  {
-				resultFilter =  USER_ADMIN + ":" + userAccount;
+				resultFilter +=  " AND -(" + USER_ADMIN + ":" + userAccount + ")";
 			    if ( groupNames!=null ) {
 			    	for ( String grpName : groupNames)
-			    	  resultFilter  +=  " OR " + GRP_ADMIN +":" + grpName ;
-			    	resultFilter = "(" + resultFilter + ")";
+			    	  resultFilter  +=  " AND -(" + GRP_ADMIN +":" + grpName  + ")";
+//			    	resultFilter = "(" + resultFilter + ")";
 			    }	
-			    resultFilter = resultFilter + adminFilter;
+//			    resultFilter = resultFilter + adminFilter;
 			} else if ( permission == Permissions.READ) {
-				resultFilter =  USER_ADMIN + ":" + userAccount + " OR " +
-						USER_EDIT + ":" + userAccount + " OR "+ USER_READ + ":" + userAccount;
+				resultFilter += " AND -(" + USER_ADMIN + ":" + userAccount + ") AND -(" +
+						USER_EDIT + ":" + userAccount + ") AND -("+ USER_READ + ":" + userAccount + ")";
 				if ( groupNames!=null) {
 					for (String groupName : groupNames) {
-					  resultFilter +=  " OR " + GRP_ADMIN + ":" + groupName + " OR " +
-							  GRP_EDIT + ":" + groupName + " OR "+ GRP_READ + ":" + groupName;
+					  resultFilter +=  " AND -(" + GRP_ADMIN + ":" + groupName + ") AND -(" +
+							  GRP_EDIT + ":" + groupName + ") AND -("+ GRP_READ + ":" + groupName + ")";
 					}
 				}
-				resultFilter = "(" + visibilityFilter + " OR " + resultFilter + ")" + adminFilter;
 			} else if ( permission == Permissions.WRITE) {
-				resultFilter =  USER_ADMIN + ":" + userAccount + " OR " +
-						USER_EDIT + ":" + userAccount ;
+				resultFilter = " AND -(" + USER_ADMIN + ":" + userAccount + ") AND -(" +
+						USER_EDIT + ":" + userAccount + ")";
 				if ( groupNames !=null) {
 					for ( String groupName : groupNames ) 
-						resultFilter += " OR " + GRP_ADMIN + ":" + groupName + " OR " +
-							GRP_EDIT + ":" + groupName ;
+						resultFilter += " AND -(" + GRP_ADMIN + ":" + groupName + ") AND -(" +
+							GRP_EDIT + ":" + groupName + ")" ;
 				} 
-				resultFilter = "(" + resultFilter + ")" + adminFilter;
 			}
 		}  else {
-			resultFilter = visibilityFilter + adminFilter;
 		}
 			
+		resultFilter = "-("+ resultFilter + ")" + adminFilter;
+		
 			
 		solrQuery.setQuery(searchTerms).setFields(UUID);
 		if ( searchTerms.equalsIgnoreCase("*:*"))

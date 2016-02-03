@@ -76,7 +76,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		
 	}
 	
-	
+/*	
 	public Collection<NetworkSummary> findNetworks(SimpleNetworkQuery simpleNetworkQuery, int skipBlocks, int top, User loggedInUser) 
 			throws NdexException, IllegalArgumentException {
 		
@@ -338,7 +338,7 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		  throw new NdexException ("Invalid search string. " + e1.getCause().getMessage());
 	  }
 	}
-	
+	*/
 	
 	public static boolean isSearchable(ODocument networkDoc, ORID userRID, ORID adminUserRID, boolean canRead, boolean includeGroups, Permissions permission)
 			throws NdexException {
@@ -432,14 +432,14 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		  VisibilityType visibility = VisibilityType.valueOf((String)networkDoc.field(NdexClasses.Network_P_visibility));
 		  if ( visibility == VisibilityType.PUBLIC)
  				  return true;
-		  if ( !canRead &&  visibility == VisibilityType.DISCOVERABLE) 
- 				  return true;
+	//	  if ( !canRead &&  visibility == VisibilityType.DISCOVERABLE) 
+ 	//			  return true;
  			  
 		  return networkIsReadableByAccount(networkDoc,userORID);
 		  		  
 	   }
 
-
+/*
 	  public class NetworkResultComparator implements Comparator<NetworkSummary> {
 
 		@Override
@@ -449,5 +449,5 @@ public class NetworkSearchDAO extends OrientdbDAO{
 		}
 		  
 	  }
-	  
+	 */ 
 }
