@@ -36,7 +36,6 @@ public class NetworkGlobalIndexManager {
 	private String solrUrl ;
 	
 	private static final String coreName = 
-		//	"26fe0261-baeb-11e5-915b-c231b72caca9";
 			"ndex-networks" ; 
 	private HttpSolrClient client;
 	
