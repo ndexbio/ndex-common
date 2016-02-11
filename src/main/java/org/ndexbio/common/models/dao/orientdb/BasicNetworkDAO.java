@@ -38,8 +38,8 @@ public class BasicNetworkDAO implements AutoCloseable {
 	public BasicNetworkDAO() throws NdexException {
 		this (NdexDatabase.getInstance().getAConnection());	
 	}
-
-	public BasicNetworkDAO(ODatabaseDocumentTx dbconnection) throws NdexException {
+	
+	public BasicNetworkDAO(ODatabaseDocumentTx dbconnection) {
 		localConnection  = dbconnection;	
 		btermIdIdx = localConnection.getMetadata().getIndexManager().getIndex(NdexClasses.Index_bterm_id);
     	nsIdIdx = localConnection.getMetadata().getIndexManager().getIndex(NdexClasses.Index_ns_id);
@@ -285,7 +285,7 @@ public class BasicNetworkDAO implements AutoCloseable {
 	    }
 	}
 	
-	protected void createSolrIndex(ODocument networkDocument) throws SolrServerException, IOException, NdexException {
+	public void createSolrIndex(ODocument networkDocument) throws SolrServerException, IOException, NdexException {
 
 		SingleNetworkSolrIdxManager c = new SingleNetworkSolrIdxManager((String)networkDocument.field(NdexClasses.ExternalObj_ID));
 		NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
