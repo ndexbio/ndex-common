@@ -54,11 +54,11 @@ public class NetworkGlobalIndexManager {
 	
 	private static final String VISIBILITY = "visibility";
 	
-	private static final String EDGE_COUNT = "EdgeCount";
+	private static final String EDGE_COUNT = "edgeCount";
 	
-	private static final String NODE_COUNT = "NodeCount";
-	private static final String CREATION_TIME = "CreationTime";
-	private static final String MODIFICATION_TIME = "ModificationTime";
+	private static final String NODE_COUNT = "nodeCount";
+	private static final String CREATION_TIME = "creationTime";
+	private static final String MODIFICATION_TIME = "modificationTime";
 	
 	
 	private static final String NODE_NAME = "nodeName";
@@ -73,15 +73,15 @@ public class NetworkGlobalIndexManager {
 	// user required indexing fields. hardcoded for now. Will turn them into configurable list in 1.4.
 	
 	private static final Set<String> otherAttributes = 
-			new HashSet<>(Arrays.asList("ObjectCategory", "Organism",
-	"Platform",
-	"Disease",
-	"Tissue",
-	 "RightsHolder",
-	 "Author",
-	 "CreatedAt",
-	 "Methods",
-	 "SubnetworkType","SubnetworkFilter","GraphHash","Rights"));
+			new HashSet<>(Arrays.asList("objectCategory", "organism",
+	"platform",
+	"disease",
+	"tissue",
+	 "rightsHolder",
+	 "author",
+	 "createdAt",
+	 "methods",
+	 "subnetworkType","subnetworkFilter","graphHash","rights"));
 	
 	private static  Map<String,String> attTable = null;
 		
