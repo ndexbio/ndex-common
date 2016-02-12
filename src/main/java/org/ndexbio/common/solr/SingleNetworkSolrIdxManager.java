@@ -104,7 +104,9 @@ public class SingleNetworkSolrIdxManager {
 	}
 
 	public void commit() throws SolrServerException, IOException {
-		client.add(docs);
-		client.commit();
+		if ( docs.size()>0 ) {
+			client.add(docs);
+			client.commit();
+		}
 	}
 }

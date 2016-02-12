@@ -18,11 +18,10 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
+import org.ndexbio.model.object.TaskType;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -78,7 +77,7 @@ public class Migrator1_2to1_3 {
 		dbDao = new OrientdbDAO ( destConn);
 	}
 	
-	private void copyNamespaces() {
+	private void copyNamespaces() throws ObjectNotFoundException, NdexException {
         srcConnection.activateOnCurrentThread();
 
         String query = "SELECT FROM namespace";
@@ -89,12 +88,26 @@ public class Migrator1_2to1_3 {
 			Long id = (Long) nsDoc.field("id");
 			String prefix= nsDoc.field("prefix");
 			String uri = nsDoc.field("uri");
+			
+			ODocument netDoc = nsDoc.field("in_networkNS");
+			String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+			
             destConn.activateOnCurrentThread();
-            ODocument newNSDoc = new ODocument(NdexClasses.Namespace)
+            ODocument newDoc = new ODocument(NdexClasses.Namespace)
             			.field(NdexClasses.Element_ID,id, OType.LONG)
             			.field(NdexClasses.ns_P_prefix, prefix, OType.STRING)
             			.field(NdexClasses.ns_P_uri,uri, OType.STRING);
-            newNSDoc.save();
+            newDoc.save();
+            
+			OrientVertex newV = graph.getVertex(newDoc);
+			try {
+				ODocument hDoc = dbDao.getRecordByUUIDStr(uuid,null);
+	  			OrientVertex vNet = graph.getVertex(hDoc);
+				graph.addEdge(null, vNet, newV, NdexClasses.Network_E_Namespace);
+			} catch (ObjectNotFoundException e) {
+				logger.info("Skipping creating network link for " + uuid );
+//				continue;
+			}
             counter++;
             if ( counter % 5000 == 0 ) {
             	destConn.commit();
@@ -139,6 +152,10 @@ public class Migrator1_2to1_3 {
 		  						
 		  					
 		  				}
+		  				
+		  				ODocument netDoc = nsDoc.field("in_BaseTerms");
+		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+		  				
 		  				destConn.activateOnCurrentThread();
 		  				ODocument newbtDoc = new ODocument(NdexClasses.BaseTerm)
 		              			.field(NdexClasses.Element_ID,id, OType.LONG)
@@ -149,6 +166,20 @@ public class Migrator1_2to1_3 {
 		  					newbtDoc.field(NdexClasses.BTerm_NS_ID, nsId);
 		  				}
 		  				newbtDoc.save();
+		  				
+		  				OrientVertex newV = graph.getVertex(newbtDoc);
+		  				try {
+		  					ODocument hDoc = dbDao.getRecordByUUIDStr(uuid,null);
+		  		  			OrientVertex vNet = graph.getVertex(hDoc);
+		  					graph.addEdge(null, vNet, newV, NdexClasses.Network_E_BaseTerms);
+		  				} catch (ObjectNotFoundException e) {
+		  					logger.info("Skipping creating network link for " + uuid );
+//		  					continue;
+		  				} catch (NdexException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							return false;
+						}
 		  				counter++;
 		  				if ( counter % 5000 == 0 ) {
 		  					destConn.commit();
@@ -439,7 +470,11 @@ public class Migrator1_2to1_3 {
 		  				String name = doc.field(NdexClasses.Network_P_name);
 		  				String version = doc.field(NdexClasses.Network_P_version);
 		  				String visibility = doc.field(NdexClasses.Network_P_visibility);
-		  				
+
+		  				if (visibility.equals("DISCOVERABLE")){
+		  					logger.info("Network "+ uuid + " visiblity changed from DISCOVERABLE to PRIVATE during migration." );
+		  					visibility="PRIVATE";
+		  				}	
 		  				Integer edgeCount = doc.field(NdexClasses.Network_P_edgeCount);
 		  				Integer nodeCount = doc.field(NdexClasses.Network_P_nodeCount);
 		  				Long ROId	= doc.field(NdexClasses.Network_P_readOnlyCommitId);
@@ -475,7 +510,7 @@ public class Migrator1_2to1_3 {
 		              					NdexClasses.ExternalObj_cTime, ct,
 		              					NdexClasses.ExternalObj_mTime,mt,
 		              					"isDeleted", false,
-		              					"isCompleted",true,
+		              					NdexClasses.Network_P_isComplete,true,
 		              					"isLocked", false,
 		              					NdexClasses.Network_P_readOnlyCommitId, ROId,
 		              					NdexClasses.Network_P_cacheId, cacheId,
@@ -642,6 +677,9 @@ public class Migrator1_2to1_3 {
 							return false;
 						}
 		            	counter ++;
+		  				if ( counter % 50 == 0 ) {
+		  					logger.info( "baseTerm commited " + counter + " records.");
+		  				}
 		  				return true; 
 		            } 
 		   
@@ -658,6 +696,91 @@ public class Migrator1_2to1_3 {
 	}
 	
 	
+	private void copyExportTasks() {
+        srcConnection.activateOnCurrentThread();
+
+        String query = "select from task where isDeleted=false and taskType like 'EXPORT%' and status = 'COMPLETED' and out_ownedBy is not null";
+        
+		counter = 0;
+		
+		OSQLAsynchQuery<ODocument> asyncQuery =
+				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
+		            @Override 
+		            public boolean result(Object iRecord) { 
+		            	ODocument doc = (ODocument) iRecord;
+		  				String uuid =  doc.field(NdexClasses.ExternalObj_ID);
+		  				String desc = doc.field("description");
+		  				Date ct = doc.field(NdexClasses.ExternalObj_cTime);
+		  				Date mt = doc.field(NdexClasses.ExternalObj_mTime);
+		  				//String status = doc.field(NdexClasses.Task_P_status);
+		  				String resource = doc.field(NdexClasses.Task_P_resource);
+		  				Date startTime = doc.field(NdexClasses.Task_P_startTime);
+		  				Date endTime = doc.field(NdexClasses.Task_P_endTime);
+		  				String fmt = doc.field(NdexClasses.Task_P_fileFormat);
+		  				String ownerUUID = doc.field("ownerUUID");
+		  				if ( ownerUUID == null) {
+		  					ODocument d = doc.field("out_ownedBy");
+		  					ownerUUID = d.field(NdexClasses.ExternalObj_ID);
+		  				}
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				ODocument newDoc = new ODocument(NdexClasses.Task)
+		              			.fields(NdexClasses.ExternalObj_ID, uuid,
+		              					NdexClasses.ExternalObj_cTime, ct,
+		              					NdexClasses.ExternalObj_mTime,mt,
+		              					"description", desc,
+		              					NdexClasses.Task_P_status, "COMPLETED",
+		              					NdexClasses.Task_P_priority, "MEDIUM",
+		              					NdexClasses.Task_P_progress, 0,
+		              					NdexClasses.Task_P_taskType, TaskType.EXPORT_NETWORK_TO_FILE.toString(),
+		              					"isDeleted", false,
+		              					NdexClasses.Task_P_resource,resource,
+		              					NdexClasses.Task_P_startTime, startTime,
+		              					NdexClasses.Task_P_endTime, endTime,
+		              					NdexClasses.Task_P_fileFormat, fmt,
+		              					"ownerUUID", ownerUUID);
+		  				newDoc.save();
+		  				
+	  					OrientVertex newV = graph.getVertex(newDoc);
+	  					
+						try {
+								ODocument userDoc = dbDao.getRecordByUUIDStr(ownerUUID,null);
+			  					OrientVertex vUser = graph.getVertex(userDoc);
+	  							graph.addEdge(null,  newV, vUser, NdexClasses.Task_E_owner);
+						} catch (ObjectNotFoundException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+								return false;
+						} catch (NdexException e) {
+								e.printStackTrace();
+								return false;
+						}
+
+
+		  				counter++;
+		  				if ( counter % 5000 == 0 ) {
+		  					destConn.commit();
+		  					logger.info( "task commited " + counter + " records.");
+		  				}
+		  				srcConnection.activateOnCurrentThread();
+		            	
+		  				return true; 
+		            } 
+		   
+		            @Override 
+		            public void end() { 
+		            	destConn.activateOnCurrentThread();
+		            	destConn.commit();
+		            	logger.info( "task class copy completed. Total record: " + counter);
+		            }
+		            
+		          });
+		        
+        
+        srcConnection.command(asyncQuery).execute(); 
+        
+	}
+	
 	
 	private void closeAll() {
 		srcConnection.activateOnCurrentThread();
@@ -670,13 +793,14 @@ public class Migrator1_2to1_3 {
 	public static void main(String[] args) throws NdexException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
 		
-//		migrator.copyUsers();
-//		migrator.copyGroups();
-		migrator.copyNetworkHeadNodes();
+/*		migrator.copyUsers();
+		migrator.copyGroups();
+ 		migrator.copyNetworkHeadNodes();
+		migrator.copyExportTasks();
 		
-	//	migrator.copyNamespaces();
-		
-	//	migrator.copyBaseTerms();
+		migrator.copyNamespaces();
+*/		
+		migrator.copyBaseTerms();
 		
 	//	migrator.copySupport();
 		
