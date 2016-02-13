@@ -214,7 +214,7 @@ public class Migrator1_2to1_3 {
 	private void copySupport() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM support";
+        String query = "SELECT FROM support where in_supports is not null";
         
 		counter = 0;
 		
@@ -284,6 +284,78 @@ public class Migrator1_2to1_3 {
 
 	}
 
+	private void copyCitations() {
+        srcConnection.activateOnCurrentThread();
+
+        String query = "SELECT FROM citation where in_citations is not null";
+        
+		counter = 0;
+		
+		OSQLAsynchQuery<ODocument> asyncQuery =
+				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
+		            @Override 
+		            public boolean result(Object iRecord) { 
+		            	ODocument doc = (ODocument) iRecord;
+		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
+		  				String text= doc.field(NdexClasses.Support_P_text);
+		  				if ( text == null) {  // skip this if the text is null
+		  					logger.warning("empty support text. Support record" + id + " is ignored.");
+		  					return true;
+		  				}
+		  				
+		  				ODocument netDoc = doc.field("in_supports");
+		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+		  				
+		  				ODocument cDoc = doc.field("out_citeFrom");
+
+		  				Long citationId = null;
+		  				if ( cDoc != null) {
+	  							citationId = cDoc.field(NdexClasses.Element_ID);
+		  				
+		  				}
+		  				
+		  				// get properties
+		  				List<NdexPropertyValuePair> props = getProperties(doc);
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				
+		  				ODocument newDoc = new ODocument(NdexClasses.Support)
+		              			.fields(NdexClasses.Element_ID,id, OType.LONG,
+		              					NdexClasses.Support_P_text, text, OType.STRING,
+		              					NdexClasses.Citation, citationId);
+		              	
+		  				if ( !props.isEmpty())
+		              		newDoc.field(NdexClasses.ndexProperties, props);
+
+		  				newDoc.save();
+		  				
+		  				// connect to network headnode.
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Supports))
+		  					return false;
+		  				
+		  				counter++;
+		  				if ( counter % 5000 == 0 ) {
+		  					destConn.commit();
+		  					logger.info( "Support commited " + counter + " records.");
+		  				}
+		  				srcConnection.activateOnCurrentThread();
+		            	
+		  				return true; 
+		            } 
+		   
+		            @Override 
+		            public void end() { 
+		            	destConn.commit();
+		            	logger.info( "Support copy completed. Total record: " + counter);
+		            }
+		            
+		          });
+		        
+        
+        srcConnection.command(asyncQuery).execute(); 
+        
+
+	}
 	
 	private void copyGroups() {
         srcConnection.activateOnCurrentThread();
@@ -606,7 +678,7 @@ public class Migrator1_2to1_3 {
 	}
 
 	
-	private boolean connectToNetworkHeadNode(ODocument elementDoc, String uuid, String edgeName) {
+	protected boolean connectToNetworkHeadNode(ODocument elementDoc, String uuid, String edgeName) {
 		OrientVertex newV = graph.getVertex(elementDoc);
 			try {
 				ODocument hDoc = dbDao.getRecordByUUIDStr(uuid,null);
