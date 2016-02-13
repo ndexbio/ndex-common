@@ -123,7 +123,7 @@ public class Migrator1_2to1_3 {
 	private void copyBaseTerms() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM baseTerm";
+        String query = "SELECT FROM baseTerm where in_BaseTerms is not null";
         
 		counter = 0;
 		
@@ -153,7 +153,13 @@ public class Migrator1_2to1_3 {
 		  					
 		  				}
 		  				
-		  				ODocument netDoc = nsDoc.field("in_BaseTerms");
+		  				Object  nsLink = nsDoc.field("in_BaseTerms");
+		  				if ( !( nsLink instanceof ODocument) ) {
+							logger.warning("ignoring baseterm " + id + " because network " + nsLink + " not found.");
+		  					return true; 
+						}	
+		  				ODocument netDoc = (ODocument) nsLink;
+		  				
 		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
 		  				
 		  				destConn.activateOnCurrentThread();
@@ -192,13 +198,14 @@ public class Migrator1_2to1_3 {
 		   
 		            @Override 
 		            public void end() {
+		            	destConn.activateOnCurrentThread();
 		            	destConn.commit();
 		            	logger.info( "Baseterm copy completed. Total record: " + counter);
 		            }
 		            
 		          });
 		        
-        
+        srcConnection.activateOnCurrentThread();
         srcConnection.command(asyncQuery).execute(); 
         
 
@@ -211,55 +218,52 @@ public class Migrator1_2to1_3 {
         
 		counter = 0;
 		
-/*		OSQLAsynchQuery<ODocument> asyncQuery =
+		OSQLAsynchQuery<ODocument> asyncQuery =
 				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
 		            @Override 
 		            public boolean result(Object iRecord) { 
 		            	ODocument doc = (ODocument) iRecord;
 		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
 		  				String text= doc.field(NdexClasses.Support_P_text);
-		  				if ( text == null)  // skip this if the text is null
+		  				if ( text == null) {  // skip this if the text is null
+		  					logger.warning("empty support text. Support record" + id + " is ignored.");
 		  					return true;
+		  				}
 		  				
-		  				Object nsRid = nsDoc.field("out_baseTermNS");
-		  				Long nsId = null;
-		  				String prefix = null;
-		  				if ( nsRid != null) {
-		  					if ( nsRid instanceof ORecordId) {
-		  						try {
-		  							ODocument ns = new ODocument((ORecordId)nsRid);
-		  					
-		  							nsId = ns.field(NdexClasses.Element_ID);
-		  							prefix =ns.field(NdexClasses.ns_P_prefix);
-		  							if ( prefix != null)
-		  								prefix += ":";
-		  						} catch ( ORecordNotFoundException e) {
-		  							logger.warning("record " + nsRid + " not found in db. ignore this namespace link.");
-		  						}
-		  					} else {
-	  							ODocument ns = (ODocument)nsRid;
-			  					
-	  							nsId = ns.field(NdexClasses.Element_ID);
-	  							prefix =ns.field(NdexClasses.ns_P_prefix);
-	  							if ( prefix != null)
-	  								prefix += ":";
-		  						
-		  					}
+		  				ODocument netDoc = doc.field("in_supports");
+		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+		  				
+		  				ODocument cDoc = doc.field("out_citeFrom");
+
+		  				Long citationId = null;
+		  				if ( cDoc != null) {
+	  							citationId = cDoc.field(NdexClasses.Element_ID);
+		  				
 		  				}
-		  				descConn.activateOnCurrentThread();
-		  				ODocument newbtDoc = new ODocument(NdexClasses.BaseTerm)
-		              			.field(NdexClasses.Element_ID,id, OType.LONG)
-		              			.field(NdexClasses.BTerm_P_name, name, OType.STRING);
-		  				if ( prefix!=null)
-		              		newbtDoc.field(NdexClasses.BTerm_P_prefix, prefix, OType.STRING);
-		  				if ( nsId !=null) {
-		  					newbtDoc.field(NdexClasses.BTerm_NS_ID, nsId);
-		  				}
-		  				newbtDoc.save();
+		  				
+		  				// get properties
+		  				List<NdexPropertyValuePair> props = getProperties(doc);
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				
+		  				ODocument newDoc = new ODocument(NdexClasses.Support)
+		              			.fields(NdexClasses.Element_ID,id, OType.LONG,
+		              					NdexClasses.Support_P_text, text, OType.STRING,
+		              					NdexClasses.Citation, citationId);
+		              	
+		  				if ( !props.isEmpty())
+		              		newDoc.field(NdexClasses.ndexProperties, props);
+
+		  				newDoc.save();
+		  				
+		  				// connect to network headnode.
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Supports))
+		  					return false;
+		  				
 		  				counter++;
 		  				if ( counter % 5000 == 0 ) {
-		  					descConn.commit();
-		  					logger.info( "baseTerm commited " + counter + " records.");
+		  					destConn.commit();
+		  					logger.info( "Support commited " + counter + " records.");
 		  				}
 		  				srcConnection.activateOnCurrentThread();
 		            	
@@ -268,8 +272,8 @@ public class Migrator1_2to1_3 {
 		   
 		            @Override 
 		            public void end() { 
-		            	descConn.commit();
-		            	logger.info( "Baseterm copy completed. Total record: " + counter);
+		            	destConn.commit();
+		            	logger.info( "Support copy completed. Total record: " + counter);
 		            }
 		            
 		          });
@@ -277,7 +281,7 @@ public class Migrator1_2to1_3 {
         
         srcConnection.command(asyncQuery).execute(); 
         
-*/
+
 	}
 
 	
@@ -483,10 +487,8 @@ public class Migrator1_2to1_3 {
 		  				String srcFormat = doc.field(NdexClasses.Network_P_source_format);
 		  				String provenance = doc.field("provenance");
 		  				
-		  				List<NdexPropertyValuePair> props = new ArrayList<>();
-		  				for ( ODocument propDoc :  getLinkedDocs(doc, "out_ndexProps" )) {
-		  					props.add(getPropertyFromDoc (propDoc));
-		  				}
+		  				List<NdexPropertyValuePair> props = getProperties(doc);
+		  				
 		  				
 		  				List<String> edits = new ArrayList<>();
 		  				List<String> reads = new ArrayList<>();
@@ -521,7 +523,8 @@ public class Migrator1_2to1_3 {
 		              					NdexClasses.Network_P_provenance, provenance,
 		              					NdexClasses.Network_P_source_format, srcFormat,
 		              					NdexClasses.Network_P_version, version,
-		              					NdexClasses.Network_P_visibility, visibility);
+		              					NdexClasses.Network_P_visibility, visibility,
+		              					NdexClasses.ndexProperties, props);
 		  				newDoc.save();
 		  				
 	  					OrientVertex newV = graph.getVertex(newDoc);
@@ -603,6 +606,31 @@ public class Migrator1_2to1_3 {
 	}
 
 	
+	private boolean connectToNetworkHeadNode(ODocument elementDoc, String uuid, String edgeName) {
+		OrientVertex newV = graph.getVertex(elementDoc);
+			try {
+				ODocument hDoc = dbDao.getRecordByUUIDStr(uuid,null);
+	  			OrientVertex vNet = graph.getVertex(hDoc);
+				graph.addEdge(null, vNet, newV, edgeName);
+			} catch (ObjectNotFoundException e) {
+				logger.info("Skipping creating network link for " + uuid );
+//				continue;
+			} catch (NdexException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	protected static List<NdexPropertyValuePair> getProperties(ODocument doc) { 
+	
+		List<NdexPropertyValuePair> props = new ArrayList<>();
+		for ( ODocument propDoc :  getLinkedDocs(doc, "out_ndexProps" )) {
+			props.add(getPropertyFromDoc (propDoc));
+		}
+		return props;
+	}
 	// direction "out_" or "in_"
 	
 	protected static Iterable<ODocument> getLinkedDocs(ODocument srcDoc, String edgeString) {	
@@ -620,7 +648,7 @@ public class Migrator1_2to1_3 {
 		    	     
 	}
 	
-	protected static NdexPropertyValuePair getPropertyFromDoc (ODocument doc) {
+	private static NdexPropertyValuePair getPropertyFromDoc (ODocument doc) {
 		NdexPropertyValuePair result = new NdexPropertyValuePair();
 		
 		result.setValue( (String)doc.field("value"));
@@ -792,8 +820,8 @@ public class Migrator1_2to1_3 {
 	
 	public static void main(String[] args) throws NdexException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
-		
-/*		migrator.copyUsers();
+/*		
+		migrator.copyUsers();
 		migrator.copyGroups();
  		migrator.copyNetworkHeadNodes();
 		migrator.copyExportTasks();
@@ -802,7 +830,7 @@ public class Migrator1_2to1_3 {
 */		
 		migrator.copyBaseTerms();
 		
-	//	migrator.copySupport();
+		migrator.copySupport();
 		
 	//	migrator.createSolrIndex();
 		migrator.closeAll();
