@@ -230,7 +230,13 @@ public class Migrator1_2to1_3 {
 		  					return true;
 		  				}
 		  				
-		  				ODocument netDoc = doc.field("in_supports");
+		  				Object netRec = doc.field("in_supports");
+		  				if ( ! (netRec instanceof ODocument)) {
+		  					logger.warning("Support id" + id + " is not pointing to a network, ignoring it.");
+		  					return true;
+		  				}
+		  					
+		  				ODocument netDoc = (ODocument)netRec;
 		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
 		  				
 		  				ODocument cDoc = doc.field("out_citeFrom");
@@ -247,8 +253,8 @@ public class Migrator1_2to1_3 {
 		  				destConn.activateOnCurrentThread();
 		  				
 		  				ODocument newDoc = new ODocument(NdexClasses.Support)
-		              			.fields(NdexClasses.Element_ID,id, OType.LONG,
-		              					NdexClasses.Support_P_text, text, OType.STRING,
+		              			.fields(NdexClasses.Element_ID,id, 
+		              					NdexClasses.Support_P_text, text,
 		              					NdexClasses.Citation, citationId);
 		              	
 		  				if ( !props.isEmpty())
@@ -271,7 +277,8 @@ public class Migrator1_2to1_3 {
 		            } 
 		   
 		            @Override 
-		            public void end() { 
+		            public void end() {
+		            	destConn.activateOnCurrentThread();
 		            	destConn.commit();
 		            	logger.info( "Support copy completed. Total record: " + counter);
 		            }
@@ -297,32 +304,26 @@ public class Migrator1_2to1_3 {
 		            public boolean result(Object iRecord) { 
 		            	ODocument doc = (ODocument) iRecord;
 		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
-		  				String text= doc.field(NdexClasses.Support_P_text);
-		  				if ( text == null) {  // skip this if the text is null
-		  					logger.warning("empty support text. Support record" + id + " is ignored.");
-		  					return true;
-		  				}
+		  				String title= doc.field(NdexClasses.Citation_P_title);
+		  				String idType = doc.field(NdexClasses.Citation_p_idType);
+		  				String identifier = doc.field(NdexClasses.Citation_P_identifier);  
+		  				List<String> authors = doc.field(NdexClasses.Citation_P_contributors);
 		  				
-		  				ODocument netDoc = doc.field("in_supports");
+		  				
+		  				ODocument netDoc = doc.field("in_citations");
 		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
-		  				
-		  				ODocument cDoc = doc.field("out_citeFrom");
-
-		  				Long citationId = null;
-		  				if ( cDoc != null) {
-	  							citationId = cDoc.field(NdexClasses.Element_ID);
-		  				
-		  				}
 		  				
 		  				// get properties
 		  				List<NdexPropertyValuePair> props = getProperties(doc);
 		  				
 		  				destConn.activateOnCurrentThread();
 		  				
-		  				ODocument newDoc = new ODocument(NdexClasses.Support)
-		              			.fields(NdexClasses.Element_ID,id, OType.LONG,
-		              					NdexClasses.Support_P_text, text, OType.STRING,
-		              					NdexClasses.Citation, citationId);
+		  				ODocument newDoc = new ODocument(NdexClasses.Citation)
+		              			.fields(NdexClasses.Element_ID,id, 
+		              					NdexClasses.Citation_P_title, title, 
+		              					NdexClasses.Citation_p_idType, idType,
+		              					NdexClasses.Citation_P_identifier, identifier,
+		              					NdexClasses.Citation_P_contributors, authors);
 		              	
 		  				if ( !props.isEmpty())
 		              		newDoc.field(NdexClasses.ndexProperties, props);
@@ -330,13 +331,13 @@ public class Migrator1_2to1_3 {
 		  				newDoc.save();
 		  				
 		  				// connect to network headnode.
-		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Supports))
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Citations))
 		  					return false;
 		  				
 		  				counter++;
 		  				if ( counter % 5000 == 0 ) {
 		  					destConn.commit();
-		  					logger.info( "Support commited " + counter + " records.");
+		  					logger.info( "Citation commited " + counter + " records.");
 		  				}
 		  				srcConnection.activateOnCurrentThread();
 		            	
@@ -345,8 +346,9 @@ public class Migrator1_2to1_3 {
 		   
 		            @Override 
 		            public void end() { 
+		            	destConn.activateOnCurrentThread();
 		            	destConn.commit();
-		            	logger.info( "Support copy completed. Total record: " + counter);
+		            	logger.info( "Citation copy completed. Total record: " + counter);
 		            }
 		            
 		          });
@@ -356,6 +358,145 @@ public class Migrator1_2to1_3 {
         
 
 	}
+	
+	
+	
+	private void copyFunctionTerms() {
+        srcConnection.activateOnCurrentThread();
+
+        String query = "SELECT FROM node where in_FunctionTerms is not null";
+        
+		counter = 0;
+		
+		OSQLAsynchQuery<ODocument> asyncQuery =
+				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
+		            @Override 
+		            public boolean result(Object iRecord) { 
+		            	ODocument doc = (ODocument) iRecord;
+		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
+		  				String name= doc.field(NdexClasses.Node_P_name);
+		  				
+		  				
+		  				ODocument netDoc = doc.field("in_networkNodes");
+		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+		  				
+		  				// get properties
+		  				List<NdexPropertyValuePair> props = getProperties(doc);
+		  				
+		  				// get represents
+		  				ODocument repDoc = doc.field("out_represent");
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				
+		  				ODocument newDoc = new ODocument(NdexClasses.Citation)
+		              			.fields(NdexClasses.Element_ID,id, 
+		              					NdexClasses.Node_P_name, name 
+		     //         					NdexClasses.Node_P_represents, rep,
+		                                 );
+		              	
+		  				if ( !props.isEmpty())
+		              		newDoc.field(NdexClasses.ndexProperties, props);
+
+		  				newDoc.save();
+		  				
+		  				// connect to network headnode.
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Citations))
+		  					return false;
+		  				
+		  				counter++;
+		  				if ( counter % 5000 == 0 ) {
+		  					destConn.commit();
+		  					logger.info( "Citation commited " + counter + " records.");
+		  				}
+		  				srcConnection.activateOnCurrentThread();
+		            	
+		  				return true; 
+		            } 
+		   
+		            @Override 
+		            public void end() { 
+		            	destConn.activateOnCurrentThread();
+		            	destConn.commit();
+		            	logger.info( "Citation copy completed. Total record: " + counter);
+		            }
+		            
+		          });
+		        
+        
+        srcConnection.command(asyncQuery).execute(); 
+        
+
+	}
+	
+	
+
+	
+	private void copyNodes() {
+        srcConnection.activateOnCurrentThread();
+
+        String query = "SELECT FROM node where in_networkNodes is not null and id > 1914000";
+        
+		counter = 0;
+		
+		OSQLAsynchQuery<ODocument> asyncQuery =
+				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
+		            @Override 
+		            public boolean result(Object iRecord) { 
+		            	ODocument doc = (ODocument) iRecord;
+		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
+		  				String name= doc.field(NdexClasses.Node_P_name);
+		  				
+		  				
+		  				ODocument netDoc = doc.field("in_networkNodes");
+		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+		  				
+		  				// get properties
+		  				List<NdexPropertyValuePair> props = getProperties(doc);
+		  				
+		  				// get represents
+		  				ODocument repDoc = doc.field("out_represent");
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				
+		  				ODocument newDoc = new ODocument(NdexClasses.Citation)
+		              			.fields(NdexClasses.Element_ID,id, 
+		              					NdexClasses.Node_P_name, name);
+		              	
+		  				if ( !props.isEmpty())
+		              		newDoc.field(NdexClasses.ndexProperties, props);
+
+		  				newDoc.save();
+		  				
+		  				// connect to network headnode.
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Citations))
+		  					return false;
+		  				
+		  				counter++;
+		  				if ( counter % 5000 == 0 ) {
+		  					destConn.commit();
+		  					logger.info( "Citation commited " + counter + " records.");
+		  				}
+		  				srcConnection.activateOnCurrentThread();
+		            	
+		  				return true; 
+		            } 
+		   
+		            @Override 
+		            public void end() { 
+		            	destConn.activateOnCurrentThread();
+		            	destConn.commit();
+		            	logger.info( "Citation copy completed. Total record: " + counter);
+		            }
+		            
+		          });
+		        
+        
+        srcConnection.command(asyncQuery).execute(); 
+        
+
+	}
+	
+	
 	
 	private void copyGroups() {
         srcConnection.activateOnCurrentThread();
@@ -899,10 +1040,14 @@ public class Migrator1_2to1_3 {
 		migrator.copyExportTasks();
 		
 		migrator.copyNamespaces();
-*/		
+		
 		migrator.copyBaseTerms();
 		
 		migrator.copySupport();
+
+		
+		migrator.copyCitations();
+*/		
 		
 	//	migrator.createSolrIndex();
 		migrator.closeAll();

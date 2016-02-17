@@ -90,7 +90,7 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 		try (NetworkDocDAO dao = new NetworkDocDAO()){
 			ODocument networkDoc = dao.getNetworkDocByUUIDString(networkId);
 						
-			final long startTime = System.currentTimeMillis();
+		//	final long startTime = System.currentTimeMillis();
 			System.out.println("Starting subnetworkQuery ");
       
 			Network result = new Network();
@@ -112,10 +112,11 @@ public class NetworkAOrientDBDAO extends NdexAOrientDBDAO  {
 			result.setEdgeCount(result.getEdges().size());
 			result.setNodeCount(result.getNodes().size());
 			
-			final long getSubnetworkTime = System.currentTimeMillis();
+	//		final long getSubnetworkTime = System.currentTimeMillis();
 			System.out.println("  Network Nodes : " + result.getNodeCount());
 			System.out.println("  Network Edges : " + result.getEdgeCount());
-			System.out.println("Getting Network : " + (getSubnetworkTime - startTime));
+		//	System.out.println("Getting Network : " + (getSubnetworkTime - startTime) + "ms");
+			
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
