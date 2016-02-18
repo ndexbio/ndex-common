@@ -12,6 +12,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
+import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.OrientDBIterableSingleLink;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.model.exceptions.NdexException;
@@ -50,7 +51,7 @@ public class Migrator1_2to1_3 {
 	
 	BasicNetworkDAO networkDao;
 	
-	OrientdbDAO  dbDao;
+	NetworkDocDAO  dbDao;
 	
 	long counter;
 	
@@ -74,7 +75,7 @@ public class Migrator1_2to1_3 {
 		
 		networkDao = new BasicNetworkDAO ( destConn);
 		
-		dbDao = new OrientdbDAO ( destConn);
+		dbDao = new NetworkDocDAO ( destConn);
 	}
 	
 	private void copyNamespaces() throws ObjectNotFoundException, NdexException {
@@ -164,8 +165,8 @@ public class Migrator1_2to1_3 {
 		  				
 		  				destConn.activateOnCurrentThread();
 		  				ODocument newbtDoc = new ODocument(NdexClasses.BaseTerm)
-		              			.field(NdexClasses.Element_ID,id, OType.LONG)
-		              			.field(NdexClasses.BTerm_P_name, name, OType.STRING);
+		              			.fields(NdexClasses.Element_ID,id,
+		              			    NdexClasses.BTerm_P_name, name);
 		  				if ( prefix!=null)
 		              		newbtDoc.field(NdexClasses.BTerm_P_prefix, prefix, OType.STRING);
 		  				if ( nsId !=null) {
@@ -364,9 +365,9 @@ public class Migrator1_2to1_3 {
 	private void copyFunctionTerms() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM node where in_FunctionTerms is not null";
+        String query = "SELECT FROM functionTerm where in_FunctionTerms is not null and out_FuncBaseTerm is not null";
         
-		counter = 0;
+/*		counter = 0;
 		
 		OSQLAsynchQuery<ODocument> asyncQuery =
 				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
@@ -374,23 +375,22 @@ public class Migrator1_2to1_3 {
 		            public boolean result(Object iRecord) { 
 		            	ODocument doc = (ODocument) iRecord;
 		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
-		  				String name= doc.field(NdexClasses.Node_P_name);
 		  				
+		  				ODocument btDoc = doc.field("out_FuncBaseTerm");
+		  				Long btId = btDoc.field(NdexClasses.Element_ID);
 		  				
-		  				ODocument netDoc = doc.field("in_networkNodes");
+
+		  				ODocument netDoc = doc.field("in_FunctionTerms"); //(ODocument)netRec;
 		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
-		  				
+
 		  				// get properties
 		  				List<NdexPropertyValuePair> props = getProperties(doc);
 		  				
-		  				// get represents
-		  				ODocument repDoc = doc.field("out_represent");
-		  				
 		  				destConn.activateOnCurrentThread();
 		  				
-		  				ODocument newDoc = new ODocument(NdexClasses.Citation)
+		  				ODocument newDoc = new ODocument(NdexClasses.FunctionTerm)
 		              			.fields(NdexClasses.Element_ID,id, 
-		              					NdexClasses.Node_P_name, name 
+		              					NdexClasses.BaseTerm, btId 
 		     //         					NdexClasses.Node_P_represents, rep,
 		                                 );
 		              	
@@ -400,13 +400,13 @@ public class Migrator1_2to1_3 {
 		  				newDoc.save();
 		  				
 		  				// connect to network headnode.
-		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Citations))
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_FunctionTerms))
 		  					return false;
 		  				
 		  				counter++;
 		  				if ( counter % 5000 == 0 ) {
 		  					destConn.commit();
-		  					logger.info( "Citation commited " + counter + " records.");
+		  					logger.info( "FunctionTerm commited " + counter + " records.");
 		  				}
 		  				srcConnection.activateOnCurrentThread();
 		            	
@@ -417,15 +417,88 @@ public class Migrator1_2to1_3 {
 		            public void end() { 
 		            	destConn.activateOnCurrentThread();
 		            	destConn.commit();
-		            	logger.info( "Citation copy completed. Total record: " + counter);
+		            	logger.info( "FunctionTerm copy completed. Total record: " + counter);
 		            }
 		            
 		          });
 		        
         
         srcConnection.command(asyncQuery).execute(); 
+  */      
+        // now create the links for arguments.
         
-
+		counter = 0;
+		
+		srcConnection.activateOnCurrentThread();
+		OSQLAsynchQuery<ODocument> asyncQuery2 =
+				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
+		            @Override 
+		            public boolean result(Object iRecord) { 
+		            	ODocument doc = (ODocument) iRecord;
+		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
+		  				
+		  				List<Long> argIds = new ArrayList<>();
+		  				for ( ODocument argDoc: getLinkedDocs(doc, "out_FuncArguments")) {
+		  					Long argId = argDoc.field(NdexClasses.Element_ID);
+		  					argIds.add(argId);
+		  				}
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				
+		  				ODocument funDoc;
+						try {
+							funDoc = dbDao.getDocumentByElementId(id);
+						} catch (NdexException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							logger.warning("Element id " + id +" not found, ignoring this record.");
+							return true;
+						}
+  			  			OrientVertex vFunc = graph.getVertex(funDoc);
+  			  			
+		  				for ( Long argId : argIds) {
+		  					ODocument argDoc;
+							try {
+								argDoc = dbDao.getDocumentByElementId(argId);
+							} catch (NdexException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+								logger.warning("Element id " + id +" not found, ignoring this record.");
+								return true;
+							}
+		  				
+		  					OrientVertex newV = graph.getVertex(argDoc);
+//		  					try {
+		  						graph.addEdge(null, vFunc, newV, NdexClasses.FunctionTerm_E_paramter);
+	/*	  					} catch (ObjectNotFoundException e) {
+		  						logger.info("Skipping creating network link for " + uuid );
+//		  						continue;
+		  					} catch (NdexException e) {
+		  					// TODO Auto-generated catch block
+		  					e.printStackTrace();
+		  					return false; */
+		  				}
+		  				counter++;
+		  				if ( counter % 5000 == 0 ) {
+		  					destConn.commit();
+		  					logger.info( "FunctionTerm arguments commited " + counter + " records.");
+		  				}
+		  				srcConnection.activateOnCurrentThread();
+		            	
+		  				return true; 
+		            } 
+		   
+		            @Override 
+		            public void end() { 
+		            	destConn.activateOnCurrentThread();
+		            	destConn.commit();
+		            	logger.info( "Function arguments completed. Total record: " + counter);
+		            }
+		            
+		          });
+		        
+        
+        srcConnection.command(asyncQuery2).execute(); 
 	}
 	
 	
@@ -718,6 +791,7 @@ public class Migrator1_2to1_3 {
 		  				for (ODocument d : getLinkedDocs(doc, "in_write")) {
 		  					edits.add((String)d.field(NdexClasses.ExternalObj_ID));
 		  				}
+		  				
 
 		  				destConn.activateOnCurrentThread();
 		  				ODocument newDoc = new ODocument(NdexClasses.Network)
@@ -1048,6 +1122,7 @@ public class Migrator1_2to1_3 {
 		
 		migrator.copyCitations();
 */		
+		migrator.copyFunctionTerms();
 		
 	//	migrator.createSolrIndex();
 		migrator.closeAll();
