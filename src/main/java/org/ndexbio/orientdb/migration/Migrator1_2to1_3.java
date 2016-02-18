@@ -1107,7 +1107,7 @@ public class Migrator1_2to1_3 {
 	
 	public static void main(String[] args) throws NdexException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
-/*		
+		
 		migrator.copyUsers();
 		migrator.copyGroups();
  		migrator.copyNetworkHeadNodes();
@@ -1121,7 +1121,7 @@ public class Migrator1_2to1_3 {
 
 		
 		migrator.copyCitations();
-*/		
+		
 		migrator.copyFunctionTerms();
 		
 	//	migrator.createSolrIndex();
