@@ -83,7 +83,7 @@ public class NetworkGlobalIndexManager {
 	 "methods",
 	 "subnetworkType","subnetworkFilter","graphHash","rights"));
 	
-	private static  Map<String,String> attTable = null;
+//	private static  Map<String,String> attTable = null;
 		
 //	private int counter;
 	
@@ -93,12 +93,12 @@ public class NetworkGlobalIndexManager {
 		solrUrl = Configuration.getInstance().getSolrURL();
 		client = new HttpSolrClient(solrUrl);
 		doc = null;
-		if ( attTable == null) { 
+/*		if ( attTable == null) { 
 			attTable = new HashMap<>(otherAttributes.size());
 			for ( String att : otherAttributes) {
 				attTable.put(att.toLowerCase(), att);
 			}
-		}
+		} */
 	}
 	
 	public void createCoreIfNotExists() throws SolrServerException, IOException, NdexException {
@@ -224,9 +224,9 @@ public class NetworkGlobalIndexManager {
 		List<NdexPropertyValuePair> props = summary.getProperties();
 		
 		for ( NdexPropertyValuePair prop : props) {
-			String attrName = attTable.get(prop.getPredicateString().toLowerCase()) ;
-			if (attrName !=null) {
-				doc.addField(attrName, prop.getValue());
+		//	String attrName = attTable.get(prop.getPredicateString().toLowerCase()) ;
+			if ( otherAttributes.contains(prop.getPredicateString()) ) {
+				doc.addField(prop.getPredicateString(), prop.getValue());
 			}
 		}
 		
