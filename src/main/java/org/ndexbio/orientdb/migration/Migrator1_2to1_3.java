@@ -81,7 +81,7 @@ public class Migrator1_2to1_3 {
 	private void copyNamespaces() throws ObjectNotFoundException, NdexException {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM namespace";
+        String query = "SELECT FROM namespace where in_networkNS is not null";
 		List<ODocument> rs = srcConnection.query(new OSQLSynchQuery<ODocument>(query));
 		
 		counter = 0;
@@ -360,6 +360,58 @@ public class Migrator1_2to1_3 {
 
 	}
 	
+	private void copyReifiedEdgeElements() {
+        srcConnection.activateOnCurrentThread();
+
+        String query = "SELECT FROM reifiedEdgeTerm where in_reifiedETerms is not null and id > 1976699";
+        
+		counter = 0;
+		
+		OSQLAsynchQuery<ODocument> asyncQuery =
+				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
+		            @Override 
+		            public boolean result(Object iRecord) { 
+		            	ODocument doc = (ODocument) iRecord;
+		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
+		  		
+		  				ODocument netDoc = doc.field("in_reifiedETerms");
+		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+		  				
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				
+		  				ODocument newDoc = new ODocument(NdexClasses.ReifiedEdgeTerm)
+		              			.fields(NdexClasses.Element_ID,id);
+		              	
+		  				newDoc.save();
+		  				
+		  				// connect to network headnode.
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_ReifiedEdgeTerms))
+		  					return false;
+		  				
+		  				counter++;
+		  				if ( counter % 5000 == 0 ) {
+		  					destConn.commit();
+		  					logger.info( "ReifiedEdge term commited " + counter + " records.");
+		  				}
+		  				srcConnection.activateOnCurrentThread();
+		            	
+		  				return true; 
+		            } 
+		   
+		            @Override 
+		            public void end() { 
+		            	destConn.activateOnCurrentThread();
+		            	destConn.commit();
+		            	logger.info( "Refied edge record copy completed. Total record: " + counter);
+		            }
+		            
+		          });
+		        
+        srcConnection.command(asyncQuery).execute(); 
+        
+
+	}
 	
 	
 	private void copyFunctionTerms() {
@@ -367,7 +419,7 @@ public class Migrator1_2to1_3 {
 
         String query = "SELECT FROM functionTerm where in_FunctionTerms is not null and out_FuncBaseTerm is not null";
         
-/*		counter = 0;
+		counter = 0;
 		
 		OSQLAsynchQuery<ODocument> asyncQuery =
 				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
@@ -424,7 +476,7 @@ public class Migrator1_2to1_3 {
 		        
         
         srcConnection.command(asyncQuery).execute(); 
-  */      
+       
         // now create the links for arguments.
         
 		counter = 0;
@@ -497,7 +549,7 @@ public class Migrator1_2to1_3 {
 		            
 		          });
 		        
-        
+        srcConnection.activateOnCurrentThread();
         srcConnection.command(asyncQuery2).execute(); 
 	}
 	
@@ -519,7 +571,6 @@ public class Migrator1_2to1_3 {
 		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
 		  				String name= doc.field(NdexClasses.Node_P_name);
 		  				
-		  				
 		  				ODocument netDoc = doc.field("in_networkNodes");
 		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
 		  				
@@ -528,12 +579,21 @@ public class Migrator1_2to1_3 {
 		  				
 		  				// get represents
 		  				ODocument repDoc = doc.field("out_represent");
+		  				Long repId = repDoc.field(NdexClasses.Element_ID);
+		  				
+		  				// get aliases
+		  				List<Long> aliases = new ArrayList<>();
+		  				
+		  				
+		  				String repType = repDoc.getClassName();
 		  				
 		  				destConn.activateOnCurrentThread();
 		  				
 		  				ODocument newDoc = new ODocument(NdexClasses.Citation)
 		              			.fields(NdexClasses.Element_ID,id, 
-		              					NdexClasses.Node_P_name, name);
+		              					NdexClasses.Node_P_name, name,
+		              					NdexClasses.Node_P_representTermType, repType,
+		              					NdexClasses.Node_P_represents,repId);
 		              	
 		  				if ( !props.isEmpty())
 		              		newDoc.field(NdexClasses.ndexProperties, props);
@@ -541,7 +601,7 @@ public class Migrator1_2to1_3 {
 		  				newDoc.save();
 		  				
 		  				// connect to network headnode.
-		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Citations))
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Nodes))
 		  					return false;
 		  				
 		  				counter++;
@@ -558,7 +618,7 @@ public class Migrator1_2to1_3 {
 		            public void end() { 
 		            	destConn.activateOnCurrentThread();
 		            	destConn.commit();
-		            	logger.info( "Citation copy completed. Total record: " + counter);
+		            	logger.info( "Node copy completed. Total record: " + counter);
 		            }
 		            
 		          });
@@ -1107,7 +1167,7 @@ public class Migrator1_2to1_3 {
 	
 	public static void main(String[] args) throws NdexException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
-		
+	/*	
 		migrator.copyUsers();
 		migrator.copyGroups();
  		migrator.copyNetworkHeadNodes();
@@ -1121,8 +1181,12 @@ public class Migrator1_2to1_3 {
 
 		
 		migrator.copyCitations();
-		
+	*/	
 		migrator.copyFunctionTerms();
+		
+		migrator.copyReifiedEdgeElements();
+		
+		migrator.copyNodes();
 		
 	//	migrator.createSolrIndex();
 		migrator.closeAll();
