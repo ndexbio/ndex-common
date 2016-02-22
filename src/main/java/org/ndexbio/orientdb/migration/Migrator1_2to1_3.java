@@ -578,26 +578,44 @@ public class Migrator1_2to1_3 {
 		  				List<NdexPropertyValuePair> props = getProperties(doc);
 		  				
 		  				// get represents
-		  				ODocument repDoc = doc.field("out_represent");
-		  				Long repId = repDoc.field(NdexClasses.Element_ID);
-		  				
+		  				Long repId = null;
+		  				String repType =null;
+		  				ODocument repDoc = doc.field("out_represents");
+		  				if ( repDoc !=null) {
+		  					repId = repDoc.field(NdexClasses.Element_ID);
+		  					repType = repDoc.getClassName();
+		  				}
 		  				// get aliases
 		  				List<Long> aliases = new ArrayList<>();
+		  				for ( ODocument alias : getLinkedDocs(doc, "out_alias") ) {
+		  					aliases.add ((Long)alias.field(NdexClasses.Element_ID));
+		  				}
 		  				
-		  				
-		  				String repType = repDoc.getClassName();
+		  				// get relatedTerms
+		  				List<Long> relatedTo = new ArrayList<>();
+		  				for ( ODocument relatedTerm : getLinkedDocs(doc, "out_relateTo") ) {
+		  					relatedTo.add ((Long)relatedTerm.field(NdexClasses.Element_ID));
+		  				}		  				
 		  				
 		  				destConn.activateOnCurrentThread();
 		  				
-		  				ODocument newDoc = new ODocument(NdexClasses.Citation)
+		  				ODocument newDoc = new ODocument(NdexClasses.Node)
 		              			.fields(NdexClasses.Element_ID,id, 
-		              					NdexClasses.Node_P_name, name,
-		              					NdexClasses.Node_P_representTermType, repType,
+		              					NdexClasses.Node_P_name, name);
+		  				
+		  				if ( repId != null) { 
+		  					newDoc.fields(NdexClasses.Node_P_representTermType, repType,
 		              					NdexClasses.Node_P_represents,repId);
-		              	
+		  				}
 		  				if ( !props.isEmpty())
 		              		newDoc.field(NdexClasses.ndexProperties, props);
-
+		  				if ( !aliases.isEmpty()) {
+		  					newDoc.field(NdexClasses.Node_P_alias, aliases);
+		  				}
+		  				
+		  				if ( !relatedTo.isEmpty()){
+		  					newDoc.field(NdexClasses.Node_P_relatedTo, relatedTo);
+		  				}
 		  				newDoc.save();
 		  				
 		  				// connect to network headnode.
@@ -607,7 +625,7 @@ public class Migrator1_2to1_3 {
 		  				counter++;
 		  				if ( counter % 5000 == 0 ) {
 		  					destConn.commit();
-		  					logger.info( "Citation commited " + counter + " records.");
+		  					logger.info( "Node commited " + counter + " records.");
 		  				}
 		  				srcConnection.activateOnCurrentThread();
 		            	
@@ -1167,7 +1185,7 @@ public class Migrator1_2to1_3 {
 	
 	public static void main(String[] args) throws NdexException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
-	/*	
+		
 		migrator.copyUsers();
 		migrator.copyGroups();
  		migrator.copyNetworkHeadNodes();
@@ -1181,7 +1199,7 @@ public class Migrator1_2to1_3 {
 
 		
 		migrator.copyCitations();
-	*/	
+		
 		migrator.copyFunctionTerms();
 		
 		migrator.copyReifiedEdgeElements();

@@ -90,13 +90,15 @@ public class AddNetworkToCacheTask extends NdexTask {
 			// create cache.
 			
 			Network n = dao.getNetworkById(UUID.fromString(networkIdStr));
+			n.setReadOnlyCacheId(taskCommitId);
+			n.setReadOnlyCommitId(taskCommitId);
 			
 			try (GZIPOutputStream w = new GZIPOutputStream( new FileOutputStream(fullpath), 16384)) {
 					//  String s = mapper.writeValueAsString( original);
 					ObjectMapper mapper = new ObjectMapper();
 					mapper.writeValue(w, n);
 			} catch (FileNotFoundException e) {
-				throw new NdexException ("Can't create network cache file in server: " + fullpath);
+				throw new NdexException ("Can't create network cache file in server: " + fullpath + ". Exception: " + e.getLocalizedMessage());
 			} catch (IOException e) {
 				throw new NdexException ("IO Error when writing cache file: " + fullpath + ". Cause: " + e.getMessage());
 			}
