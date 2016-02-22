@@ -98,8 +98,9 @@ public class NetworkDocDAO extends OrientdbDAO {
 	 * Set the islocked flag to true in the db.
 	 * This is an atomic operation. Will commit the current transaction.
 	 * @param networkID
+	 * @throws ObjectNotFoundException 
 	 */
-	public void lockNetwork(String networkIDstr) {
+	public void lockNetwork(String networkIDstr) throws ObjectNotFoundException {
 		ODocument nDoc = getNetworkDocByUUIDString(networkIDstr);
 		nDoc.field(NdexClasses.Network_P_isLocked,true);
 		db.commit();
@@ -109,19 +110,20 @@ public class NetworkDocDAO extends OrientdbDAO {
 	 * Set the islocked flag to false in the db.
 	 * This is an atomic operation. Will commit the current transaction.
 	 * @param networkID
+	 * @throws ObjectNotFoundException 
 	 */
-	public void unlockNetwork (String networkIDstr) {
+	public void unlockNetwork (String networkIDstr) throws ObjectNotFoundException {
 		ODocument nDoc = getNetworkDocByUUIDString(networkIDstr);
 		nDoc.field(NdexClasses.Network_P_isLocked,false);
 		db.commit();
 	}
 	
-	public boolean networkIsLocked(String networkUUIDStr) {
+	public boolean networkIsLocked(String networkUUIDStr) throws ObjectNotFoundException {
 		ODocument nDoc = getNetworkDocByUUIDString(networkUUIDStr);
 		return nDoc.field(NdexClasses.Network_P_isLocked);
 	}
 	
-	public ProvenanceEntity getProvenance(UUID networkId) throws JsonParseException, JsonMappingException, IOException {
+	public ProvenanceEntity getProvenance(UUID networkId) throws JsonParseException, JsonMappingException, IOException, ObjectNotFoundException {
 		// get the network document
 		ODocument nDoc = getNetworkDocByUUIDString(networkId.toString());
 		// get the provenance string
@@ -136,7 +138,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 		
 	}
     
-	public int setProvenance(UUID networkId, ProvenanceEntity provenance) throws JsonProcessingException {
+	public int setProvenance(UUID networkId, ProvenanceEntity provenance) throws JsonProcessingException, ObjectNotFoundException {
 		// get the network document
 		ODocument nDoc = getNetworkDocByUUIDString(networkId.toString());	
 		// serialize the ProvenanceEntity
@@ -150,13 +152,13 @@ public class NetworkDocDAO extends OrientdbDAO {
 		return 1;
 	}
 	
-	public ODocument getNetworkDocByUUIDString(String id) {
+	public ODocument getNetworkDocByUUIDString(String id) throws ObjectNotFoundException {
 	     String query = "select from " + NdexClasses.Network + " where UUID='"
                 +id+"' and (isDeleted = false)";
         final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
  
         if (networks.isEmpty())
-	        return null;
+	        throw new ObjectNotFoundException("Network " + id + " not found.");
         
         return networks.get(0);
    }
@@ -765,7 +767,7 @@ public class NetworkDocDAO extends OrientdbDAO {
     	
     }
 	
-	public Collection<Namespace> getNamespaces(String networkUUID)  {
+	public Collection<Namespace> getNamespaces(String networkUUID) throws ObjectNotFoundException  {
 		ArrayList<Namespace> namespaces = new ArrayList<>();
 		
 		ODocument networkDoc = getNetworkDocByUUIDString(networkUUID);
@@ -785,20 +787,20 @@ public class NetworkDocDAO extends OrientdbDAO {
     }
 
 
-	public NetworkSummary getNetworkSummaryById (String networkUUIDStr) {
+	public NetworkSummary getNetworkSummaryById (String networkUUIDStr) throws ObjectNotFoundException {
 		ODocument doc = getNetworkDocByUUIDString(networkUUIDStr);
 		if ( doc == null) return null;
 		return getNetworkSummary(doc);
 	}
  
 	
-	public boolean networkIsReadOnly(String networkUUIDStr) {
+	public boolean networkIsReadOnly(String networkUUIDStr) throws ObjectNotFoundException {
 		ODocument doc = getNetworkDocByUUIDString(networkUUIDStr);
 		Long commitId = doc.field(NdexClasses.Network_P_readOnlyCommitId );
 		return commitId != null && commitId.longValue() >0 ;
 	}
 	
-    public ODocument getNetworkDocByUUID(UUID id) {
+    public ODocument getNetworkDocByUUID(UUID id) throws ObjectNotFoundException {
     	return getNetworkDocByUUIDString(id.toString());
     }
 
