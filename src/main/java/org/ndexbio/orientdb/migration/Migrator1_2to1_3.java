@@ -380,7 +380,7 @@ public class Migrator1_2to1_3 {
 	private void copyReifiedEdgeElements() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM reifiedEdgeTerm where in_reifiedETerms is not null and id > 1976699";
+        String query = "SELECT FROM reifiedEdgeTerm where in_reifiedETerms is not null";
         
 		counter = 0;
 		
@@ -634,7 +634,7 @@ public class Migrator1_2to1_3 {
 	private void copyNodes() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM node where in_networkNodes is not null and id > 1914000";
+        String query = "SELECT FROM node where in_networkNodes is not null ";
         
 		counter = 0;
 		
@@ -761,7 +761,7 @@ public class Migrator1_2to1_3 {
 	private void copyEdges() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM edge where in_networkEdges is not null and in_edgeSubject is not null and out_edgeObject is not null and id > 88847607";
+        String query = "SELECT FROM edge where in_networkEdges is not null and in_edgeSubject is not null and out_edgeObject is not null";
         
 		counter = 0;
 		
