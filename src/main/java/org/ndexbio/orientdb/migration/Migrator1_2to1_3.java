@@ -25,6 +25,7 @@ import org.ndexbio.model.object.TaskType;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -47,6 +48,10 @@ public class Migrator1_2to1_3 {
 	ODatabaseDocumentTx srcConnection;
 	ODatabaseDocumentTx destConn;
 	
+	ODictionary destDictionary;
+	
+	Long seqId ;
+	
 	NdexDatabase targetDB;
 	
 	OrientGraph graph;
@@ -64,6 +69,10 @@ public class Migrator1_2to1_3 {
 
 		srcConnection = srcPool.acquire();
 		
+		ODictionary srcDictionary = srcConnection.getDictionary();
+		ODocument vd = (ODocument) srcDictionary.get("NdexSeq");
+		seqId = vd.field("f1");
+		
 		targetDB = NdexDatabase.createNdexDatabase("http://pulic.ndexbio.org/",
 				"plocal:/opt/ndex/orientdb/databases/ndex",
     			"admin","admin", 5);
@@ -78,6 +87,7 @@ public class Migrator1_2to1_3 {
 		networkDao = new BasicNetworkDAO ( destConn);
 		
 		dbDao = new NetworkDocDAO ( destConn);
+
 	}
 	
 	private void copyNamespaces() throws ObjectNotFoundException, NdexException {
@@ -477,7 +487,7 @@ public class Migrator1_2to1_3 {
 	private void copyFunctionTerms() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM functionTerm where in_FunctionTerms is not null and out_FuncBaseTerm is not null";
+        String query = "SELECT FROM functionTerm where out_FuncBaseTerm is not null";
         
 		counter = 0;
 		
@@ -820,7 +830,7 @@ public class Migrator1_2to1_3 {
 		  				newDoc.save();
 		  				
 		  				// connect to network headnode.
-		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Nodes))
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Edges))
 		  					return false;
 		  				
 	  					OrientVertex newV = graph.getVertex(newDoc);
@@ -1313,7 +1323,7 @@ public class Migrator1_2to1_3 {
 		            	ODocument doc = (ODocument) iRecord;
 		            	try {
 							networkDao.createSolrIndex(doc);
-							Thread.sleep(5000);
+							Thread.sleep(2000);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							logger.severe("Network " + doc.field(NdexClasses.ExternalObj_ID) + " solr index failed to create. Error:" + e.getMessage());
@@ -1339,7 +1349,16 @@ public class Migrator1_2to1_3 {
         
 	}
 	
-	
+	private void copySquenceId() {
+        destConn.activateOnCurrentThread();
+
+        ODocument vdoc = new ODocument();
+        vdoc = vdoc.field("f1", seqId).save();
+        ODictionary dictionary = destConn.getDictionary();
+        dictionary.put("NdexSeq", vdoc);
+    	destConn.commit();
+        
+	}	
 	private void copyExportTasks() {
         srcConnection.activateOnCurrentThread();
 
@@ -1436,7 +1455,9 @@ public class Migrator1_2to1_3 {
 	
 	public static void main(String[] args) throws NdexException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
-	/*	
+
+		migrator.copySquenceId();
+
 		migrator.copyUsers();
 		migrator.copyGroups();
  		migrator.copyNetworkHeadNodes();
@@ -1458,8 +1479,9 @@ public class Migrator1_2to1_3 {
 		migrator.copyNodes();
 	
 		migrator.copyEdges();
-  */
-	//	migrator.copyReifiedEdgeLinks();
+  
+		migrator.copyReifiedEdgeLinks();
+		
 		
 		migrator.createSolrIndex();
 		migrator.closeAll();
