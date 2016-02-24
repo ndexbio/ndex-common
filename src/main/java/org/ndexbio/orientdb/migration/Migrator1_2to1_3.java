@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.apache.solr.client.solrj.SolrServerException;
@@ -413,6 +415,64 @@ public class Migrator1_2to1_3 {
 
 	}
 	
+	private void copyReifiedEdgeLinks() {
+        srcConnection.activateOnCurrentThread();
+
+        String query = "SELECT FROM reifiedEdgeTerm where in_reifiedETerms is not null and id > 1976699";
+        
+		counter = 0;
+		
+		OSQLAsynchQuery<ODocument> asyncQuery =
+				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
+		            @Override 
+		            public boolean result(Object iRecord) { 
+		            	ODocument doc = (ODocument) iRecord;
+		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
+		  		
+		  				ODocument edgeDoc = doc.field("out_reify");
+		  				Long edgeId = edgeDoc.field(NdexClasses.Element_ID);		  				
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				
+	 					ODocument edgeNDoc;
+	 					ODocument reifiedNDoc;
+						try {
+							edgeNDoc = dbDao.getDocumentByElementId(edgeId);
+							reifiedNDoc = dbDao.getDocumentByElementId(id);
+						} catch (NdexException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+								logger.warning("Edge id not found in target db:" + edgeId );
+								return true;
+						}
+		  				OrientVertex edgeV = graph.getVertex(edgeNDoc);
+		  				OrientVertex reifiedV = graph.getVertex(reifiedNDoc);
+		  					
+		  				graph.addEdge(null, reifiedV, edgeV, NdexClasses.ReifiedEdge_E_edge);
+
+		  				counter++;
+		  				if ( counter % 5000 == 0 ) {
+		  					destConn.commit();
+		  					logger.info( "ReifiedEdge link commited " + counter + " records.");
+		  				}
+		  				srcConnection.activateOnCurrentThread();
+		            	
+		  				return true; 
+		            } 
+		   
+		            @Override 
+		            public void end() { 
+		            	destConn.activateOnCurrentThread();
+		            	destConn.commit();
+		            	logger.info( "Refied edge linke copy completed. Total record: " + counter);
+		            }
+		            
+		          });
+		        
+        srcConnection.command(asyncQuery).execute(); 
+        
+
+	}
 	
 	private void copyFunctionTerms() {
         srcConnection.activateOnCurrentThread();
@@ -570,6 +630,7 @@ public class Migrator1_2to1_3 {
 		            	ODocument doc = (ODocument) iRecord;
 		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
 		  				String name= doc.field(NdexClasses.Node_P_name);
+		//  				System.out.println("node id: " + id);
 		  				
 		  				ODocument netDoc = doc.field("in_networkNodes");
 		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
@@ -593,8 +654,34 @@ public class Migrator1_2to1_3 {
 		  				
 		  				// get relatedTerms
 		  				List<Long> relatedTo = new ArrayList<>();
-		  				for ( ODocument relatedTerm : getLinkedDocs(doc, "out_relateTo") ) {
-		  					relatedTo.add ((Long)relatedTerm.field(NdexClasses.Element_ID));
+		  				try {
+		  					for ( Object relatedTerm : getLinkedObjs(doc, "out_relateTo") ) {
+		  						if (relatedTerm instanceof ODocument) 
+		  						    relatedTo.add ((Long)((ODocument)relatedTerm).field(NdexClasses.Element_ID));
+		  						else {
+		  						//	System.out.println(relatedTerm.getClass().getName());
+		  						//	ODocument dd = new ODocument((ORecordId)relatedTerm);
+		  						//	relatedTo.add((Long)dd.field(NdexClasses.Element_ID)) ;
+		  						}
+		  					}	
+		  				} catch (ClassCastException e)	{
+		  					System.err.println(e.getMessage() + " ");
+		  					return false;
+		  				}
+		  				
+		  				
+		  				// get citations
+		  				Set<Long> citationIds = new TreeSet<>();
+		  				for ( ODocument cDoc : getLinkedDocs(doc, "out_nCitation") ) {
+		  					Long cId = cDoc.field(NdexClasses.Element_ID);
+		  					citationIds.add(cId);
+		  				}
+		  				
+		  				//get supports
+		  				Set<Long> supportIds = new TreeSet<> ();
+		  				for ( ODocument sDoc : getLinkedDocs ( doc, "out_nSupport")) {
+		  					Long sId = sDoc.field(NdexClasses.Element_ID);
+		  					supportIds.add(sId);
 		  				}		  				
 		  				
 		  				destConn.activateOnCurrentThread();
@@ -616,6 +703,15 @@ public class Migrator1_2to1_3 {
 		  				if ( !relatedTo.isEmpty()){
 		  					newDoc.field(NdexClasses.Node_P_relatedTo, relatedTo);
 		  				}
+		  				
+		  				if ( !citationIds.isEmpty()) {
+		  					newDoc.field(NdexClasses.Citation, citationIds);
+		  				}
+		  				
+		  				if ( ! supportIds.isEmpty()) {
+		  					newDoc.field(NdexClasses.Support, supportIds);
+		  				}
+		  				
 		  				newDoc.save();
 		  				
 		  				// connect to network headnode.
@@ -647,6 +743,131 @@ public class Migrator1_2to1_3 {
 
 	}
 	
+	private void copyEdges() {
+        srcConnection.activateOnCurrentThread();
+
+        String query = "SELECT FROM edge where in_networkEdges is not null and in_edgeSubject is not null and out_edgeObject is not null";
+        
+		counter = 0;
+		
+		OSQLAsynchQuery<ODocument> asyncQuery =
+				new OSQLAsynchQuery<ODocument>(query, new OCommandResultListener() { 
+		            @Override 
+		            public boolean result(Object iRecord) { 
+		            	ODocument doc = (ODocument) iRecord;
+		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
+		  				
+		  				Object  netObj = doc.field("in_networkEdges");
+		  				if ( !(netObj instanceof ODocument)) {
+		  					logger.warning("edge: " + id + " not pointing to a network doc. ignoring it.");
+		  					return true;
+		  				}
+		  					
+		  				ODocument netDoc = (ODocument)netObj;
+		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+		  				
+		  				// get properties
+		  				List<NdexPropertyValuePair> props = getProperties(doc);
+		  				
+		  				// get predicate
+		  				Long predicateId = null;
+		  				ODocument predDoc = doc.field("out_edgePredicate");
+		  				if ( predDoc !=null) {
+		  					predicateId = predDoc.field(NdexClasses.Element_ID);
+		  				}
+		  				// get subject node
+		  				ODocument subjDoc = doc.field("in_edgeSubject");
+		  				Long subjId = subjDoc.field(NdexClasses.Element_ID);
+		  				
+		  				// get object node
+		  				ODocument objDoc = doc.field("out_edgeObject");
+		  				Long objId = objDoc.field(NdexClasses.Element_ID);
+		  				
+		  				// get citations
+		  				Set<Long> citationIds = new TreeSet<>();
+		  				for ( ODocument cDoc : getLinkedDocs(doc, "out_eCitation") ) {
+		  					Long cId = cDoc.field(NdexClasses.Element_ID);
+		  					citationIds.add(cId);
+		  				}
+		  				
+		  				//get supports
+		  				Set<Long> supportIds = new TreeSet<> ();
+		  				for ( ODocument sDoc : getLinkedDocs ( doc, "out_eSupport")) {
+		  					Long sId = sDoc.field(NdexClasses.Element_ID);
+		  					supportIds.add(sId);
+		  				}
+		  				
+		  				destConn.activateOnCurrentThread();
+		  				
+		  				ODocument newDoc = new ODocument(NdexClasses.Edge)
+		              			.fields(NdexClasses.Element_ID,id,
+		              					NdexClasses.Edge_P_predicateId, predicateId);
+		  				
+		  				if ( !citationIds.isEmpty())
+		  					newDoc.field(NdexClasses.Citation, citationIds);
+		  				
+		  				if ( !supportIds.isEmpty())
+		  					newDoc.field(NdexClasses.Support, supportIds);
+		  				
+		  				if ( !props.isEmpty())
+		              		newDoc.field(NdexClasses.ndexProperties, props);
+		  				newDoc.save();
+		  				
+		  				// connect to network headnode.
+		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_Nodes))
+		  					return false;
+		  				
+	  					OrientVertex newV = graph.getVertex(newDoc);
+
+		  				// connect to nodes
+	 					ODocument subjNDoc;
+	 					ODocument objNDoc;
+						try {
+							subjNDoc = dbDao.getDocumentByElementId(subjId);
+							objNDoc = dbDao.getDocumentByElementId(objId);
+						} catch (NdexException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							logger.warning("subject or object node id not found:" + subjId + "/"+ objId);
+							return true;
+						}
+	  					OrientVertex subjV = graph.getVertex(subjNDoc);
+	  					OrientVertex objV = graph.getVertex(objNDoc);
+//	  					try {
+	  						graph.addEdge(null, subjV, newV, NdexClasses.Edge_E_subject);
+	  						graph.addEdge(null, newV, objV, NdexClasses.Edge_E_object);
+/*	  					} catch (ObjectNotFoundException e) {
+	  						logger.info("Skipping creating network link for " + uuid );
+//	  						continue;
+	  					} catch (NdexException e) {
+	  					// TODO Auto-generated catch block
+	  					e.printStackTrace();
+	  					return false; */
+	
+		  				counter++;
+		  				if ( counter % 5000 == 0 ) {
+		  					destConn.commit();
+		  					logger.info( "Edge commited " + counter + " records.");
+		  				}
+		  				srcConnection.activateOnCurrentThread();
+		            	
+		  				return true; 
+		            } 
+		   
+		            @Override 
+		            public void end() { 
+		            	destConn.activateOnCurrentThread();
+		            	destConn.commit();
+		            	logger.info( "Edge copy completed. Total record: " + counter);
+		            }
+		            
+		          });
+		        
+        
+        srcConnection.command(asyncQuery).execute(); 
+        
+
+	}
 	
 	
 	private void copyGroups() {
@@ -981,10 +1202,10 @@ public class Migrator1_2to1_3 {
 				logger.info("Skipping creating network link for " + uuid );
 //				continue;
 			} catch (NdexException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		}
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return false;
+			}
 		return true;
 	}
 	
@@ -992,7 +1213,9 @@ public class Migrator1_2to1_3 {
 	
 		List<NdexPropertyValuePair> props = new ArrayList<>();
 		for ( ODocument propDoc :  getLinkedDocs(doc, "out_ndexProps" )) {
-			props.add(getPropertyFromDoc (propDoc));
+			NdexPropertyValuePair p = getPropertyFromDoc (propDoc);
+			if ( p !=null ) 
+				props.add(p);
 		}
 		return props;
 	}
@@ -1012,6 +1235,21 @@ public class Migrator1_2to1_3 {
 				return iterable;
 		    	     
 	}
+
+	protected static Iterable<? extends Object> getLinkedObjs(ODocument srcDoc, String edgeString) {	
+    	
+		   Object f = srcDoc.field(edgeString);
+		    	
+		    	if ( f == null) return emptyDocs;
+		    	
+		    	if ( f instanceof ODocument)
+		    		 return new OrientDBIterableSingleLink((ODocument)f);
+		    	
+		    	@SuppressWarnings("unchecked")
+				Iterable<Object> iterable = (Iterable<Object>)f;
+				return iterable;
+		    	     
+	}
 	
 	private static NdexPropertyValuePair getPropertyFromDoc (ODocument doc) {
 		NdexPropertyValuePair result = new NdexPropertyValuePair();
@@ -1022,7 +1260,12 @@ public class Migrator1_2to1_3 {
 		String predicateStr = doc.field("predicateStr");
 		
 		if ( predicateStr == null) {
-			ODocument bt = doc.field("out_prop");
+			Object btObj = doc.field("out_prop");
+			if ( ! (btObj instanceof ODocument)) {
+				System.err.println("Record " + doc.getIdentity().toString() + " has field out_prop as a record id. skip it." );
+				return null;
+			}
+			ODocument bt = (ODocument) btObj;
 			predicateStr = bt.field("name");
 			Object nsRid = bt.field("out_baseTermNS");
 			String prefix = null;
@@ -1185,7 +1428,7 @@ public class Migrator1_2to1_3 {
 	
 	public static void main(String[] args) throws NdexException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
-		
+	/*	
 		migrator.copyUsers();
 		migrator.copyGroups();
  		migrator.copyNetworkHeadNodes();
@@ -1205,6 +1448,8 @@ public class Migrator1_2to1_3 {
 		migrator.copyReifiedEdgeElements();
 		
 		migrator.copyNodes();
+	*/
+		migrator.copyEdges();
 		
 	//	migrator.createSolrIndex();
 		migrator.closeAll();

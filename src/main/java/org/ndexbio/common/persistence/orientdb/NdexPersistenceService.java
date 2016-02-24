@@ -220,7 +220,7 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 
-				
+/*	No longer valid in 1.3			
 	public void addCitationToElement(long elementId, Long citationId, String className) throws ExecutionException, NdexException{
 		ODocument elementRec = elementIdCache.get(elementId);
 		OrientVertex nodeV = graph.getVertex(elementRec);
@@ -241,7 +241,7 @@ public class NdexPersistenceService extends PersistenceService {
 //		o.reload();
 		elementIdCache.put(elementId, o);
 	}
-	
+	*/
 	public void addCitationsToElement(long elementId, Collection<Long> newCitationIds) throws ExecutionException{
 		
 		if( newCitationIds == null || newCitationIds.size() == 0 ) return;
