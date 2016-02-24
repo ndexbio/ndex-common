@@ -534,6 +534,9 @@ public class NdexNetworkCloneService extends PersistenceService {
 				        .field(NdexClasses.Element_ID, newFunctionTermId)
 						.save();
 
+				OrientVertex fTermV = graph.getVertex(eTermdoc);
+				networkVertex.addEdge(NdexClasses.Network_E_FunctionTerms,fTermV);
+				
 				elementIdCache.put(newFunctionTermId, eTermdoc);
 				this.functionTermIdMap.put(functionTerm.getId(), newFunctionTermId);
 					

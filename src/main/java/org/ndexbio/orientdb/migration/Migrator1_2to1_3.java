@@ -746,7 +746,7 @@ public class Migrator1_2to1_3 {
 	private void copyEdges() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM edge where in_networkEdges is not null and in_edgeSubject is not null and out_edgeObject is not null";
+        String query = "SELECT FROM edge where in_networkEdges is not null and in_edgeSubject is not null and out_edgeObject is not null and id > 88847607";
         
 		counter = 0;
 		
@@ -771,7 +771,13 @@ public class Migrator1_2to1_3 {
 		  				
 		  				// get predicate
 		  				Long predicateId = null;
-		  				ODocument predDoc = doc.field("out_edgePredicate");
+		  				Object predObj = doc.field("out_edgePredicate");
+		  				if ( predObj instanceof ORecordId ) {
+		  					logger.warning("Invalid record id: " + predObj.toString() + " found for predicate doc link. Ignore this edge.");
+		  					return true;
+		  				}
+		  					
+		  				ODocument predDoc = (ODocument)predObj;
 		  				if ( predDoc !=null) {
 		  					predicateId = predDoc.field(NdexClasses.Element_ID);
 		  				}
@@ -1307,14 +1313,16 @@ public class Migrator1_2to1_3 {
 		            	ODocument doc = (ODocument) iRecord;
 		            	try {
 							networkDao.createSolrIndex(doc);
+							Thread.sleep(5000);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
+							logger.severe("Network " + doc.field(NdexClasses.ExternalObj_ID) + " solr index failed to create. Error:" + e.getMessage());
 							e.printStackTrace();
-							return false;
+							return true;
 						}
 		            	counter ++;
 		  				if ( counter % 50 == 0 ) {
-		  					logger.info( "baseTerm commited " + counter + " records.");
+		  					logger.info(  counter + " Solr indexes created for networks.");
 		  				}
 		  				return true; 
 		            } 
@@ -1448,10 +1456,12 @@ public class Migrator1_2to1_3 {
 		migrator.copyReifiedEdgeElements();
 		
 		migrator.copyNodes();
-	*/
+	
 		migrator.copyEdges();
+  */
+	//	migrator.copyReifiedEdgeLinks();
 		
-	//	migrator.createSolrIndex();
+		migrator.createSolrIndex();
 		migrator.closeAll();
     	logger.info( "DB migration completed.");
 	}
