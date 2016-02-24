@@ -17,6 +17,7 @@ import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.OrientDBIterableSingleLink;
 import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
+import org.ndexbio.common.solr.NetworkGlobalIndexManager;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
@@ -62,7 +63,11 @@ public class Migrator1_2to1_3 {
 	
 	long counter;
 	
-	public Migrator1_2to1_3(String srcPath) throws NdexException {
+	public Migrator1_2to1_3(String srcPath) throws NdexException, SolrServerException, IOException {
+		
+		NetworkGlobalIndexManager mgr = new NetworkGlobalIndexManager();
+		mgr.createCoreIfNotExists();
+		
 		srcDbPath = srcPath;
 		
 		srcPool = new OPartitionedDatabasePool(srcDbPath , "admin","admin",5);
@@ -1453,7 +1458,7 @@ public class Migrator1_2to1_3 {
     	NdexDatabase.close();
 	}
 	
-	public static void main(String[] args) throws NdexException {
+	public static void main(String[] args) throws NdexException, SolrServerException, IOException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
 
 		migrator.copySquenceId();
