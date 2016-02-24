@@ -503,12 +503,17 @@ public class Migrator1_2to1_3 {
 		            	ODocument doc = (ODocument) iRecord;
 		  				Long id = (Long) doc.field(NdexClasses.Element_ID);
 		  				
+		  				Object btObj = doc.field("out_FuncBaseTerm");
+		  				if ( !( btObj instanceof ODocument ) ) {
+		  					logger.warning("function term " + id + " copy ignored. Not pointing to a valid base term. " + btObj.toString());
+		  					return true;
+		  				}	
 		  				ODocument btDoc = doc.field("out_FuncBaseTerm");
 		  				Long btId = btDoc.field(NdexClasses.Element_ID);
 		  				
 
 		  				ODocument netDoc = doc.field("in_FunctionTerms"); //(ODocument)netRec;
-		  				String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
+		  				String uuid = (netDoc == null) ? null  : ((String)netDoc.field ( NdexClasses.ExternalObj_ID  ) )  ;
 
 		  				// get properties
 		  				List<NdexPropertyValuePair> props = getProperties(doc);
@@ -526,10 +531,11 @@ public class Migrator1_2to1_3 {
 
 		  				newDoc.save();
 		  				
-		  				// connect to network headnode.
-		  				if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_FunctionTerms))
-		  					return false;
-		  				
+		  				if ( uuid !=null) {
+		  					// connect to network headnode.
+		  					if ( !connectToNetworkHeadNode(newDoc, uuid, NdexClasses.Network_E_FunctionTerms))
+		  						return false;
+		  				}
 		  				counter++;
 		  				if ( counter % 5000 == 0 ) {
 		  					destConn.commit();
@@ -1460,7 +1466,7 @@ public class Migrator1_2to1_3 {
 	
 	public static void main(String[] args) throws NdexException, SolrServerException, IOException {
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
-
+/*
 		migrator.copySquenceId();
 
 		migrator.copyUsers();
@@ -1475,7 +1481,7 @@ public class Migrator1_2to1_3 {
 		migrator.copySupport();
 
 		
-		migrator.copyCitations();
+		migrator.copyCitations(); */
 		
 		migrator.copyFunctionTerms();
 		
