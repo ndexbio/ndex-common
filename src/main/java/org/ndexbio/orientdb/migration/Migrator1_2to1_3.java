@@ -458,6 +458,9 @@ public class Migrator1_2to1_3 {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 								logger.warning("Edge id not found in target db:" + edgeId );
+
+								srcConnection.activateOnCurrentThread();
+
 								return true;
 						}
 		  				OrientVertex edgeV = graph.getVertex(edgeNDoc);
@@ -581,11 +584,19 @@ public class Migrator1_2to1_3 {
 		  				ODocument funDoc;
 						try {
 							funDoc = dbDao.getDocumentByElementId(id);
+						} catch (ObjectNotFoundException e) {
+			//				e.printStackTrace();
+							logger.warning("Element id " + id +" not found, ignoring this record.");
+
+							srcConnection.activateOnCurrentThread();
+
+							return true;
 						} catch (NdexException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
-							logger.warning("Element id " + id +" not found, ignoring this record.");
-							return true;
+							logger.severe("Failed to get fuctionTerm record for Element id " + id +".");
+
+							return false ;
 						}
   			  			OrientVertex vFunc = graph.getVertex(funDoc);
   			  			
@@ -594,9 +605,10 @@ public class Migrator1_2to1_3 {
 							try {
 								argDoc = dbDao.getDocumentByElementId(argId);
 							} catch (NdexException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 								logger.warning("Element id " + id +" not found, ignoring this record.");
+				  				srcConnection.activateOnCurrentThread();
+
 								return true;
 							}
 		  				
