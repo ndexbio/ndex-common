@@ -264,7 +264,11 @@ public class BioPAXNetworkExporter {
 			if ( ! pvp.getPredicateString().equals("ndex:bioPAXType")){
 				String propertyString = pvp.getPredicateString();
 				String value = pvp.getValue();
-				PropertyEditor editor = editorMap.getEditorForProperty(propertyString, bioPAXClass);
+				
+				// add this to be compatible with the biopax networks that are loaded with older parser or migrated from 1.2 db
+				String filteredPropertyStr = propertyString.startsWith("bp:")? propertyString.substring(3) : propertyString;
+				
+				PropertyEditor editor = editorMap.getEditorForProperty(filteredPropertyStr, bioPAXClass);
 				if (editor != null){
 //					System.out.println("    Property: " + propertyString + " value: " + value);
 					editor.setValueToBean(value, bpe);

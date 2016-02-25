@@ -23,6 +23,7 @@ import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.Permissions;
 import org.ndexbio.model.object.TaskType;
+import org.ndexbio.task.Configuration;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -48,9 +49,7 @@ public class Migrator1_2to1_3 {
 	OPartitionedDatabasePool srcPool; 
 	ODatabaseDocumentTx srcConnection;
 	ODatabaseDocumentTx destConn;
-	
-	ODictionary destDictionary;
-	
+		
 	Long seqId ;
 	
 	NdexDatabase targetDB;
@@ -68,7 +67,7 @@ public class Migrator1_2to1_3 {
 		NetworkGlobalIndexManager mgr = new NetworkGlobalIndexManager();
 		mgr.createCoreIfNotExists();
 		
-		srcDbPath = srcPath;
+		srcDbPath = "plocal:" + srcPath;
 		
 		srcPool = new OPartitionedDatabasePool(srcDbPath , "admin","admin",5);
 
@@ -78,9 +77,11 @@ public class Migrator1_2to1_3 {
 		ODocument vd = (ODocument) srcDictionary.get("NdexSeq");
 		seqId = vd.field("f1");
 		
-		targetDB = NdexDatabase.createNdexDatabase("http://pulic.ndexbio.org/",
-				"plocal:/opt/ndex/orientdb/databases/ndex",
-    			"admin","admin", 5);
+		Configuration configuration = Configuration.getInstance();
+		targetDB = NdexDatabase.createNdexDatabase( configuration.getHostURI(),
+				configuration.getDBURL(),
+    			configuration.getDBUser(),
+    			configuration.getDBPasswd(), 5);
 		
 		destConn = targetDB.getAConnection();
 		
@@ -127,7 +128,7 @@ public class Migrator1_2to1_3 {
 //				continue;
 			}
             counter++;
-            if ( counter % 5000 == 0 ) {
+            if ( counter % 10000 == 0 ) {
             	destConn.commit();
             	logger.info( "Namespace commited " + counter + " records.");
             }
@@ -205,7 +206,7 @@ public class Migrator1_2to1_3 {
 							return false;
 						}
 		  				counter++;
-		  				if ( counter % 5000 == 0 ) {
+		  				if ( counter % 10000 == 0 ) {
 		  					destConn.commit();
 		  					logger.info( "baseTerm commited " + counter + " records.");
 		  				}
@@ -285,7 +286,7 @@ public class Migrator1_2to1_3 {
 		  					return false;
 		  				
 		  				counter++;
-		  				if ( counter % 5000 == 0 ) {
+		  				if ( counter % 10000 == 0 ) {
 		  					destConn.commit();
 		  					logger.info( "Support commited " + counter + " records.");
 		  				}
@@ -353,7 +354,7 @@ public class Migrator1_2to1_3 {
 		  					return false;
 		  				
 		  				counter++;
-		  				if ( counter % 5000 == 0 ) {
+		  				if ( counter % 10000 == 0 ) {
 		  					destConn.commit();
 		  					logger.info( "Citation commited " + counter + " records.");
 		  				}
@@ -540,7 +541,7 @@ public class Migrator1_2to1_3 {
 		  						return false;
 		  				}
 		  				counter++;
-		  				if ( counter % 5000 == 0 ) {
+		  				if ( counter % 10000 == 0 ) {
 		  					destConn.commit();
 		  					logger.info( "FunctionTerm commited " + counter + " records.");
 		  				}
@@ -575,29 +576,28 @@ public class Migrator1_2to1_3 {
 		  				
 		  				List<Long> argIds = new ArrayList<>();
 		  				for ( ODocument argDoc: getLinkedDocs(doc, "out_FuncArguments")) {
-		  					Long argId = argDoc.field(NdexClasses.Element_ID);
-		  					argIds.add(argId);
+		  					if ( argDoc != null) {
+		  						Long argId = argDoc.field(NdexClasses.Element_ID);
+		  						argIds.add(argId);
+		  					}
 		  				}
+		  				
+		  				if ( argIds.isEmpty())
+		  					return true;
 		  				
 		  				destConn.activateOnCurrentThread();
 		  				
 		  				ODocument funDoc;
 						try {
 							funDoc = dbDao.getDocumentByElementId(id);
-						} catch (ObjectNotFoundException e) {
+						} catch (NdexException e) {
 			//				e.printStackTrace();
 							logger.warning("Element id " + id +" not found, ignoring this record.");
 
 							srcConnection.activateOnCurrentThread();
 
 							return true;
-						} catch (NdexException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-							logger.severe("Failed to get fuctionTerm record for Element id " + id +".");
-
-							return false ;
-						}
+						} 
   			  			OrientVertex vFunc = graph.getVertex(funDoc);
   			  			
 		  				for ( Long argId : argIds) {
@@ -624,7 +624,7 @@ public class Migrator1_2to1_3 {
 		  					return false; */
 		  				}
 		  				counter++;
-		  				if ( counter % 5000 == 0 ) {
+		  				if ( counter % 10000 == 0 ) {
 		  					destConn.commit();
 		  					logger.info( "FunctionTerm arguments commited " + counter + " records.");
 		  				}
@@ -752,7 +752,7 @@ public class Migrator1_2to1_3 {
 		  					return false;
 		  				
 		  				counter++;
-		  				if ( counter % 5000 == 0 ) {
+		  				if ( counter % 10000 == 0 ) {
 		  					destConn.commit();
 		  					logger.info( "Node commited " + counter + " records.");
 		  				}
@@ -884,7 +884,7 @@ public class Migrator1_2to1_3 {
 	  					return false; */
 	
 		  				counter++;
-		  				if ( counter % 5000 == 0 ) {
+		  				if ( counter % 10000 == 0 ) {
 		  					destConn.commit();
 		  					logger.info( "Edge commited " + counter + " records.");
 		  				}
@@ -1477,7 +1477,13 @@ public class Migrator1_2to1_3 {
 	}
 	
 	public static void main(String[] args) throws NdexException, SolrServerException, IOException {
-		Migrator1_2to1_3 migrator = new Migrator1_2to1_3("plocal:/opt/ndex/orientdb/databases/ndex_1_2");
+		
+		if ( args.length != 1) {
+			System.out.println("Usage: Migrator1_2to1_3 <Ndex 1.2 db path>\n\n example: \n\n Migrator1_2to1_3 /opt/ndex/orientdb/databases/ndex_1_2\n");
+			
+		}	
+		//"plocal:/opt/ndex/orientdb/databases/ndex_1_2";
+		Migrator1_2to1_3 migrator = new Migrator1_2to1_3(args[0]);
 /*
 		migrator.copySquenceId();
 
@@ -1493,11 +1499,11 @@ public class Migrator1_2to1_3 {
 		migrator.copySupport();
 
 		
-		migrator.copyCitations(); */
+		migrator.copyCitations(); 
 		
-		migrator.copyFunctionTerms();
+		migrator.copyFunctionTerms(); 
 		
-		migrator.copyReifiedEdgeElements();
+		migrator.copyReifiedEdgeElements(); */
 		
 		migrator.copyNodes();
 	
