@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -67,6 +68,9 @@ public class Migrator1_2to1_3 {
 		mgr.createCoreIfNotExists();
 		
 		srcDbPath = "plocal:" + srcPath;
+		
+		OGlobalConfiguration.USE_WAL.setValue(false);
+		OGlobalConfiguration.WAL_SYNC_ON_PAGE_FLUSH.setValue(false);
 		
 		srcPool = new OPartitionedDatabasePool(srcDbPath , "admin","admin",5);
 
