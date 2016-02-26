@@ -353,6 +353,8 @@ public class BioPAXNetworkExporter {
 			if (predicateTerm == null) throw new NdexException("Malformed BioPAX Edge, no BaseTerm found for predicateId = " + predicateId);
 
 			String predicate = predicateTerm.getName();
+			if ( predicate.startsWith("bp:"))
+				predicate = predicate.substring(3);
 			Class<? extends BioPAXElement> subjectClass = subjectBPE.getModelInterface();
 			PropertyEditor editor = editorMap.getEditorForProperty(predicate, subjectClass);
 			

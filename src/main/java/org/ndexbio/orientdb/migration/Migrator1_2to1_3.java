@@ -1105,8 +1105,8 @@ public class Migrator1_2to1_3 {
 		  				}	
 		  				Integer edgeCount = doc.field(NdexClasses.Network_P_edgeCount);
 		  				Integer nodeCount = doc.field(NdexClasses.Network_P_nodeCount);
-		  				Long ROId	= doc.field(NdexClasses.Network_P_readOnlyCommitId);
-		  				Long cacheId = doc.field(NdexClasses.Network_P_cacheId);
+		  		//		Long ROId	= doc.field(NdexClasses.Network_P_readOnlyCommitId);
+		  		//		Long cacheId = doc.field(NdexClasses.Network_P_cacheId);
 		  				
 		  				String srcFormat = doc.field(NdexClasses.Network_P_source_format);
 		  				String provenance = doc.field("provenance");
@@ -1122,8 +1122,10 @@ public class Migrator1_2to1_3 {
 		  					reads.add((String)d.field(NdexClasses.ExternalObj_ID));
 		  				}
 		  				
+		  				String owner = null;
 		  				for (ODocument d : getLinkedDocs(doc, "in_admin")) {
 		  					admins.add((String)d.field(NdexClasses.ExternalObj_ID));
+		  					owner = d.field(NdexClasses.account_P_accountName);
 		  				}
 		  				
 		  				for (ODocument d : getLinkedDocs(doc, "in_write")) {
@@ -1139,8 +1141,8 @@ public class Migrator1_2to1_3 {
 		              					"isDeleted", false,
 		              					NdexClasses.Network_P_isComplete,true,
 		              					"isLocked", false,
-		              					NdexClasses.Network_P_readOnlyCommitId, ROId,
-		              					NdexClasses.Network_P_cacheId, cacheId,
+		              					NdexClasses.Network_P_readOnlyCommitId, -1, // ROId,
+		              					NdexClasses.Network_P_cacheId, -1 , // cacheId,
 		              					NdexClasses.Network_P_desc, desc,
 		              					NdexClasses.Network_P_name, name,
 		              					NdexClasses.Network_P_edgeCount, edgeCount,
@@ -1149,7 +1151,8 @@ public class Migrator1_2to1_3 {
 		              					NdexClasses.Network_P_source_format, srcFormat,
 		              					NdexClasses.Network_P_version, version,
 		              					NdexClasses.Network_P_visibility, visibility,
-		              					NdexClasses.ndexProperties, props);
+		              					NdexClasses.ndexProperties, props,
+		              					NdexClasses.Network_P_owner, owner);
 		  				newDoc.save();
 		  				
 	  					OrientVertex newV = graph.getVertex(newDoc);
