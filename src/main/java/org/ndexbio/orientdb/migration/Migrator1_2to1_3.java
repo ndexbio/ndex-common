@@ -16,7 +16,6 @@ import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
 import org.ndexbio.common.models.dao.orientdb.NetworkDocDAO;
 import org.ndexbio.common.models.dao.orientdb.OrientDBIterableSingleLink;
-import org.ndexbio.common.models.dao.orientdb.OrientdbDAO;
 import org.ndexbio.common.solr.NetworkGlobalIndexManager;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
@@ -680,13 +679,13 @@ public class Migrator1_2to1_3 {
 		  					repType = repDoc.getClassName();
 		  				}
 		  				// get aliases
-		  				List<Long> aliases = new ArrayList<>();
+		  				Set<Long> aliases = new TreeSet<>();
 		  				for ( ODocument alias : getLinkedDocs(doc, "out_alias") ) {
 		  					aliases.add ((Long)alias.field(NdexClasses.Element_ID));
 		  				}
 		  				
 		  				// get relatedTerms
-		  				List<Long> relatedTo = new ArrayList<>();
+		  				Set<Long> relatedTo = new TreeSet<>();
 		  				try {
 		  					for ( Object relatedTerm : getLinkedObjs(doc, "out_relateTo") ) {
 		  						if (relatedTerm instanceof ODocument) 

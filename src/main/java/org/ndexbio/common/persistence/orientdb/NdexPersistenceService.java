@@ -210,7 +210,7 @@ public class NdexPersistenceService extends PersistenceService {
 		    }
 		}
 		
-		List<Long> oldAliases = nodeDoc.field(NdexClasses.Node_P_alias);
+		Collection<Long> oldAliases = nodeDoc.field(NdexClasses.Node_P_alias);
 		if ( oldAliases !=null && oldAliases.size() > 0 )
 			oldAliases.addAll(newAliases);
 		else 
