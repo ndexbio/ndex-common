@@ -1141,8 +1141,8 @@ public class Migrator1_2to1_3 {
 		              					"isDeleted", false,
 		              					NdexClasses.Network_P_isComplete,true,
 		              					"isLocked", false,
-		              					NdexClasses.Network_P_readOnlyCommitId, -1, // ROId,
-		              					NdexClasses.Network_P_cacheId, -1 , // cacheId,
+		              					NdexClasses.Network_P_readOnlyCommitId, -1l, // ROId,
+		              					NdexClasses.Network_P_cacheId, -1l , // cacheId,
 		              					NdexClasses.Network_P_desc, desc,
 		              					NdexClasses.Network_P_name, name,
 		              					NdexClasses.Network_P_edgeCount, edgeCount,
@@ -1487,7 +1487,7 @@ public class Migrator1_2to1_3 {
 		}	
 		//"plocal:/opt/ndex/orientdb/databases/ndex_1_2";
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3(args[0]);
-/*
+
 		migrator.copySquenceId();
 
 		migrator.copyUsers();
@@ -1506,7 +1506,7 @@ public class Migrator1_2to1_3 {
 		
 		migrator.copyFunctionTerms(); 
 		
-		migrator.copyReifiedEdgeElements(); */
+		migrator.copyReifiedEdgeElements(); 
 		
 		migrator.copyNodes();
 	
