@@ -102,7 +102,7 @@ public class Migrator1_2to1_3 {
 	private void copyNamespaces() throws ObjectNotFoundException, NdexException {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM namespace where in_networkNS is not null";
+        String query = "SELECT FROM namespace where in_networkNS is not null and (uri is not null or prefix is not null)";
 		List<ODocument> rs = srcConnection.query(new OSQLSynchQuery<ODocument>(query));
 		
 		counter = 0;
@@ -168,11 +168,10 @@ public class Migrator1_2to1_3 {
 		  					ODocument ns = (ODocument)nsRid;
 			  					
 	  						nsId = ns.field(NdexClasses.Element_ID);
-	  						prefix =ns.field(NdexClasses.ns_P_prefix);
-	  						if ( prefix != null)
-	  							prefix += ":";
-		  						
-		  					
+	  						if (ns.field(NdexClasses.ns_P_prefix) == null) {
+	  						  prefix = ns.field(NdexClasses.ns_P_uri);
+	  						  nsId = null;
+	  						}	  					
 		  				}
 		  				
 		  				Object  nsLink = nsDoc.field("in_BaseTerms");
@@ -1352,7 +1351,7 @@ public class Migrator1_2to1_3 {
 		            	ODocument doc = (ODocument) iRecord;
 		            	try {
 							networkDao.createSolrIndex(doc);
-							Thread.sleep(2000);
+							Thread.sleep(1000);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							logger.severe("Network " + doc.field(NdexClasses.ExternalObj_ID) + " solr index failed to create. Error:" + e.getMessage());
@@ -1501,7 +1500,7 @@ public class Migrator1_2to1_3 {
 		migrator.copyNamespaces();
 		
 		migrator.copyBaseTerms();
-		
+/*		
 		migrator.copySupport();
 
 		
@@ -1518,8 +1517,8 @@ public class Migrator1_2to1_3 {
 		migrator.copyReifiedEdgeLinks();
 		
 		
-		migrator.createSolrIndex();
-		migrator.closeAll();
+		migrator.createSolrIndex(); */
+		migrator.closeAll(); 
     	logger.info( "DB migration completed.");
 	}
 	
