@@ -1500,7 +1500,7 @@ public class Migrator1_2to1_3 {
 		migrator.copyNamespaces();
 		
 		migrator.copyBaseTerms();
-/*		
+		
 		migrator.copySupport();
 
 		
@@ -1517,7 +1517,7 @@ public class Migrator1_2to1_3 {
 		migrator.copyReifiedEdgeLinks();
 		
 		
-		migrator.createSolrIndex(); */
+		migrator.createSolrIndex(); 
 		migrator.closeAll(); 
     	logger.info( "DB migration completed.");
 	}
