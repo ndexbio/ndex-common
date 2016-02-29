@@ -816,7 +816,7 @@ public class UserDocDAO extends OrientdbDAO {
 			List<ODocument> records = this.db.command(query).execute();
 			for (ODocument group : records) {
 				memberships.add((String) group
-						.field(NdexClasses.GRP_P_NAME));
+						.field(NdexClasses.account_P_accountName));
 			}
 
 			logger.info("Successfuly retrieved user-group memberships");
