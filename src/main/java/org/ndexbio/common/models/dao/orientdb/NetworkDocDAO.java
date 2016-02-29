@@ -1000,7 +1000,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 			simpleNetworkQuery.setPermission(Permissions.READ);
 
 		List<String> groupNames = null;
-		if ( simpleNetworkQuery.getIncludeGroups()) {
+		if ( loggedInUser !=null && simpleNetworkQuery.getIncludeGroups()) {
 			UserDocDAO userDao = new UserDocDAO(this.getDBConnection());
 			groupNames = userDao.getUserAllGroupMemberships(loggedInUser.getAccountName());
 		}
