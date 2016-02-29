@@ -615,7 +615,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return getNodeDocById(nodeId);
 	}
 	
-	private void createNetworkAttribute(NetworkAttributesElement e) throws NdexException {
+	private void createNetworkAttribute(NetworkAttributesElement e) throws NdexException, JsonProcessingException {
 		if ( e.getName().equals(NdexClasses.Network_P_name) && e.getSubnetwork() == null) {
 			networkDoc.field(NdexClasses.Network_P_name,
 					  e.getValue()).save();
@@ -946,7 +946,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		return termId;
 	}
 
-	private void addEdgeAttribute(EdgeAttributesElement e) throws NdexException{
+	private void addEdgeAttribute(EdgeAttributesElement e) throws NdexException, JsonProcessingException{
 		for ( Long edgeSID : e.getPropertyOf()) {
 		
 		   ODocument edgeDoc = getOrCreateEdgeDocBySID(edgeSID); 
@@ -967,7 +967,7 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	
-	private void addNodeAttribute(NodeAttributesElement e) throws NdexException{
+	private void addNodeAttribute(NodeAttributesElement e) throws NdexException, JsonProcessingException{
 		for ( Long nodeSID : e.getPropertyOf()) {
 			ODocument nodeDoc = getOrCreateNodeDocBySID(nodeSID);
 		   

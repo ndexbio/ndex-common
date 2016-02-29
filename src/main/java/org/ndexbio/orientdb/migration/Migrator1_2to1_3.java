@@ -1485,7 +1485,7 @@ public class Migrator1_2to1_3 {
 		
 		if ( args.length != 1) {
 			System.out.println("Usage: Migrator1_2to1_3 <Ndex 1.2 db path>\n\n example: \n\n Migrator1_2to1_3 /opt/ndex/orientdb/databases/ndex_1_2\n");
-			
+			return;
 		}	
 		//"plocal:/opt/ndex/orientdb/databases/ndex_1_2";
 		Migrator1_2to1_3 migrator = new Migrator1_2to1_3(args[0]);
