@@ -999,8 +999,8 @@ public class NetworkDocDAO extends OrientdbDAO {
 		NetworkGlobalIndexManager networkIdx = new NetworkGlobalIndexManager();
 		
 		//prepare the query.
-		if (simpleNetworkQuery.getPermission() == null) 
-			simpleNetworkQuery.setPermission(Permissions.READ);
+	//	if (simpleNetworkQuery.getPermission() == null) 
+	//		simpleNetworkQuery.setPermission(Permissions.READ);
 
 		List<String> groupNames = null;
 		if ( loggedInUser !=null && simpleNetworkQuery.getIncludeGroups()) {

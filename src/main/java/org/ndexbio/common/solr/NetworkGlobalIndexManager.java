@@ -187,6 +187,7 @@ public class NetworkGlobalIndexManager {
 //		    resultFilter = resultFilter + adminFilter;
 		} */
 		}  else {
+			resultFilter = VISIBILITY + ":PUBLIC";
 		}
 			
 		resultFilter = resultFilter + adminFilter;
