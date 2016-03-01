@@ -285,6 +285,9 @@ public class NetworkGlobalIndexManager {
 
 //		counter = 0;
 	}
+	
+	
+	
 
     public void addNodeToIndex(String name, List<String> represents, List<String> alias, List<String> relatedTerms,
     				List<String> geneSymbol, List<String> NCBIGeneID) throws SolrServerException, IOException {
@@ -333,6 +336,25 @@ public class NetworkGlobalIndexManager {
 		docs.clear();
 		doc = null;
 
+	}
+	
+	public void updateNetworkProperties (String networkId, Collection<NdexPropertyValuePair> props) throws SolrServerException, IOException {
+		client.setBaseURL(solrUrl + "/" + coreName);
+		SolrInputDocument tmpdoc = new SolrInputDocument();
+		tmpdoc.addField(UUID, networkId);
+
+		for ( NdexPropertyValuePair prop : props) {
+			if ( otherAttributes.contains(prop.getPredicateString()) ) {
+				Map<String,String> cmd = new HashMap<>();
+				cmd.put("set", prop.getValue());
+				tmpdoc.addField(prop.getPredicateString(), cmd);
+			}
+		}
+		
+		Collection<SolrInputDocument> docs = new ArrayList<>(1);
+		docs.add(tmpdoc);
+		client.add(docs);
+		client.commit();
 	}
 	
 	

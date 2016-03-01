@@ -43,12 +43,14 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 //import org.ndexbio.common.models.dao.orientdb.NetworkSearchDAO.NetworkResultComparator;
 import org.ndexbio.common.solr.NetworkGlobalIndexManager;
+import org.ndexbio.common.solr.SingleNetworkSolrIdxManager;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.object.NdexPropertyValuePair;
@@ -970,9 +972,11 @@ public class NetworkDocDAO extends OrientdbDAO {
 	 * @return
 	 * @throws ObjectNotFoundException
 	 * @throws NdexException
+     * @throws IOException 
+     * @throws SolrServerException 
 	 */
 	public int setNetworkProperties (UUID networkId, Collection<NdexPropertyValuePair> properties
-			 ) throws ObjectNotFoundException, NdexException {
+			 ) throws ObjectNotFoundException, NdexException, SolrServerException, IOException {
 
 		ODocument rec = this.getRecordByUUID(networkId, null);
 		
@@ -984,6 +988,11 @@ public class NetworkDocDAO extends OrientdbDAO {
 		rec.fields(NdexClasses.ndexProperties, props,
 					NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
 
+		
+		// update the solr Index
+		NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
+		globalIdx.updateNetworkProperties(networkId.toString(), props);
+		
 		return props.size();
 	}
 	
