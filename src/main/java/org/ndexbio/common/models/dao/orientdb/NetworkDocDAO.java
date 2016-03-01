@@ -993,6 +993,9 @@ public class NetworkDocDAO extends OrientdbDAO {
 		if (queryStr.equals("*")  || queryStr.length() == 0 )
 			queryStr = "*:*";
 		
+		if ( simpleNetworkQuery.getPermission() !=null && simpleNetworkQuery.getPermission() == Permissions.ADMIN)
+			throw new NdexException("Permission can only be WRITE or READ in this function.");
+		
 		NetworkGlobalIndexManager networkIdx = new NetworkGlobalIndexManager();
 		
 		//prepare the query.
