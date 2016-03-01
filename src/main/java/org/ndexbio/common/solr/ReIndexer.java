@@ -1,6 +1,7 @@
 package org.ndexbio.common.solr;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.apache.solr.client.solrj.SolrServerException;
@@ -61,9 +62,10 @@ public class ReIndexer {
 
 	}
 	
-	private void createSolrIndex() {
+	private void createSolrIndex(String UUID) {
 
-        String query = "SELECT FROM network where isDeleted=false and isComplete=true";
+        String query = "SELECT FROM network where isDeleted=false and isComplete=true" + 
+              (UUID == null ? "" : (" and UUID='" + UUID + "'") );
         
 		counter = 0;
 		
@@ -108,14 +110,20 @@ public class ReIndexer {
 	
 	public static void main(String[] args) throws NdexException, SolrServerException, IOException {
 		if ( args.length !=1) {
-			System.out.println("Usage: ReIndexer <UUID>\n\n Valid command: delete\n" +  
-						"UUID can be all, which will apply command to all networks in db.");
+			System.out.println("Usage: ReIndexer <UUID>\n\n" +  
+						"UUID can be \"all\", which will apply command to all networks in db.");
 			return;
 		}
 		
 		ReIndexer worker = new ReIndexer ();
 		
-		worker.createSolrIndex();
+		String uuidStr = args[0];
+		
+		if ( uuidStr.equalsIgnoreCase("all"))
+		   worker.createSolrIndex(null);
+		else if ( UUID.fromString( uuidStr) != null)
+		   worker.createSolrIndex(uuidStr);
+		
 		worker.closeAll();
 	}
 
