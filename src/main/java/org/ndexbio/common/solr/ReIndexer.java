@@ -13,10 +13,7 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.task.Configuration;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -48,6 +45,8 @@ public class ReIndexer {
 				configuration.getDBURL(),
     			configuration.getDBUser(),
     			configuration.getDBPasswd(), 5);
+
+		System.out.println ( "Database object created.");
 		
 		destConn = targetDB.getAConnection();
 		
