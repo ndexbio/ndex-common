@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -988,13 +989,15 @@ public class NetworkDocDAO extends OrientdbDAO {
 			if (!p.getPredicateString().equals(NdexClasses.Network_P_source_format))
 				props.add(p);
 		}
+		
+		Date updateTime = Calendar.getInstance().getTime();
 		rec.fields(NdexClasses.ndexProperties, props,
-					NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
+					NdexClasses.ExternalObj_mTime, updateTime).save();
 
 		
 		// update the solr Index
 		NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
-		globalIdx.updateNetworkProperties(networkId.toString(), props);
+		globalIdx.updateNetworkProperties(networkId.toString(), props, updateTime);
 		
 		return props.size();
 	}

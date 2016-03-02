@@ -31,6 +31,7 @@
 package org.ndexbio.common.solr;
 
 import java.io.IOException;
+import java.util.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
@@ -105,6 +107,8 @@ public class NetworkGlobalIndexManager {
 	private static final Set<String> otherAttributes = 
 			new HashSet<>(Arrays.asList("objectCategory", "organism",
 	"platform",
+	"graphPropertiesHash",
+	"networkType",
 	"disease",
 	"tissue",
 	 "rightsHolder",
@@ -338,18 +342,33 @@ public class NetworkGlobalIndexManager {
 
 	}
 	
-	public void updateNetworkProperties (String networkId, Collection<NdexPropertyValuePair> props) throws SolrServerException, IOException {
+	public void updateNetworkProperties (String networkId, Collection<NdexPropertyValuePair> props, Date updateTime) throws SolrServerException, IOException {
 		client.setBaseURL(solrUrl + "/" + coreName);
 		SolrInputDocument tmpdoc = new SolrInputDocument();
 		tmpdoc.addField(UUID, networkId);
 
+	
+		Set<String> indexedAttributes = new TreeSet<> ();	
 		for ( NdexPropertyValuePair prop : props) {
 			if ( otherAttributes.contains(prop.getPredicateString()) ) {
+				indexedAttributes.add(prop.getPredicateString());
 				Map<String,String> cmd = new HashMap<>();
 				cmd.put("set", prop.getValue());
 				tmpdoc.addField(prop.getPredicateString(), cmd);
 			}
 		}
+
+		for ( String attr : otherAttributes) {
+			if ( !indexedAttributes.contains(attr)) {
+				Map<String,String> cmd = new HashMap<>();
+				cmd.put("set", null);
+				tmpdoc.addField(attr, cmd);
+			}
+		}
+		
+		Map<String,Timestamp> cmd = new HashMap<>();
+		cmd.put("set",  new java.sql.Timestamp(updateTime.getTime()));
+		tmpdoc.addField(MODIFICATION_TIME, cmd);
 		
 		Collection<SolrInputDocument> docs = new ArrayList<>(1);
 		docs.add(tmpdoc);
