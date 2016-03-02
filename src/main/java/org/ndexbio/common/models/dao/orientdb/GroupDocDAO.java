@@ -39,6 +39,8 @@ import org.ndexbio.common.NdexClasses;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.SimpleUserQuery;
+import org.ndexbio.model.object.network.NetworkSummary;
+import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.model.object.Group;
 import org.ndexbio.model.object.Membership;
 import org.ndexbio.model.object.MembershipType;
@@ -274,6 +276,49 @@ public class GroupDocDAO extends OrientdbDAO {
 			throw new NdexException("Unable to get network memberships for group with UUID "+groupId);
 		}
 	}
+	
+	public List<NetworkSummary> getGroupNetworks (String groupId, String userAccountName) 
+			throws ObjectNotFoundException, NdexException {
+		
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId.toString()),
+				"A group UUID is required");
+		
+		ODocument group = this.getRecordByUUIDStr(groupId, NdexClasses.Group);
+	
+		List<NetworkSummary> results = new ArrayList<>(20);
+		
+		try {
+			String groupRID = group.getIdentity().toString();
+			OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
+		  			"SELECT FROM"
+		  			+ " (TRAVERSE "+ NdexClasses.Group +".out_"+ Permissions.READ.toString().toLowerCase()  + 
+		  			     "," + NdexClasses.Group + ".out_"+ Permissions.WRITE.toString().toLowerCase() +" FROM"
+		  				+ " " + groupRID
+		  				+ "  WHILE $depth <=1)"
+		  			+ " WHERE @class = '" + NdexClasses.Network + "' and ( " + NdexClasses.ExternalObj_isDeleted + " = false)"
+		 			);
+			
+			List<ODocument> records = this.db.command(query).execute(); 
+			for(ODocument netDoc: records) {
+				NetworkSummary summary = NetworkDocDAO.getNetworkSummary(netDoc);
+				
+				if ( summary.getVisibility() == VisibilityType.PUBLIC) {
+					results.add(summary );
+				} else if ( userAccountName !=null ){
+					 NetworkDocDAO dao = new NetworkDocDAO(this.getDBConnection());
+					 if ( dao.networkSummaryIsReadable(userAccountName, summary.getExternalId().toString()) )
+						results.add(summary);
+				}
+			}
+			
+			logger.info("Successfuly retrieved group-networks");
+			return results;
+			
+		} catch(Exception e) {
+			logger.severe("An unexpected error occured while retrieving group-networks " + e.getMessage());
+			throw new NdexException("Unable to get networks for group with UUID "+groupId);
+		}
+	}	
 	
 	/**************************************************************************
 	    * getGroupUserMemberships
