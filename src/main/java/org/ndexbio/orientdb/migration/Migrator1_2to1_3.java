@@ -1381,7 +1381,7 @@ public class Migrator1_2to1_3 {
 		            	ODocument doc = (ODocument) iRecord;
 		            	try {
 							networkDao.createSolrIndex(doc);
-							Thread.sleep(1000);
+							Thread.sleep(500);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							logger.severe("Network " + doc.field(NdexClasses.ExternalObj_ID) + " solr index failed to create. Error:" + e.getMessage());

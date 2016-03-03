@@ -741,13 +741,13 @@ public class NetworkDocDAO extends OrientdbDAO {
         for ( ODocument doc : Helper.getNetworkElements(nDoc, NdexClasses.Network_E_Edges) ){ 
             	if ( counter >= endPosition) break;
 
-                counter ++;
             	
             	if ( counter >= startPosition )  {
               	   Edge e = getEdgeFromDocument(doc,network);
               	   network.getEdges().put(e.getId(), e);
             	               
                 }
+                counter ++;
         }
         
         network.setEdgeCount(network.getEdges().size());
