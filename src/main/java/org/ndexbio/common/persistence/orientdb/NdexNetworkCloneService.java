@@ -51,6 +51,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.Helper;
+import org.ndexbio.common.models.dao.orientdb.TaskDAO;
 import org.ndexbio.common.models.dao.orientdb.UserDAO;
 import org.ndexbio.common.models.object.network.RawNamespace;
 import org.ndexbio.common.solr.NetworkGlobalIndexManager;
@@ -77,6 +78,7 @@ import org.ndexbio.model.object.network.VisibilityType;
 import org.ndexbio.task.NdexServerQueue;
 
 import com.google.common.base.Preconditions;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -107,7 +109,6 @@ public class NdexNetworkCloneService extends PersistenceService {
     private Map<Long, Long>  edgeIdMap;
     
 	static Logger logger = LoggerFactory.getLogger(NdexNetworkCloneService.class);
-    
     /*
      * Currently, the procces flow of this class is:
      * 
@@ -275,7 +276,18 @@ public class NdexNetworkCloneService extends PersistenceService {
 			UserDAO userdao = new UserDAO(localConnection, graph);
 			ODocument ownerDoc = userdao.getRecordByAccountName(this.ownerAccount, null) ;
 			OrientVertex ownerV = graph.getVertex(ownerDoc);
-			ownerV.addEdge(NdexClasses.E_admin, networkVertex);
+			
+			for	(int retry = 0;	retry <	NdexDatabase.maxRetries;	++retry)	{
+     			try	{
+     				ownerV.addEdge(NdexClasses.E_admin, networkVertex);
+   		   			break;
+     			} catch(ONeedRetryException	e)	{
+     				logger.warn("Write conflict when creating edge to owner: + " + ownerV.getIdentity() );
+     				ownerV.reload();
+     			}
+     		}
+			
+			
 			this.localConnection.commit();
 	
 			createSolrIndex(networkDoc);
@@ -825,7 +837,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 	}
 	
 	private void abortTransaction() throws ObjectNotFoundException, NdexException {
-		logger.warn("AbortTransaction has been invoked from CX loader.");
+		logger.warn("AbortTransaction has been invoked from network clone service.");
 
 		logger.info("Deleting partial network "+ this.network.getExternalId().toString() + " in order to rollback in response to error");
 		networkDoc.field(NdexClasses.ExternalObj_isDeleted, true).save();
