@@ -406,6 +406,9 @@ public class NetworkDAO extends NetworkDocDAO {
         ODocument networkdoc = this.getNetworkDocByUUID(UUID.fromString(networkUUID));
         ODocument accountdoc = this.getRecordByUUID(UUID.fromString(accountUUID), null);
         
+        if ( permission == Permissions.ADMIN && accountdoc.getClassName().equals(NdexClasses.Group) )
+        	throw new NdexException ("Groups are not allowed to administer a network, only individual accounts are allowed.");
+        
         String className = accountdoc.getClassName();
         String accountName = accountdoc.field(NdexClasses.account_P_accountName);
         OrientVertex networkV = graph.getVertex(networkdoc);
