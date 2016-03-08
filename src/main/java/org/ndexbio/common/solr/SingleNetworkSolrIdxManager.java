@@ -55,7 +55,7 @@ public class SingleNetworkSolrIdxManager {
 	
 	static private final  int batchSize = 2000;
 	private int counter ; 
-	private Collection<SolrInputDocument> docs ;
+//	private Collection<SolrInputDocument> docs ;
 	
 	public static final String ID = "id";
 	private static final String NAME = "name";
@@ -97,7 +97,7 @@ public class SingleNetworkSolrIdxManager {
 			throw new NdexException ("Failed to create solrIndex for network " + coreName + ". Error: " + foo.getResponseHeader().toString());
 		}
 		counter = 0;
-		docs = new ArrayList<>(batchSize);
+	//	docs = new ArrayList<>(batchSize);
 		
 		client.setBaseURL(solrUrl + "/" + coreName);
 	}
@@ -121,22 +121,22 @@ public class SingleNetworkSolrIdxManager {
 //		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) 
 //			doc.addField(RELATEDTO, relatedTerms);
 		
-		docs.add(doc);
-		
+	//	docs.add(doc);
+		client.add(doc);
 		counter ++;
-		if ( counter == batchSize) {
-			client.add(docs);
+		if ( counter % batchSize == 0 ) {
+		//	client.add(docs);
 			client.commit();
-			docs.clear();
-			counter = 0;
+//			docs.clear();
+		//	counter = 0;
 		}
 
 	}
 
 	public void commit() throws SolrServerException, IOException {
-		if ( docs.size()>0 ) {
-			client.add(docs);
+	//	if ( docs.size()>0 ) {
+	//		client.add(docs);
 			client.commit();
-		}
+	//	}
 	}
 }
