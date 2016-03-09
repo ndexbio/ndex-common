@@ -304,8 +304,11 @@ public class XGMMLNetworkExporter {
 			Element metaData = doc.createElement(attTag);
 			parent.appendChild(metaData);
 			metaData.setAttribute("label", p.getPredicateString());
-			metaData.setAttribute("name", p.getPredicateString());
-		    metaData.setAttribute("type", p.getDataType());
+			metaData.setAttribute("name", p.getPredicateString()); 
+			String dataType = p.getDataType();
+		    if ( dataType !=null && dataType.equals("double"))
+		    	dataType = "real";
+		    metaData.setAttribute("type", dataType);
 	        if ( p.getDataType() !=null && !p.getDataType().equals("list")) { 
 				metaData.setAttribute("value", p.getValue());
 	        } else {
