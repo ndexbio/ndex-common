@@ -41,6 +41,8 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.apache.solr.client.solrj.SolrServerException;
+import org.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
+import org.cxio.util.CxioUtil;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.common.models.dao.orientdb.BasicNetworkDAO;
@@ -62,6 +64,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -1287,9 +1291,15 @@ public class Migrator1_2to1_3 {
 	
 		List<NdexPropertyValuePair> props = new ArrayList<>();
 		for ( ODocument propDoc :  getLinkedDocs(doc, "out_ndexProps" )) {
-			NdexPropertyValuePair p = getPropertyFromDoc (propDoc);
-			if ( p !=null ) 
-				props.add(p);
+			try { 
+				NdexPropertyValuePair p = getPropertyFromDoc (propDoc);
+				if ( p !=null ) 
+					props.add(p);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+				logger.severe("In compatible string list found in property: " +  propDoc.getIdentity().toString() + " ignore copying this property");
+			}
+			
 		}
 		return props;
 	}
@@ -1325,11 +1335,31 @@ public class Migrator1_2to1_3 {
 		    	     
 	}
 	
-	private static NdexPropertyValuePair getPropertyFromDoc (ODocument doc) {
+	private static NdexPropertyValuePair getPropertyFromDoc (ODocument doc) throws JsonProcessingException {
 		NdexPropertyValuePair result = new NdexPropertyValuePair();
 		
-		result.setValue( (String)doc.field("value"));
-		result.setDataType((String)doc.field( "dType"));
+		
+		String value = doc.field("value");
+		String dataType = doc.field( "dType");
+		if (dataType == null || dataType.length() ==0 ) 
+			dataType = "string";
+		else if ( dataType.equalsIgnoreCase("real"))
+			dataType = ATTRIBUTE_DATA_TYPE.DOUBLE.toString();
+		else if ( dataType.equalsIgnoreCase("string"))
+			dataType = ATTRIBUTE_DATA_TYPE.STRING.toString();
+		else if ( dataType.equalsIgnoreCase("list"))
+		    dataType = ATTRIBUTE_DATA_TYPE.STRING.toString();
+		else if ( dataType.equalsIgnoreCase("boolean"))
+			dataType = ATTRIBUTE_DATA_TYPE.BOOLEAN.toString();
+		else if ( dataType.equals("double"))
+			dataType = ATTRIBUTE_DATA_TYPE.DOUBLE.toString();
+		else if ( dataType.equals("List.String")) {
+			dataType = ATTRIBUTE_DATA_TYPE.STRING.toString();
+		}
+	
+		result.setValue(value);
+
+		result.setDataType(dataType);
 		
 		String predicateStr = doc.field("predicateStr");
 		
