@@ -95,9 +95,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>commons-collections</groupId>
-			<artifactId>commons-collections</artifactId>
-			<version>3.2.1</version>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-collections4</artifactId>
+			<version>4.1</version>
 		</dependency>
 
 		<dependency>
@@ -224,6 +224,6 @@
 		</plugins>
 	</build>
 	<properties>
-		<orientdb.version>2.1.10</orientdb.version>
+		<orientdb.version>2.1.11</orientdb.version>
 	</properties>
 </project>
