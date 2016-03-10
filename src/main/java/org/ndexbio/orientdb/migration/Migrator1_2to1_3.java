@@ -470,7 +470,7 @@ public class Migrator1_2to1_3 {
 	private void copyReifiedEdgeLinks() {
         srcConnection.activateOnCurrentThread();
 
-        String query = "SELECT FROM reifiedEdgeTerm where in_reifiedETerms is not null and id > 1976699";
+        String query = "SELECT FROM reifiedEdgeTerm where in_reifiedETerms is not null";
         
 		counter = 0;
 		
