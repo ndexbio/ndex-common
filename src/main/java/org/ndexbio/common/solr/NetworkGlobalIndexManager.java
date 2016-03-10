@@ -294,23 +294,30 @@ public class NetworkGlobalIndexManager {
 	
 
     public void addNodeToIndex(String name, List<String> represents, List<String> alias, List<String> relatedTerms,
-    				List<String> geneSymbol, List<String> NCBIGeneID) throws SolrServerException, IOException {
+    				List<String> geneSymbol, List<String> NCBIGeneID)  {
 				
 		if ( name != null && name.length() >1 ) 
 			doc.addField(NODE_NAME, name);
-		if ( represents !=null )
-			doc.addField(REPRESENTS, represents);
-		if ( alias !=null && !alias.isEmpty())
-			doc.addField(ALIASES, alias);
-		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) 
-			doc.addField(RELATED_TO, relatedTerms);
-		
+		if ( represents !=null ) {
+			for ( String term : represents)
+				doc.addField(REPRESENTS, term);
+		}	
+		if ( alias !=null ) {
+			for (String term : alias )
+				doc.addField(ALIASES, term);
+		}	
+		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) { 
+			for ( String term : relatedTerms)
+				doc.addField(RELATED_TO, term);
+		}
 		if ( geneSymbol != null && !geneSymbol.isEmpty()) {
-			doc.addField(GENE_SYMBOL, geneSymbol);
+			for ( String gs : geneSymbol)
+				doc.addField(GENE_SYMBOL, gs);
 		}
 		
 		if ( NCBIGeneID !=null && !NCBIGeneID.isEmpty()) {
-			doc.addField(NCBI_GENE_ID, NCBIGeneID);
+			for ( String geneId : NCBIGeneID)
+				doc.addField(NCBI_GENE_ID, geneId);
 		}
 		
 	//	docs.add(doc);

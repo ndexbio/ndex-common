@@ -55,7 +55,7 @@ public class SingleNetworkSolrIdxManager {
 	
 	static private final  int batchSize = 2000;
 	private int counter ; 
-//	private Collection<SolrInputDocument> docs ;
+	private Collection<SolrInputDocument> docs ;
 	
 	public static final String ID = "id";
 	private static final String NAME = "name";
@@ -97,7 +97,7 @@ public class SingleNetworkSolrIdxManager {
 			throw new NdexException ("Failed to create solrIndex for network " + coreName + ". Error: " + foo.getResponseHeader().toString());
 		}
 		counter = 0;
-	//	docs = new ArrayList<>(batchSize);
+		docs = new ArrayList<>(batchSize);
 		
 		client.setBaseURL(solrUrl + "/" + coreName);
 	}
@@ -110,33 +110,37 @@ public class SingleNetworkSolrIdxManager {
 	public void addNodeIndex(long id, String name, List<String> represents, List<String> alias) throws SolrServerException, IOException {
 		
 		SolrInputDocument doc = new SolrInputDocument();
-		doc.addField(ID,  id );
+		doc.addField("id",  id );
 		
 		if ( name != null ) 
 			doc.addField(NAME, name);
-		if ( represents !=null && !represents.isEmpty())
-			doc.addField(REPRESENTS, represents);
-		if ( alias !=null && !alias.isEmpty())
-			doc.addField(ALIAS, alias);
+		if ( represents !=null && !represents.isEmpty()) {
+			for ( String rterm : represents )
+				doc.addField(REPRESENTS, rterm);
+		}	
+		if ( alias !=null && !alias.isEmpty()) {
+			for ( String aTerm : alias )
+				doc.addField(ALIAS, aTerm);
+		}	
 //		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) 
 //			doc.addField(RELATEDTO, relatedTerms);
 		
-	//	docs.add(doc);
-		client.add(doc);
+		docs.add(doc);
+	//	client.add(doc);
 		counter ++;
 		if ( counter % batchSize == 0 ) {
-		//	client.add(docs);
+			client.add(docs);
 			client.commit();
-//			docs.clear();
-		//	counter = 0;
+			docs.clear();
 		}
 
 	}
 
 	public void commit() throws SolrServerException, IOException {
-	//	if ( docs.size()>0 ) {
-	//		client.add(docs);
+		if ( docs.size()>0 ) {
+			client.add(docs);
 			client.commit();
-	//	}
+			docs.clear();
+		}
 	}
 }
