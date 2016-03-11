@@ -177,17 +177,20 @@ public class NetworkGlobalIndexManager {
 		
 		String adminFilter = "";		
 		if ( adminedBy !=null) {
+			adminedBy = "\"" + adminedBy + "\"";
 			adminFilter = " AND (" + USER_ADMIN + ":" + adminedBy + " OR " + GRP_ADMIN + ":" + adminedBy + ")";
 		}
 		
 		String resultFilter = "";
 		if ( userAccount !=null) {     // has a signed in user.
+			userAccount = "\"" + userAccount +"\"";
 			if ( permission == null) {
 				resultFilter =  VISIBILITY + ":PRIVATE";
 				resultFilter += " AND -(" + USER_ADMIN + ":" + userAccount + ") AND -(" +
 						USER_EDIT + ":" + userAccount + ") AND -("+ USER_READ + ":" + userAccount + ")";
 				if ( groupNames!=null) {
 					for (String groupName : groupNames) {
+					  groupName = "\"" + groupName + "\"";	
 					  resultFilter +=  " AND -(" + GRP_ADMIN + ":" + groupName + ") AND -(" +
 							  GRP_EDIT + ":" + groupName + ") AND -("+ GRP_READ + ":" + groupName + ")";
 					}
@@ -199,7 +202,8 @@ public class NetworkGlobalIndexManager {
 						USER_EDIT + ":" + userAccount + ") OR ("+ USER_READ + ":" + userAccount + ")";
 				if ( groupNames!=null) {
 					for (String groupName : groupNames) {
-					  resultFilter +=  " OR (" + GRP_ADMIN + ":" + groupName + ") OR (" +
+						  groupName = "\"" + groupName + "\"";	
+						  resultFilter +=  " OR (" + GRP_ADMIN + ":" + groupName + ") OR (" +
 							  GRP_EDIT + ":" + groupName + ") OR ("+ GRP_READ + ":" + groupName + ")";
 					}
 				}
@@ -207,9 +211,11 @@ public class NetworkGlobalIndexManager {
 				resultFilter = "(" + USER_ADMIN + ":" + userAccount + ") OR (" +
 						USER_EDIT + ":" + userAccount + ")";
 				if ( groupNames !=null) {
-					for ( String groupName : groupNames ) 
-						resultFilter += " OR (" + GRP_ADMIN + ":" + groupName + ") OR (" +
+					for ( String groupName : groupNames )  {
+						  groupName = "\"" + groupName + "\"";	
+						  resultFilter += " OR (" + GRP_ADMIN + ":" + groupName + ") OR (" +
 							GRP_EDIT + ":" + groupName + ")" ;
+					}
 				} 
 			}/* else if ( permission == Permissions.ADMIN)  {
 			resultFilter =  " -(" + USER_ADMIN + ":" + userAccount + ")";

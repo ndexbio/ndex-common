@@ -105,7 +105,7 @@ public class ReIndexer {
 		            	ODocument doc = (ODocument) iRecord;
 		            	try {
 							networkDao.createSolrIndex(doc);
-							Thread.sleep(500);
+							Thread.sleep(200);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							logger.severe("Network " + doc.field(NdexClasses.ExternalObj_ID) + " solr index failed to create. Error:" + e.getMessage());
