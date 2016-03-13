@@ -148,12 +148,19 @@ public class Migrator1_2to1_3 {
 			ODocument netDoc = nsDoc.field("in_networkNS");
 			String uuid = netDoc.field(NdexClasses.ExternalObj_ID);
 			
+			// get properties
+			List<NdexPropertyValuePair> props = getProperties(nsDoc);
+			
             destConn.activateOnCurrentThread();
             ODocument newDoc = new ODocument(NdexClasses.Namespace)
             			.field(NdexClasses.Element_ID,id, OType.LONG)
             			.field(NdexClasses.ns_P_prefix, prefix, OType.STRING)
             			.field(NdexClasses.ns_P_uri,uri, OType.STRING);
-            newDoc.save();
+            
+			if ( !props.isEmpty())
+              		newDoc.field(NdexClasses.ndexProperties, props);
+            
+			newDoc.save();
             
 			OrientVertex newV = graph.getVertex(newDoc);
 			try {
