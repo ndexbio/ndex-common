@@ -36,6 +36,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -416,7 +417,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	
 	//write citations
 	writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
-		   supportIdMap , true, true,true );
+		   supportIdMap , true, true,true ,null);
    
 }
 
@@ -476,12 +477,12 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		
 		//write citations
 		writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
-		   supportIdMap , true, writeEdgeCitationLinks,writeEdgeSupportLinks );
+		   supportIdMap , true, writeEdgeCitationLinks,writeEdgeSupportLinks,null );
    
 }
-	
+	// only used in neighborhood query
 	private void writeEdgeAspectsInCX(ODocument doc, CxWriter cxwtr, Set<String> aspects, Map<Long,Long> citationIdMap,
-		    Map<Long,Long> supportIdMap) throws ObjectNotFoundException, IOException {
+		    Map<Long,Long> supportIdMap, Map<String,Long> aspectElementCount) throws ObjectNotFoundException, IOException {
 	
 		Long SID = getSIDFromDoc ( doc);
 	
@@ -528,13 +529,15 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 								cxwtr.writeAspectElement(ep);
 					}
 					cxwtr.endAspectFragment();
+					Long cnt = aspectElementCount.get(EdgeAttributesElement.ASPECT_NAME);
+					aspectElementCount.put(EdgeAttributesElement.ASPECT_NAME, cnt.longValue() + props.size());
 			}
 		}
 		
 		//write citations
 		writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
 		   supportIdMap , true, aspects.contains(CitationElement.ASPECT_NAME),
-		   aspects.contains(SupportElement.ASPECT_NAME) );
+		   aspects.contains(SupportElement.ASPECT_NAME) , aspectElementCount );
    
 }
 
@@ -634,7 +637,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
   	
 		//writeCitations and supports
 		writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
-			   supportIdMap , false, writeNodeCitationLinks, writeNodeSupportLinks );
+			   supportIdMap , false, writeNodeCitationLinks, writeNodeSupportLinks,null );
 	}
 
 	/**
@@ -650,7 +653,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	 * @throws NdexException
 	 */
 	private void writeNodeAspectsInCX(Long id,ODocument doc, CxWriter cxwtr, Set<String> aspects,
-			 Map<Long, Long> nodeIdMap, Map<Long,Long> citationIdMap,  Map<Long,Long> supportIdMap) 
+			 Map<Long, Long> nodeIdMap, Map<Long,Long> citationIdMap,  Map<Long,Long> supportIdMap, Map<String,Long> elementCount) 
 			throws IOException, NdexException {
 		
 		Long SID = getSIDFromDoc(doc);
@@ -666,11 +669,15 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 				if ( aspects.contains(ReifiedEdgeElement.ASPECT_NAME)) {
 					ODocument reifiedEdgeDoc = this.getReifiedEdgeDocById(repId);
 					writeReifiedEdgeTermInCX(SID, reifiedEdgeDoc, cxwtr);
+					Long cnt = elementCount.get(ReifiedEdgeElement.ASPECT_NAME);
+					elementCount.put(ReifiedEdgeElement.ASPECT_NAME, cnt.longValue()+1);
 				}
 			} else if (termType.equals(NdexClasses.FunctionTerm) ) {
 				if ( aspects.contains(FunctionTermElement.ASPECT_NAME)) {
 					ODocument funcDoc = this.getFunctionDocById(repId);
 					writeNdexAspectElementAsAspectFragment(cxwtr, getFunctionTermsElementFromDoc(SID, funcDoc));
+					Long cnt = elementCount.get(FunctionTermElement.ASPECT_NAME);
+					elementCount.put(FunctionTermElement.ASPECT_NAME, cnt.longValue()+1);
 				}
 			} else 
 				throw new NdexException ("Unsupported term type '" + termType + 
@@ -686,22 +693,35 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 					  new NodesElement(SID , (String) doc.field(NdexClasses.Node_P_name),represents));
 		}
 		
-		if ( aspects.contains(NodeAttributesElement.ASPECT_NAME))
-			writeNodeAttributesInCX(doc, cxwtr, /*repIdSet, */SID);
- 	
+		if ( aspects.contains(NodeAttributesElement.ASPECT_NAME)) {
+		   int c = writeNodeAttributesInCX(doc, cxwtr, /*repIdSet, */SID);
+		   Long cnt = elementCount.get(NodeAttributesElement.ASPECT_NAME);
+			elementCount.put(NodeAttributesElement.ASPECT_NAME, cnt.longValue()+c);
+		}	
 		//writeCitations and supports
 		writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
 			   supportIdMap , false, aspects.contains(CitationElement.ASPECT_NAME),
-			   aspects.contains(SupportElement.ASPECT_NAME));
+			   aspects.contains(SupportElement.ASPECT_NAME) ,elementCount);
 	}
 	
 	
 	
 	
-	
-	private void writeNodeAttributesInCX(ODocument doc, CxWriter cxwtr, Long SID)
+	/**
+	 * Return the number of attributes that was written out.
+	 * @param doc
+	 * @param cxwtr
+	 * @param SID
+	 * @return
+	 * @throws ObjectNotFoundException
+	 * @throws IOException
+	 * @throws NdexException
+	 */
+	private int writeNodeAttributesInCX(ODocument doc, CxWriter cxwtr, Long SID)
 			throws ObjectNotFoundException, IOException, NdexException {
 
+		    int count = 0;
+		    
 			Set<Long> aliases = doc.field(NdexClasses.Node_P_alias);
 		
 			if ( aliases !=null) {
@@ -710,6 +730,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 					terms.add(getBaseTermStringById(id));
 				}
 				writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_alias,terms, ATTRIBUTE_DATA_TYPE.LIST_OF_STRING));
+				count++;
 			}
 		    	
 			Set<Long> relatedTerms = doc.field(NdexClasses.Node_P_relatedTo);
@@ -719,6 +740,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 						terms.add(getBaseTermStringById(id));
 					}
 					writeNdexAspectElementAsAspectFragment(cxwtr, new NodeAttributesElement(null,SID,NdexClasses.Node_P_relatedTo,terms,ATTRIBUTE_DATA_TYPE.LIST_OF_STRING));
+					count++;
 			}
 			
 			// write properties
@@ -732,13 +754,16 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			   					SID, p.getPredicateString(), p.getValue(), t) : 
 						new NodeAttributesElement (p.getSubNetworkId(),SID, p.getPredicateString(), p.getValue(), t);
 					cxwtr.writeAspectElement(ep);
+					count++;
 		 		}
 		 		cxwtr.endAspectFragment();
 		 	}
+		 	
+		 	return count;
 	}
 	
 	private void writeCitationAndSupportLinks(Long SID, ODocument doc,  CxWriter cxwtr, Map<Long,Long> citationIdMap,
-		    Map<Long,Long> supportIdMap ,boolean isEdge, boolean writeCitationLinks, boolean writeSupportLinks ) throws ObjectNotFoundException, IOException {
+		    Map<Long,Long> supportIdMap ,boolean isEdge, boolean writeCitationLinks, boolean writeSupportLinks, Map<String,Long> elementCount) throws ObjectNotFoundException, IOException {
    	
 	//write citations
 	if ( writeCitationLinks ) {
@@ -756,10 +781,19 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			
 			cids.add(csid);
 		}
-		if (isEdge)
+		if (isEdge) {
 		  writeNdexAspectElementAsAspectFragment(cxwtr, new EdgeCitationLinksElement(SID, cids));
-		else
+		  if  ( elementCount !=null ) {
+			  Long cnt = elementCount.get(EdgeCitationLinksElement.ASPECT_NAME);
+			  elementCount.put(EdgeCitationLinksElement.ASPECT_NAME, cnt+1);
+		  }
+		} else {
 		  writeNdexAspectElementAsAspectFragment(cxwtr, new NodeCitationLinksElement(SID, cids));	
+		  if  ( elementCount !=null ) {
+			  Long cnt = elementCount.get(NodeCitationLinksElement.ASPECT_NAME);
+			  elementCount.put(NodeCitationLinksElement.ASPECT_NAME, cnt+1);
+		  }
+		}
 	  }
 	}
 	
@@ -779,11 +813,19 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			
 				supIds.add(ssid);
 			}
-			if ( isEdge)
+			if ( isEdge) {
 				writeNdexAspectElementAsAspectFragment(cxwtr, new EdgeSupportLinksElement(SID, supIds));
-			else 
+				if  ( elementCount !=null ) {
+					Long cnt = elementCount.get(EdgeSupportLinksElement.ASPECT_NAME);
+					elementCount.put(EdgeSupportLinksElement.ASPECT_NAME, cnt+1);
+				}
+			}else  {
 				writeNdexAspectElementAsAspectFragment(cxwtr, new NodeSupportLinksElement(SID, supIds));
-
+				if  ( elementCount !=null ) {
+					  Long cnt = elementCount.get(NodeSupportLinksElement.ASPECT_NAME);
+					  elementCount.put(NodeSupportLinksElement.ASPECT_NAME, cnt+1);
+				}	  
+			}	
 		}
 	}
 }
@@ -1220,20 +1262,35 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 
 	
 	public MetaDataCollection getMetaDataCollection () {
+	
+        return getMetaDataCollection_aux(true);
+	}
+
+	private MetaDataCollection getMetaDataCollection_aux (boolean setEdgeAndNodeCounts) {
 		MetaDataCollection md = networkDoc.field(NdexClasses.Network_P_metadata);
 		if ( md != null) {
+			if ( setEdgeAndNodeCounts)
+				return md;
+			
+			// otherwise remove all the element counts from metadata.
+			for ( MetaDataElement m : md ) {
+					m.setElementCount(null);
+			}
 			return md;
 		}
 			
 		md = CXMetaDataManager.getInstance().createCXMataDataTemplate();
 
         Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
-        int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
-        int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
         
-        md.setElementCount(NodesElement.ASPECT_NAME, new Long(nodecount));
-        md.setElementCount(EdgesElement.ASPECT_NAME, new Long(edgecount));
-  
+        if ( setEdgeAndNodeCounts) {
+        	int edgecount = networkDoc.field(NdexClasses.Network_P_edgeCount);
+        	int nodecount = networkDoc.field(NdexClasses.Network_P_nodeCount);
+        
+        	md.setElementCount(NodesElement.ASPECT_NAME, new Long(nodecount));
+        	md.setElementCount(EdgesElement.ASPECT_NAME, new Long(edgecount));
+        }
+        
         //check citation
         populateMDElementCnt(md, NdexClasses.Network_E_Citations, CitationElement.ASPECT_NAME);
         populateMDElementCnt(md, NdexClasses.Network_E_FunctionTerms, FunctionTermElement.ASPECT_NAME);
@@ -1256,8 +1313,9 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
         return md;
 	}
-
-
+	
+	
+	
 	private void populateMDElementCnt(MetaDataCollection md,String edgeName, String aspectName) {
 		long count = networkVertex.countEdges(Direction.OUT, edgeName);     
         if ( count == 0 ) {
@@ -1274,22 +1332,19 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 		//prepare metadata
 		MetaDataCollection preMetaData ;
 		
-		boolean dbHasMetadata = true;
-		MetaDataCollection metadata = networkDoc.field(NdexClasses.Network_P_metadata);
-		if ( metadata == null) {
-			dbHasMetadata = false;
-			metadata = this.getMetaDataCollection();
-		}		
+		MetaDataCollection metadata = this.getMetaDataCollection();
 		
 		Set<String> aspects = parameters.getAspects();
+		Map<String, Long> aspectElementCount = new HashMap<>(aspects.size());
 		preMetaData = new MetaDataCollection();
 		for (String aspectName : aspects) {
 			MetaDataElement e = metadata.getMetaDataElement(aspectName);
 			if ( e == null)
 					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
+			e.setElementCount(null);
 			preMetaData.add(e);
+			aspectElementCount.put(aspectName, 0l);
 		}
-		
 		
 		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
         cxwtr.addPreMetaData(preMetaData);		
@@ -1302,29 +1357,33 @@ public class CXNetworkExporter extends SingleNetworkDAO {
             if (aspects.contains(NdexNetworkStatus.ASPECT_NAME)) {
                writeNdexStatus(cxwtr);
                aspects.remove(NdexNetworkStatus.ASPECT_NAME);
+               aspectElementCount.put(NdexNetworkStatus.ASPECT_NAME, 1l);
             }
             
             // write provenance
             if ( aspects.contains(Provenance.ASPECT_NAME)) {
             	writeProvenance(cxwtr);
             	aspects.remove(Provenance.ASPECT_NAME);
+            	aspectElementCount.put(Provenance.ASPECT_NAME, 1l);
             }
             
             // write name, desc and other properties;
             if ( aspects.contains(NetworkAttributesElement.ASPECT_NAME)) {
-               writeNetworkAttributes(cxwtr, -1);
+               int cnt = writeNetworkAttributes(cxwtr, -1);
                aspects.remove(NetworkAttributesElement.ASPECT_NAME);
+               aspectElementCount.put(NetworkAttributesElement.ASPECT_NAME, (long)cnt);
             }
             
             //write namespaces 
             if (  aspects.contains(NamespacesElement.ASPECT_NAME)) {
-            	writeNamespacesInCX(cxwtr, -1);
+            	int cnt = writeNamespacesInCX(cxwtr, -1);
             	aspects.remove(NetworkAttributesElement.ASPECT_NAME);
+            	aspectElementCount.put(NamespacesElement.ASPECT_NAME, (long)cnt);
             }
 
             
     		// start writing ndex aspects out.
-            writeNeighborhoodSubNetworkAspects(cxwtr, parameters);
+            writeNeighborhoodSubNetworkAspects(cxwtr, parameters, aspectElementCount);
             
             //writing opaque aspects
             for ( String aspect : aspects) {
@@ -1335,21 +1394,23 @@ public class CXNetworkExporter extends SingleNetworkDAO {
             //Add post metadata
             
             MetaDataCollection postmd = new MetaDataCollection ();
+            for ( Map.Entry<String,Long> entry : aspectElementCount.entrySet()) {
+            	postmd.setElementCount(entry.getKey(), entry.getValue());
+            }     
             
-            if ( !dbHasMetadata) {
-            	if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null ) {
+            if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null ) {
             		postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
-            	}
+            }
             
-            	if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null ) {
+            if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null ) {
             		postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
-            	}
-            	if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null )
+            }
+            if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null )
             		postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
             
-            	if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null  )
+            if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null  )
             		postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
-            }
+           
             
             if ( postmd.size()>0)
               cxwtr.addPostMetaData(postmd);        
@@ -1362,7 +1423,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 
 	}
 	
-	private void  writeNeighborhoodSubNetworkAspects(CxWriter cxwtr, CXSimplePathQuery parameters) throws NdexException, SolrServerException, IOException {
+	private void  writeNeighborhoodSubNetworkAspects(CxWriter cxwtr, CXSimplePathQuery parameters, Map<String, Long> aspectElementCount) throws NdexException, SolrServerException, IOException {
 		
 	    // tracking ids to SID mapping that has been outputed.
         Map<Long,Long> citationIdMap = new TreeMap<> ();
@@ -1373,17 +1434,30 @@ public class CXNetworkExporter extends SingleNetworkDAO {
         
 
 		Set<ORID> nodeRIDs = getNodeRidsFromSearchString( cxwtr, parameters.getAspects(), parameters.getSearchString(), parameters.getEdgeLimit()*2, 
-					nodeIdMap, citationIdMap, supportIdMap);
+					nodeIdMap, citationIdMap, supportIdMap, aspectElementCount);
 
 		Set<ORID> traversedEdges = new TreeSet<>();
 
 		traverseNeighborHoodAndOutputCX(cxwtr, parameters.getAspects(),nodeRIDs, parameters.getSearchDepth(), parameters.getEdgeLimit(),traversedEdges,
-				nodeIdMap,citationIdMap, supportIdMap);
+				nodeIdMap,citationIdMap, supportIdMap, aspectElementCount);
+		
+		// set the count for metadata 
+		if ( aspectElementCount.containsKey(NodesElement.ASPECT_NAME))
+			aspectElementCount.put(NodesElement.ASPECT_NAME, new Long(nodeIdMap.size()));
+		
+		if ( aspectElementCount.containsKey(EdgesElement.ASPECT_NAME))
+			aspectElementCount.put(EdgesElement.ASPECT_NAME, new Long(traversedEdges.size()));
+		
+		if ( aspectElementCount.containsKey(CitationElement.ASPECT_NAME))
+			aspectElementCount.put(CitationElement.ASPECT_NAME, new Long(citationIdMap.size()));
+		
+		if ( aspectElementCount.containsKey(SupportElement.ASPECT_NAME))
+			aspectElementCount.put(SupportElement.ASPECT_NAME, new Long(traversedEdges.size()));
 	}
 	
 	private Set<ORID> getNodeRidsFromSearchString(CxWriter wtr, Set<String> aspects,
 			 String searchString, int nodeLimit, Map<Long,Long> nodeIdMap,
-			 Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap) throws NdexException, SolrServerException, IOException {
+			 Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap, Map<String,Long> aspectElementCount) throws NdexException, SolrServerException, IOException {
 		
 		Set<ORID> result = new TreeSet<>();
 
@@ -1394,7 +1468,7 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 			ODocument nodeDoc =  getNodeDocById( id );
 			result.add(nodeDoc.getIdentity());
 			
-			writeNodeAspectsInCX(id,nodeDoc, wtr, aspects, nodeIdMap,citationIdMap,supportIdMap );
+			writeNodeAspectsInCX(id,nodeDoc, wtr, aspects, nodeIdMap,citationIdMap,supportIdMap, aspectElementCount );
 
 		}
 		
@@ -1404,20 +1478,22 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 	
 	private void  traverseNeighborHoodAndOutputCX(CxWriter wtr, Set<String> aspects,
 			   Set<ORID> nodeRIDs, int searchDepth, int edgeLimit ,Set<ORID> traversedEdges,
-			   Map<Long,Long> nodeIdMap, Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap
+			   Map<Long,Long> nodeIdMap, Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap,
+			   Map<String,Long> aspectElementCount
 			   ) throws NdexException, IOException  {
 		if ( searchDepth <= 0 ) return ;
 		
-		Set<ORID> newNodes1 = getNeighborHood(wtr, aspects,nodeRIDs,edgeLimit, true,traversedEdges, nodeIdMap,citationIdMap,supportIdMap);  // upstream
-		Set<ORID> newNodes2 = getNeighborHood(wtr, aspects,nodeRIDs,edgeLimit, false,traversedEdges,nodeIdMap,citationIdMap,supportIdMap);  // downstream;
+		Set<ORID> newNodes1 = getNeighborHood(wtr, aspects,nodeRIDs,edgeLimit, true,traversedEdges, nodeIdMap,citationIdMap,supportIdMap, aspectElementCount);  // upstream
+		Set<ORID> newNodes2 = getNeighborHood(wtr, aspects,nodeRIDs,edgeLimit, false,traversedEdges,nodeIdMap,citationIdMap,supportIdMap, aspectElementCount);  // downstream;
 		
         newNodes1.addAll(newNodes2);
-		traverseNeighborHoodAndOutputCX(wtr, aspects, newNodes1, searchDepth-1, edgeLimit, traversedEdges, nodeIdMap,citationIdMap,supportIdMap);
+		traverseNeighborHoodAndOutputCX(wtr, aspects, newNodes1, searchDepth-1, edgeLimit, traversedEdges, nodeIdMap,citationIdMap,supportIdMap, aspectElementCount);
 	}
 	
 	
 	private  Set<ORID> getNeighborHood(CxWriter wtr, Set<String> aspects,Set<ORID> nodeRIDs,
-			int edgeLimit ,boolean upstream, Set<ORID> traversedEdges, Map<Long,Long> nodeIdMap, Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap) throws NdexException, IOException {
+			int edgeLimit ,boolean upstream, Set<ORID> traversedEdges, Map<Long,Long> nodeIdMap, 
+			Map<Long,Long> citationIdMap, Map<Long,Long> supportIdMap, Map<String,Long> aspectElementCount) throws NdexException, IOException {
 		Set<ORID> newNodes = new TreeSet<>();
 		for ( ORID nodeRID: nodeRIDs) {
 			ODocument nodeDoc = new ODocument(nodeRID);
@@ -1428,14 +1504,14 @@ public class CXNetworkExporter extends SingleNetworkDAO {
 				if( !traversedEdges.contains(edgeDoc.getIdentity())) { //new edge found
 					traversedEdges.add(edgeDoc.getIdentity());
 					
-					writeEdgeAspectsInCX(edgeDoc, wtr, aspects, citationIdMap, supportIdMap);
+					writeEdgeAspectsInCX(edgeDoc, wtr, aspects, citationIdMap, supportIdMap, aspectElementCount);
 
 					ODocument newNodeDoc = (ODocument)(upstream ? 
 							         edgeDoc.field("in_" + NdexClasses.Edge_E_subject) : 
 							         edgeDoc.field("out_"+ NdexClasses.Edge_E_object) );
 					Long nodeId = newNodeDoc.field(NdexClasses.Element_ID);
 					if ( !nodeIdMap.containsKey(nodeId))
-					    writeNodeAspectsInCX(nodeId,newNodeDoc, wtr, aspects, nodeIdMap, citationIdMap,supportIdMap);
+					    writeNodeAspectsInCX(nodeId,newNodeDoc, wtr, aspects, nodeIdMap, citationIdMap,supportIdMap, aspectElementCount);
 					
 					ORID newNodeRID = newNodeDoc.getIdentity();
 					if ( !newNodes.contains(newNodeRID)) {
