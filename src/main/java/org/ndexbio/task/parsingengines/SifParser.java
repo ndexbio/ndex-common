@@ -36,6 +36,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -387,18 +388,24 @@ public class SifParser implements IParsingEngine {
 					if (participantNodeId == null)
 						break;
 					//String type = tokens[1];
-					String name = tokens[2];
-					// special case processing for "_HUMAN" suffix
-					int humanSuffixIndex = name.indexOf("_HUMAN");
+					List<String> aliasList = new LinkedList<>();
+					aliasList.add(tokens[2]);
+					//String name = tokens[2];
+					// special case processing for "_HUMAN" suffix # this logic is removed from 1.3.2
+				/*	int humanSuffixIndex = name.indexOf("_HUMAN");
 					if (humanSuffixIndex != -1){
 						name = name.substring(0, humanSuffixIndex);
-					}
+					} 
 					//participant.setName(name);
-					this.persistenceService.setNodeName(participantNodeId, name);
+					this.persistenceService.setNodeName(participantNodeId, name); */
 					
 					if (tokens.length > 3) {
 						String[] unificationAliases = tokens[3].split(";");
-						this.persistenceService.addAliasToNode(participantNodeId,unificationAliases);
+						if ( unificationAliases !=null ) {
+							for (String a : unificationAliases) 
+								aliasList.add(a);
+						}
+						this.persistenceService.addAliasToNode(participantNodeId,aliasList);
 						if (tokens.length > 4) {
 							String[] relationshipAliases = tokens[4].split(";");
 							this.persistenceService.setRelatedTermsOnNode(participantNodeId, relationshipAliases);

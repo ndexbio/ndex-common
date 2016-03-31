@@ -220,6 +220,34 @@ public class NdexPersistenceService extends PersistenceService {
 		elementIdCache.put(nodeId, nodeDoc);
 	}
 
+	public void addAliasToNode(long nodeId, Collection<String> aliases) throws ExecutionException, NdexException {
+		ODocument nodeDoc = elementIdCache.get(nodeId);
+
+		List<Long> newAliases = new ArrayList<>(aliases.size());
+		
+		for (String alias : aliases) {
+			Long b= this.getBaseTermId(alias);
+		    Long repNodeId = this.baseTermNodeIdMap.get(b);
+			if ( repNodeId != null && repNodeId.equals(nodeId)) {
+		    	logger.warning("Alias '" + alias + "' is also the represented base term of node " + 
+			    nodeId +". Alias ignored.");
+		    } else {
+		    	newAliases.add(b);
+		    }
+		}
+		
+		Collection<Long> oldAliases = nodeDoc.field(NdexClasses.Node_P_alias);
+		if ( oldAliases !=null && oldAliases.size() > 0 )
+			oldAliases.addAll(newAliases);
+		else 
+			oldAliases = newAliases;
+		nodeDoc.field(NdexClasses.Node_P_alias, oldAliases).save();
+		
+		elementIdCache.put(nodeId, nodeDoc);
+	}
+	
+	
+	
 /*	No longer valid in 1.3			
 	public void addCitationToElement(long elementId, Long citationId, String className) throws ExecutionException, NdexException{
 		ODocument elementRec = elementIdCache.get(elementId);
