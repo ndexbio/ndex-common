@@ -106,7 +106,8 @@ public class Migrator1_2to1_3 {
 		OGlobalConfiguration.USE_WAL.setValue(false);
 		OGlobalConfiguration.WAL_SYNC_ON_PAGE_FLUSH.setValue(false);
 		
-		srcPool = new OPartitionedDatabasePool(srcDbPath , "admin","admin",5);
+	//	srcPool = new OPartitionedDatabasePool(srcDbPath , "admin","admin",5);
+		srcPool = new OPartitionedDatabasePool(srcDbPath , "admin","admin",5,10);  // from 2.1.15
 
 		srcConnection = srcPool.acquire();
 		
