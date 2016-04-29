@@ -299,10 +299,10 @@ public class NetworkGlobalIndexManager {
 	
 	
 
-    public void addNodeToIndex(String name, List<String> represents, List<String> alias, List<String> relatedTerms,
+    public void addNodeToIndex(String name, List<String> represents, List<String> alias, /*List<String> relatedTerms, */
     				List<String> geneSymbol, List<String> NCBIGeneID)  {
 				
-		if ( name != null && name.length() >1 ) 
+		if ( name != null && name.length() >2 ) 
 			doc.addField(NODE_NAME, name);
 		if ( represents !=null ) {
 			for ( String term : represents)
@@ -312,10 +312,10 @@ public class NetworkGlobalIndexManager {
 			for (String term : alias )
 				doc.addField(ALIASES, term);
 		}	
-		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) { 
+/*		if ( relatedTerms !=null && ! relatedTerms.isEmpty() ) { 
 			for ( String term : relatedTerms)
 				doc.addField(RELATED_TO, term);
-		}
+		} */
 		if ( geneSymbol != null && !geneSymbol.isEmpty()) {
 			for ( String gs : geneSymbol)
 				doc.addField(GENE_SYMBOL, gs);

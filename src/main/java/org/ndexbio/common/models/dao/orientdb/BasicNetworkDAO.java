@@ -277,20 +277,25 @@ public class BasicNetworkDAO implements AutoCloseable {
 		String name = doc.field(NdexClasses.BTerm_P_name);
 		String prefix = doc.field(NdexClasses.BTerm_P_prefix);
 
-		if ( name.length() > 1)
+		if ( name.length() > 2)
 		  termList.add(name);
 	   
-		if (prefix !=null) {
+	/*	we don't index on prefix any more.
+	 * if (prefix !=null) {    
 			termList.add ( prefix + name);
-		}    
+		}     */
 		
-	    Long nsId = doc.field(NdexClasses.BTerm_NS_ID); 
+/*		we skip indexing the prefix part for now. May put this back in the future if we do search string rewrites.
+		Long nsId = doc.field(NdexClasses.BTerm_NS_ID); 
 	    	
 	    if ( nsId != null && nsId.longValue() > 0) {
 	    	ODocument nsdoc = getNamespaceDocById(nsId);
 	        prefix = nsdoc.field(NdexClasses.ns_P_prefix)	;
 	    	termList.add ( prefix + ":"+ name);
-	    }	
+	    } else {
+	    	if ( prefix !=null )
+	    		termList.add(prefix + name);
+	    } */
 	}
 	
 	private void addFunctionTermsToIndexList ( ODocument funcDoc, List<String> termList) throws ObjectNotFoundException {
@@ -363,7 +368,7 @@ public class BasicNetworkDAO implements AutoCloseable {
 			}
 		}
 		
-		// get the relatedTo term list
+/*		// get the relatedTo term list   skip indexing related terms for now as per requests from other teams.
 		List<String> relatedTermList = null;
 		Collection<Long> relatedTo = nodeDoc.field(NdexClasses.Node_P_relatedTo);
 		if ( relatedTo !=null) {
@@ -371,7 +376,7 @@ public class BasicNetworkDAO implements AutoCloseable {
 			for ( Long relatedToId : relatedTo) {
 				addTermsToIndexList(relatedToId, relatedTermList);
 			}
-		}
+		} */
 		// get the represent term list.
 		List<String> representList =  null;
 		Long represents = nodeDoc.field(NdexClasses.Node_P_represents);
@@ -402,7 +407,7 @@ public class BasicNetworkDAO implements AutoCloseable {
 		}
 		
 		singleNetworkIndex.addNodeIndex(id, name, representList, aliasList) ; //relatedTermList);
-		globalIndex.addNodeToIndex(name, representList, aliasList, relatedTermList, geneSymbol, NCBIGeneID);
+		globalIndex.addNodeToIndex(name, representList, aliasList, /*relatedTermList,*/ geneSymbol, NCBIGeneID);
 	}
 /*	
 	private void addNetworkToGlobalIndex(ODocument networkDoc) throws NdexException, SolrServerException, IOException {
