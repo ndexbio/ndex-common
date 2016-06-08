@@ -157,7 +157,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	
 	public ODocument getNetworkDocByUUIDString(String id) throws ObjectNotFoundException {
 	     String query = "select from " + NdexClasses.Network + " where UUID='"
-                +id+"' and (isDeleted = false)";
+                +id+"' and (isDeleted = false) and (isComplete=true)";
         final List<ODocument> networks = db.query(new OSQLSynchQuery<ODocument>(query));
  
         if (networks.isEmpty())

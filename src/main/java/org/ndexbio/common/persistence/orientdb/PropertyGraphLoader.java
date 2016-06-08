@@ -60,6 +60,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+
+@Deprecated
 public class PropertyGraphLoader {
 	
 	NdexDatabase db;
@@ -91,7 +93,7 @@ public class PropertyGraphLoader {
 	}
 	
 
-	public NetworkSummary updateNetwork(PropertyGraphNetwork network) throws Exception {
+/*	public NetworkSummary updateNetwork(PropertyGraphNetwork network) throws Exception {
 		UUID uuid = null;
 		NdexPersistenceService persistenceService = null;
 		try {
@@ -120,7 +122,7 @@ public class PropertyGraphLoader {
 		} finally {
 			if ( persistenceService !=null) persistenceService.close();
 		}
-	}
+	} */
 	
 	
 	private void insertNewNetwork(PropertyGraphNetwork network,
@@ -253,7 +255,7 @@ public class PropertyGraphLoader {
 		}
 		
 	}
-	
+/*	
 	private void updateNetwork (UUID uuid, PropertyGraphNetwork network,  NdexPersistenceService persistenceService) throws Exception {
 		
 			NetworkDAO dao = new NetworkDAO(persistenceService.getDbConnection());
@@ -297,13 +299,13 @@ public class PropertyGraphLoader {
 	        		NdexClasses.ExternalObj_mTime, Calendar.getInstance().getTime()).save();
 	        
 	        
-			persistenceService.setNetworkProperties(currentNetwork.getProperties(), null /*network.getPresentationProperties()*/);
+			persistenceService.setNetworkProperties(currentNetwork.getProperties(), null );
 
 			persistenceService.networkVertex.getRecord().reload();
 			// redo populate the elements
 		    insertNetworkElements(network, persistenceService);
 		
-	}
+	} */
 	
 	private static NetworkSourceFormat removeNetworkSourceFormat(PropertyGraphNetwork pg) {
 		List<NdexPropertyValuePair> props = pg.getProperties(); 

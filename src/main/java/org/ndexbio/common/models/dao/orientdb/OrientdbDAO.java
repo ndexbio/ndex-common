@@ -156,7 +156,8 @@ public class OrientdbDAO implements AutoCloseable {
     	db.commit();
     }
     
-    public void rollback() {
+    // removing this function because OriendDB guys said we should not use is. Should just throw an exception when error occurs in a transaction.
+ /*   public void rollback() {
     	db.rollback();
-    }
+    } */
 }

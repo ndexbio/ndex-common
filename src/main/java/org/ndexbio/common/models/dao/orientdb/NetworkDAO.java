@@ -89,7 +89,7 @@ public class NetworkDAO extends NetworkDocDAO {
 		
 	private OrientGraph graph;	
 	
-	private static final int CLEANUP_BATCH_SIZE = 50000;
+	private static final int CLEANUP_BATCH_SIZE = 10000;
 	
 	public static final String RESET_MOD_TIME = "resetMTime";
 	
@@ -162,8 +162,18 @@ public class NetworkDAO extends NetworkDocDAO {
 		
 		return count++;
 	}
+	 
+	private List<String> getOpaqueAspectEdges (ODocument networkDoc) {
+		List<String> result = new ArrayList<>();
+		Map<String, String> opaqueAspectEdgeTable = networkDoc.field(NdexClasses.Network_P_opaquEdgeTable);
+		if ( opaqueAspectEdgeTable == null )
+			return result;
+		
+		result.addAll(opaqueAspectEdgeTable.values());
+		
+		return result;
+	}
 	
-
 	/**
 	 * Delete up to CLEANUP_BATCH_SIZE vertices in a network. This function is for cleaning up a logically 
 	 * deleted network in the database. 
@@ -175,8 +185,11 @@ public class NetworkDAO extends NetworkDocDAO {
 	private int cleanupNetworkElements(ODocument networkDoc) throws ObjectNotFoundException, NdexException {
         int counter = 0;
 
+        List<String> edgesToBeDeleted = getOpaqueAspectEdges(networkDoc);
+        for ( String ndexEdges : networkElementType)
+           edgesToBeDeleted.add(ndexEdges);
         
-        for ( String fieldName : networkElementType) {
+        for ( String fieldName : edgesToBeDeleted) {
         	counter = cleanupElementsByEdge(networkDoc, fieldName, counter);
         	if ( counter >= CLEANUP_BATCH_SIZE) {
         		return counter;
@@ -192,8 +205,9 @@ public class NetworkDAO extends NetworkDocDAO {
 	 * @param fieldName
 	 * @param currentCounter
 	 * @return the number of vertices being deleted. 
+	 * @throws NdexException 
 	 */
-	private int cleanupElementsByEdge(ODocument doc, String fieldName, int currentCounter) {
+	private int cleanupElementsByEdge(ODocument doc, String fieldName, int currentCounter) throws NdexException {
 		
 		Object f = doc.field("out_"+fieldName);
 		if ( f != null ) {
@@ -201,10 +215,13 @@ public class NetworkDAO extends NetworkDocDAO {
 				ORidBag e = (ORidBag)f;
 				int counter = currentCounter;
 				for ( OIdentifiable rid : e) {
-					counter = cleanupElement((ODocument)rid, counter);
-					if ( counter >= CLEANUP_BATCH_SIZE) {
-						return counter;
-					}
+					if(rid !=null) {
+						counter = cleanupElement((ODocument)rid, counter);
+						if ( counter >= CLEANUP_BATCH_SIZE) {
+							return counter;
+						}
+					} else 
+						throw new NdexException ("Db traversing on " + fieldName + " got a null value in the ORidBag.");
 				}
 				return  counter;
 			} 
@@ -227,9 +244,9 @@ public class NetworkDAO extends NetworkDocDAO {
 			}
 		}
 		counter ++;
-		if ( counter % 2000 == 0 ) {
+		if ( counter % 200 == 0 ) {
 			graph.commit();
-			if (counter % 10000 == 0 ) {
+			if (counter % 1000 == 0 ) {
 				logger.info("Deleted " + counter + " vertexes from network during cleanup.");
 			}
 		}
@@ -258,8 +275,8 @@ public class NetworkDAO extends NetworkDocDAO {
  		return 1;
 	}
 	
-	
-	public int deleteNetworkElements(String UUID) {
+/*	@Deprecated
+	private int deleteNetworkElements(String UUID) {
 		int counter = 0;
 		
 		String query = "traverse * from ( traverse out_networkNodes,out_BaseTerms,out_networkNS from (select from network where UUID='"
@@ -279,7 +296,7 @@ public class NetworkDAO extends NetworkDocDAO {
 
         }
         return counter;
-	}
+	} */
 	
 	/** 
 	 * delete all ndex and presentation properties from a network record.
@@ -504,9 +521,9 @@ public class NetworkDAO extends NetworkDocDAO {
     }
 
 	
-	public void rollback() {
+/*	public void rollback() {
 		graph.rollback();		
-	}
+	} */
 
 	@Override
 	public void commit() {

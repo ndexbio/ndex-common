@@ -1085,15 +1085,15 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 	}
 	
 	
-	public UUID updateNetwork(String networkUUID) throws NdexException, ExecutionException, SolrServerException, IOException {
+	public UUID updateNetwork(String networkUUID, ProvenanceEntity provenanceEntity) throws NdexException, ExecutionException, SolrServerException, IOException {
 
 		// get the old network head node
 		ODocument srcNetworkDoc = this.getRecordByUUIDStr(networkUUID);
 		if (srcNetworkDoc == null)
 				throw new NdexException("Network with UUID " + networkUUID + " is not found in this server");
 
-		srcNetworkDoc.field(NdexClasses.Network_P_isComplete, false).save();
-		graph.commit();
+//		srcNetworkDoc.field(NdexClasses.Network_P_isComplete, false).save();
+//		graph.commit();
 		try {
 
 
@@ -1109,31 +1109,12 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 		} catch ( Exception e) {
 			e.printStackTrace();
 			this.abortTransaction();
-			srcNetworkDoc.field(NdexClasses.Network_P_isComplete, true).save();
+			srcNetworkDoc.field(NdexClasses.Network_P_isLocked, false).save();
+//			srcNetworkDoc.field(NdexClasses.Network_P_isComplete, true).save();
 			graph.commit();
 			throw new NdexException("Error occurred when updating network using CX. " + e.getMessage());
 		}
 			
-		
-		graph.begin();
-
-		UUID newUUID = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
-
-		srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
-					  NdexClasses.ExternalObj_isDeleted,true).save();
-			
-		this.networkDoc.reload();
-		// copy the creationTime and visibility
-		networkDoc.fields( NdexClasses.ExternalObj_ID, networkUUID,
-					NdexClasses.ExternalObj_cTime, srcNetworkDoc.field(NdexClasses.ExternalObj_cTime),
-					NdexClasses.Network_P_visibility, srcNetworkDoc.field(NdexClasses.Network_P_visibility),
-					NdexClasses.Network_P_isLocked,false,
-					NdexClasses.ExternalObj_mTime, new Date() ,
-					          NdexClasses.Network_P_isComplete,true)
-			.save();
-		graph.commit();
-		
-		
 		// remove the old solr Index and add the new one.
 		SingleNetworkSolrIdxManager idxManager = new SingleNetworkSolrIdxManager(networkUUID);
 		NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
@@ -1144,6 +1125,27 @@ public class CXNetworkLoader extends BasicNetworkDAO {
 			logger.warn("Failed to delete Solr Index for network " + networkUUID + ". Please clean it up manually from solr. Error message: " + se.getMessage());
 		}
 		
+		graph.begin();
+
+		UUID newUUID = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
+
+		srcNetworkDoc.fields(NdexClasses.ExternalObj_ID, newUUID.toString(),
+					  NdexClasses.ExternalObj_isDeleted,true).save();
+			
+		this.networkDoc.reload();
+		
+		// copy the creationTime and visibility
+		networkDoc.fields( NdexClasses.ExternalObj_ID, networkUUID,
+					NdexClasses.ExternalObj_cTime, srcNetworkDoc.field(NdexClasses.ExternalObj_cTime),
+					NdexClasses.Network_P_visibility, srcNetworkDoc.field(NdexClasses.Network_P_visibility),
+					NdexClasses.Network_P_isLocked,false,
+					NdexClasses.ExternalObj_mTime, new Date() ,
+					          NdexClasses.Network_P_isComplete,true)
+			.save();
+		setNetworkProvenance(provenanceEntity);
+		graph.commit();
+		
+		//create Solr index on the new network.	
 		createSolrIndex(networkDoc);
 			
 		// added a delete old network task.
@@ -1184,5 +1186,6 @@ public class CXNetworkLoader extends BasicNetworkDAO {
                 .save();
     }
 
+    public void commit () { graph.commit(); } 
 
 }

@@ -86,7 +86,7 @@ public class CXParser implements IParsingEngine {
 				l.add(	new SimplePropertyValuePair ( "filename",description) );
 
 				loader.setNetworkProvenance(provEntity);
-
+				loader.commit();
 			}
 		} catch ( Exception e) {
 			e.printStackTrace();

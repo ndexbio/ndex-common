@@ -169,6 +169,17 @@ public class NdexNetworkCloneService extends PersistenceService {
 			this.localConnection.commit();
 			
 			//move the UUID from old network to new network, set new one's isComplete and set the old one to isDeleted.
+
+			// remove the old solr Index and add the new one.
+			String networkUUID = this.srcNetwork.getExternalId().toString();
+			SingleNetworkSolrIdxManager idxManager = new SingleNetworkSolrIdxManager(networkUUID);
+			NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
+			try {
+				idxManager.dropIndex();
+				globalIdx.deleteNetwork(networkUUID);
+			} catch (SolrServerException | HttpSolrClient.RemoteSolrException | IOException se ) {
+				logger.warn("Failed to delete Solr Index for network " + networkUUID + ". Please clean it up manually from solr. Error message: " + se.getMessage());
+			}
 			
 			localConnection.begin();
 			UUID newUUID = NdexUUIDFactory.INSTANCE.createNewNDExUUID();
@@ -187,16 +198,7 @@ public class NdexNetworkCloneService extends PersistenceService {
 			.save();
 			localConnection.commit();
 			
-			// remove the old solr Index and add the new one.
-			String networkUUID = this.srcNetwork.getExternalId().toString();
-			SingleNetworkSolrIdxManager idxManager = new SingleNetworkSolrIdxManager(networkUUID);
-			NetworkGlobalIndexManager globalIdx = new NetworkGlobalIndexManager();
-			try {
-				idxManager.dropIndex();
-				globalIdx.deleteNetwork(networkUUID);
-			} catch (SolrServerException | HttpSolrClient.RemoteSolrException | IOException se ) {
-				logger.warn("Failed to delete Solr Index for network " + networkUUID + ". Please clean it up manually from solr. Error message: " + se.getMessage());
-			}
+
 			createSolrIndex(networkDoc);
 						
 			
