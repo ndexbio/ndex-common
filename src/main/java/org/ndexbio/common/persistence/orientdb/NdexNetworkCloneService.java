@@ -203,10 +203,11 @@ public class NdexNetworkCloneService extends PersistenceService {
 						
 			
 			// added a delete old network task.
-			Task task = new Task();
+			// comment this block out to work around orientdb corruption
+			/* Task task = new Task();
 			task.setTaskType(TaskType.SYSTEM_DELETE_NETWORK);
 			task.setResource(newUUID.toString());
-			NdexServerQueue.INSTANCE.addSystemTask(task);
+			NdexServerQueue.INSTANCE.addSystemTask(task); */
 			
 			this.network.setIsLocked(false);
 			
