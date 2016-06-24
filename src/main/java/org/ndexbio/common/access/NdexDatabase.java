@@ -106,8 +106,8 @@ public class NdexDatabase {
 		}
 		
 		Arrays.sort(NdexSupportedAspects) ;
-		pool = new OPartitionedDatabasePool(dbURL, dbUserName, dbPassword,size);
-		//pool = new OPartitionedDatabasePool(dbURL, dbUserName, dbPassword,size, size+5);  // from 2.1.15
+		//pool = new OPartitionedDatabasePool(dbURL, dbUserName, dbPassword,size);
+		pool = new OPartitionedDatabasePool(dbURL, dbUserName, dbPassword,size, size+5);  // from 2.1.15
 	    
 	    logger.info("Connection pool to " + dbUserName + "@" + dbURL + " ("+ size + ") created.");
 
