@@ -106,6 +106,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	public void lockNetwork(String networkIDstr) throws ObjectNotFoundException {
 		ODocument nDoc = getNetworkDocByUUIDString(networkIDstr);
 		nDoc.field(NdexClasses.Network_P_isLocked,true);
+		nDoc.save();
 		db.commit();
 	}
 	
@@ -118,6 +119,7 @@ public class NetworkDocDAO extends OrientdbDAO {
 	public void unlockNetwork (String networkIDstr) throws ObjectNotFoundException {
 		ODocument nDoc = getNetworkDocByUUIDString(networkIDstr);
 		nDoc.field(NdexClasses.Network_P_isLocked,false);
+		nDoc.save();
 		db.commit();
 	}
 	
