@@ -109,7 +109,6 @@ public class CXMetaDataManager {
 			metadataElement .setVersion(e.getValue());
 			metadataElement .setConsistencyGroup(consistencyGroupId);
 	        md.add(metadataElement );
-
 		}   
 		md.setElementCount(NdexNetworkStatus.ASPECT_NAME, 1l);
         return md;

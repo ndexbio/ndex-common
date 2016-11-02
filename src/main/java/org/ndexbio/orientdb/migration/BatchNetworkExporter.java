@@ -1,14 +1,11 @@
 package org.ndexbio.orientdb.migration;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.solr.client.solrj.SolrServerException;
 import org.ndexbio.common.NdexClasses;
 import org.ndexbio.common.access.NdexDatabase;
 import org.ndexbio.model.exceptions.NdexException;
@@ -20,7 +17,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-public class BatchNetworkExporter {
+public class BatchNetworkExporter implements AutoCloseable{
 	
 	
 	private String srcDbPath;
@@ -44,32 +41,6 @@ public class BatchNetworkExporter {
 	    			"admin", 5);
 		 srcConnection = db.getAConnection();
 		 srcConnection.activateOnCurrentThread();
-	}
-	
-	
-	private void exportAll() throws Exception {
-		
-		String pathPrefix = "/opt/ndex/migration/";
-		 String query = "SELECT UUID FROM network where isDeleted = false and isComplete = true";
-			List<ODocument> rs = srcConnection.query(new OSQLSynchQuery<ODocument>(query));
-			int counter = 0;
-			for (ODocument doc : rs) {
-				counter++;
-				String uuidStr = doc.field("UUID");
-				
-				System.out.print("Exporting " + uuidStr + " -- " + counter);
-				long t1 = System.currentTimeMillis();
-				try (FileOutputStream out = new FileOutputStream(pathPrefix+ uuidStr + ".cx" )) {
-				
-				CXNetworkExporterV13 exporter = new CXNetworkExporterV13(uuidStr);
-				exporter.writeNetworkInCX(out, true);
-				exporter.close();
-				long t2 = System.currentTimeMillis();
-				System.out.println( "\ttotal: " + (t2-t1)/1000.0 + "(sec)");
-				}
-			}
-			
-			System.out.println("export network finished.");
 	}
 	
 	
@@ -104,23 +75,24 @@ public class BatchNetworkExporter {
 	private void exportNetworkTable() throws Exception {
 		
 		String pathPrefix = "/opt/ndex/migration/";
-		String query = "SELECT * FROM network where isDeleted = false and isComplete = true";
+		String query = "SELECT * FROM network where isDeleted = false and isComplete = true and nodeCount > 0";
 			List<ODocument> rs = srcConnection.query(new OSQLSynchQuery<ODocument>(query));
 			int counter = 0;
-			long t1 = System.currentTimeMillis();
+			long t0 = System.currentTimeMillis();
 			ObjectMapper mapper = new ObjectMapper();
 			try (FileWriter wtr = new FileWriter(pathPrefix+ "network.json" )) {
 				wtr.write("[\n");
 				
 				for (ODocument doc : rs) {
+					long t1 = System.currentTimeMillis();
 					if ( counter != 0)
 						wtr.write(",\n");
 					counter++;
 					Map<String,Object> networkRec = new HashMap<>();
-					//String uuidStr = doc.field("UUID");
+					String uuidStr = doc.field("UUID");
 				
 					networkRec.put("rid", doc.field("@rid").toString());
-					networkRec.put("uuid", doc.field("UUID"));
+					networkRec.put("uuid", uuidStr);
 					networkRec.put("createdTime", doc.field("createdTime"));
 					networkRec.put("modificationTime", doc.field("modificationTime"));
 					networkRec.put("description", doc.field(NdexClasses.Network_P_desc));
@@ -140,25 +112,47 @@ public class BatchNetworkExporter {
 					
 					String jsonRec = mapper.writeValueAsString(networkRec)	;
 					wtr.write(jsonRec);
+					
+					System.out.print("Exporting " + uuidStr + " -- " + counter + "edges: " + doc.field( NdexClasses.Network_P_edgeCount) +
+							"\tnodes: " + doc.field( NdexClasses.Network_P_nodeCount));
+					
+					try (FileOutputStream out = new FileOutputStream(pathPrefix+ uuidStr + ".cx" )) {
+						
+						CXNetworkExporterV13 exporter = new CXNetworkExporterV13(uuidStr);
+						exporter.writeNetworkInCX(out, true);
+						exporter.close();
+						long t2 = System.currentTimeMillis();
+						System.out.println( "\ttotal: " + (t2-t1)/1000.0 + "(sec)");
+					}
 										
 				}	
 				wtr.write("]\n");
 			}
 			
 		long t2 = System.currentTimeMillis();
-		System.out.println("exported " + counter + " network records. Total time: " + (t2-t1)/1000.0);
+		System.out.println("exported " + counter + " network records. Total time: " + (t2-t0)/1000.0);
+	}
+	
+	
+	public void close() {
+		srcConnection.activateOnCurrentThread();
+		if (srcConnection != null ) 
+			srcConnection.close();
+		destConn.activateOnCurrentThread();
+    	NdexDatabase.close();
 	}
 	
 public static void main(String[] args) throws Exception {
 		
-		BatchNetworkExporter ne = new  BatchNetworkExporter("/opt/ndex/orientdb/databases/ndex");
-	//	ne.exportAll();
+		try (BatchNetworkExporter ne = new  BatchNetworkExporter("/opt/ndex/orientdb/databases/ndex")) {
 	
-		ne.exportMainTable("user","");
-		ne.exportMainTable("task"," and taskType = 'EXPORT_NETWORK_TO_FILE' and status = 'COMPLETED'");
-		ne.exportMainTable("request","");
-		ne.exportMainTable("group","");
-		ne.exportNetworkTable();
+			ne.exportMainTable("user","");
+			ne.exportMainTable("task"," and taskType = 'EXPORT_NETWORK_TO_FILE' and status = 'COMPLETED'");
+			ne.exportMainTable("request","");
+			ne.exportMainTable("group","");
+			ne.exportNetworkTable();
+		
+		}
 	}
 	
 
