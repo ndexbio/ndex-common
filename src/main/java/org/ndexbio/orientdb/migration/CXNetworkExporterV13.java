@@ -85,6 +85,7 @@ import org.ndexbio.model.object.CXSimplePathQuery;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.network.VisibilityType;
+import org.slf4j.spi.LocationAwareLogger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.id.ORID;
@@ -411,12 +412,17 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 	if ( props !=null) {
 		cxwtr.startAspectFragment(EdgeAttributesElement.ASPECT_NAME);
 		for ( NdexPropertyValuePair p : props ) {
-			ATTRIBUTE_DATA_TYPE t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
-			EdgeAttributesElement ep = AttributesAspectUtils.isListType(t) ? 
+			if ( p.getPredicateString() != null && p.getPredicateString().length()>0) {
+				ATTRIBUTE_DATA_TYPE t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
+				EdgeAttributesElement ep = AttributesAspectUtils.isListType(t) ? 
 					EdgeAttributesElement.createInstanceWithMultipleValues ( p.getSubNetworkId(), 
 							SID, p.getPredicateString(), p.getValue(), t) : 
 					new EdgeAttributesElement ( p.getSubNetworkId(), SID, p.getPredicateString(), p.getValue(),t);
-			cxwtr.writeAspectElement(ep);
+				cxwtr.writeAspectElement(ep);
+			} else 
+			  System.err.println("Edge property name field is empty, ignoring the edge property (" + p.toString() + " ) of ( " + doc.getIdentity().toString()
+					  + " during exporting network.");
+					  		
 		}
 		cxwtr.endAspectFragment();
 	}
@@ -754,6 +760,7 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 		 	if ( props !=null) {
 		 		cxwtr.startAspectFragment(NodeAttributesElement.ASPECT_NAME);
 		 		for ( NdexPropertyValuePair p : props ) {
+		 			if ( p.getPredicateString()!=null & p.getPredicateString().length()>0) {
 		 			ATTRIBUTE_DATA_TYPE t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
 		 			NodeAttributesElement ep = AttributesAspectUtils.isListType(t) ?
 						NodeAttributesElement.createInstanceWithMultipleValues(p.getSubNetworkId(),
@@ -761,6 +768,9 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 						new NodeAttributesElement (p.getSubNetworkId(),SID, p.getPredicateString(), p.getValue(), t);
 					cxwtr.writeAspectElement(ep);
 					count++;
+		 			} else 
+		 				System.err.println("Ignoring node property " + doc.getIdentity().toString() + " because the property name is empty.");
+		 			
 		 		}
 		 		cxwtr.endAspectFragment();
 		 	}

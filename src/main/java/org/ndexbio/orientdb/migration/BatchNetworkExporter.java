@@ -113,7 +113,7 @@ public class BatchNetworkExporter implements AutoCloseable{
 					String jsonRec = mapper.writeValueAsString(networkRec)	;
 					wtr.write(jsonRec);
 					
-					System.out.print("Exporting " + uuidStr + " -- " + counter + "edges: " + doc.field( NdexClasses.Network_P_edgeCount) +
+					System.out.print("Exporting " + uuidStr + " -- " + counter + "\tedges: " + doc.field( NdexClasses.Network_P_edgeCount) +
 							"\tnodes: " + doc.field( NdexClasses.Network_P_nodeCount));
 					
 					try (FileOutputStream out = new FileOutputStream(pathPrefix+ uuidStr + ".cx" )) {
