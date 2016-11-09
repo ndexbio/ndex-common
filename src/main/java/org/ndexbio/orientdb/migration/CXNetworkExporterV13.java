@@ -129,6 +129,12 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 		if ( me != null)
 			me.setElementCount(1L);
 		
+		MetaDataElement ev = md.getMetaDataElement("visualProperties");
+		if (ev != null) {
+			md.remove("visualProperties");
+			ev.setName("cyVisualProperties");
+			md.add(ev);
+		} 
         cxwtr.addPreMetaData(md);
       try {
         cxwtr.start();
@@ -281,7 +287,10 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 		if (tab != null) {
 			for ( Map.Entry<String, String> e: tab.entrySet()) {
 				String edgeName = e.getValue();
-				cxwtr.startAspectFragment(e.getKey());
+				String aspectName = e.getKey();
+				if ( aspectName.equals("visualProperties"))
+					aspectName = "cyVisualProperties";
+				cxwtr.startAspectFragment(aspectName);
 				for( ODocument doc : getNetworkElements(edgeName)) {
 					String value = doc.field(edgeName);
 					cxwtr.writeOpaqueAspectElement(value);
@@ -434,64 +443,7 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 }
 
 	
-	private void writeEdgeAspectsInCX(ODocument doc, CxWriter cxwtr, Map<Long,Long> citationIdMap,
-		    Map<Long,Long> supportIdMap , 
-		    boolean writeEdges, boolean writeEdgeAttr,
-		    boolean writeEdgeCitationLinks, boolean writeEdgeSupportLinks) throws ObjectNotFoundException, IOException {
-	
-		Long SID = getSIDFromDoc ( doc);
-	
-		if ( writeEdges) {
-			// track the counter
-			long l = SID.longValue();
-			if (l>edgeIdCounter)
-				edgeIdCounter = l;
-	
-			ODocument srcDoc = doc.field("in_"+ NdexClasses.Edge_E_subject);
-			ODocument tgtDoc = doc.field("out_"+NdexClasses.Edge_E_object);
-	
-			Long srcId = srcDoc.field(NdexClasses.Element_SID);
-			if ( srcId == null )
-				srcId = srcDoc.field(NdexClasses.Element_ID);
-	
-			Long tgtId = tgtDoc.field(NdexClasses.Element_SID);
-			if ( tgtId == null)
-				tgtId = tgtDoc.field(NdexClasses.Element_ID);
-	
-			String relation = null;
-			Long predicate= doc.field(NdexClasses.Edge_P_predicateId);
-	
-			if ( predicate !=null) {
-				relation = this.getBaseTermStringById(predicate);
-			}
-	
-			EdgesElement e = new EdgesElement(SID, srcId, tgtId,relation);
-	
-			writeNdexAspectElementAsAspectFragment(cxwtr,e);
-		}
-  
-		if ( writeEdgeAttr) {
-			// write other properties
-			List<NdexPropertyValuePair> props = doc.field(NdexClasses.ndexProperties);
-			if ( props !=null) {
-					cxwtr.startAspectFragment(EdgeAttributesElement.ASPECT_NAME);
-					for ( NdexPropertyValuePair p : props ) {
-						ATTRIBUTE_DATA_TYPE t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
-						EdgeAttributesElement ep = AttributesAspectUtils.isListType(t) ? 
-								EdgeAttributesElement.createInstanceWithMultipleValues ( p.getSubNetworkId(), 
-										SID, p.getPredicateString(), p.getValue(), t) : 
-								new EdgeAttributesElement ( p.getSubNetworkId(), SID, p.getPredicateString(), p.getValue(),t);
-								cxwtr.writeAspectElement(ep);
-					}
-					cxwtr.endAspectFragment();
-			}
-		}
-		
-		//write citations
-		writeCitationAndSupportLinks(SID,  doc, cxwtr, citationIdMap,
-		   supportIdMap , true, writeEdgeCitationLinks,writeEdgeSupportLinks,null );
-   
-}
+
 	// only used in neighborhood query
 	private void writeEdgeAspectsInCX(ODocument doc, CxWriter cxwtr, Set<String> aspects, Map<Long,Long> citationIdMap,
 		    Map<Long,Long> supportIdMap, Map<String,Long> aspectElementCount) throws ObjectNotFoundException, IOException {
@@ -947,311 +899,9 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 	}
 
 	
-	public void writeOneAspectInCX(OutputStream out, String aspectName, int elementLimit, boolean use_default_pretty_printer) throws IOException, NdexException {
-		init();
-		//prepare metadata
-		MetaDataCollection preMetaData ;
-		
-		MetaDataCollection metadata = networkDoc.field(NdexClasses.Network_P_metadata);
-		if ( metadata != null) {
-				MetaDataElement e = metadata.getMetaDataElement(aspectName);
-				if ( e == null)
-					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
-				e.getData().remove(MetaDataElement.ELEMENT_COUNT);
-				preMetaData = new MetaDataCollection();
-				preMetaData.add(e);
-		} else {
-			// construct metadata
-			List<String> l = new ArrayList<>(1);
-			l.add(aspectName);
-			preMetaData = CXMetaDataManager.getInstance().createCXMataDataTemplateForAspects(l);
-		    Timestamp lastUpdate = new Timestamp( ((Date)networkDoc.field(NdexClasses.ExternalObj_mTime)).getTime());
-		    preMetaData.setLastUpdate(aspectName, lastUpdate.getTime());
-		}
-		
-		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
-        cxwtr.addPreMetaData(preMetaData);
-        
-        try {
-        	cxwtr.start();
 
-        	// start writing aspects out.
-        	//write NdexStatus
-        	long counter =0 ;
-        	if (aspectName.equals(NdexNetworkStatus.ASPECT_NAME)) {
-        		counter = writeNdexStatus(cxwtr);
-        	} else if ( aspectName.equals(NetworkAttributesElement.ASPECT_NAME)) {
-        		// write name, desc and other properties;
-        		counter = writeNetworkAttributes(cxwtr, elementLimit);
-        	} else if (   aspectName.equals(NamespacesElement.ASPECT_NAME)) {
-        		//write namespaces 
-        		counter = writeNamespacesInCX(cxwtr, elementLimit);
-        	} else if (  aspectName.equals(Provenance.ASPECT_NAME) ) { 
-        		writeProvenance(cxwtr);
-        		counter = 1;
-        	} else {
-        	
-        		// tracking ids to SID mapping and baseterms that has been outputed.
-        		Map<Long,Long> citationIdMap = new TreeMap<> ();
-        		Map<Long,Long> supportIdMap = new TreeMap<> ();
-        
-        		if ( aspectName.equals(CitationElement.ASPECT_NAME)) {
-        			for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
-        				if ( elementLimit <=0 || counter < elementLimit)
-        					counter ++;
-        				else 
-        					break;
-        				Long citationId = doc.field(NdexClasses.Element_ID);
-        				Long SID = writeCitationInCX(doc, cxwtr);
-        				citationIdMap.put(citationId, SID);
-        			}
-        		} else if (aspectName.equals(SupportElement.ASPECT_NAME) ) {
-        			for ( ODocument doc: getNetworkElements (NdexClasses.Network_E_Supports)) {
-        			if ( elementLimit <=0 || counter < elementLimit)
-        				counter ++;
-        			else 
-        				break;
-        			Long supportId = doc.field(NdexClasses.Element_ID);
-        			Long SID = writeSupportInCX(doc, cxwtr);
-        			supportIdMap.put(supportId, SID);
-        			}
-        		} else {
-        			boolean writeNodes             = aspectName.equals(NodesElement.ASPECT_NAME);
-        			boolean writeNodeAttr          = aspectName.equals(NodeAttributesElement.ASPECT_NAME);
-        			boolean writeFunctionTerm      = aspectName.equals(FunctionTermElement.ASPECT_NAME);
-        			boolean writeReifiedEdgeTerm   = aspectName.equals(ReifiedEdgeElement.ASPECT_NAME);
-        			boolean writeNodeCitationLinks = aspectName.equals(NodeCitationLinksElement.ASPECT_NAME);
-        			boolean writeNodeSupportLinks  = aspectName.equals(NodeSupportLinksElement.ASPECT_NAME);
-        			if ( writeNodes|| writeNodeAttr ||writeFunctionTerm || writeReifiedEdgeTerm || 
-                		writeNodeCitationLinks || writeNodeSupportLinks) {
-        				for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Nodes)) {
-        					if ( elementLimit <=0 || counter < elementLimit)
-        						counter ++;
-        					else 
-        						break;
-        					writeNodeAspectsInCX(doc, cxwtr,/* repIdSet, */citationIdMap, supportIdMap,
-                				writeNodes,	writeNodeAttr, writeFunctionTerm, writeReifiedEdgeTerm,
-                				writeNodeCitationLinks,writeNodeSupportLinks);
-        				}  
-        			} else {
-        				boolean writeEdges = aspectName.equals(EdgesElement.ASPECT_NAME);
-        				boolean writeEdgeAttr = aspectName.equals(EdgeAttributesElement.ASPECT_NAME);
-        				boolean writeEdgeCitationLinks = aspectName.equals(EdgeCitationLinksElement.ASPECT_NAME);
-        				boolean writeEdgeSupportLinks = aspectName.equals(EdgeSupportLinksElement.ASPECT_NAME);
-        				if ( writeEdges || writeEdgeAttr || writeEdgeCitationLinks || writeEdgeSupportLinks ) {
-        					for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Edges)) {
-        						if ( elementLimit <=0 || counter < elementLimit)
-        							counter ++;
-        						else 
-        							break;
-        						writeEdgeAspectsInCX(doc,cxwtr, citationIdMap, supportIdMap,
-        								writeEdges, writeEdgeAttr, writeEdgeCitationLinks, writeEdgeSupportLinks);
-        					}
-        				} else {
-        					writeOpaqueAspect(cxwtr, aspectName, elementLimit);    
-        				}	
-        			}
-        		}
 
-        	}
-        
-        	//Add post metadata
-        	MetaDataCollection postmd = new MetaDataCollection ();
-        
-        	MetaDataElement e = new MetaDataElement();
-        	e.setName(aspectName);
-        	e.setElementCount(counter);
-        	postmd.add(e);
-        	
-        	cxwtr.addPostMetaData(postmd);        
-
-        	cxwtr.end(true, "");
-        } catch (Exception e) {
-        	cxwtr.end(false, "Error on the server:" + e.getMessage());
-        	throw e;
-        }
-
-	}
 	
-	/**
-	 * 
-	 * @return
-	 * @throws NdexException 
-	 */
-/*	private boolean populatePreMetadataForAspects (MetaDataCollection preMetadata, Set<String> aspects) throws NdexException  {		
-		
-		boolean dbHasMetadata = true;
-		MetaDataCollection metadata = networkDoc.field(NdexClasses.Network_P_metadata);
-		if ( metadata == null) {
-			dbHasMetadata = false;
-			metadata = this.getMetaDataCollection();
-		}		
-		
-		for (String aspectName : aspects) {
-			MetaDataElement e = metadata.getMetaDataElement(aspectName);
-			if ( e == null)
-					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
-	//		preMetaData.add(e);
-		}
-		return dbHasMetadata;
-	} */
-	
-	
-	/**
-	 * 
-	 * @param out
-	 * @param aspects should be not null and not empty.
-	 * @throws NdexException 
-	 * @throws IOException 
-	 */
-	public void writeAspectsInCX(OutputStream out, Set<String> aspects, boolean use_default_pretty_printer) throws NdexException, IOException {
-		
-		init();
-		
-		//prepare metadata
-		MetaDataCollection preMetaData ;
-		
-		boolean dbHasMetadata = true;
-		MetaDataCollection metadata = networkDoc.field(NdexClasses.Network_P_metadata);
-		if ( metadata == null) {
-			dbHasMetadata = false;
-			metadata = this.getMetaDataCollection();
-		}		
-		
-		preMetaData = new MetaDataCollection();
-		for (String aspectName : aspects) {
-			MetaDataElement e = metadata.getMetaDataElement(aspectName);
-			if ( e == null)
-					throw new NdexException ("Aspect " + aspectName + " not found in network " + uuid);
-			preMetaData.add(e);
-		}
-		
-		
-		CxWriter cxwtr = getNdexCXWriter(out, use_default_pretty_printer);     
-        cxwtr.addPreMetaData(preMetaData);
-        
-     try {   
-        cxwtr.start();
-
-		// start writing aspects out.
-        
-        //write NdexStatus
-        if (aspects.contains(NdexNetworkStatus.ASPECT_NAME)) {
-           writeNdexStatus(cxwtr);
-           aspects.remove(NdexNetworkStatus.ASPECT_NAME);
-        }
-        
-        // write provenance
-        if ( aspects.contains(Provenance.ASPECT_NAME)) {
-        	writeProvenance(cxwtr);
-        	aspects.remove(Provenance.ASPECT_NAME);
-        }
-        
-        // write name, desc and other properties;
-        if ( aspects.contains(NetworkAttributesElement.ASPECT_NAME)) {
-           writeNetworkAttributes(cxwtr, -1);
-           aspects.remove(NetworkAttributesElement.ASPECT_NAME);
-        }
-        
-        //write namespaces 
-        if (  aspects.contains(NamespacesElement.ASPECT_NAME)) {
-        	writeNamespacesInCX(cxwtr, -1);
-        	aspects.remove(NetworkAttributesElement.ASPECT_NAME);
-        }
-        
-        // tracking ids to SID mapping and baseterms that has been outputed.
-        Map<Long,Long> citationIdMap = new TreeMap<> ();
-        Map<Long,Long> supportIdMap = new TreeMap<> ();
-     //   Set<Long> repIdSet = new TreeSet<> ();
-
-        
-        if ( aspects.contains(CitationElement.ASPECT_NAME)) {
-        	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Citations)) {
-        		Long citationId = doc.field(NdexClasses.Element_ID);
-        		Long SID = writeCitationInCX(doc, cxwtr);
-        		citationIdMap.put(citationId, SID);
-        	}
-        	aspects.remove(CitationElement.ASPECT_NAME);
-        }
-        
-        if (aspects.contains(SupportElement.ASPECT_NAME) ) {
-        	for ( ODocument doc: getNetworkElements (NdexClasses.Network_E_Supports)) {
-        		Long supportId = doc.field(NdexClasses.Element_ID);
-        		Long SID = writeSupportInCX(doc, cxwtr);
-        		supportIdMap.put(supportId, SID);
-        	}
-        	aspects.remove(SupportElement.ASPECT_NAME);
-        }   
-        
-        boolean writeNodes             = aspects.contains(NodesElement.ASPECT_NAME);
-        boolean writeNodeAttr          = aspects.contains(NodeAttributesElement.ASPECT_NAME);
-        boolean writeFunctionTerm      = aspects.contains(FunctionTermElement.ASPECT_NAME);
-        boolean writeReifiedEdgeTerm   = aspects.contains(ReifiedEdgeElement.ASPECT_NAME);
-        boolean writeNodeCitationLinks = aspects.contains(NodeCitationLinksElement.ASPECT_NAME);
-        boolean writeNodeSupportLinks  = aspects.contains(NodeSupportLinksElement.ASPECT_NAME);
-        if ( writeNodes|| writeNodeAttr ||writeFunctionTerm || writeReifiedEdgeTerm || 
-        		writeNodeCitationLinks || writeNodeSupportLinks) {
-        	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Nodes)) {
-        		writeNodeAspectsInCX(doc, cxwtr,/* repIdSet, */citationIdMap, supportIdMap,
-        				writeNodes,	writeNodeAttr, writeFunctionTerm, writeReifiedEdgeTerm,
-        				writeNodeCitationLinks,writeNodeSupportLinks);
-        	}  
-        	
-        	aspects.remove(NodesElement.ASPECT_NAME);
-        	aspects.remove(NodeAttributesElement.ASPECT_NAME);
-        	aspects.remove(FunctionTermElement.ASPECT_NAME);
-        	aspects.remove(ReifiedEdgeElement.ASPECT_NAME);
-        	aspects.remove(NodeCitationLinksElement.ASPECT_NAME);
-        	aspects.remove(NodeSupportLinksElement.ASPECT_NAME);
-        }
-        
-        
-        boolean writeEdges = aspects.contains(EdgesElement.ASPECT_NAME);
-        boolean writeEdgeAttr = aspects.contains(EdgeAttributesElement.ASPECT_NAME);
-        boolean writeEdgeCitationLinks = aspects.contains(EdgeCitationLinksElement.ASPECT_NAME);
-        boolean writeEdgeSupportLinks = aspects.contains(EdgeSupportLinksElement.ASPECT_NAME);
-        if ( writeEdges || writeEdgeAttr || writeEdgeCitationLinks || writeEdgeSupportLinks ) {
-        	for ( ODocument doc : getNetworkElements(NdexClasses.Network_E_Edges)) {
-        		writeEdgeAspectsInCX(doc,cxwtr, citationIdMap, supportIdMap,
-        			writeEdges, writeEdgeAttr, writeEdgeCitationLinks, writeEdgeSupportLinks);
-        	}
-        	aspects.remove(EdgesElement.ASPECT_NAME);
-        	aspects.remove(EdgeAttributesElement.ASPECT_NAME);
-        	aspects.remove(EdgeCitationLinksElement.ASPECT_NAME);
-        	aspects.remove(EdgeSupportLinksElement.ASPECT_NAME);
-        }
-        
-        for ( String opaqueAspectName : aspects) {
-        	writeOpaqueAspect(cxwtr, opaqueAspectName, -1);
-        }
-        //Add post metadata
-        
-        MetaDataCollection postmd = new MetaDataCollection ();
-        
-        if ( !dbHasMetadata) {
-        	if ( preMetaData.getMetaDataElement(NodesElement.ASPECT_NAME)!=null  ) {
-        		postmd.setIdCounter(NodesElement.ASPECT_NAME, nodeIdCounter);
-        	}
-        
-        	if ( preMetaData.getMetaDataElement(EdgesElement.ASPECT_NAME) != null  ) {
-        		postmd.setIdCounter(EdgesElement.ASPECT_NAME, edgeIdCounter);
-        	}
-        	if ( preMetaData.getMetaDataElement(CitationElement.ASPECT_NAME)!= null)
-        		postmd.setIdCounter(CitationElement.ASPECT_NAME, citationIdCounter);
-        
-        	if ( preMetaData.getMetaDataElement(SupportElement.ASPECT_NAME) != null )
-        		postmd.setIdCounter(SupportElement.ASPECT_NAME, supportIdCounter);
-        }
-        
-        if ( postmd.size()>0)
-          cxwtr.addPostMetaData(postmd);        
-        cxwtr.end(true, "");
-     } catch (Exception e )  {
-    	 cxwtr.end(false, "Error: " + e.getMessage());
-    	 throw e;
-     }
-        
-	}
 
 
 	private int writeNamespacesInCX(CxWriter cxwtr, int limit) throws IOException {
