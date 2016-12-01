@@ -24,7 +24,7 @@ public class BatchNetworkExporter implements AutoCloseable{
 
 	OPartitionedDatabasePool srcPool; 
 	ODatabaseDocumentTx srcConnection;
-	ODatabaseDocumentTx destConn;
+//	ODatabaseDocumentTx destConn;
 	
 	public BatchNetworkExporter (String srcPath) throws NdexException {
 		srcDbPath = "plocal:" + srcPath;
@@ -138,7 +138,7 @@ public class BatchNetworkExporter implements AutoCloseable{
 		srcConnection.activateOnCurrentThread();
 		if (srcConnection != null ) 
 			srcConnection.close();
-		destConn.activateOnCurrentThread();
+	//	destConn.activateOnCurrentThread();
     	NdexDatabase.close();
 	}
 	
