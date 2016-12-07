@@ -148,7 +148,8 @@ public static void main(String[] args) throws Exception {
 	
 			  // test only
 			
-			  try (CXNetworkExporterV13 e = new CXNetworkExporterV13 ("4325a644-a531-11e6-9ed0-06603eb7f303")) {
+		//	  try (CXNetworkExporterV13 e = new CXNetworkExporterV13 ("4325a644-a531-11e6-9ed0-06603eb7f303")) {
+			try (CXNetworkExporterV13 e = new CXNetworkExporterV13 ("8954341d-8e46-11e5-b435-06603eb7f303")) {
 			  FileOutputStream out = new FileOutputStream("/tmp/outputcy.cx" );
 			  e.writeNetworkInCX(out, true);
 		      out.close();

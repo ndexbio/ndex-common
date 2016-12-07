@@ -223,11 +223,13 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 		
 		int counter = 0;
 		
+		String title = null;
+		
 		if ( limit <=0 || counter < limit) {
-			String title = networkDoc.field(NdexClasses.Network_P_name);
+		    title = networkDoc.field(NdexClasses.Network_P_name);
 			if ( title != null ) {
 				writeNdexAspectElementAsAspectFragment(cxwtr,
-            		new NetworkAttributesElement(singleSubNetId,NdexClasses.Network_P_name, title));
+            		new NetworkAttributesElement(null, NdexClasses.Network_P_name, title));
 			}
 			counter ++;
 		}
@@ -262,6 +264,7 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
         List<NdexPropertyValuePair> props = networkDoc.field(NdexClasses.ndexProperties);
         if ( props !=null) {
         	for ( NdexPropertyValuePair p : props) {
+        		
         		if ( limit <=0 || counter < limit ) 
         		   counter ++;
         		else 
