@@ -87,6 +87,8 @@ import org.ndexbio.model.object.ProvenanceEntity;
 import org.ndexbio.model.object.network.VisibilityType;
 import org.slf4j.spi.LocationAwareLogger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -99,6 +101,8 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 	private long edgeIdCounter;
 	private long citationIdCounter;
 	private long supportIdCounter;
+	
+	private Long singleSubNetId ;
 		
 	public CXNetworkExporterV13(String UUID) throws NdexException {
 		super(UUID);
@@ -110,6 +114,7 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 		edgeIdCounter = 0;
 		citationIdCounter = 0;
 		supportIdCounter = 0;
+		singleSubNetId = null;
 	}
 	
 	public void writeNetworkInCX(OutputStream out, final boolean use_default_pretty_printer) throws IOException, NdexException {
@@ -123,18 +128,20 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 		if ( md == null) {
 			dbHasMetadata = false;
 			md = this.getMetaDataCollection();
-		}
+		} else 
+			this.singleSubNetId = this.getSingleSubNetId();
 		
 		MetaDataElement me = md.getMetaDataElement(NamespacesElement.ASPECT_NAME);
 		if ( me != null)
 			me.setElementCount(1L);
 		
-		MetaDataElement ev = md.getMetaDataElement("visualProperties");
+	/*	MetaDataElement ev = md.getMetaDataElement("visualProperties");
 		if (ev != null) {
 			md.remove("visualProperties");
 			ev.setName("cyVisualProperties");
 			md.add(ev);
-		} 
+		} */
+		
         cxwtr.addPreMetaData(md);
       try {
         cxwtr.start();
@@ -220,16 +227,16 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 			String title = networkDoc.field(NdexClasses.Network_P_name);
 			if ( title != null ) {
 				writeNdexAspectElementAsAspectFragment(cxwtr,
-            		new NetworkAttributesElement(null,NdexClasses.Network_P_name, title));
+            		new NetworkAttributesElement(singleSubNetId,NdexClasses.Network_P_name, title));
 			}
 			counter ++;
 		}
         
 		if (limit <=0 || counter < limit) {
 			String desc = networkDoc.field(NdexClasses.Network_P_desc);
-			if ( desc != null) {
+			if ( desc != null && desc.length() >0 ) {
 				writeNdexAspectElementAsAspectFragment(cxwtr,
-            		new NetworkAttributesElement(null,NdexClasses.Network_P_desc, desc));
+            		new NetworkAttributesElement(singleSubNetId,NdexClasses.Network_P_desc, desc));
 			}
 			counter ++;
 		}
@@ -238,7 +245,7 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 			String version = networkDoc.field(NdexClasses.Network_P_version);
 			if ( version !=null) {
 				writeNdexAspectElementAsAspectFragment(cxwtr,
-            		new NetworkAttributesElement(null,NdexClasses.Network_P_version, version));
+            		new NetworkAttributesElement(singleSubNetId,NdexClasses.Network_P_version, version));
 			}
 			counter ++;
 		}
@@ -247,7 +254,7 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 			String srcFmtStr = networkDoc.field(NdexClasses.Network_P_source_format);
 			if ( srcFmtStr !=null) {
 				writeNdexAspectElementAsAspectFragment(cxwtr,
-            		new NetworkAttributesElement(null,CXsrcFormatAttrName, srcFmtStr));
+            		new NetworkAttributesElement(singleSubNetId,CXsrcFormatAttrName, srcFmtStr));
 			}
 			counter ++;
 		}	
@@ -260,6 +267,9 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
         		else 
         			break;
         		ATTRIBUTE_DATA_TYPE t = ATTRIBUTE_DATA_TYPE.STRING;
+        		Long attSubNetId = p.getSubNetworkId();
+        		if ( attSubNetId == null && singleSubNetId !=null)
+        			attSubNetId = singleSubNetId;
         		try {
         			t = AttributesAspectUtils.toDataType(p.getDataType().toLowerCase());
         		} catch (IllegalArgumentException e) {
@@ -267,10 +277,10 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
         		}	
         		if ( !AttributesAspectUtils.isListType(t)) {
         			writeNdexAspectElementAsAspectFragment(cxwtr,
-        					NetworkAttributesElement.createInstanceWithSingleValue(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
+        					NetworkAttributesElement.createInstanceWithSingleValue(attSubNetId,p.getPredicateString(), p.getValue(),
         							t ));
         		} else {
-        			NetworkAttributesElement te = NetworkAttributesElement.createInstanceWithMultipleValues(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
+        			NetworkAttributesElement te = NetworkAttributesElement.createInstanceWithMultipleValues(attSubNetId,p.getPredicateString(), p.getValue(),
 							t);
         			writeNdexAspectElementAsAspectFragment(cxwtr,te);
         				//	new NetworkAttributesElement(p.getSubNetworkId(),p.getPredicateString(), p.getValue(),
@@ -288,8 +298,8 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 			for ( Map.Entry<String, String> e: tab.entrySet()) {
 				String edgeName = e.getValue();
 				String aspectName = e.getKey();
-				if ( aspectName.equals("visualProperties"))
-					aspectName = "cyVisualProperties";
+	//			if ( aspectName.equals("visualProperties"))
+	//				aspectName = "cyVisualProperties";
 				cxwtr.startAspectFragment(aspectName);
 				for( ODocument doc : getNetworkElements(edgeName)) {
 					String value = doc.field(edgeName);
@@ -299,6 +309,31 @@ public class CXNetworkExporterV13 extends SingleNetworkDAO {
 			}
 		}
 		
+	}
+	
+	private Long getSingleSubNetId () throws JsonProcessingException, IOException {
+		Map<String,String> tab = networkDoc.field(NdexClasses.Network_P_opaquEdgeTable);
+		if (tab != null) {
+			String edgeName = tab.get("subNetworks");
+			if ( edgeName != null) {
+				Long result = null;
+				int count = 0;
+				for ( ODocument doc : getNetworkElements(edgeName)) {
+					count ++;
+					if ( count <= 1) {
+						String v = doc.field(edgeName);
+						ObjectMapper o = new ObjectMapper();
+						JsonNode t = o.readTree(v);
+						result = Long.valueOf(t.get("@id").asLong());
+						//System.out.println(doc.toJSON());
+						return result;
+					} else 
+						return null;
+					
+				}
+			}
+		}
+		return null;
 	}
 
 	private void writeOpaqueAspect(CxWriter cxwtr, String opaqueAspectName, int limit) throws IOException {

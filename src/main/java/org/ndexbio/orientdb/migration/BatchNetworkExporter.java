@@ -143,9 +143,20 @@ public class BatchNetworkExporter implements AutoCloseable{
 	}
 	
 public static void main(String[] args) throws Exception {
-		
+	
 		try (BatchNetworkExporter ne = new  BatchNetworkExporter("/opt/ndex/orientdb/databases/ndex")) {
 	
+			  // test only
+			
+			  try (CXNetworkExporterV13 e = new CXNetworkExporterV13 ("4325a644-a531-11e6-9ed0-06603eb7f303")) {
+			  FileOutputStream out = new FileOutputStream("/tmp/outputcy.cx" );
+			  e.writeNetworkInCX(out, true);
+		      out.close();
+			  }
+				
+			
+			
+			
 			ne.exportMainTable("user","");
 			ne.exportMainTable("task"," and taskType = 'EXPORT_NETWORK_TO_FILE' and status = 'COMPLETED'");
 			ne.exportMainTable("request","");
